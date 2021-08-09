@@ -15,7 +15,10 @@ CODE AND IMPROVEMENTS
 =============================
 This is a web application based on HTML5, CSS3 and JavaScript.
 
-It has some dependencies, JQuery (I will remove it on future pull requests), WebMIDIAPI (necessary to play the chords - soundfonts in mp3) and Google Fonts (no problem with this).
+It has some dependencies:
+-JQuery (I will remove it on future pull requests)
+-WebMIDI API (necessary to play the chords - soundfonts in mp3 https://webaudio.github.io/web-midi-api/)
+-Google Fonts (no problem with this).
 
 The layout needs some small improvements to be fully responsive.
 
