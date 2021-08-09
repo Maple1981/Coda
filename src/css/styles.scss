@@ -1,0 +1,552 @@
+@charset "utf-8";
+
+$dusty_grey:#333;
+$majestic_grey: #bbb;
+$broken_white: #eee;
+$dungeon_black:#111;
+$nadir_black:#000;
+$zenit_black:#444;
+$gelatinouscube_green:#00ff95;
+$pasto_green:#a3ffd9;
+$elysium_blue: #c5f6ff;
+$coral_blue:rgba(0, 212, 255, 1);
+$ghast_black:rgba(0, 0, 0, 0.5);
+$squid_purple:#a622ae;
+$tinticole_purple:#711477;
+$brujah_red: #ca4a4a;
+$rusty_orange: #c46f00;
+
+$basic_back_color: $dusty_grey;
+$basic_front_color: $broken_white;
+$basic_fill_color: $dungeon_black;
+$basic_filldarkgrad_color: $nadir_black;
+$basic_fillbrightgrad_color: $zenit_black;
+$corporative_main_color: $gelatinouscube_green;
+$corporative_mainbright_color: $pasto_green;
+$corporative_secondary_color: $elysium_blue;
+$corporative_complementary_color: $squid_purple;
+$corporative_complementarydark_color: $squid_purple;
+$corporative_tertiary_color: $rusty_orange;
+$link_color: $coral_blue;
+$shadow_color: $ghast_black;
+$alert_color: $brujah_red;
+$neutral_color: $majestic_grey;
+
+*{
+	margin:0;
+	padding:0;
+	border:0;
+}
+
+body{ 
+	background-color: $basic_back_color;
+	font-family: 'Open Sans', sans-serif;
+	font-style:normal; 
+	font-weight:300; 
+	color: $basic_front_color;
+	text-rendering: optimizeLegibility;
+	height:100vh;
+}
+
+
+h1{
+	font-weight:800;
+	font-size:6em;
+	background: -webkit-linear-gradient(
+		45deg, 
+		$corporative_secondary_color, 
+		$corporative_main_color 10%, 
+		$corporative_complementary_color 38%
+	);
+	background-clip: text;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	margin-top:-.15em; 
+}
+
+h2,h3,h4,h5,h6{
+	font-weight:300; 
+	color:$corporative_main_color; 
+	margin-bottom:.5em;
+}
+
+h2{
+	font-size:1em;
+	margin-top:.1em;
+	margin-bottom:.5em;
+}
+
+h3{
+	border-bottom:1px solid $corporative_main_color;
+}
+
+section{
+	margin-bottom:1em;
+}
+
+p{
+	margin-bottom:.6em;
+}
+
+a{
+	color:$link_color;
+}
+
+dl dt{
+	color:$corporative_mainbright_color;
+}
+
+dl dd{
+	font-size:.8em;
+}
+
+strong{
+	font-weight:600;
+}
+
+.destacado{
+	font-weight:600; 
+	font-size:1.1em;
+}
+
+
+.columnata{
+	display: flex;
+	flex-wrap: nowrap;
+	gap:3em;
+}
+
+.columnata--ultimaColumnaAlineadaDr div:last-child{
+	margin-left: auto;
+}
+
+.infoAdicional{
+	font-size:.7em;
+}
+
+.estiloEnlace{
+	text-decoration:underline;
+	color:$corporative_main_color;
+	cursor:pointer;
+}
+
+div#container{
+	padding:1em;
+	max-width:957px; 
+	margin:0 auto; 
+	background-color: $basic_fill_color;  
+	-webkit-box-shadow: 0px 0px 40px 0px $shadow_color; 
+	box-shadow: 0px 0px 40px 0px $shadow_color; 
+	border-top:8px solid $corporative_main_color;
+}
+
+header{
+	height:180px;
+	width:957px;
+}
+
+fieldset{
+	font-size:.9em; 
+	border-radius:10px; 
+	padding:20px; 
+	
+	background: $basic_filldarkgrad_color; //retro compatibility old browsers
+	background: linear-gradient(
+		0deg, 
+		$basic_fill_color 0%, 
+		$basic_filldarkgrad_color 35%, 
+		$basic_fillbrightgrad_color 100%
+	);
+
+	h3{
+		border-bottom:none; 
+		font-weight:800; 
+		font-size:1.4em; 
+		width:auto;
+	}
+
+}
+
+
+span.opcion{
+	margin-left:30px;
+}
+
+input[type="text"],
+select, 
+textarea{
+	border:1px solid $basic_front_color; 
+	padding:2px;
+}
+
+input[type="text"]:hover,
+select:hover, 
+textarea:hover,
+input[type="text"]:focus,
+select:focus, textarea:focus{
+	border:1px solid $corporative_main_color;
+}
+label{
+	font-weight:600;
+}
+
+input[type="button"]{ 
+	cursor:pointer; 
+	padding:5px 10px; 
+	border-radius:5px; 
+	color: $basic_front_color; 
+	background: $corporative_complementary_color; //retro compatibility old browsers
+	background: linear-gradient(
+		0deg, 
+		$corporative_complementarydark_color 79%, 
+		$corporative_complementary_color 100%
+	);
+}
+
+input[type="button"]:hover{
+	background: $corporative_main_color;
+	box-shadow: inset 0px 0px 15px 0px $shadow_color;
+
+}
+
+p.centrado{
+	text-align: center;
+}
+
+.material-icons.icono{
+	font-size:6em;
+	color:$corporative_main_color;
+}
+
+.material-icons.icono.fundamentos{
+	color:$corporative_main_color;
+}
+.material-icons.icono.instrumentos{
+	color:$corporative_mainbright_color;
+}
+.material-icons.icono.licencia{
+	color:$corporative_complementary_color;
+}
+
+section#notacion{
+	font-size:1.2em; 
+
+	h3{
+		width:70%;
+	}
+
+	ul{
+		text-align:center;
+	}
+
+	ul li{
+		list-style-type:none; 
+		display:inline;
+		margin-right:.3em;
+	}
+
+	ul li sup{
+		font-size:.7em;
+	}
+
+	ul li.principal{
+		font-weight:600;
+	}
+
+	ul li.secundaria{
+		font-weight:600;
+	}
+
+	div.leyendaModal{
+		width:100%; 
+		margin:0 auto; 
+		font-size:.7em; 
+		text-align:center;
+	}
+
+	table tr td span.cadencial{
+		font-weight:600;
+	}
+	
+	table.acordesEscala{
+		margin-top:20px;
+	}
+
+	div.leyendaAcordesModales{
+		width:100%;
+		 margin:0 auto; 
+		 font-size:.7em; 
+		 text-align:center;
+	}
+
+}
+
+section#notacion, 
+section#armoniaExtendida{
+
+	table{
+		width:100%; 
+		margin:0 auto; 
+		font-size:.8em;
+		border-collapse:collapse;
+	}
+
+	table tr td{
+		border:1px solid $basic_fillbrightgrad_color;
+		padding:5px; 
+		text-align:center;
+	}
+
+	table tr td.cabecera, 
+	table thead tr td{
+		font-weight:600;
+		background: $basic_back_color; /*  Navegadores carracla */
+		background: linear-gradient(
+			0deg, 
+			$basic_back_color 0%, 
+			$basic_fillbrightgrad_color 100%
+		);
+		color:$basic_front_color;
+	}
+
+	table tr td.par{
+		background-color:$basic_filldarkgrad_color;
+	}
+
+	p.leyenda{
+		font-size:.6em; 
+		text-align:center;
+		margin-top:.7em;
+	}
+
+}
+
+span.principal, li.principal{
+	color:$link_color;
+}
+
+span.secundaria, li.secundaria{
+	color:$corporative_tertiary_color;
+}
+
+section table tr td.celdaAcorde{
+	cursor:pointer; 
+	color:$corporative_complementary_color;
+}
+
+.cadencial{
+	color: $corporative_main_color;
+}
+.evitar{
+	color:$alert_color;
+}
+
+section#instrumento{
+	text-align:center; 
+	font-size:.85em;
+
+	table.diapason{
+		width:650px;
+		height:212px;
+		background:transparent url("../../img/diapason.jpg") no-repeat 0 0; 
+		background-size: contain;
+		margin:0 auto;
+
+		td{
+			width:50px; 
+			height:29px; 
+			padding:2px 5px; 
+			text-align:center; 
+		}/*traste*/
+
+	} /*width=13 trastes x (width traste sin sumar padding traste)*/
+
+
+	div.teclado{
+		width:646px;
+		height:212px;
+		background:transparent url("../../img/teclado.jpg") no-repeat 0 0;
+		background-size:contain; 
+		margin:0 auto;
+		padding-left:36px; 
+		padding-right:40px;
+
+		table td{
+			text-align:center; 
+			padding:0px;
+		}
+
+		table.teclasNegras{
+			padding-top:100px;
+			width:572px;
+
+			td{
+				vertical-align:top;
+				width:18px;
+			}
+
+			td.huecoBlancas{
+				width:24px;
+			}
+
+			td.huecoC{
+				width:26px;
+			}
+
+			td.huecoE{
+				width:30px;
+			}
+
+			td.huecoA{
+				width:18px;
+			}
+
+		}
+
+		table.teclasBlancas{
+			padding-top:40px;
+			width:574px;
+
+			td{
+				vertical-align:bottom; 
+				width:28px;
+			}
+
+		}
+
+
+
+	} /*(width teclaBlanca * 14) + (width teclaNegra * 10)*/
+
+	table td.celdaNota span{
+		border-radius:11px;
+		width:22px; 
+		height:22px;
+		display:block; 
+		margin:0 auto;
+	}
+
+	table td.noPerteneceEscala span{
+		color: $neutral_color;
+		background-color:transparent;
+	}
+
+	table td.perteneceEscala span{
+		background-color: $corporative_main_color;
+		color:$basic_filldarkgrad_color;  
+		font-weight:800;
+	}
+
+	div.teclado table td.perteneceEscala span{
+		background-color: $corporative_main_color;
+	}
+
+	table td.celdaNota span.resaltada{
+		background-color:$corporative_complementary_color !important; 
+	}
+
+}
+
+section#circuloQuintas {
+	position:absolute; 
+	top:180px; 
+	margin-left:680px; 
+	height:200px;
+}
+
+div#circuloDesplegado {
+  margin:70px 0 0px 0; 
+  height: 100px;
+  width: 100px;
+  transform: translate(70%, -50%);
+}
+
+div.circulo {
+	position: absolute;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background-color: $corporative_main_color;
+	text-align:center;
+	font-size:.7em;
+
+	p{
+		margin-bottom:0px;
+	}
+	p:first-child{
+		padding-top:4px;
+	}
+	p span{
+		color:$basic_filldarkgrad_color;
+		text-decoration:none;
+	}
+	p.actual span{
+		color:$corporative_complementary_color;
+	}
+
+}
+
+section#armoniaExtendida table{
+	margin-bottom:20px;
+}
+
+section#bienvenida{
+
+	h2{
+		font-size:1.4em; 
+		text-align:center;
+	}
+
+	img{
+		display:block; 
+		margin:0 auto; 
+		margin-bottom:5px;
+	}
+
+}
+
+section#controlVersiones{
+	clear:both; 
+	margin-top:40px;
+	article{
+		margin-bottom:20px;
+	}
+	article dl dd{
+		margin-bottom:10px; 
+		list-style-type:disc; 
+		margin-left:20px;
+	}
+}
+
+footer{
+	text-align:center; 
+	border-top:1px solid $basic_back_color; 
+	font-size:.8em; 
+	margin-top:1em;
+	margin-bottom:1em; 
+	padding-top:.8em;
+
+	ul#redesSociales li{
+		display:inline;
+		margin-left:5px;
+		list-style-type:none;
+	}
+
+}
+
+/*jquery-ui overwrite*/
+.ui-state-default, 
+.ui-widget-content .ui-state-default, 
+.ui-widget-header .ui-state-default {
+	background-color: $basic_filldarkgrad_color !important;
+	border:1px solid $basic_fillbrightgrad_color !important;
+	color: $basic_front_color  !important;
+}
+
+.ui-accordion-header-active{
+	background-color: $corporative_main_color !important;
+}
+
+.ui-widget-content{
+	background-color: $basic_fill_color !important;
+}

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <title>CODA</title>
+  <meta name="description" content="Genera con un solo click escalas, tonalidades y acordes. Practícalos sobre una guitarra y un piano virtuales.">
+  <meta name="author" content="Javier Arce">
+  <link rel="stylesheet" href="dist/css/styles.min.css">
+  
+  <link href='http://fonts.googleapis.com/css?family=Open+Sans:800,600,300,300italic' rel='stylesheet' type='text/css'>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"><!--https://fonts.google.com/icons-->
+
+  <link type="image/x-icon" rel="shortcut icon" href="/favicon.ico">
+  <!--[if lt IE 9]>
+  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  
+  <link rel="stylesheet" href="js/jquery-ui-1.11.4/jquery-ui.min.css">
+
+  <script src="js/jquery-1.10.js"></script>
+  
+  <script src="js/jquery-ui-1.11.4/jquery-ui.min.js"></script>
+  
+  <!-- WEB MIDI - WEB AUDIO -->
+  
+  <!-- polyfill -->
+	<script src="js/inc/shim/Base64.js" type="text/javascript"></script>
+	<script src="js/inc/shim/Base64binary.js" type="text/javascript"></script>
+	<script src="js/inc/shim/WebAudioAPI.js" type="text/javascript"></script>
+	<!-- midi.js package -->
+	<script src="js/midi/audioDetect.js" type="text/javascript"></script>
+	<script src="js/midi/gm.js" type="text/javascript"></script>
+	<script src="js/midi/loader.js" type="text/javascript"></script>
+	<script src="js/midi/plugin.audiotag.js" type="text/javascript"></script>
+	<script src="js/midi/plugin.webaudio.js" type="text/javascript"></script>
+	<script src="js/midi/plugin.webmidi.js" type="text/javascript"></script>
+	<!-- utils -->
+	<script src="js/util/dom_request_xhr.js" type="text/javascript"></script>
+	<script src="js/util/dom_request_script.js" type="text/javascript"></script>
+  
+  <!-- FIN WEB MIDI - WEB AUDIO -->
+  
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+
+</head>
+
+<body>
+	<div id="container">
+    
+        <header>
+            
+			<div class="columnata columnata--ultimaColumnaAlineadaDr">
+				<div id="encabezado">
+					<h1>CODA</h1>
+					<h2>Generador matemático de escalas, acordes y progresiones</h2>
+				</div>
+				<div>
+					<fieldset id="interface">
+						<h3>Elige tu escala</h3>
+						<p>
+							<label>Tónica <select id="tonica"></select></label>
+							<label>Escala <select id="escala"></select></label>
+						</p>
+						<p>
+							Formato 
+							<label>♯ <input name="formato" id="sostenidos" value="0" checked="checked" type="radio"></label> 
+							<label>♭ <input name="formato" id="bemoles" value="1" type="radio"></label>
+							<span class="opcion">Instrumento 
+								<label>Guitarra <input name="instrumento" id="guitarra" value="0" checked="checked" type="radio"></label> 
+								<label>Piano <input name="instrumento" id="piano" value="1" type="radio"></label>
+							</span>
+						</p>
+						<input id="btnEscala" value="Dame información de la escala" type="button">
+					</fieldset>
+				</div>
+				
+			</div>
+			
+        </header>
+        
+        <main>
+            <section id="notacion">
+            </section>
+            
+            <section id="instrumento">
+            </section>
+			
+			<section id="armoniaExtendida">
+			</section>
+			
+			<section id="circuloQuintas">
+			</section>
+			
+			<section id="bienvenida">
+				<article id="principal" class="columnata">
+					<div>
+						<p>
+							<em>CODA</em> es una aplicación web para <strong>estudiantes</strong> de armonía y <strong>músicos</strong> de todo tipo. 
+							Proporciona información básica sobre tonalidades, escalas, acordes y progresiones.
+							Con un solo click, puede obtenerse ayuda rápida para componer una canción nueva, efectuar arreglos,
+							armonizar una melodía, utilizar modos griegos o cambiar la tonalidad de una obra.
+						<p>
+					</div>
+					<div>
+						<p>
+							El sistema es muy sencillo: escoges una <strong>tónica</strong> y un <strong>tipo de escala</strong>, y pulsas el botón. Aparecerá toda la información
+							disponible al respecto en forma de una vista de la escala elegida, un gestor de los acordes que pueden formarse sobre ella y una vista del instrumento seleccionado (guitarra o piano).
+						</p>
+					</div>
+				</article>
+				<div class="columnata">
+					<article id="funciones">
+						<h2>Fundamentos</h2>
+						<p class="centrado">
+							<span class="material-icons icono fundamentos">class</span>
+						</p>
+						<p>
+						La aplicación se basa en las reglas esenciales de la <a href="http://es.wikipedia.org/wiki/Armon%C3%ADa" title="Ver en Wikipedia información sobre armonía tonal o funcional">armonía funcional</a>, pero también ofrece información sobre <a href="http://es.wikipedia.org/wiki/Modos_musicales" title="Ver en Wikipedia información sobre armonía modal">armonía modal</a>
+						y sobre escalas no diatónicas o poco utilizadas en occidente (exóticas).
+						</p>
+					</article>
+					<article id="instrumentos">
+						<h2>Instrumentos</h2>
+						<p class="centrado">
+							<span class="material-icons icono instrumentos">piano</span>
+						</p>
+						<p>
+						Además de la información puramente teórica, CODA incluye una vista de <strong>guitarra</strong> y otra de <strong>piano</strong>, 
+						para que a los practicantes de esos instrumentos les resulte más fácil familiarizarse con la escala elegida.
+						</p>
+					</article>
+					<article id="libre">
+						<h2>Licencia</h2>
+						<p class="centrado">
+							<span class="material-icons icono licencia">flaky</span>
+						</p>
+						<p>
+						Esta aplicación está creada utilizando solamente especificaciones y estándares <strong>abiertos</strong> como HTML5, CSS3 y JavaScript a través de JQuery. 
+						Su código fuente es <strong>libre</strong> y utiliza una licencia <a href="http://creativecommons.org/licenses/by-sa/3.0/es/" title="Licencia Creative Commons Reconocimiento - Compartir igual">Creative Commons Reconocimiento - Compartir igual</a>.
+						</p>
+					</article>
+				</div>
+				
+			</section>
+			
+            <section id="controlVersiones">
+            	<article>
+					<h3>Novedades de la versión actual beta 0.4</h3>
+					<dl>
+						<dt>Acordes de la tonalidad paralela</dt>
+                        <dd>Para las escalas heptatónicas tonales, la tabla de acordes muestra los acordes de la tonalidad paralela.</dd>
+					</dl>
+				</article>
+				<article>
+					<h3>Novedades de la versión actual beta 0.3</h3>
+					<dl>
+						<dt>Web Audio</dt>
+                        <dd>Al hacer click sobre cualquier acorde de una tabla, se reproduce su sonido.</dd>
+                        <dt>Círculo de quintas</dt>
+						<dd>Ahora, a elegir una escala "tonificable", bajo la vista de instrumento, aparece un círculo de quintas dinámico por el que poder navegar.</dd>
+						<dt>Vista de instrumentos</dt>
+						<dd>Añadidas distintas afinaciones seleccionables en la vista del diapasón de guitarra.</dd>
+						<dd>Al pasar sobre un acorde en el Gestor de acordes, las notas que lo forman se iluminan en otro color en el instrumento.</dd>
+						<dt>Armonía extendida</dt>
+						<dd>Tablas de armonía ampliada: dominantes secundarias, subdominantes secundarias, sustitutos, relativo menor, ...</dd>
+					</dl>
+				</article>
+				<article>
+                	<h3>Novedades de la versión beta 0.2</h3>
+                    <dl>
+                    	<dt>Vista de escalas y de instrumentos</dt>
+                        <dd>Música modal: notas principales y secundarias de las escalas de cada modo</dd>
+                        <dt>Gestor de acordes</dt>
+                        <dd>Armonía modal: acordes fundamentales, cadenciales, no de tónica y a evitar.</dd>
+                    </dl>
+                </article>
+                <article>
+                    <h3>Novedades de la versión  beta 0.1</h3>
+                    <dl>
+						<dt>Vista de escalas</dt>
+                        <dd>Información sobre las escalas relativas y paralelas.</dd>
+                        <dt>Gestor de acordes</dt>
+                        <dd>Ahora, los acordes generados son de cuatriada en lugar de triada siempre que sea posible.</dd>
+						<dd>Información sobre las funciones armónicas de cada grado en la tonalidad de la escala elegida.</dd>
+						<dt>Vista de instrumentos</dt>
+                        <dd>Vista de piano.</dd>
+						<dt>Otros</dt>
+                        <dd>Cambios menores en la interfaz (ahora es asíncrona) y en el diseño.</dd> 
+						<dd>Presentación y guía rápida de uso.</dd>
+						<dd>Mejoras en la estructura del código y los comentarios.</dd>
+                    </dl>
+                </article>
+                <article>
+                    <h3>Mejoras para la siguiente versión</h3>
+                    <dl>
+                        <dt>Gestor de acordes</dt>
+						<dd>
+							Al hacer click sobre un acorde, aparece la siguiente información adicional:
+							<br />
+							construcción de tensiones de novena, onceava y treceava en la escala elegida. Inversiones posibles.
+						</dd>
+                        <dt>Vista de instrumentos</dt>
+						<dd>Ampliación del diapasón hasta los 22-24 trastes</dd>
+                        <dd>Vista de bajo.</dd>
+						<dt>Gestor de progresiones</dt>
+                        <dd>Cadencias y progresiones típicas de la tonalidad, opciones de modulación a otras tonalidades.</dd>
+                    </dl>
+                </article>
+            </section>
+        </main>
+    
+        <footer>
+            <p>HTML 5 + CSS 3 + JQuery</p>
+            <p>
+				<a href="js/coda.js" title="Ver repositorio GitHub">Ver repositorio GitHub</a>
+			</p>
+            <p>Javier Arce.</p>
+			<p>
+				<a href="https://creativecommons.org/licenses/by-sa/4.0/" title="Licencia Creative Commons Reconocimiento - Compartir igual Internacional">
+					Creative Commons by-sa 4.0 International
+				</a>
+			</p>
+            <p>
+				<strong>CODA está en fase beta</strong>. 
+				Puede contener errores. Por favor, todavía no te tomes la aplicación demasiado en serio. 
+				
+			</p>
+            <p>
+				Si tienes algún consejo, idea de mejora o crítica furibunda, puedes contactar conmigo 
+				a través de GitHub.
+			</p>
+
+        </footer>
+        
+    </div>
+
+</body>
+</html>

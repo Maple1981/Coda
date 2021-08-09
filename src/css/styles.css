@@ -1,0 +1,502 @@
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+body {
+  background-color: #333;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 300;
+  color: #eee;
+  text-rendering: optimizeLegibility;
+  height: 100vh;
+}
+
+h1 {
+  font-weight: 800;
+  font-size: 6em;
+  background: -webkit-linear-gradient(45deg, #c5f6ff, #00ff95 10%, #a622ae 38%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-top: -.15em;
+}
+
+h2, h3, h4, h5, h6 {
+  font-weight: 300;
+  color: #00ff95;
+  margin-bottom: .5em;
+}
+
+h2 {
+  font-size: 1em;
+  margin-top: .1em;
+  margin-bottom: .5em;
+}
+
+h3 {
+  border-bottom: 1px solid #00ff95;
+}
+
+section {
+  margin-bottom: 1em;
+}
+
+p {
+  margin-bottom: .6em;
+}
+
+a {
+  color: #00d4ff;
+}
+
+dl dt {
+  color: #a3ffd9;
+}
+
+dl dd {
+  font-size: .8em;
+}
+
+strong {
+  font-weight: 600;
+}
+
+.destacado {
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+.columnata {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-wrap: nowrap;
+      flex-wrap: nowrap;
+  gap: 3em;
+}
+
+.columnata--ultimaColumnaAlineadaDr div:last-child {
+  margin-left: auto;
+}
+
+.infoAdicional {
+  font-size: .7em;
+}
+
+.estiloEnlace {
+  text-decoration: underline;
+  color: #00ff95;
+  cursor: pointer;
+}
+
+div#container {
+  padding: 1em;
+  max-width: 957px;
+  margin: 0 auto;
+  background-color: #111;
+  -webkit-box-shadow: 0px 0px 40px 0px rgba(0, 0, 0, 0.5);
+  box-shadow: 0px 0px 40px 0px rgba(0, 0, 0, 0.5);
+  border-top: 8px solid #00ff95;
+}
+
+header {
+  height: 180px;
+  width: 957px;
+}
+
+fieldset {
+  font-size: .9em;
+  border-radius: 10px;
+  padding: 20px;
+  background: #000;
+  background: -webkit-gradient(linear, left bottom, left top, from(#111), color-stop(35%, #000), to(#444));
+  background: linear-gradient(0deg, #111 0%, #000 35%, #444 100%);
+}
+
+fieldset h3 {
+  border-bottom: none;
+  font-weight: 800;
+  font-size: 1.4em;
+  width: auto;
+}
+
+span.opcion {
+  margin-left: 30px;
+}
+
+input[type="text"],
+select,
+textarea {
+  border: 1px solid #eee;
+  padding: 2px;
+}
+
+input[type="text"]:hover,
+select:hover,
+textarea:hover,
+input[type="text"]:focus,
+select:focus, textarea:focus {
+  border: 1px solid #00ff95;
+}
+
+label {
+  font-weight: 600;
+}
+
+input[type="button"] {
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: #eee;
+  background: #a622ae;
+  background: -webkit-gradient(linear, left bottom, left top, color-stop(79%, #a622ae), to(#a622ae));
+  background: linear-gradient(0deg, #a622ae 79%, #a622ae 100%);
+}
+
+input[type="button"]:hover {
+  background: #00ff95;
+  -webkit-box-shadow: inset 0px 0px 15px 0px rgba(0, 0, 0, 0.5);
+          box-shadow: inset 0px 0px 15px 0px rgba(0, 0, 0, 0.5);
+}
+
+p.centrado {
+  text-align: center;
+}
+
+.material-icons.icono {
+  font-size: 6em;
+  color: #00ff95;
+}
+
+.material-icons.icono.fundamentos {
+  color: #00ff95;
+}
+
+.material-icons.icono.instrumentos {
+  color: #a3ffd9;
+}
+
+.material-icons.icono.licencia {
+  color: #a622ae;
+}
+
+section#notacion {
+  font-size: 1.2em;
+}
+
+section#notacion h3 {
+  width: 70%;
+}
+
+section#notacion ul {
+  text-align: center;
+}
+
+section#notacion ul li {
+  list-style-type: none;
+  display: inline;
+  margin-right: .3em;
+}
+
+section#notacion ul li sup {
+  font-size: .7em;
+}
+
+section#notacion ul li.principal {
+  font-weight: 600;
+}
+
+section#notacion ul li.secundaria {
+  font-weight: 600;
+}
+
+section#notacion div.leyendaModal {
+  width: 100%;
+  margin: 0 auto;
+  font-size: .7em;
+  text-align: center;
+}
+
+section#notacion table tr td span.cadencial {
+  font-weight: 600;
+}
+
+section#notacion table.acordesEscala {
+  margin-top: 20px;
+}
+
+section#notacion div.leyendaAcordesModales {
+  width: 100%;
+  margin: 0 auto;
+  font-size: .7em;
+  text-align: center;
+}
+
+section#notacion table,
+section#armoniaExtendida table {
+  width: 100%;
+  margin: 0 auto;
+  font-size: .8em;
+  border-collapse: collapse;
+}
+
+section#notacion table tr td,
+section#armoniaExtendida table tr td {
+  border: 1px solid #444;
+  padding: 5px;
+  text-align: center;
+}
+
+section#notacion table tr td.cabecera,
+section#notacion table thead tr td,
+section#armoniaExtendida table tr td.cabecera,
+section#armoniaExtendida table thead tr td {
+  font-weight: 600;
+  background: #333;
+  /*  Navegadores carracla */
+  background: -webkit-gradient(linear, left bottom, left top, from(#333), to(#444));
+  background: linear-gradient(0deg, #333 0%, #444 100%);
+  color: #eee;
+}
+
+section#notacion table tr td.par,
+section#armoniaExtendida table tr td.par {
+  background-color: #000;
+}
+
+section#notacion p.leyenda,
+section#armoniaExtendida p.leyenda {
+  font-size: .6em;
+  text-align: center;
+  margin-top: .7em;
+}
+
+span.principal, li.principal {
+  color: #00d4ff;
+}
+
+span.secundaria, li.secundaria {
+  color: #c46f00;
+}
+
+section table tr td.celdaAcorde {
+  cursor: pointer;
+  color: #a622ae;
+}
+
+.cadencial {
+  color: #00ff95;
+}
+
+.evitar {
+  color: #ca4a4a;
+}
+
+section#instrumento {
+  text-align: center;
+  font-size: .85em;
+  /*width=13 trastes x (width traste sin sumar padding traste)*/
+  /*(width teclaBlanca * 14) + (width teclaNegra * 10)*/
+}
+
+section#instrumento table.diapason {
+  width: 650px;
+  height: 212px;
+  background: transparent url("../../img/diapason.jpg") no-repeat 0 0;
+  background-size: contain;
+  margin: 0 auto;
+  /*traste*/
+}
+
+section#instrumento table.diapason td {
+  width: 50px;
+  height: 29px;
+  padding: 2px 5px;
+  text-align: center;
+}
+
+section#instrumento div.teclado {
+  width: 646px;
+  height: 212px;
+  background: transparent url("../../img/teclado.jpg") no-repeat 0 0;
+  background-size: contain;
+  margin: 0 auto;
+  padding-left: 36px;
+  padding-right: 40px;
+}
+
+section#instrumento div.teclado table td {
+  text-align: center;
+  padding: 0px;
+}
+
+section#instrumento div.teclado table.teclasNegras {
+  padding-top: 100px;
+  width: 572px;
+}
+
+section#instrumento div.teclado table.teclasNegras td {
+  vertical-align: top;
+  width: 18px;
+}
+
+section#instrumento div.teclado table.teclasNegras td.huecoBlancas {
+  width: 24px;
+}
+
+section#instrumento div.teclado table.teclasNegras td.huecoC {
+  width: 26px;
+}
+
+section#instrumento div.teclado table.teclasNegras td.huecoE {
+  width: 30px;
+}
+
+section#instrumento div.teclado table.teclasNegras td.huecoA {
+  width: 18px;
+}
+
+section#instrumento div.teclado table.teclasBlancas {
+  padding-top: 40px;
+  width: 574px;
+}
+
+section#instrumento div.teclado table.teclasBlancas td {
+  vertical-align: bottom;
+  width: 28px;
+}
+
+section#instrumento table td.celdaNota span {
+  border-radius: 11px;
+  width: 22px;
+  height: 22px;
+  display: block;
+  margin: 0 auto;
+}
+
+section#instrumento table td.noPerteneceEscala span {
+  color: #bbb;
+  background-color: transparent;
+}
+
+section#instrumento table td.perteneceEscala span {
+  background-color: #00ff95;
+  color: #000;
+  font-weight: 800;
+}
+
+section#instrumento div.teclado table td.perteneceEscala span {
+  background-color: #00ff95;
+}
+
+section#instrumento table td.celdaNota span.resaltada {
+  background-color: #a622ae !important;
+}
+
+section#circuloQuintas {
+  position: absolute;
+  top: 180px;
+  margin-left: 680px;
+  height: 200px;
+}
+
+div#circuloDesplegado {
+  margin: 70px 0 0px 0;
+  height: 100px;
+  width: 100px;
+  -webkit-transform: translate(70%, -50%);
+          transform: translate(70%, -50%);
+}
+
+div.circulo {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #00ff95;
+  text-align: center;
+  font-size: .7em;
+}
+
+div.circulo p {
+  margin-bottom: 0px;
+}
+
+div.circulo p:first-child {
+  padding-top: 4px;
+}
+
+div.circulo p span {
+  color: #000;
+  text-decoration: none;
+}
+
+div.circulo p.actual span {
+  color: #a622ae;
+}
+
+section#armoniaExtendida table {
+  margin-bottom: 20px;
+}
+
+section#bienvenida h2 {
+  font-size: 1.4em;
+  text-align: center;
+}
+
+section#bienvenida img {
+  display: block;
+  margin: 0 auto;
+  margin-bottom: 5px;
+}
+
+section#controlVersiones {
+  clear: both;
+  margin-top: 40px;
+}
+
+section#controlVersiones article {
+  margin-bottom: 20px;
+}
+
+section#controlVersiones article dl dd {
+  margin-bottom: 10px;
+  list-style-type: disc;
+  margin-left: 20px;
+}
+
+footer {
+  text-align: center;
+  border-top: 1px solid #333;
+  font-size: .8em;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  padding-top: .8em;
+}
+
+footer ul#redesSociales li {
+  display: inline;
+  margin-left: 5px;
+  list-style-type: none;
+}
+
+/*jquery-ui overwrite*/
+.ui-state-default,
+.ui-widget-content .ui-state-default,
+.ui-widget-header .ui-state-default {
+  background-color: #000 !important;
+  border: 1px solid #444 !important;
+  color: #eee !important;
+}
+
+.ui-accordion-header-active {
+  background-color: #00ff95 !important;
+}
+
+.ui-widget-content {
+  background-color: #111 !important;
+}
+/*# sourceMappingURL=styles.css.map */

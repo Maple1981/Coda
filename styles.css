@@ -1,0 +1,521 @@
+/* CSS Document */
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+body {
+  background-color: #333;
+}
+
+section, article, p, h1, h2, h3, h4, h5, h6 {
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 300;
+  color: #eee;
+  text-rendering: optimizeLegibility;
+}
+
+h1 {
+  font-weight: 800;
+  font-size: 4em;
+  margin-top: .2em;
+  margin-bottom: .1em;
+  background: -webkit-linear-gradient(45deg, #c5f6ff, #00ff95 30%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+h2, h3, h4, h5, h6 {
+  font-weight: 300;
+  color: #78a449;
+  margin-bottom: 10px;
+}
+
+h2 {
+  font-size: 1em;
+  margin-top: .1em;
+  margin-bottom: .5em;
+}
+
+h3 {
+  border-bottom: 1px solid #ddd;
+}
+
+section {
+  margin-bottom: 40px;
+}
+
+p {
+  margin-bottom: 10px;
+}
+
+a {
+  color: #6a9b36;
+}
+
+dl dt {
+  color: #78a449;
+}
+
+dl dd {
+  font-size: .8em;
+}
+
+strong {
+  font-weight: 600;
+}
+
+.destacado {
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+.columnaIz {
+  float: left;
+  width: 48%;
+}
+
+.columnaDr {
+  float: right;
+  width: 48%;
+}
+
+.tresColumnas {
+  clear: both;
+}
+
+.tresColumnas .columnaIz {
+  float: left;
+  width: 30%;
+  margin-right: 5%;
+}
+
+.tresColumnas .columnaCentral {
+  float: left;
+  width: 30%;
+  margin-right: 5%;
+}
+
+.tresColumnas .columnaDr {
+  float: left;
+  width: 30%;
+  margin-right: 0%;
+}
+
+.infoAdicional {
+  font-size: .7em;
+}
+
+.estiloEnlace {
+  text-decoration: underline;
+  color: #6a9b36;
+  cursor: pointer;
+}
+
+div#container {
+  padding: 20px;
+  width: 957px;
+  margin: 0 auto;
+  background-color: #222;
+  -webkit-box-shadow: 0px 0px 40px 0px rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 0px 40px 0px rgba(0, 0, 0, 0.1);
+  border-top: 8px solid #6a9b36;
+}
+
+header {
+  height: 180px;
+  width: 957px;
+}
+
+header div#encabezado {
+  width: 500px;
+  float: left;
+}
+
+fieldset {
+  font-size: .9em;
+  border-radius: 10px;
+  padding: 20px;
+  width: 400px;
+  float: right;
+  background: #e4efc0;
+  /* Navegadores carracla */
+  /* FF3.6+ */
+  /* Chrome,Safari4+ */
+  /* Chrome10+,Safari5.1+ */
+  /* Opera 11.10+ */
+  /* IE10+ */
+  background: -webkit-gradient(linear, left top, left bottom, from(#e4efc0), to(#abbd73));
+  background: linear-gradient(to bottom, #e4efc0 0%, #abbd73 100%);
+  /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e4efc0', endColorstr='#abbd73',GradientType=0 );
+  /* IE6-9 */
+}
+
+fieldset h3 {
+  border-bottom: none;
+  font-weight: 800;
+  font-size: 1.4em;
+  width: auto;
+}
+
+span.opcion {
+  margin-left: 30px;
+}
+
+input[type="text"], select, textarea {
+  border: 1px solid #aaa;
+  padding: 2px;
+}
+
+input[type="text"]:hover, select:hover, textarea:hover, input[type="text"]:focus, select:focus, textarea:focus {
+  border: 1px solid #78A449;
+}
+
+label {
+  font-weight: 600;
+}
+
+input[type="button"] {
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: #fff;
+  background: #627d4d;
+  /* Navegadores carracla */
+  /* FF3.6+ */
+  /* Chrome,Safari4+ */
+  /* Chrome10+,Safari5.1+ */
+  /* Opera 11.10+ */
+  /* IE10+ */
+  background: -webkit-gradient(linear, left top, left bottom, from(#627d4d), to(#1f3b08));
+  background: linear-gradient(to bottom, #627d4d 0%, #1f3b08 100%);
+  /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#627d4d', endColorstr='#1f3b08',GradientType=0 );
+  /* IE6-9 */
+}
+
+input[type="button"]:hover {
+  background-color: #165102;
+  -webkit-box-shadow: inset 0px 0px 15px 0px #323232;
+  box-shadow: inset 0px 0px 15px 0px #323232;
+}
+
+main {
+  width: 100%;
+}
+
+section#notacion {
+  font-size: 1.2em;
+}
+
+section#notacion h3 {
+  width: 700px;
+}
+
+section#notacion ul {
+  text-align: center;
+}
+
+section#notacion ul li {
+  list-style-type: none;
+  display: inline;
+  margin-right: .3em;
+}
+
+section#notacion ul li sup {
+  font-size: .7em;
+}
+
+section#notacion ul li.principal {
+  font-weight: 600;
+}
+
+section#notacion ul li.secundaria {
+  font-weight: 600;
+}
+
+section#notacion div.leyendaModal {
+  width: 100%;
+  margin: 0 auto;
+  font-size: .7em;
+  text-align: center;
+}
+
+span.principal, li.principal {
+  color: #0aa0d1;
+}
+
+span.secundaria, li.secundaria {
+  color: #c46f00;
+}
+
+section#notacion table, section#armoniaExtendida table {
+  width: 700px;
+  margin: 0 auto;
+  font-size: .8em;
+  border-collapse: collapse;
+}
+
+section#notacion table tr td, section#armoniaExtendida table tr td {
+  border: 1px solid #ccc;
+  padding: 5px;
+  text-align: center;
+  min-width: 100px;
+}
+
+section#notacion table tr td.cabecera, section#notacion table thead tr td, section#armoniaExtendida table tr td.cabecera, section#armoniaExtendida table thead tr td {
+  font-weight: 600;
+  background: #e4efc0;
+  /*  Navegadores carracla */
+  /* FF3.6+ */
+  /* Chrome,Safari4+ */
+  /* Chrome10+,Safari5.1+ */
+  /* Opera 11.10+ */
+  /* IE10+ */
+  background: -webkit-gradient(linear, left top, left bottom, from(#e4efc0), to(#abbd73));
+  background: linear-gradient(to bottom, #e4efc0 0%, #abbd73 100%);
+  /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e4efc0', endColorstr='#abbd73',GradientType=0 );
+  /* IE6-9 */
+}
+
+section#notacion table tr td.par, section#armoniaExtendida table tr td.par {
+  background-color: #f2f2f2;
+}
+
+section#notacion table tr td span.cadencial {
+  color: #03ad4f;
+  font-weight: 600;
+}
+
+section#notacion table tr td span.evitar {
+  color: #ca4a4a;
+}
+
+section table tr td.celdaAcorde {
+  cursor: pointer;
+  color: #966ff1;
+}
+
+section#notacion table.acordesEscala {
+  margin-top: 20px;
+}
+
+section#notacion p.leyenda, section#armoniaExtendida p.leyenda {
+  font-size: .6em;
+  text-align: center;
+  margin-top: 5px;
+}
+
+section#notacion div.leyendaAcordesModales {
+  width: 100%;
+  margin: 0 auto;
+  font-size: .7em;
+  text-align: center;
+}
+
+.cadencial {
+  color: #03ad4f;
+}
+
+.evitar {
+  color: #ca4a4a;
+}
+
+section#instrumento {
+  text-align: center;
+  font-size: .85em;
+}
+
+section#instrumento table.diapason {
+  width: 650px;
+  height: 212px;
+  background: transparent url("../img/diapason.jpg") no-repeat 0 0;
+  margin: 0 auto;
+}
+
+/*width=13 trastes x (width traste sin sumar padding traste)*/
+section#instrumento table.diapason td {
+  width: 50px;
+  height: 29px;
+  padding: 2px 5px;
+  text-align: center;
+}
+
+/*traste*/
+section#instrumento div.teclado {
+  width: 646px;
+  height: 212px;
+  background: transparent url("../img/teclado.jpg") no-repeat 0 0;
+  margin: 0 auto;
+  padding-left: 36px;
+  padding-right: 40px;
+}
+
+/*(width teclaBlanca * 14) + (width teclaNegra * 10)*/
+section#instrumento div.teclado table td {
+  text-align: center;
+  padding: 0px;
+}
+
+section#instrumento div.teclado table.teclasNegras {
+  padding-top: 100px;
+  width: 572px;
+}
+
+section#instrumento div.teclado table.teclasNegras td {
+  vertical-align: top;
+  width: 18px;
+}
+
+section#instrumento div.teclado table.teclasNegras td.huecoBlancas {
+  width: 24px;
+}
+
+section#instrumento div.teclado table.teclasNegras td.huecoC {
+  width: 26px;
+}
+
+section#instrumento div.teclado table.teclasNegras td.huecoE {
+  width: 30px;
+}
+
+section#instrumento div.teclado table.teclasNegras td.huecoA {
+  width: 18px;
+}
+
+section#instrumento div.teclado table.teclasBlancas {
+  padding-top: 40px;
+  width: 574px;
+}
+
+section#instrumento div.teclado table.teclasBlancas td {
+  vertical-align: bottom;
+  width: 28px;
+}
+
+section#instrumento table td.celdaNota span {
+  border-radius: 11px;
+  width: 22px;
+  height: 22px;
+  display: block;
+  margin: 0 auto;
+}
+
+section#instrumento table td.noPerteneceEscala span {
+  color: #bbb;
+  background-color: transparent;
+}
+
+section#instrumento table td.perteneceEscala span {
+  background-color: #81c222;
+  font-weight: 800;
+}
+
+section#instrumento div.teclado table td.perteneceEscala span {
+  background-color: #81c222;
+}
+
+section#instrumento table td.celdaNota span.resaltada {
+  background-color: #c7b0fc !important;
+  color: #000;
+}
+
+section#circuloQuintas {
+  position: absolute;
+  top: 180px;
+  margin-left: 680px;
+  height: 200px;
+}
+
+div#circuloDesplegado {
+  margin: 100px 0 0px 0;
+  height: 100px;
+  width: 100px;
+  -webkit-transform: translate(70%, -50%);
+          transform: translate(70%, -50%);
+}
+
+div.circulo {
+  position: absolute;
+  width: 35px;
+  height: 35px;
+  border: 1px solid #7a8d3f;
+  border-radius: 50%;
+  background-color: #DBE2C0;
+  text-align: center;
+  font-size: .7em;
+}
+
+div.circulo p {
+  margin-bottom: 0px;
+}
+
+div.circulo p span {
+  color: #2e72c7;
+}
+
+div.circulo p.actual span {
+  color: #fff;
+}
+
+section#armoniaExtendida table {
+  margin-bottom: 20px;
+}
+
+section#bienvenida div.tresColumnas {
+  margin-top: 40px;
+}
+
+section#bienvenida article#principal {
+  min-height: 150px;
+}
+
+section#bienvenida div.tresColumnas, section#bienvenida div.tresColumnas article {
+  min-height: 200px;
+}
+
+section#bienvenida h2 {
+  font-size: 1.4em;
+  text-align: center;
+}
+
+section#bienvenida img {
+  display: block;
+  margin: 0 auto;
+  margin-bottom: 5px;
+}
+
+section#controlVersiones {
+  clear: both;
+  margin-top: 40px;
+}
+
+section#controlVersiones article {
+  margin-bottom: 20px;
+}
+
+section#controlVersiones article dl dd {
+  margin-bottom: 10px;
+  list-style-type: disc;
+  margin-left: 20px;
+}
+
+footer {
+  text-align: center;
+  border-top: 1px solid #ddd;
+  font-size: .8em;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  padding-top: .8em;
+}
+
+footer ul#redesSociales li {
+  display: inline;
+  margin-left: 5px;
+  list-style-type: none;
+}
+/*# sourceMappingURL=styles.css.map */
