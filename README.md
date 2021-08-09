@@ -1,5 +1,9 @@
 # Coda
 
+![codapreview](https://user-images.githubusercontent.com/88559684/128783209-bfd3ba43-08a9-4968-9e2d-7723d1e31472.jpg)
+
+
+
 FEATURES
 =================
 This is a scale/chord generator written in Spanish language. It can generate the degrees and chords of any diatonic scale (triads and quatriads with their respective harmonic functions), as well as offer alternatives
