@@ -25,4 +25,9 @@ I will probably change the CSS nomenclature to BEM, and the CSS architecture to 
 
 It would be nice to use TypeScript in the app.js to get static typing and convert the primitive types to class properties. 
 
+LICENSE
+===============================
+Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+https://creativecommons.org/licenses/by-sa/4.0/
+
 Enjoy coding!
