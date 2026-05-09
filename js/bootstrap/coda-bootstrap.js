@@ -15,13 +15,16 @@
 			soundfontUrl: './soundfont/',
 			velocity: data.midi.velocity
 		});
+		var chordPlayback = options.application.createChordPlayback({
+			playbackService: playbackService
+		});
 
 		var controller = options.controller.initialize({
 			$: options.$,
 			application: options.application,
+			chordPlayback: chordPlayback,
 			data: data,
 			domain: options.domain,
-			playbackService: playbackService,
 			renderers: options.renderers,
 			ui: options.ui
 		});
@@ -29,6 +32,7 @@
 		playbackService.load();
 
 		return {
+			chordPlayback: chordPlayback,
 			controller: controller,
 			playbackService: playbackService
 		};

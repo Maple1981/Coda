@@ -25,7 +25,8 @@ function runScript(relativePath) {
 	'js/domain/circle-of-fifths-domain.js',
 	'js/domain/instrument-domain.js',
 	'js/domain/music-domain.js',
-	'js/application/scale-report-application.js'
+	'js/application/scale-report-application.js',
+	'js/application/chord-playback-application.js'
 ].forEach(runScript);
 
 const app = context.window.CodaApplication;
@@ -83,6 +84,25 @@ assert.equal(cMajorPiano.type, 'piano');
 assert.equal(cMajorPiano.keyboard.blackKeys.length, 12);
 assert.equal(cMajorPiano.keyboard.whiteKeys.length, 7);
 assert.equal(cMajorPiano.keyboard.blackKeys[1].nombre, 'Db');
+
+let playedNotes = null;
+let playedOptions = null;
+const chordPlayback = app.createChordPlayback({
+	playbackService: {
+		playChordFromNames: function (noteNames, options) {
+			playedNotes = noteNames;
+			playedOptions = options;
+		}
+	}
+});
+
+const parsedNotes = chordPlayback.playChordFromCellId('C-E-G-B');
+assert.deepEqual(parsedNotes, ['C', 'E', 'G', 'B']);
+assert.deepEqual(playedNotes, ['C', 'E', 'G', 'B']);
+assert.deepEqual(playedOptions, {
+	bassOctaveOffset: -12,
+	duration: 0.75
+});
 
 const modalReport = app.buildScaleReport({
 	data: data,

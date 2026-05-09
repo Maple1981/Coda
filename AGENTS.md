@@ -65,8 +65,8 @@ Los nuevos modulos deben poder probarse de forma aislada siempre que sea razonab
 - `styles.css` y `src/css/`: estilos compilados y fuentes Sass.
 - `js/app.js`: logica principal de la aplicacion.
 - `js/data.js`: datos y estructuras musicales agrupados en `CodaData`.
-- `js/bootstrap/`: composition root del navegador. `coda-bootstrap.js` cablea datos, dominio, aplicacion, renderers, UI, controlador y playback.
-- `js/application/`: casos de uso de aplicacion. `scale-report-application.js` orquesta dominio para construir informes de escala e instrumentos sin tocar DOM ni generar HTML.
+- `js/bootstrap/`: composition root del navegador. `script-manifest.js` documenta el orden canonico de carga de modulos; `coda-bootstrap.js` cablea datos, dominio, aplicacion, renderers, UI, controlador y playback.
+- `js/application/`: casos de uso de aplicacion. `scale-report-application.js` orquesta dominio para construir informes de escala e instrumentos sin tocar DOM ni generar HTML; `chord-playback-application.js` traduce identificadores de acordes de UI a notas y delega en el servicio de playback.
 - `js/domain/`: modulos de dominio extraidos progresivamente desde el monolito.
   - `music-utils.js`: patrones, nombres de nota, indices circulares e intervalos compartidos.
   - `scale-domain.js`: construccion de escalas y notas caracteristicas modales.
@@ -85,7 +85,7 @@ Los nuevos modulos deben poder probarse de forma aislada siempre que sea razonab
 - `Docs/teoria-md/`: version Markdown separada por areas o grupos de conceptos.
 - `tests/domain-tests.js`: pruebas basicas de dominio para escalas, acordes diatonicos, etiquetas modales, dominantes secundarios, sustitutos tritonales, ii relativos y armonia extendida.
 - `tests/app-layer-tests.js`: pruebas de orquestacion para informes de escala e instrumentos.
-- `tests/architecture-tests.js`: prueba de carga/cableado de modulos principales y bootstrap.
+- `tests/architecture-tests.js`: prueba de carga/cableado de modulos principales, manifest de scripts y bootstrap.
 - `tests/renderers-tests.js`: pruebas basicas de renderizado HTML desacoplado de la interfaz.
 
 ## Criterios para futuras mejoras

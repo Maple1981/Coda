@@ -70,7 +70,7 @@
 				$: $,
 				data: options.data,
 				domain: options.domain,
-				onChordClick: playChord(options.playbackService),
+				onChordClick: playChord(options.chordPlayback),
 				onChordMouseOut: clearChordHighlight($),
 				onChordMouseOver: highlightChord($),
 				renderers: options.renderers,
@@ -192,9 +192,9 @@
 		};
 	}
 
-	function playChord(playbackService) {
+	function playChord(chordPlayback) {
 		return function (element) {
-			playbackService.playChordFromNames(element.id.split('-'), {
+			chordPlayback.playChordFromCellId(element.id, {
 				bassOctaveOffset: -12,
 				duration: 0.75
 			});

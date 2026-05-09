@@ -16,26 +16,12 @@ function runScript(relativePath) {
 	vm.runInContext(source, context, { filename: relativePath });
 }
 
-[
-	'js/data.js',
-	'js/domain/music-utils.js',
-	'js/domain/scale-domain.js',
-	'js/domain/chord-domain.js',
-	'js/domain/extended-harmony-domain.js',
-	'js/domain/circle-of-fifths-domain.js',
-	'js/domain/instrument-domain.js',
-	'js/domain/music-domain.js',
-	'js/application/scale-report-application.js',
-	'js/renderers/scale-summary-renderer.js',
-	'js/renderers/scale-chords-renderer.js',
-	'js/renderers/extended-harmony-renderer.js',
-	'js/renderers/instrument-renderer.js',
-	'js/renderers/circle-of-fifths-renderer.js',
-	'js/ui/scale-report-ui.js',
-	'js/ui/scale-report-controller.js',
-	'js/services/playback-service.js',
-	'js/bootstrap/coda-bootstrap.js'
-].forEach(runScript);
+runScript('js/bootstrap/script-manifest.js');
+
+const manifestScripts = context.window.CodaScriptManifest.applicationScripts;
+manifestScripts.filter(function (scriptPath) {
+	return scriptPath !== 'js/app.js';
+}).forEach(runScript);
 
 const global = context.window;
 
@@ -43,6 +29,8 @@ assert.ok(global.CodaData);
 assert.ok(global.CodaDomain.buildScale);
 assert.ok(global.CodaDomain.buildScaleReport === undefined);
 assert.ok(global.CodaApplication.buildScaleReport);
+assert.ok(global.CodaApplication.createChordPlayback);
+assert.ok(global.CodaApplication.playChordFromCellId);
 assert.ok(global.CodaRenderers.scaleSummary);
 assert.ok(global.CodaRenderers.scaleChords);
 assert.ok(global.CodaRenderers.extendedHarmony);
@@ -52,6 +40,19 @@ assert.ok(global.CodaUi.renderScaleReport);
 assert.ok(global.CodaScaleReportController.initialize);
 assert.ok(global.CodaPlayback.create);
 assert.ok(global.CodaBootstrap.start);
+assert.deepEqual(manifestScripts.slice(-1), ['js/app.js']);
+
+const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const htmlScripts = [];
+const scriptRegex = /<script\s+src="([^"]+)"/g;
+let match;
+while ((match = scriptRegex.exec(indexHtml)) !== null) {
+	htmlScripts.push(match[1]);
+}
+
+const manifestIndex = htmlScripts.indexOf('js/bootstrap/script-manifest.js');
+assert.ok(manifestIndex > -1);
+assert.deepEqual(htmlScripts.slice(manifestIndex + 1, manifestIndex + 1 + manifestScripts.length), manifestScripts);
 
 let controllerOptions;
 let playbackOptions;
@@ -84,11 +85,13 @@ const startResult = global.CodaBootstrap.start({
 });
 
 assert.equal(startResult.controller.initialized, true);
+assert.ok(startResult.chordPlayback.playChordFromCellId);
 assert.equal(loadCalled, true);
 assert.equal(playbackOptions.notes, global.CodaData.notes);
 assert.equal(playbackOptions.channel, global.CodaData.midi.channel);
 assert.equal(playbackOptions.instrument, 'acoustic_grand_piano');
 assert.equal(controllerOptions.application, global.CodaApplication);
+assert.equal(controllerOptions.chordPlayback, startResult.chordPlayback);
 assert.equal(controllerOptions.domain, global.CodaDomain);
 assert.equal(controllerOptions.renderers, global.CodaRenderers);
 assert.equal(controllerOptions.ui, global.CodaUi);
