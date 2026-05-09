@@ -4,6 +4,7 @@
 
 	global.CodaDomain = {
 		buildExtendedHarmonyChord: global.CodaExtendedHarmonyDomain.buildExtendedHarmonyChord,
+		buildCircleOfFifthsView: global.CodaCircleOfFifthsDomain.buildCircleOfFifthsView,
 		buildScale: global.CodaScaleDomain.buildScale,
 		buildScaleChords: global.CodaChordDomain.buildScaleChords,
 		cleanDegreeForExtendedHarmony: global.CodaExtendedHarmonyDomain.cleanDegreeForExtendedHarmony,

@@ -22,15 +22,18 @@ function runScript(relativePath) {
 	'js/domain/scale-domain.js',
 	'js/domain/chord-domain.js',
 	'js/domain/extended-harmony-domain.js',
+	'js/domain/circle-of-fifths-domain.js',
 	'js/domain/music-domain.js',
 	'js/renderers/scale-summary-renderer.js',
 	'js/renderers/scale-chords-renderer.js',
 	'js/renderers/extended-harmony-renderer.js',
-	'js/renderers/instrument-renderer.js'
+	'js/renderers/instrument-renderer.js',
+	'js/renderers/circle-of-fifths-renderer.js'
 ].forEach(runScript);
 
 const data = context.window.CodaData;
 const domain = context.window.CodaDomain;
+const circleOfFifthsRenderer = context.window.CodaRenderers.circleOfFifths;
 const extendedHarmonyRenderer = context.window.CodaRenderers.extendedHarmony;
 const instrumentsRenderer = context.window.CodaRenderers.instruments;
 const scaleChordsRenderer = context.window.CodaRenderers.scaleChords;
@@ -95,6 +98,16 @@ assert.ok(scaleSummaryHtml.indexOf('<span id="A_m_" class="revamp estiloEnlace">
 assert.ok(scaleSummaryHtml.indexOf('<span id="C_m" class="revamp estiloEnlace">Cm</span>') > -1);
 assert.ok(scaleSummaryHtml.indexOf('<ul class="notasEscala">') > -1);
 assert.ok(scaleSummaryHtml.indexOf('C<sup>I</sup>') > -1);
+
+const circleHtml = circleOfFifthsRenderer.render({
+	orderedKeys: data.circleOfFifths.slice(0, 12),
+	selectedKey: 'C'
+});
+
+assert.ok(circleHtml.indexOf('<div id="circuloDesplegado">') > -1);
+assert.ok(circleHtml.indexOf('class="circulo numero0" style="top: 50px; left: 130px;"') > -1);
+assert.ok(circleHtml.indexOf('<p class="actual"><span id="C_" class="revamp estiloEnlace">C</span></p>') > -1);
+assert.ok(circleHtml.indexOf('<span id="A_m" class="revamp estiloEnlace">Am</span>') > -1);
 
 const guitarHtml = instrumentsRenderer.renderGuitar({
 	scaleDefinition: byName(data.scales, 'Mayor'),

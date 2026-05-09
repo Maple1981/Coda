@@ -22,6 +22,7 @@ function runScript(relativePath) {
 	'js/domain/scale-domain.js',
 	'js/domain/chord-domain.js',
 	'js/domain/extended-harmony-domain.js',
+	'js/domain/circle-of-fifths-domain.js',
 	'js/domain/music-domain.js'
 ].forEach(runScript);
 
@@ -33,6 +34,38 @@ assert.equal(data.notes.length, 12);
 assert.ok(data.extendedHarmony.secondaryDominants.length > 0);
 assert.ok(data.extendedHarmony.tritoneSubstitutes.length > 0);
 assert.ok(data.extendedHarmony.relativeMinorSeconds.length > 0);
+
+const cMajorCircle = domain.buildCircleOfFifthsView({
+	circleOfFifths: data.circleOfFifths,
+	scaleDefinition: data.scales[0],
+	selectedScaleIndex: 0,
+	tonicName: 'C'
+});
+
+assert.equal(cMajorCircle.selectedKey, 'C');
+assert.equal(cMajorCircle.orderedKeys.length, 12);
+assert.deepEqual(cMajorCircle.orderedKeys.slice(0, 3).map(function (key) { return key.nombre; }), ['C', 'F', 'Bb']);
+
+const fSharpMajorCircle = domain.buildCircleOfFifthsView({
+	circleOfFifths: data.circleOfFifths,
+	scaleDefinition: data.scales[0],
+	selectedScaleIndex: 0,
+	tonicName: 'F#'
+});
+
+assert.equal(fSharpMajorCircle.selectedKey, 'Gb');
+assert.equal(fSharpMajorCircle.orderedKeys[0].nombre, 'Gb');
+assert.equal(data.circleOfFifths.length, 13);
+
+const aSharpMinorCircle = domain.buildCircleOfFifthsView({
+	circleOfFifths: data.circleOfFifths,
+	scaleDefinition: data.scales[2],
+	selectedScaleIndex: 2,
+	tonicName: 'A#'
+});
+
+assert.equal(aSharpMinorCircle.selectedKey, 'Bbm');
+assert.equal(aSharpMinorCircle.orderedKeys[0].nombre, 'Db');
 
 function byName(collection, name) {
 	return collection.find(function (item) {

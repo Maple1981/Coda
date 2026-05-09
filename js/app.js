@@ -11,7 +11,6 @@ $( document ).ready(function() {
 	var nombreTonicaElegida;
 	var nombreEscalaElegida;
 	var modalidadGeneralElegida; //En el caso de las escalas tonificables, guarda una M o una m.
-	var circuloQuintasElegido; //array Asociativo (hashtable). No confundir con el array global circuloQuintas
 	
 	//variable local para recoger cambios en diapasón y piano (evento on change)
 	var notasEscalaElegidaGlobal;
@@ -224,69 +223,6 @@ $( document ).ready(function() {
 		
 	};
 	
-	//método que rellena el hashtable circuloQuintasElegido
-    //sólo válido para las escalas tonales
-	function obtenCirculoQuintasElegido()
-	{
-
-		var posicionModalidad = $('select#escala option:selected').val(); //necesario para saber qué escalas son tonales
-		
-		if(posicionModalidad > -1 && posicionModalidad < 7){
-			//estamos visualizando una tonalidad, por tanto, llenamos el círculo de quintas respectivo
-			
-			
-			var escala = $('select#tonica option:selected').text();
-			var modalidad = $('select#escala option:selected').text();
-			
-			var modalidadAbreviada = "";
-			if (modalidad.indexOf("Menor")>= 0){
-				modalidadAbreviada = "m";
-			};
-			
-			var tonalidadAbreviada = escala + modalidadAbreviada;
-			
-			//conociendo ya la nomenclatura de la tonalidad a mostrar, 
-			//buscamos su posición en el arreglo general circuloQuintas
-			var columnaEncontrada;
-			var filaEncontrada;
-			for(var i=0; i<circuloQuintas.length; i++)
-			{
-				if (circuloQuintas[i]['nombre']==tonalidadAbreviada){
-					columnaEncontrada = 'nombre';
-					filaEncontrada = i;
-					break;
-					
-				}else if(circuloQuintas[i]['aka'] != null){
-						if(circuloQuintas[i]['aka']==tonalidadAbreviada){
-						columnaEncontrada = 'aka';
-						filaEncontrada = i;
-						break;
-						};
-				}else if(circuloQuintas[i]['enarmonica']==tonalidadAbreviada)
-				{
-					columnaEncontrada = 'enarmonica';
-					filaEncontrada = i;
-					break;
-				};
-			};
-			//alert(filaEncontrada + ' ' + columnaEncontrada);
-			
-			//llenamos el arreglo circuloQuintasElegido a partir de 
-			for(var i=0; i<12; i++)
-			{
-			
-				if (i + filaEncontrada < 12){
-					circuloQuintasElegido.push(circuloQuintas[i + filaEncontrada]);
-				}else{
-					circuloQuintasElegido.push(circuloQuintas[i + filaEncontrada - 12]);
-				};
-			};
-			
-		};
-		
-		
-	};
-	
 	//función de output html que devuelve el nombre de Tónica + Escala según la elección del usuario
 	function generaTituloEscala(){
 		nombreTonicaElegida = $('select#tonica option:selected').text();
@@ -350,124 +286,14 @@ $( document ).ready(function() {
 	//función de output html que devuelve una tabla para simular un círculo de quintas contenido en circuloQuintas, siempre que hayamos elegido una escala tonificable.
 	function generaCirculoQuintas()
 	{
+		var circleView = CodaDomain.buildCircleOfFifthsView({
+			circleOfFifths: circuloQuintas,
+			scaleDefinition: escalaElegida,
+			selectedScaleIndex: $('select#escala option:selected').val(),
+			tonicName: $('select#tonica option:selected').text()
+		});
 
-		
-		if(escalaElegida['tonal']!= null){
-		
-			//encontramos la posición de la escala elegida.
-			var abreviaturaEscalaElegida = '';
-			if($('select#escala option:selected').val() == '0'){ //si es mayor
-				abreviaturaEscalaElegida = $('select#tonica option:selected').text();
-				
-				//problema con F# Mayor ya que es la última posición enarmónica del hashtable circuloQuintas (entrada nº 13), y ésta es despreciada
-				if($('select#tonica option:selected').text() == 'F#'){
-					abreviaturaEscalaElegida = 'Gb';
-				};
-				
-			}else{ //si no es mayor, por fuerza el resto de escalas "tonales" son menores
-				abreviaturaEscalaElegida = $('select#tonica option:selected').text() + 'm';
-				
-				//problema con A#m (ya que en circuloQuintas está "Db", "aka" : "C#", "enarmonica" : "Bbm" y no aparece nunca A#m)
-				if($('select#tonica option:selected').text() == 'A#'){
-					abreviaturaEscalaElegida = 'Bbm';
-				};
-				
-				
-				
-			};
-			
-			
-			//recorremos el círculo de quintas hasta encontrar la posición de la escala elegida.
-			var posInicial = -1;
-			var posFinal = -1;
-			for(var i=0; i<=circuloQuintas.length - 1; i++){
-			
-				if((circuloQuintas[i]['nombre']== abreviaturaEscalaElegida) || circuloQuintas[i]['enarmonica']== abreviaturaEscalaElegida || circuloQuintas[i]['aka']== abreviaturaEscalaElegida){
-					posInicial = i;
-				};
-				
-			};
-			
-			//limpiamos la ultima posición enharmónica del array
-			if (posInicial == 13)	posInicial = 6;
-			var CirculoQuintasLimpio = circuloQuintas;
-			if(CirculoQuintasLimpio.length==13)	CirculoQuintasLimpio.pop();
-			
-			if(posInicial > -1){
-
-				/////////////////////////////////////////////////////////////////
-		
-				var circuloOrdenado = new Array();
-				
-				for(var i=0; i<12; i++){
-					var posActual = -1;
-					
-					posActual = posInicial - i
-					
-					if(posActual <= -1)
-					{
-						posActual = posActual + CirculoQuintasLimpio.length;
-					};
-					
-					circuloOrdenado.push(CirculoQuintasLimpio[posActual]);
-
-				};
-				
-				//para cuadrar el circulo, ya que se pinta en sentido horario desde las 15:00, tenemos que hacer una pequeña ñapa: aumentar la posición inicial
-			
-				
-				var theta = [];
-
-				var setup = function(n, rx, ry, id) {
-				  var contenedor = document.getElementById(id);
-				  var mainHeight = parseInt(window.getComputedStyle(contenedor).height.slice(0, -2));
-				  var vCirculo = [];
-				  for (var i = 0; i < n; i++) {
-					var circulo = document.createElement('div');
-					circulo.className = 'circulo numero' + i;
-					vCirculo.push(circulo);
-					vCirculo[i].posx = Math.round(rx * (Math.cos(theta[i]))) + 'px';
-					vCirculo[i].posy = Math.round(ry * (Math.sin(theta[i]))) + 'px';
-					vCirculo[i].style.top = ((mainHeight / 2) - parseInt(vCirculo[i].posy.slice(0, -2))) + 'px';
-					vCirculo[i].style.left = ((mainHeight / 2) + parseInt(vCirculo[i].posx.slice(0, -2))) + 'px';
-					
-					var classElegida = '';
-					
-					if(abreviaturaEscalaElegida == circuloOrdenado[i]['nombre'] || abreviaturaEscalaElegida == circuloOrdenado[i]['enarmonica'] || abreviaturaEscalaElegida == circuloOrdenado[i]['aka']){
-						classElegida = ' class="actual"';
-					};
-					
-					$(circulo).append('<p' + classElegida +'><span id="' + circuloOrdenado[i]['nombre'] + '_" class="revamp estiloEnlace">' + circuloOrdenado[i]['nombre'] +  '</span></p>');
-					
-					$(circulo).append('<p' + classElegida +'><span id="' + circuloOrdenado[i]['enarmonica'].replace('m','') + '_m" class="revamp estiloEnlace">' + circuloOrdenado[i]['enarmonica'] +  '</span></p>');
-					
-					
-					contenedor.appendChild(vCirculo[i]);
-				  };
-				};
-
-				var generaCirculo = function(n, rx, ry, id) {
-				  var frags = 360 / n;
-				  for (var i = 0; i <= n; i++) {
-					theta.push((frags / 180) * i * Math.PI);
-				  };
-				  setup(n, rx, ry, id)
-				};
-				
-				var circuloDesplegado = document.createElement('div');
-				circuloDesplegado.id = 'circuloDesplegado';
-				$('#circuloQuintas').append(circuloDesplegado);
-				generaCirculo(12, 80, 80, 'circuloDesplegado');
-				
-				
-				
-				////////////////////////////////////////////////////////////////
-				
-			
-			};
-		
-		};
-		
+		return CodaRenderers.circleOfFifths.render(circleView);
 	};
 	
 	//genera tablas con acordes derivados de las cuatriadas básicas (sus dominantes secundarias, etc.)
