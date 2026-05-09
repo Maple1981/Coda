@@ -33,7 +33,7 @@ La base tecnica actual usa:
 - CSS3 / Sass.
 - JavaScript en navegador.
 - Web Audio / Web MIDI y soundfonts para reproduccion.
-- Dependencias locales historicas como jQuery y jQuery UI.
+- jQuery 3.7.1 y jQuery UI 1.14.2 vendorizados localmente.
 
 ## Principios de desarrollo
 

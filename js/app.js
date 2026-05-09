@@ -1215,7 +1215,7 @@ $( document ).ready(function() {
 	$('#interface select').change(function () {
 		//si el usuario ha pulsado al menos una vez el botón, los siguientes cambios de vista
 		//son automáticos.
-		if($('#notacion').children().size() > 0 && $('#instrumento').children().size() > 0 ){
+		if($('#notacion').children().length > 0 && $('#instrumento').children().length > 0 ){
 			generaInformacion();
 		  };
 	});
@@ -1237,7 +1237,7 @@ $( document ).ready(function() {
 		  
 		  //además de rellenar de nuevo los selects, actualizamos los resultados al completo
 		  //en caso de que ya se haya generado alguna información
-		   if($('#notacion').children().size() > 0 && $('#instrumento').children().size() > 0 ){
+		   if($('#notacion').children().length > 0 && $('#instrumento').children().length > 0 ){
 			generaInformacion();
 		  };
 		  
@@ -1246,7 +1246,7 @@ $( document ).ready(function() {
 	//evento de cambio de vista instrumento con los input radio
 	$('#interface input:radio[name="instrumento"]').change(function () {
 		//simplemente actualizamos el instrumento, no hay que hacer nada más
-		if($('#notacion').children().size() > 0 && $('#instrumento').children().size() > 0 ){
+		if($('#notacion').children().length > 0 && $('#instrumento').children().length > 0 ){
 			creaInterfazInstrumento(notasEscalaElegidaGlobal);
 		};
 	});
