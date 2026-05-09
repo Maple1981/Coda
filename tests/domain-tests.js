@@ -23,6 +23,7 @@ function runScript(relativePath) {
 	'js/domain/chord-domain.js',
 	'js/domain/extended-harmony-domain.js',
 	'js/domain/circle-of-fifths-domain.js',
+	'js/domain/instrument-domain.js',
 	'js/domain/music-domain.js'
 ].forEach(runScript);
 
@@ -134,6 +135,38 @@ function buildExtendedHarmonyChord(options) {
 
 const cMajor = buildScale('C', 'Mayor', false);
 assert.deepEqual(names(cMajor), ['C', 'D', 'E', 'F', 'G', 'A', 'B']);
+
+const cMajorGuitar = domain.buildGuitarFretboard({
+	fretCount: data.constants.fretCount,
+	isDegreeSuppressed: function () { return false; },
+	notes: data.notes,
+	preferFlats: false,
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	scaleNotes: cMajor,
+	tuning: data.tunings[0]
+});
+
+assert.equal(cMajorGuitar.length, 6);
+assert.equal(cMajorGuitar[0].aire, 'E');
+assert.equal(cMajorGuitar[0].trastes.length, 12);
+assert.deepEqual(cMajorGuitar[0].trastes.slice(0, 3).map(function (fret) { return fret.nombre; }), ['F', 'F#', 'G']);
+assert.equal(cMajorGuitar[0].trastes[0].perteneceEscala, true);
+assert.equal(cMajorGuitar[0].trastes[1].perteneceEscala, false);
+
+const cMajorPiano = domain.buildPianoKeyboard({
+	isDegreeSuppressed: function () { return false; },
+	notes: data.notes,
+	octaveCount: 1,
+	preferFlats: true,
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	scaleNotes: cMajor
+});
+
+assert.equal(cMajorPiano.blackKeys.length, 12);
+assert.equal(cMajorPiano.whiteKeys.length, 7);
+assert.equal(cMajorPiano.blackKeys[1].nombre, 'Db');
+assert.equal(cMajorPiano.whiteKeys[0].nombre, 'C');
+assert.equal(cMajorPiano.whiteKeys[0].perteneceEscala, true);
 
 const cMajorChords = buildScaleChords(cMajor, 'Mayor');
 assert.deepEqual(names(cMajorChords), ['Cmaj7', 'Dm7', 'Em7', 'Fmaj7', 'G7', 'Am7', 'Bm7♭5']);

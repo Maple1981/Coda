@@ -1,5 +1,4 @@
-// Renderers for instrument views. They format the guitar fretboard and piano
-// keyboard HTML; the app still owns when each view is selected.
+// Renderers for prepared instrument view models.
 (function (global) {
 	'use strict';
 
@@ -71,18 +70,13 @@
 	function renderBlackKeys(options) {
 		var html = '<table class="teclasNegras"><tbody><tr>';
 
-		for (var i = 0; i < options.octaveCount; i++) {
-			for (var j = 0; j < options.notes.length; j++) {
-				var note = options.notes[j];
+		for (var i = 0; i < options.keyboard.blackKeys.length; i++) {
+			var key = options.keyboard.blackKeys[i];
 
-				if (note.enarmonica != null) {
-					var state = findScaleNoteState(note, options, true);
-					var noteName = options.preferFlats ? note.enarmonica : note.nombre;
-
-					html += renderPianoNoteCell(noteName, state.belongsToScale, state.modalType, options.scaleDefinition);
-				} else {
-					html += '<td class="huecoBlanco hueco' + note.nombre + '"><span>&nbsp;&nbsp;</span></td>';
-				}
+			if (key.type === 'note') {
+				html += renderPianoNoteCell(key.nombre, key.perteneceEscala, key.tipo, options.scaleDefinition);
+			} else {
+				html += '<td class="huecoBlanco hueco' + key.nombre + '"><span>&nbsp;&nbsp;</span></td>';
 			}
 		}
 
@@ -94,15 +88,9 @@
 	function renderWhiteKeys(options) {
 		var html = '<table class="teclasBlancas"><tbody><tr>';
 
-		for (var i = 0; i < options.octaveCount; i++) {
-			for (var j = 0; j < options.notes.length; j++) {
-				var note = options.notes[j];
-
-				if (note.enarmonica == null) {
-					var state = findScaleNoteState(note, options, false);
-					html += renderPianoNoteCell(note.nombre, state.belongsToScale, state.modalType, options.scaleDefinition, true);
-				}
-			}
+		for (var i = 0; i < options.keyboard.whiteKeys.length; i++) {
+			var key = options.keyboard.whiteKeys[i];
+			html += renderPianoNoteCell(key.nombre, key.perteneceEscala, key.tipo, options.scaleDefinition, true);
 		}
 
 		html += '</tr></table>';
@@ -118,28 +106,6 @@
 		return '<td class="' + cellClass + scaleClass + '"><span' + modalClass + '>' + noteName + '</span></td>';
 	}
 
-	function findScaleNoteState(note, options, includeEnharmonic) {
-		for (var key in options.scaleNotes) {
-			var scaleNote = options.scaleNotes[key];
-			var matchesName = scaleNote.nombre === note.nombre;
-			var matchesEnharmonic = includeEnharmonic && note.enarmonica != null && scaleNote.nombre === note.enarmonica;
-
-			if (matchesName || matchesEnharmonic) {
-				if (!options.isDegreeSuppressed(key)) {
-					return {
-						belongsToScale: true,
-						modalType: scaleNote.tipo || ''
-					};
-				}
-			}
-		}
-
-		return {
-			belongsToScale: false,
-			modalType: ''
-		};
-	}
-
 	function modalSpanClass(modalType, scaleDefinition) {
 		if (scaleDefinition.modal && modalType !== '') {
 			return ' class="' + modalType + '"';
@@ -150,7 +116,6 @@
 
 	global.CodaRenderers = global.CodaRenderers || {};
 	global.CodaRenderers.instruments = {
-		findScaleNoteState: findScaleNoteState,
 		renderBlackKeys: renderBlackKeys,
 		renderGuitar: renderGuitar,
 		renderPiano: renderPiano,

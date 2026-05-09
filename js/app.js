@@ -120,106 +120,16 @@ $( document ).ready(function() {
 	function obtenDiapason(arrayNotas)
 	{
 		afinacionElegida = afinaciones[numeroAfinacionElegida];
-		var cuerdasAlAire;
-		
-		//si están seleccionados sostenidos, cojemos la afinación pero enarmónica
-		if($("#interface input:radio:checked").val()==0){
-			cuerdasAlAire = afinacionElegida['enarmonica'].split('-');
-		}else{
-			cuerdasAlAire = afinacionElegida['patron'].split('-');
-		};
-		
-		for(var i=cuerdasAlAire.length-1;i>=0;i--)
-		{	
-			
-			//para cada nota añadida al aire, comprobamos si está en la escala elegida, para marcarla
-			var perteneceEscala = false;
-			var tipoModal = '';
-			for(var key in arrayNotas)
-			{
-				if(arrayNotas[key]['nombre']==cuerdasAlAire[i])
-				{
-					if(!compruebaSiGradoEstaSuprimido(key))
-					{
-						perteneceEscala = true;
-						if(escalaElegida['modal'] && arrayNotas[key]['tipo'] != '')	tipoModal = arrayNotas[key]['tipo'];
-						break;
-					};
-				};
-					 
-			};
-			
-			if(escalaElegida['modal']){
-				cuerdas.push({'aire' : cuerdasAlAire[i], 'trastes' : new Array(), 'perteneceEscala' : perteneceEscala, 'tipo' : tipoModal});	
-			}else{
-				cuerdas.push({'aire' : cuerdasAlAire[i], 'trastes' : new Array(), 'perteneceEscala' : perteneceEscala});	
-			};
-			
-			
-		};
-		
-		for(var j=0;j<cuerdas.length;j++)
-		{	
-		
-			//sacamos la posición inicial desde donde se empiezan a almacenar las notas de cada cuerda
-			var posicionInicial = 0;
-			for(var key in notas)
-			{
-				if(notas[key]['nombre']==cuerdas[j]['aire']){
-					posicionInicial = parseInt(key);
-				}else{
-				
-					if(notas[key]['enarmonica']==cuerdas[j]['aire']){
-						posicionInicial = parseInt(key);
-					};
-				
-				};
-					 
-			};
-			
-			//a partir de esa posición, vamos añadiendo notas a los trastes
-			var posicionActual = posicionInicial;
-			for(var k=0;k<numeroTrastes;k++)
-			{
-				if(posicionActual <notas.length - 1)
-				{
-					posicionActual += 1;
-				}else{
-					posicionActual = 0;
-				};
-				
-				
-				var nombre = notas[posicionActual]['nombre'];
-				if($("#interface input:radio:checked").val()==1){
-						if (notas[posicionActual]['enarmonica'] != undefined){ nombre= notas[posicionActual]['enarmonica'];} 
-				};
-				
-				//para cada nota añadida al diapasón, comprobamos si está en la escala elegida, para marcarla
-				var perteneceEscala = false;
-				var tipoModal = '';
-				for(var key in arrayNotas)
-				{
-					if(arrayNotas[key]['nombre']==nombre)
-					{
-						if(!compruebaSiGradoEstaSuprimido(key))
-						{
-							perteneceEscala = true;
-							if(escalaElegida['modal'] && arrayNotas[key]['tipo'] != '')	tipoModal = arrayNotas[key]['tipo'];
-							break;
-						};
-					};
-						 
-				};
-				
-				
-				if(escalaElegida['modal']){
-					cuerdas[j]['trastes'].push({'nombre' : nombre, 'perteneceEscala' : perteneceEscala, 'tipo' : tipoModal});	
-				}else{
-					cuerdas[j]['trastes'].push({'nombre' : nombre, 'perteneceEscala' : perteneceEscala});	
-				};
-				
-			};
-		};
+
+		cuerdas = CodaDomain.buildGuitarFretboard({
+			fretCount: data.constants.fretCount,
+			isDegreeSuppressed: compruebaSiGradoEstaSuprimido,
+			notes: notas,
+			preferFlats: $("#interface input:radio:checked").val()==1,
+			scaleDefinition: escalaElegida,
+			scaleNotes: arrayNotas,
+			tuning: afinacionElegida
+		});
 		
 	};
 	
@@ -273,13 +183,18 @@ $( document ).ready(function() {
 	//marcando con una cssclass específica las notas que sí pertenecen a la escala elegida. 
 	function generaTablaPiano(arrayNotas)
 	{
-		return CodaRenderers.instruments.renderPiano({
+		var keyboard = CodaDomain.buildPianoKeyboard({
 			isDegreeSuppressed: compruebaSiGradoEstaSuprimido,
 			notes: notas,
 			octaveCount: 2,
 			preferFlats: $("#interface input:radio:checked").val()==1,
 			scaleDefinition: escalaElegida,
 			scaleNotes: arrayNotas
+		});
+
+		return CodaRenderers.instruments.renderPiano({
+			keyboard: keyboard,
+			scaleDefinition: escalaElegida
 		});
 	};
 	

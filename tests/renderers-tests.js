@@ -23,6 +23,7 @@ function runScript(relativePath) {
 	'js/domain/chord-domain.js',
 	'js/domain/extended-harmony-domain.js',
 	'js/domain/circle-of-fifths-domain.js',
+	'js/domain/instrument-domain.js',
 	'js/domain/music-domain.js',
 	'js/renderers/scale-summary-renderer.js',
 	'js/renderers/scale-chords-renderer.js',
@@ -130,13 +131,18 @@ assert.ok(guitarHtml.indexOf('<table class="diapason">') > -1);
 assert.ok(guitarHtml.indexOf('<td class="celdaNota perteneceEscala"><span>E</span></td>') > -1);
 assert.ok(guitarHtml.indexOf('<td><span>2</span></td>') > -1);
 
-const pianoHtml = instrumentsRenderer.renderPiano({
+const pianoKeyboard = domain.buildPianoKeyboard({
 	isDegreeSuppressed: function () { return false; },
 	notes: data.notes,
 	octaveCount: 1,
 	preferFlats: true,
 	scaleDefinition: byName(data.scales, 'Mayor'),
 	scaleNotes: cMajor
+});
+
+const pianoHtml = instrumentsRenderer.renderPiano({
+	keyboard: pianoKeyboard,
+	scaleDefinition: byName(data.scales, 'Mayor')
 });
 
 assert.ok(pianoHtml.indexOf('<table class="teclasNegras">') > -1);
