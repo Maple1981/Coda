@@ -8,14 +8,18 @@
 		var selectedTuningIndex = 0;
 
 		$('#interface input:radio[name="formato"][value="0"]').prop('checked', true);
+		$('#interface input:radio[name="instrumento"][value="1"]').prop('checked', true);
 		fillSelectHashTable($, $('#tonica'), options.data.notes, false);
 		fillSelectHashTable($, $('#escala'), options.data.scales, false);
+		applyRecommendedNotation($, options);
 
 		$('#btnEscala').click(function () {
 			renderReport();
 		});
 
 		$('#interface select').change(function () {
+			applyRecommendedNotation($, options);
+
 			if (options.ui.hasRenderedResults($)) {
 				renderReport();
 			}
@@ -38,6 +42,7 @@
 
 		$(document).on('click', '.revamp', function (event) {
 			navigateToLinkedKey($, options.data.notes, event.target.id);
+			applyRecommendedNotation($, options);
 			renderReport();
 		});
 
@@ -142,6 +147,7 @@
 
 	function navigateToLinkedKey($, notes, targetId) {
 		var selectedOption = targetId.split('_');
+		var noteValue = findNoteValue(notes, selectedOption[0]);
 
 		if (selectedOption[1].indexOf('m') > -1) {
 			$('select#escala').val('2');
@@ -150,21 +156,44 @@
 		}
 
 		if (selectedOption[0].indexOf('#') > 0) {
-			$('#interface input:radio[name="formato"][value="0"]').prop('checked', true);
 			fillSelectHashTable($, $('#tonica'), notes, false);
 		}
 
 		if (selectedOption[0].indexOf('b') > 0) {
-			$('#interface input:radio[name="formato"][value="1"]').prop('checked', true);
 			fillSelectHashTable($, $('#tonica'), notes, true);
 		}
 
-		$('select#tonica option').each(function () {
-			if (this.text === selectedOption[0]) {
-				$(this).prop('selected', true);
-				return false;
+		if (noteValue > -1) {
+			$('select#tonica').val(String(noteValue));
+		}
+	}
+
+	function findNoteValue(notes, noteName) {
+		for (var i = 0; i < notes.length; i++) {
+			if (notes[i].nombre === noteName || notes[i].enarmonica === noteName) {
+				return i;
 			}
+		}
+
+		return -1;
+	}
+
+	function applyRecommendedNotation($, options) {
+		var scaleIndex = parseInt($('select#escala option:selected').val(), 10);
+		var scaleDefinition = options.data.scales[scaleIndex];
+		var preferFlats = options.domain.shouldPreferFlatsForKeySignature({
+			notes: options.data.notes,
+			scaleDefinition: scaleDefinition,
+			selectedScaleIndex: scaleIndex,
+			tonicName: $('select#tonica option:selected').text()
 		});
+
+		if (preferFlats == null) {
+			return;
+		}
+
+		$('#interface input:radio[name="formato"][value="' + (preferFlats ? '1' : '0') + '"]').prop('checked', true);
+		fillSelectHashTable($, $('#tonica'), options.data.notes, preferFlats);
 	}
 
 	function highlightChord($) {
@@ -203,7 +232,9 @@
 
 	global.CodaScaleReportController = {
 		clearChordHighlight: clearChordHighlight,
+		applyRecommendedNotation: applyRecommendedNotation,
 		fillSelectHashTable: fillSelectHashTable,
+		findNoteValue: findNoteValue,
 		highlightChord: highlightChord,
 		initialize: initialize,
 		navigateToLinkedKey: navigateToLinkedKey,

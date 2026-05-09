@@ -455,10 +455,9 @@ section#circuloQuintas {
 }
 
 div#circuloDesplegado {
-  margin:70px 0 0px 0; 
-  height: 100px;
-  width: 100px;
-  transform: translate(70%, -50%);
+  margin:20px 0 0px 0; 
+  height: 200px;
+  width: 200px;
 }
 
 div.circulo {
@@ -481,9 +480,13 @@ div.circulo {
 		text-decoration:none;
 	}
 	p.actual span{
-		color:$corporative_complementary_color;
+		color:$broken_white;
 	}
 
+}
+
+div.circulo.actual {
+	background-color:$corporative_complementary_color;
 }
 
 section#armoniaExtendida table{

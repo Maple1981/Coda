@@ -14,6 +14,7 @@
 		findExtendedHarmonyRule: global.CodaExtendedHarmonyDomain.findExtendedHarmonyRule,
 		noteName: global.CodaMusicUtils.noteName,
 		parsePattern: global.CodaMusicUtils.parsePattern,
-		resolveProgressionDegrees: global.CodaProgressionDomain.resolveProgressionDegrees
+		resolveProgressionDegrees: global.CodaProgressionDomain.resolveProgressionDegrees,
+		shouldPreferFlatsForKeySignature: global.CodaCircleOfFifthsDomain.shouldPreferFlatsForKeySignature
 	};
 })(window);

@@ -29,6 +29,7 @@ assert.ok(global.CodaData);
 assert.ok(global.CodaDomain.buildScale);
 assert.ok(global.CodaDomain.buildScaleReport === undefined);
 assert.ok(global.CodaDomain.resolveProgressionDegrees);
+assert.ok(global.CodaDomain.shouldPreferFlatsForKeySignature);
 assert.ok(global.CodaApplication.buildScaleReport);
 assert.ok(global.CodaApplication.createChordPlayback);
 assert.ok(global.CodaApplication.playChordFromCellId);

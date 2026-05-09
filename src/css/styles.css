@@ -404,11 +404,9 @@ section#circuloQuintas {
 }
 
 div#circuloDesplegado {
-  margin: 70px 0 0px 0;
-  height: 100px;
-  width: 100px;
-  -webkit-transform: translate(70%, -50%);
-          transform: translate(70%, -50%);
+  margin: 20px 0 0px 0;
+  height: 200px;
+  width: 200px;
 }
 
 div.circulo {
@@ -435,7 +433,11 @@ div.circulo p span {
 }
 
 div.circulo p.actual span {
-  color: #a622ae;
+  color: #eee;
+}
+
+div.circulo.actual {
+  background-color: #a622ae;
 }
 
 section#armoniaExtendida table {

@@ -59,6 +59,34 @@ assert.equal(cMajorReport.extendedHarmonyEnabled, true);
 assert.equal(cMajorReport.mode, 'M');
 assert.equal(cMajorReport.circleOfFifths.selectedKey, 'C');
 
+const fSharpMajorReport = app.buildScaleReport({
+	data: data,
+	domain: domain,
+	preferFlats: false,
+	scaleIndex: 0,
+	scaleName: 'Mayor',
+	tonicIndex: noteIndex('F#'),
+	tonicName: 'F#'
+});
+
+assert.equal(fSharpMajorReport.circleOfFifths.selectedKey, 'F#');
+assert.equal(fSharpMajorReport.circleOfFifths.orderedKeys[6].nombre, 'F#');
+assert.equal(fSharpMajorReport.circleOfFifths.orderedKeys[6].enarmonica, 'D#m');
+
+const gbMajorReport = app.buildScaleReport({
+	data: data,
+	domain: domain,
+	preferFlats: true,
+	scaleIndex: 0,
+	scaleName: 'Mayor',
+	tonicIndex: noteIndex('Gb'),
+	tonicName: 'Gb'
+});
+
+assert.equal(gbMajorReport.circleOfFifths.selectedKey, 'Gb');
+assert.equal(gbMajorReport.circleOfFifths.orderedKeys[6].nombre, 'Gb');
+assert.equal(gbMajorReport.circleOfFifths.orderedKeys[6].enarmonica, 'Ebm');
+
 const cMajorProgression = app.buildProgressionFromDegrees({
 	degrees: ['I', 'IV', 'V', 'I'],
 	domain: domain,

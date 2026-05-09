@@ -51,6 +51,7 @@
 
 		report.circleOfFifths = options.domain.buildCircleOfFifthsView({
 			circleOfFifths: options.data.circleOfFifths,
+			preferFlats: options.preferFlats,
 			scaleDefinition: scaleDefinition,
 			selectedScaleIndex: options.scaleIndex,
 			tonicName: options.tonicName

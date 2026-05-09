@@ -107,9 +107,23 @@ const circleHtml = circleOfFifthsRenderer.render({
 });
 
 assert.ok(circleHtml.indexOf('<div id="circuloDesplegado">') > -1);
-assert.ok(circleHtml.indexOf('class="circulo numero0" style="top: 50px; left: 130px;"') > -1);
+assert.ok(circleHtml.indexOf('class="circulo numero0 actual" style="top: 0px; left: 80px;"') > -1);
 assert.ok(circleHtml.indexOf('<p class="actual"><span id="C_" class="revamp estiloEnlace">C</span></p>') > -1);
 assert.ok(circleHtml.indexOf('<span id="A_m" class="revamp estiloEnlace">Am</span>') > -1);
+
+const fSharpCircleHtml = circleOfFifthsRenderer.render({
+	orderedKeys: domain.buildCircleOfFifthsView({
+		circleOfFifths: data.circleOfFifths,
+		preferFlats: false,
+		scaleDefinition: byName(data.scales, 'Mayor'),
+		selectedScaleIndex: 0,
+		tonicName: 'F#'
+	}).orderedKeys,
+	selectedKey: 'F#'
+});
+
+assert.ok(fSharpCircleHtml.indexOf('<span id="F#_" class="revamp estiloEnlace">F#</span>') > -1);
+assert.ok(fSharpCircleHtml.indexOf('<span id="D#_m" class="revamp estiloEnlace">D#m</span>') > -1);
 
 const guitarHtml = instrumentsRenderer.renderGuitar({
 	scaleDefinition: byName(data.scales, 'Mayor'),

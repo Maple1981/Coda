@@ -39,6 +39,7 @@ assert.ok(data.extendedHarmony.relativeMinorSeconds.length > 0);
 
 const cMajorCircle = domain.buildCircleOfFifthsView({
 	circleOfFifths: data.circleOfFifths,
+	preferFlats: false,
 	scaleDefinition: data.scales[0],
 	selectedScaleIndex: 0,
 	tonicName: 'C'
@@ -46,28 +47,98 @@ const cMajorCircle = domain.buildCircleOfFifthsView({
 
 assert.equal(cMajorCircle.selectedKey, 'C');
 assert.equal(cMajorCircle.orderedKeys.length, 12);
-assert.deepEqual(cMajorCircle.orderedKeys.slice(0, 3).map(function (key) { return key.nombre; }), ['C', 'F', 'Bb']);
+assert.deepEqual(cMajorCircle.orderedKeys.slice(0, 3).map(function (key) { return key.nombre; }), ['C', 'G', 'D']);
+assert.equal(domain.shouldPreferFlatsForKeySignature({
+	notes: data.notes,
+	scaleDefinition: data.scales[0],
+	selectedScaleIndex: 0,
+	tonicName: 'F'
+}), true);
+assert.equal(domain.shouldPreferFlatsForKeySignature({
+	notes: data.notes,
+	scaleDefinition: data.scales[0],
+	selectedScaleIndex: 0,
+	tonicName: 'G'
+}), false);
 
 const fSharpMajorCircle = domain.buildCircleOfFifthsView({
 	circleOfFifths: data.circleOfFifths,
+	preferFlats: false,
 	scaleDefinition: data.scales[0],
 	selectedScaleIndex: 0,
 	tonicName: 'F#'
 });
 
-assert.equal(fSharpMajorCircle.selectedKey, 'Gb');
-assert.equal(fSharpMajorCircle.orderedKeys[0].nombre, 'Gb');
+assert.equal(fSharpMajorCircle.selectedKey, 'F#');
+assert.equal(fSharpMajorCircle.orderedKeys[0].nombre, 'C');
+assert.equal(fSharpMajorCircle.orderedKeys[6].nombre, 'F#');
+assert.equal(fSharpMajorCircle.orderedKeys[6].enarmonica, 'D#m');
 assert.equal(data.circleOfFifths.length, 13);
+
+const fSharpMajorCircleAsFlats = domain.buildCircleOfFifthsView({
+	circleOfFifths: data.circleOfFifths,
+	preferFlats: true,
+	scaleDefinition: data.scales[0],
+	selectedScaleIndex: 0,
+	tonicName: 'Gb'
+});
+
+assert.equal(fSharpMajorCircleAsFlats.selectedKey, 'Gb');
+assert.equal(fSharpMajorCircleAsFlats.orderedKeys[6].nombre, 'Gb');
+assert.equal(fSharpMajorCircleAsFlats.orderedKeys[6].enarmonica, 'Ebm');
 
 const aSharpMinorCircle = domain.buildCircleOfFifthsView({
 	circleOfFifths: data.circleOfFifths,
+	preferFlats: true,
 	scaleDefinition: data.scales[2],
 	selectedScaleIndex: 2,
 	tonicName: 'A#'
 });
 
 assert.equal(aSharpMinorCircle.selectedKey, 'Bbm');
-assert.equal(aSharpMinorCircle.orderedKeys[0].nombre, 'Db');
+assert.equal(aSharpMinorCircle.orderedKeys[0].nombre, 'C');
+assert.equal(domain.shouldPreferFlatsForKeySignature({
+	notes: data.notes,
+	scaleDefinition: data.scales[2],
+	selectedScaleIndex: 2,
+	tonicName: 'D'
+}), true);
+assert.equal(domain.shouldPreferFlatsForKeySignature({
+	notes: data.notes,
+	scaleDefinition: data.scales[2],
+	selectedScaleIndex: 2,
+	tonicName: 'E'
+}), false);
+assert.equal(domain.shouldPreferFlatsForKeySignature({
+	notes: data.notes,
+	scaleDefinition: data.scales[14],
+	selectedScaleIndex: 14,
+	tonicName: 'C'
+}), true);
+assert.equal(domain.shouldPreferFlatsForKeySignature({
+	notes: data.notes,
+	scaleDefinition: data.scales[14],
+	selectedScaleIndex: 14,
+	tonicName: 'D'
+}), true);
+assert.equal(domain.shouldPreferFlatsForKeySignature({
+	notes: data.notes,
+	scaleDefinition: data.scales[15],
+	selectedScaleIndex: 15,
+	tonicName: 'E'
+}), false);
+assert.equal(domain.shouldPreferFlatsForKeySignature({
+	notes: data.notes,
+	scaleDefinition: data.scales[16],
+	selectedScaleIndex: 16,
+	tonicName: 'F'
+}), true);
+assert.equal(domain.shouldPreferFlatsForKeySignature({
+	notes: data.notes,
+	scaleDefinition: data.scales[17],
+	selectedScaleIndex: 17,
+	tonicName: 'G'
+}), false);
 
 function byName(collection, name) {
 	return collection.find(function (item) {
