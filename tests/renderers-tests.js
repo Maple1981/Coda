@@ -23,6 +23,7 @@ function runScript(relativePath) {
 	'js/domain/chord-domain.js',
 	'js/domain/extended-harmony-domain.js',
 	'js/domain/music-domain.js',
+	'js/renderers/scale-summary-renderer.js',
 	'js/renderers/scale-chords-renderer.js',
 	'js/renderers/extended-harmony-renderer.js'
 ].forEach(runScript);
@@ -31,6 +32,7 @@ const data = context.window.CodaData;
 const domain = context.window.CodaDomain;
 const extendedHarmonyRenderer = context.window.CodaRenderers.extendedHarmony;
 const scaleChordsRenderer = context.window.CodaRenderers.scaleChords;
+const scaleSummaryRenderer = context.window.CodaRenderers.scaleSummary;
 
 function byName(collection, name) {
 	return collection.find(function (item) {
@@ -76,6 +78,22 @@ const cMinorNaturalChords = domain.buildScaleChords({
 	octaveSemitones: data.constants.octaveSemitones
 });
 
+const scaleSummaryHtml = scaleSummaryRenderer.render({
+	circleOfFifths: data.circleOfFifths,
+	isDegreeSuppressed: function () { return false; },
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	scaleName: 'Mayor',
+	scaleNotes: cMajor,
+	selectedScaleIndex: 0,
+	tonicName: 'C'
+});
+
+assert.ok(scaleSummaryHtml.indexOf('<h3>C Mayor</h3>') > -1);
+assert.ok(scaleSummaryHtml.indexOf('<span id="A_m_" class="revamp estiloEnlace">Am</span>') > -1);
+assert.ok(scaleSummaryHtml.indexOf('<span id="C_m" class="revamp estiloEnlace">Cm</span>') > -1);
+assert.ok(scaleSummaryHtml.indexOf('<ul class="notasEscala">') > -1);
+assert.ok(scaleSummaryHtml.indexOf('C<sup>I</sup>') > -1);
+
 const scaleChordsHtml = scaleChordsRenderer.render({
 	mode: 'M',
 	parallelScaleChords: cMinorNaturalChords,
@@ -89,6 +107,10 @@ assert.ok(scaleChordsHtml.indexOf('Cmaj7') > -1);
 assert.ok(scaleChordsHtml.indexOf('class="celdaAcorde" id="G-B-D-F"') > -1);
 assert.ok(scaleChordsHtml.indexOf('<td>V7</td>') > -1);
 assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Función: </td>') > -1);
+
+const dDorianDefinition = data.scales.find(function (scale) {
+	return scale.modal === 'true' && scale.nombre.indexOf('rico') > -1;
+});
 
 const dDorian = domain.buildScale({
 	tonicIndex: noteIndex('D'),
@@ -105,6 +127,19 @@ const dDorianChords = domain.buildScaleChords({
 	chordDefinitions: data.chords,
 	octaveSemitones: data.constants.octaveSemitones
 });
+
+const modalSummaryHtml = scaleSummaryRenderer.renderList({
+	circleOfFifths: data.circleOfFifths,
+	isDegreeSuppressed: function () { return false; },
+	scaleDefinition: dDorianDefinition,
+	scaleNotes: dDorian,
+	selectedScaleIndex: 7,
+	tonicName: 'D'
+});
+
+assert.ok(modalSummaryHtml.indexOf('<span class="principal">Nota principal</span>') > -1);
+assert.ok(modalSummaryHtml.indexOf('<li class="principal">') > -1);
+assert.ok(modalSummaryHtml.indexOf('<li class="secundaria">') > -1);
 
 const modalChordsHtml = scaleChordsRenderer.render({
 	mode: '',

@@ -289,118 +289,25 @@ $( document ).ready(function() {
 	
 	//función de output html que devuelve el nombre de Tónica + Escala según la elección del usuario
 	function generaTituloEscala(){
-		var html = '';
-		
 		nombreTonicaElegida = $('select#tonica option:selected').text();
 		nombreEscalaElegida = $('select#escala option:selected').text();
-		
-		html += '<h3>' + nombreTonicaElegida + " " + nombreEscalaElegida + '</h3>';	
-		
-		return html;
+
+		return CodaRenderers.scaleSummary.renderTitle({
+			scaleName: nombreEscalaElegida,
+			tonicName: nombreTonicaElegida
+		});
 	};
 	
 	//función de output html que devuelve una lista de los grados de la escala
 	function generaListaEscala(arrayNotas){
-		
-		var html = '';
-		
-		//si se puede, añadimos información de la escala (relativa, paralela)
-		if(escalaElegida['tonal']!= null){
-			
-			//Relativa: buscamos en el circulo de quintas
-			var enarmCirculo = '';
-			var abreviaturaEscalaElegida = '';
-			if($('select#escala option:selected').val() == '0'){
-				abreviaturaEscalaElegida = $('select#tonica option:selected').text();
-				
-				for(var i=0; i<circuloQuintas.length; i++)
-				{
-					if(circuloQuintas[i]['nombre']==abreviaturaEscalaElegida){
-						enarmCirculo = circuloQuintas[i]['enarmonica'];
-						break;
-					}else if(circuloQuintas[i]['aka'] != null){
-						if(circuloQuintas[i]['aka']==abreviaturaEscalaElegida){
-							enarmCirculo = circuloQuintas[i]['enarmonica'];
-							break;
-						};
-					};
-					
-				};
-				
-			}else{ //si no es mayor, por fuerza el resto de escalas "tonales" son menores
-				abreviaturaEscalaElegida = $('select#tonica option:selected').text() + 'm';
-				
-				for(var i=0; i<circuloQuintas.length; i++)
-				{
-					if(circuloQuintas[i]['enarmonica']==abreviaturaEscalaElegida){
-						enarmCirculo = circuloQuintas[i]['nombre'];
-						break;
-					}else if(circuloQuintas[i]['aka'] != null){
-						if(circuloQuintas[i]['aka']==abreviaturaEscalaElegida){
-							enarmCirculo = circuloQuintas[i]['nombre'];
-							break;
-						};
-					};
-					
-				};
-				
-			};
-			
-			enarmCirculo = enarmCirculo.replace('m','_m'); //para controlar mejor los parametros pasados, es preferible preparar el posterior split
-			
-			html += '<p class="infoAdicional"><strong>Tonalidad relativa</strong>: <span id="' + enarmCirculo + '_" class="revamp estiloEnlace">' + enarmCirculo.replace('_m','m') + '</span>';
-			
-			//Paralela: más fácil todavía, comprobamos el modo de la tonalidad
-			var modoTon = '',modoParalelo = '';
-			if($('select#escala option:selected').val() == '0'){
-				modoTon = 'mayor';
-				modoParalelo = 'm';
-			}else{
-				modoTon = 'menor';
-				modoParalelo = '';
-			};
-			
-			html += '&nbsp;<strong>Tonalidad paralela</strong>: <span id="' + $('select#tonica option:selected').text() + '_' + modoParalelo + '" class="revamp estiloEnlace">' + $('select#tonica option:selected').text() + '' + modoParalelo + '</span></p>';
-		};
-		
-		html += '<h4>Grados de la escala</h4>';
-		//y creamos la escala en sí en formato lista
-		html += '<ul class="notasEscala">';
-		for(var i=0; i<arrayNotas.length; i++)
-		{
-			
-			if(!compruebaSiGradoEstaSuprimido(i))
-			{
-				
-				//si la escala es modal, marcamos las notas principales y secundarias
-				var cssElementoLista = '';
-				if(arrayNotas[i]['tipo'] != null){
-					cssElementoLista = ' class="' + arrayNotas[i]['tipo'] + '"';	
-				};
-				
-				html += '<li' + cssElementoLista + '>';
-				
-				var nombre = arrayNotas[i]['nombre'];
-				html += nombre + '<sup>' + arrayNotas[i]['grado'] + '</sup>'; //otros datos del hash: semitonos, nombreGrado
-				if(i<arrayNotas.length-1)	html += ' - ';
-				html += '</li>';
-			};
-
-		};
-		
-		if(html.substring(html.length - 8, html.length) == ' - </li>')	html = html.substring(0,html.length-8) + '<li>';
-		
-		html += '</ul>';
-		
-		//leyenda de las escalas modales
-		if(escalaElegida['modal']=='true'){
-			html += '<div class="leyendaModal">';
-			html += '<span class="principal">Nota principal</span> - ';
-			html += '<span class="secundaria">Nota secundaria</span>';
-			html += '</div>';
-		};
-		
-		return html;
+		return CodaRenderers.scaleSummary.renderList({
+			circleOfFifths: circuloQuintas,
+			isDegreeSuppressed: compruebaSiGradoEstaSuprimido,
+			scaleDefinition: escalaElegida,
+			scaleNotes: arrayNotas,
+			selectedScaleIndex: $('select#escala option:selected').val(),
+			tonicName: $('select#tonica option:selected').text()
+		});
 	};
 	
 	//función de output html que devuelve una tabla con los acordes que se forma en cada grado de la escala
