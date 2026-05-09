@@ -111,9 +111,9 @@ fieldset {
   font-size: .9em;
   border-radius: 10px;
   padding: 20px;
-  background: #000;
-  background: -webkit-gradient(linear, left bottom, left top, from(#111), color-stop(35%, #000), to(#444));
-  background: linear-gradient(0deg, #111 0%, #000 35%, #444 100%);
+  background: #151515;
+  background: -webkit-gradient(linear, left bottom, left top, from(#111), color-stop(35%, #151515), to(#444));
+  background: linear-gradient(0deg, #111 0%, #151515 35%, #444 100%);
 }
 
 fieldset h3 {
@@ -225,7 +225,7 @@ section#notacion table tr td span.cadencial {
 }
 
 section#notacion table.acordesEscala {
-  margin-top: 20px;
+  margin-top: 34px;
 }
 
 section#notacion div.leyendaAcordesModales {
@@ -264,7 +264,7 @@ section#armoniaExtendida table thead tr td {
 
 section#notacion table tr td.par,
 section#armoniaExtendida table tr td.par {
-  background-color: #000;
+  background-color: #151515;
 }
 
 section#notacion p.leyenda,
@@ -384,7 +384,7 @@ section#instrumento table td.noPerteneceEscala span {
 
 section#instrumento table td.perteneceEscala span {
   background-color: #00ff95;
-  color: #000;
+  color: #151515;
   font-weight: 800;
 }
 
@@ -400,26 +400,35 @@ section#circuloQuintas {
   position: absolute;
   top: 180px;
   margin-left: 680px;
-  height: 200px;
+  height: 220px;
 }
 
 div#circuloDesplegado {
-  margin: 20px 0 0px 0;
+  margin: 20px 0 12px 0;
   height: 200px;
   width: 200px;
 }
 
 div.circulo {
+  box-sizing: border-box;
   position: absolute;
   width: 40px;
   height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
   border-radius: 50%;
+  overflow: hidden;
   background-color: #00ff95;
   text-align: center;
   font-size: .7em;
 }
 
 div.circulo p {
+  box-sizing: border-box;
+  height: 18px;
+  line-height: 14px;
   margin-bottom: 0px;
 }
 
@@ -428,7 +437,7 @@ div.circulo p:first-child {
 }
 
 div.circulo p span {
-  color: #000;
+  color: #151515;
   text-decoration: none;
 }
 
@@ -457,17 +466,80 @@ section#bienvenida img {
 
 section#controlVersiones {
   clear: both;
-  margin-top: 40px;
 }
 
 section#controlVersiones article {
   margin-bottom: 20px;
 }
 
+section#controlVersiones article h3 {
+  width: 100%;
+}
+
+section#controlVersiones article dl dt {
+  font-weight: 600;
+  color: #a3ffd9;
+}
+
 section#controlVersiones article dl dd {
   margin-bottom: 10px;
   list-style-type: disc;
   margin-left: 20px;
+}
+
+.dialogoNovedades {
+  max-width: 92vw;
+  background: #111 !important;
+  border: 1px solid #444 !important;
+  color: #eee !important;
+}
+
+.dialogoNovedades .ui-dialog-titlebar {
+  background: #151515 !important;
+  border: 1px solid #444 !important;
+  color: #eee !important;
+}
+
+.dialogoNovedades .ui-dialog-title {
+  color: #eee !important;
+}
+
+.dialogoNovedades .ui-dialog-titlebar-close {
+  background: #151515 !important;
+  border: 1px solid #444 !important;
+}
+
+.dialogoNovedades .ui-dialog-content {
+  background: #111 !important;
+  color: #eee !important;
+  font-size: 0.95em;
+  line-height: 1.45;
+  scrollbar-color: #a622ae #151515;
+  scrollbar-width: thin;
+}
+
+.dialogoNovedades .ui-dialog-content p,
+.dialogoNovedades .ui-dialog-content dd,
+.dialogoNovedades .ui-dialog-content li {
+  color: #eee;
+}
+
+.dialogoNovedades .ui-dialog-content::-webkit-scrollbar {
+  width: 12px;
+}
+
+.dialogoNovedades .ui-dialog-content::-webkit-scrollbar-track {
+  background: #151515;
+}
+
+.dialogoNovedades .ui-dialog-content::-webkit-scrollbar-thumb {
+  background: #a622ae;
+  border: 3px solid #151515;
+  border-radius: 8px;
+}
+
+.dialogoNovedades .ui-dialog-content::-webkit-scrollbar-thumb:hover {
+  background: #711477;
 }
 
 footer {
@@ -489,7 +561,7 @@ footer ul#redesSociales li {
 .ui-state-default,
 .ui-widget-content .ui-state-default,
 .ui-widget-header .ui-state-default {
-  background-color: #000 !important;
+  background-color: #151515 !important;
   border: 1px solid #444 !important;
   color: #eee !important;
 }

@@ -4,7 +4,7 @@ $dusty_grey:#333;
 $majestic_grey: #bbb;
 $broken_white: #eee;
 $dungeon_black:#111;
-$nadir_black:#000;
+$nadir_black:#151515;
 $zenit_black:#444;
 $gelatinouscube_green:#00ff95;
 $pasto_green:#a3ffd9;
@@ -269,7 +269,7 @@ section#notacion{
 	}
 	
 	table.acordesEscala{
-		margin-top:20px;
+		margin-top:34px;
 	}
 
 	div.leyendaAcordesModales{
@@ -451,25 +451,34 @@ section#circuloQuintas {
 	position:absolute; 
 	top:180px; 
 	margin-left:680px; 
-	height:200px;
+	height:220px;
 }
 
 div#circuloDesplegado {
-  margin:20px 0 0px 0; 
+  margin:20px 0 12px 0; 
   height: 200px;
   width: 200px;
 }
 
 div.circulo {
+	box-sizing:border-box;
 	position: absolute;
 	width: 40px;
 	height: 40px;
+	min-width:40px;
+	min-height:40px;
+	max-width:40px;
+	max-height:40px;
 	border-radius: 50%;
+	overflow:hidden;
 	background-color: $corporative_main_color;
 	text-align:center;
 	font-size:.7em;
 
 	p{
+		box-sizing:border-box;
+		height:18px;
+		line-height:14px;
 		margin-bottom:0px;
 	}
 	p:first-child{
@@ -509,15 +518,68 @@ section#bienvenida{
 }
 
 section#controlVersiones{
-	clear:both; 
-	margin-top:40px;
+	clear:both;
 	article{
 		margin-bottom:20px;
+	}
+	article h3{
+		width:100%;
+	}
+	article dl dt{
+		font-weight:600;
+		color:$corporative_secondary_color;
 	}
 	article dl dd{
 		margin-bottom:10px; 
 		list-style-type:disc; 
 		margin-left:20px;
+	}
+}
+
+.dialogoNovedades {
+	max-width:92vw;
+	background:$basic_fill_color !important;
+	border:1px solid $basic_fillbrightgrad_color !important;
+	color:$basic_front_color !important;
+
+	.ui-dialog-titlebar{
+		background:$basic_filldarkgrad_color !important;
+		border:1px solid $basic_fillbrightgrad_color !important;
+		color:$basic_front_color !important;
+	}
+	.ui-dialog-title{
+		color:$basic_front_color !important;
+	}
+	.ui-dialog-titlebar-close{
+		background:$basic_filldarkgrad_color !important;
+		border:1px solid $basic_fillbrightgrad_color !important;
+	}
+	.ui-dialog-content{
+		background:$basic_fill_color !important;
+		color:$basic_front_color !important;
+		font-size:.95em;
+		line-height:1.45;
+		scrollbar-color:$corporative_complementary_color $basic_filldarkgrad_color;
+		scrollbar-width:thin;
+	}
+	.ui-dialog-content p,
+	.ui-dialog-content dd,
+	.ui-dialog-content li{
+		color:$basic_front_color;
+	}
+	.ui-dialog-content::-webkit-scrollbar{
+		width:12px;
+	}
+	.ui-dialog-content::-webkit-scrollbar-track{
+		background:$basic_filldarkgrad_color;
+	}
+	.ui-dialog-content::-webkit-scrollbar-thumb{
+		background:$corporative_complementary_color;
+		border:3px solid $basic_filldarkgrad_color;
+		border-radius:8px;
+	}
+	.ui-dialog-content::-webkit-scrollbar-thumb:hover{
+		background:$tinticole_purple;
 	}
 }
 

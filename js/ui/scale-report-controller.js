@@ -12,6 +12,7 @@
 		fillSelectHashTable($, $('#tonica'), options.data.notes, false);
 		fillSelectHashTable($, $('#escala'), options.data.scales, false);
 		applyRecommendedNotation($, options);
+		initializeChangelogDialog($);
 
 		$('#btnEscala').click(function () {
 			renderReport();
@@ -145,6 +146,32 @@
 		select.empty().append(html);
 	}
 
+	function initializeChangelogDialog($) {
+		if (typeof $('#controlVersiones').dialog !== 'function') {
+			return;
+		}
+
+		$('#controlVersiones').dialog({
+			autoOpen: false,
+			classes: {
+				'ui-dialog': 'dialogoNovedades'
+			},
+			height: Math.min(720, $(window).height() - 60),
+			modal: true,
+			title: 'Novedades y mejoras',
+			width: Math.min(920, $(window).width() - 40)
+		});
+
+		$('#enlaceNovedades').click(function (event) {
+			event.preventDefault();
+			$('#controlVersiones').dialog('open');
+		});
+
+		$(document).on('mousedown', '.ui-widget-overlay', function () {
+			$('#controlVersiones').dialog('close');
+		});
+	}
+
 	function navigateToLinkedKey($, notes, targetId) {
 		var selectedOption = targetId.split('_');
 		var noteValue = findNoteValue(notes, selectedOption[0]);
@@ -236,6 +263,7 @@
 		fillSelectHashTable: fillSelectHashTable,
 		findNoteValue: findNoteValue,
 		highlightChord: highlightChord,
+		initializeChangelogDialog: initializeChangelogDialog,
 		initialize: initialize,
 		navigateToLinkedKey: navigateToLinkedKey,
 		playChord: playChord
