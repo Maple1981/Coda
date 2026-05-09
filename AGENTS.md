@@ -75,7 +75,7 @@ Los nuevos modulos deben poder probarse de forma aislada siempre que sea razonab
   - `instrument-domain.js`: modelos puros de diapason de guitarra y teclado de piano con pertenencia a escala.
   - `music-domain.js`: fachada de compatibilidad `CodaDomain` para la aplicacion legacy.
 - `js/renderers/`: modulos de renderizado. `scale-summary-renderer.js` genera el titulo/lista de escala y relaciones tonal relativa/paralela, `scale-chords-renderer.js` genera la tabla de acordes diatonicos, `extended-harmony-renderer.js` genera las tablas de armonia extendida, `instrument-renderer.js` genera las vistas de guitarra y piano y `circle-of-fifths-renderer.js` genera la navegacion del circulo de quintas.
-- `js/ui/`: coordinacion de interfaz legacy con jQuery. `scale-report-ui.js` lee seleccion del DOM, monta el informe renderizado y conecta eventos de acordes.
+- `js/ui/`: coordinacion de interfaz legacy con jQuery. `scale-report-ui.js` lee seleccion del DOM y monta el informe renderizado; `scale-report-controller.js` inicializa selects, conecta eventos de pantalla, gestiona navegacion tonal y delega en aplicacion/UI.
 - `js/services/`: servicios extraidos progresivamente para reproduccion, exportacion MIDI y otras integraciones de navegador.
 - `js/midi/`: utilidades relacionadas con MIDI y reproduccion.
 - `soundfont/`: instrumentos y muestras usadas para preescucha.
