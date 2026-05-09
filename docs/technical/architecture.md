@@ -23,12 +23,14 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/bootstrap/coda-bootstrap.js`: cablea datos, dominio, aplicación, renderers, UI, controlador y playback.
 - `js/application/scale-report-application.js`: construye informes de escala e instrumentos.
 - `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI a notas y delega en playback.
+- `js/application/progression-application.js`: casos de uso iniciales para progresiones armónicas.
 - `js/domain/music-utils.js`: patrones, nombres de nota, índices circulares e intervalos compartidos.
 - `js/domain/scale-domain.js`: construcción de escalas y notas características modales.
 - `js/domain/chord-domain.js`: acordes diatónicos, acordes desde fundamental y etiquetas modales.
 - `js/domain/extended-harmony-domain.js`: dominantes secundarios, subdominantes secundarios, sustitutos tritonales e ii relativos.
 - `js/domain/circle-of-fifths-domain.js`: normalización de tonalidad y ordenación del círculo de quintas.
 - `js/domain/instrument-domain.js`: modelos puros de diapasón de guitarra y teclado de piano.
+- `js/domain/progression-domain.js`: resolución pura de grados de progresión contra acordes de escala.
 - `js/domain/music-domain.js`: fachada de compatibilidad `CodaDomain`.
 - `js/renderers/scale-summary-renderer.js`: título/lista de escala y relaciones relativa/paralela.
 - `js/renderers/scale-chords-renderer.js`: tabla de acordes diatónicos.

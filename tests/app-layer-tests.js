@@ -24,9 +24,11 @@ function runScript(relativePath) {
 	'js/domain/extended-harmony-domain.js',
 	'js/domain/circle-of-fifths-domain.js',
 	'js/domain/instrument-domain.js',
+	'js/domain/progression-domain.js',
 	'js/domain/music-domain.js',
 	'js/application/scale-report-application.js',
-	'js/application/chord-playback-application.js'
+	'js/application/chord-playback-application.js',
+	'js/application/progression-application.js'
 ].forEach(runScript);
 
 const app = context.window.CodaApplication;
@@ -56,6 +58,15 @@ assert.deepEqual(cMajorReport.parallelScaleChords.map(function (chord) { return 
 assert.equal(cMajorReport.extendedHarmonyEnabled, true);
 assert.equal(cMajorReport.mode, 'M');
 assert.equal(cMajorReport.circleOfFifths.selectedKey, 'C');
+
+const cMajorProgression = app.buildProgressionFromDegrees({
+	degrees: ['I', 'IV', 'V', 'I'],
+	domain: domain,
+	report: cMajorReport
+});
+
+assert.deepEqual(cMajorProgression.map(function (step) { return step.degree; }), ['I', 'IV', 'V', 'I']);
+assert.deepEqual(cMajorProgression.map(function (step) { return step.chord.nombre; }), ['Cmaj7', 'Fmaj7', 'G7', 'Cmaj7']);
 
 const cMajorGuitar = app.buildInstrumentView({
 	data: data,

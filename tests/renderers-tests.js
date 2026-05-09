@@ -24,6 +24,7 @@ function runScript(relativePath) {
 	'js/domain/extended-harmony-domain.js',
 	'js/domain/circle-of-fifths-domain.js',
 	'js/domain/instrument-domain.js',
+	'js/domain/progression-domain.js',
 	'js/domain/music-domain.js',
 	'js/renderers/scale-summary-renderer.js',
 	'js/renderers/scale-chords-renderer.js',

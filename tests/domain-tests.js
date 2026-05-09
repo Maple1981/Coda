@@ -24,6 +24,7 @@ function runScript(relativePath) {
 	'js/domain/extended-harmony-domain.js',
 	'js/domain/circle-of-fifths-domain.js',
 	'js/domain/instrument-domain.js',
+	'js/domain/progression-domain.js',
 	'js/domain/music-domain.js'
 ].forEach(runScript);
 
@@ -169,6 +170,12 @@ assert.equal(cMajorPiano.whiteKeys[0].nombre, 'C');
 assert.equal(cMajorPiano.whiteKeys[0].perteneceEscala, true);
 
 const cMajorChords = buildScaleChords(cMajor, 'Mayor');
+const cMajorCadence = domain.resolveProgressionDegrees({
+	degrees: ['I', 'IV', 'V', 'I'],
+	scaleChords: cMajorChords,
+	scaleNotes: cMajor
+});
+assert.deepEqual(cMajorCadence.map(function (step) { return step.chord.nombre; }), ['Cmaj7', 'Fmaj7', 'G7', 'Cmaj7']);
 assert.deepEqual(names(cMajorChords), ['Cmaj7', 'Dm7', 'Em7', 'Fmaj7', 'G7', 'Am7', 'Bm7♭5']);
 
 const bbMajor = buildScale('Bb', 'Mayor', true);
