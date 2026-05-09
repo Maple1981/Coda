@@ -19,6 +19,16 @@ $( document ).ready(function() {
 	var numeroAfinacionElegida;
 	var afinacionElegida;
 	var cuerdas; //array Asociativo (hashtable)
+	var playbackService = CodaPlayback.create({
+		midi: MIDI,
+		notes: notas,
+		channel: channel,
+		velocity: velocity,
+		delay: delay,
+		initialMidiNote: Cinicial,
+		soundfontUrl: './soundfont/',
+		instrument: 'acoustic_grand_piano'
+	});
 	
 	//en cuanto estamos preparados, incializamos el radio de formato para evitar
 	//inconsistencias de #/b que puedan provocar en el select desplegable las recargas de navegador(F5)
@@ -945,99 +955,34 @@ $( document ).ready(function() {
 	function generaFilaArmoniaExtendida(arrayExtendido, nombreAcordeExtendido, semitonosHastaNuevaFundamental, arrayNotas, arrayAcordes){
 		
 		var html = '';
-		var posExtendidaEncontrada = -1;
 		
 		html += '<tr>';
 		for(var i=0; i<=arrayAcordes.length - 1; i++){
 
-			var gradoLimpio = arrayNotas[i]['grado'].replace('J','').replace('m','').replace('sus','').replace('rel', '').toLowerCase();
-
-			posExtendidaEncontrada = encuentraPosicionArmoniaExtendida(arrayExtendido, gradoLimpio, nombreAcordeExtendido);
+			var acordeExtendido = CodaDomain.buildExtendedHarmonyChord({
+				extensionRules: arrayExtendido,
+				targetDegree: arrayNotas[i]['grado'],
+				chordTypeName: nombreAcordeExtendido,
+				rootSemitoneOffset: semitonosHastaNuevaFundamental,
+				scaleChord: arrayAcordes[i],
+				notes: notas,
+				chordDefinitions: acordes,
+				mode: modalidadGeneralElegida,
+				preferFlats: $("#interface input:radio:checked").val()==1,
+				octaveSemitones: numeroNotasEscalaDiatonica
+			});
 			
-			if(posExtendidaEncontrada >=0){
+			if(acordeExtendido){
 				
-				//calculamos el acorde en sí a partir de su fundamental y tipo
-
-				//primero sacamos la posicion de la fundamental del acorde analizado
-				var posicionFundamental = -1;
-				for(var j=0; j<=notas.length - 1; j++){
-					if(arrayAcordes[i]['fundamental']==notas[j]['nombre'] || arrayAcordes[i]['fundamental']==notas[j]['enarmonica']){
-						posicionFundamental = j;
-					};
-				};
+				html += '<td class="celdaAcorde" id="' + acordeExtendido.noteId + '">';
 				
-				
-				//a dicha posición, le añadimos el nº de semitonos necesarios para obtener el acorde extendido
-				var posicionFundamentalNuevoAcorde = posicionFundamental + semitonosHastaNuevaFundamental;
-				if(posicionFundamentalNuevoAcorde>11)	posicionFundamentalNuevoAcorde = posicionFundamentalNuevoAcorde - 12;
-				
-				//y encontramos qué nota es
-				var notaDominante =  notas[posicionFundamentalNuevoAcorde]['nombre'];
-				if($("#interface input:radio:checked").val()==1){ 
-				//bemoles
-					if(notas[posicionFundamentalNuevoAcorde]['enarmonica']){
-						notaDominante = notas[posicionFundamentalNuevoAcorde]['enarmonica'];
-					};
-				};
-				
-				
-				
-				//Obtenemos el patrón de tonos del acorde
-				var patronAcorde = '';
-				var abreviaturaAcorde = '';
-				for(var j=0; j<=acordes.length - 1; j++){
-					if(arrayExtendido[posExtendidaEncontrada]['tipo'] == acordes[j]['nombre']){
-						patronAcorde = acordes[j]['patron'];
-						abreviaturaAcorde = acordes[j]['abreviatura'];
-					};
-				};
-				
-				//y, teniendo la fundamental y el patrón, simplemente buscamos el resto de notas del patrón
-				var terceraPatron, quintaPatron, septimaPatron = '';
-				var patronPart = patronAcorde.split('-');
-				
-				terceraPatron = parseInt(posicionFundamentalNuevoAcorde) + parseInt(patronPart[1]);
-				if(terceraPatron > 11)	terceraPatron = terceraPatron -12;
-				quintaPatron = parseInt(posicionFundamentalNuevoAcorde) + parseInt(patronPart[2]);
-				if(quintaPatron > 11)	quintaPatron = quintaPatron -12;
-				septimaPatron = parseInt(posicionFundamentalNuevoAcorde) + parseInt(patronPart[3]);
-				if(septimaPatron > 11)	septimaPatron = septimaPatron -12;
-				
-				var acordeCompuesto = notaDominante + '-' + notas[terceraPatron]['nombre'] + '-' + notas[quintaPatron]['nombre'] + '-' + notas[septimaPatron]['nombre'];
-				
-				if($("#interface input:radio:checked").val()==1){ 
-				//bemoles
-					acordeCompuesto = notaDominante;
-					if(notas[terceraPatron]['enarmonica']){
-						acordeCompuesto += '-' + notas[terceraPatron]['enarmonica'];
-					}else{
-						acordeCompuesto += '-' + notas[terceraPatron]['nombre'];
-					}
-					if(notas[quintaPatron]['enarmonica']){
-						acordeCompuesto += '-' + notas[quintaPatron]['enarmonica'];
-					}else{
-						acordeCompuesto += '-' + notas[quintaPatron]['nombre'];
-					}
-					if(notas[septimaPatron]['enarmonica']){
-						acordeCompuesto += '-' + notas[septimaPatron]['enarmonica'];
-					}else{
-						acordeCompuesto += '-' + notas[septimaPatron]['nombre'];
-					};
-				};
-
-			};
-			
-			if(posExtendidaEncontrada > -1 && notaDominante && abreviaturaAcorde && arrayExtendido[posExtendidaEncontrada]['nombre'] && acordeCompuesto){
-				
-				html += '<td class="celdaAcorde" id="' + acordeCompuesto + '">';
-				
-				html += '<p>' + notaDominante + abreviaturaAcorde + ' (' + arrayExtendido[posExtendidaEncontrada]['nombre'] + ')</p>';
+				html += '<p>' + acordeExtendido.rootName + acordeExtendido.abbreviation + ' (' + acordeExtendido.ruleName + ')</p>';
 				
 				var classFrecuencia = '';
 				
-				if(arrayExtendido[posExtendidaEncontrada]['importante'])	classFrecuencia = ' cadencial';
+				if(acordeExtendido.important)	classFrecuencia = ' cadencial';
 				
-				html += '<p class="destacado' + classFrecuencia + '">' + acordeCompuesto + '</p>'
+				html += '<p class="destacado' + classFrecuencia + '">' + acordeExtendido.noteId + '</p>'
 				
 			html += '</td>';
 			
@@ -1054,30 +999,6 @@ $( document ).ready(function() {
 	
 		return html;
 	
-	};
-	
-	
-	//recorre el hashtable de armonía extendida pasado y devuelve la posicion según el grado y tipo de acorde pasado
-	function encuentraPosicionArmoniaExtendida(arreglo, grado, tipo){
-	
-		//recorremos las dominantes
-			var posEncontrada = -1;
-			for(var j= 0; j<=arreglo.length - 1; j++){
-				var nombreLimpio = arreglo[j]['nombre'].toLowerCase().split('-');
-				
-				if(grado == nombreLimpio[1] && tipo == arreglo[j]['tipo']){
-					
-					if(modalidadGeneralElegida == "M"){
-						posEncontrada = j;
-					}else{
-						if(arreglo[j]['menor'] == true)	posEncontrada = j;
-					};
-					
-					
-				};
-			};
-		
-		return posEncontrada;
 	};
 	
 	
@@ -1161,40 +1082,11 @@ $( document ).ready(function() {
 	//reproduce un acorde web-midi / web-audio con las notas pasadas en el id de la celda
 	function reproduceAcorde(objThis){
 		
-		//traducimos el acorde de la celda en notas midi
 		var notasPart = objThis.id.split('-');
-		
-		var acordeMIDI = new Array();
-		
-		for(var i= 0; i<=notasPart.length - 1; i++){
-			
-			var separacion = 0;
-			if(i==0)	separacion = -12; //pasamos la nota del bajo separada una octava del resto del acorde
-
-			
-			acordeMIDI.push(calculaNotaMIDI(notasPart[i], separacion));
-			
-		};
-		
-		MIDI.chordOn(channel, acordeMIDI, velocity, delay);
-		MIDI.chordOff(channel, acordeMIDI, delay + 0.75);
-		
-			
-	};
-	
-	//traduce la notación estándar americana en MIDI notes numéricas (integer)
-	function calculaNotaMIDI(nota, separacion)
-	{
-		for(var i = 0; i<= notas.length - 1; i++){
-			
-			if(notas[i]['nombre'] == nota || notas[i]['enarmonica'] == nota){
-				//hemos encontrado la posición en el hashtable de notas, por tanto devolvemos dicha posición + la octava del C3 en midi notes
-				
-				return + Cinicial + separacion + i;	
-			};
-				
-		};
-		 
+		playbackService.playChordFromNames(notasPart, {
+			bassOctaveOffset: -12,
+			duration: 0.75
+		});
 	};
 	
 	 
@@ -1435,24 +1327,7 @@ $( document ).ready(function() {
 	
 	
 	//CARGA DE WEB MIDI Y WEB AUDIO
-	//generamos un objeto MIDI que esté accesible a nivel de toda la aplicación
-	
-	MIDI.loadPlugin({
-		soundfontUrl: "./soundfont/",
-		instrument: "acoustic_grand_piano",
-		onprogress: function(state, progress) {
-			//console.log(state, progress);
-		},
-		onsuccess: function() {
-			
-			// establecemos el min-max MIDI
-			MIDI.setVolume(0, 127);
-			//MIDI.noteOn(0, note, velocity, delay);
-			//MIDI.noteOff(0, note, delay + 0.75);
-
-			
-		}
-	});
+	playbackService.load();
 	
 	
 	

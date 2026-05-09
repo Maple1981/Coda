@@ -109,6 +109,79 @@
 		return '';
 	}
 
+	function findChordDefinitionByName(chordDefinitions, name) {
+		for (var i = 0; i < chordDefinitions.length; i++) {
+			if (chordDefinitions[i].nombre === name) {
+				return chordDefinitions[i];
+			}
+		}
+	}
+
+	function noteIndex(notes, noteName) {
+		for (var i = 0; i < notes.length; i++) {
+			if (notes[i].nombre === noteName || notes[i].enarmonica === noteName) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	function circularChromaticIndex(index, offset, octaveSemitones) {
+		var target = index + offset;
+
+		while (target >= octaveSemitones) {
+			target -= octaveSemitones;
+		}
+
+		while (target < 0) {
+			target += octaveSemitones;
+		}
+
+		return target;
+	}
+
+	function cleanDegreeForExtendedHarmony(degree) {
+		return degree.replace('J', '').replace('m', '').replace('sus', '').replace('rel', '').toLowerCase();
+	}
+
+	function findExtendedHarmonyRule(rules, degree, chordTypeName, mode) {
+		var normalizedDegree = cleanDegreeForExtendedHarmony(degree);
+
+		for (var i = 0; i < rules.length; i++) {
+			var ruleParts = rules[i].nombre.toLowerCase().split('-');
+
+			if (normalizedDegree === ruleParts[1] && chordTypeName === rules[i].tipo) {
+				if (mode === 'M' || rules[i].menor === true) {
+					return rules[i];
+				}
+			}
+		}
+	}
+
+	function buildChordFromRoot(options) {
+		var chordDefinition = findChordDefinitionByName(options.chordDefinitions, options.chordTypeName);
+
+		if (!chordDefinition) {
+			return;
+		}
+
+		var pattern = parsePattern(chordDefinition.patron);
+		var chordNoteNames = [];
+
+		for (var i = 0; i < pattern.length; i++) {
+			var noteOffset = i === 0 ? 0 : pattern[i];
+			var notePosition = circularChromaticIndex(options.rootIndex, noteOffset, options.octaveSemitones);
+			chordNoteNames.push(noteName(options.notes[notePosition], options.preferFlats));
+		}
+
+		return {
+			rootName: noteName(options.notes[options.rootIndex], options.preferFlats),
+			abbreviation: chordDefinition.abreviatura,
+			notes: chordNoteNames
+		};
+	}
+
 	function modalChordType(scaleNote, third, fifth, seventh) {
 		var rootIsCharacteristic = scaleNote.tipo === 'principal' || scaleNote.tipo === 'secundaria';
 		var chordContainsOtherCharacteristic =
@@ -181,9 +254,60 @@
 		return chords;
 	}
 
+	function buildExtendedHarmonyChord(options) {
+		var rule = findExtendedHarmonyRule(
+			options.extensionRules,
+			options.targetDegree,
+			options.chordTypeName,
+			options.mode
+		);
+
+		if (!rule) {
+			return;
+		}
+
+		var scaleChordRootIndex = noteIndex(options.notes, options.scaleChord.fundamental);
+
+		if (scaleChordRootIndex < 0) {
+			return;
+		}
+
+		var extendedRootIndex = circularChromaticIndex(
+			scaleChordRootIndex,
+			options.rootSemitoneOffset,
+			options.octaveSemitones
+		);
+
+		var chord = buildChordFromRoot({
+			rootIndex: extendedRootIndex,
+			chordTypeName: rule.tipo,
+			chordDefinitions: options.chordDefinitions,
+			notes: options.notes,
+			preferFlats: options.preferFlats,
+			octaveSemitones: options.octaveSemitones
+		});
+
+		if (!chord) {
+			return;
+		}
+
+		return {
+			ruleName: rule.nombre,
+			chordTypeName: rule.tipo,
+			rootName: chord.rootName,
+			abbreviation: chord.abbreviation,
+			notes: chord.notes,
+			noteId: chord.notes.join('-'),
+			important: rule.importante === true
+		};
+	}
+
 	global.CodaDomain = {
+		buildExtendedHarmonyChord: buildExtendedHarmonyChord,
 		buildScale: buildScale,
 		buildScaleChords: buildScaleChords,
+		cleanDegreeForExtendedHarmony: cleanDegreeForExtendedHarmony,
+		findExtendedHarmonyRule: findExtendedHarmonyRule,
 		noteName: noteName,
 		parsePattern: parsePattern
 	};

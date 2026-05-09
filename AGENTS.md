@@ -50,8 +50,10 @@ La base tecnica actual usa:
 La modernizacion debe hacerse de forma progresiva, evitando una reescritura total. La prioridad es extraer primero la logica musical pura a modulos de dominio sin dependencias de DOM, jQuery, MIDI ni renderizado.
 
 - `js/domain/`: reglas musicales puras y entidades/servicios de dominio.
+- `js/services/`: servicios de frontend para infraestructura del navegador, como preescucha y futura exportacion MIDI.
 - `js/app.js`: orquestacion legacy de interfaz, eventos y renderizado mientras se completa la migracion.
 - Futuros servicios pueden separarse por responsabilidad: escalas, acordes, progresiones, reproduccion, exportacion MIDI e instrumentos.
+- La armonia extendida debe formalizarse en dominio antes de reutilizarse en generacion de progresiones o exportacion MIDI. `CodaDomain.buildExtendedHarmonyChord(...)` es la primera frontera extraida para dominantes secundarios, subdominantes secundarios, sustitutos tritonales y ii relativos.
 
 Los nuevos modulos deben poder probarse de forma aislada siempre que sea razonable.
 
@@ -62,6 +64,7 @@ Los nuevos modulos deben poder probarse de forma aislada siempre que sea razonab
 - `js/app.js`: logica principal de la aplicacion.
 - `js/data.js`: datos y estructuras musicales.
 - `js/domain/`: modulos de dominio extraidos progresivamente desde el monolito.
+- `js/services/`: servicios extraidos progresivamente para reproduccion, exportacion MIDI y otras integraciones de navegador.
 - `js/midi/`: utilidades relacionadas con MIDI y reproduccion.
 - `soundfont/`: instrumentos y muestras usadas para preescucha.
 - `img/`: recursos visuales como teclado y diapason.
