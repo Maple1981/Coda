@@ -206,3 +206,29 @@ segundosMenoresRelativos.push({"nombre" : "ii7rel-VI", "tipo" : "menor séptima"
 segundosMenoresRelativos.push({"nombre" : "ii7b5rel-IV", "tipo" : "semidisminuido", "menor" : true});
 segundosMenoresRelativos.push({"nombre" : "ii7b5rel-V", "tipo" : "semidisminuido", "menor" : true});
 segundosMenoresRelativos.push({"nombre" : "ii7b5rel-VI", "tipo" : "semidisminuido", "menor" : true});
+
+window.CodaData = {
+	constants: {
+		octaveSemitones: numeroNotasEscalaDiatonica,
+		fretCount: numeroTrastes
+	},
+	midi: {
+		delay: delay,
+		note: note,
+		velocity: velocity,
+		channel: channel,
+		initialMidiNote: Cinicial
+	},
+	notes: notas,
+	intervals: intervalos,
+	scales: escalas,
+	chords: acordes,
+	tunings: afinaciones,
+	circleOfFifths: circuloQuintas,
+	extendedHarmony: {
+		secondaryDominants: dominantesSecundarios,
+		secondarySubdominants: subDominantesSecundarios,
+		tritoneSubstitutes: tritonosSustitutos,
+		relativeMinorSeconds: segundosMenoresRelativos
+	}
+};

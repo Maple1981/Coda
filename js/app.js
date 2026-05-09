@@ -19,6 +19,24 @@ $( document ).ready(function() {
 	var numeroAfinacionElegida;
 	var afinacionElegida;
 	var cuerdas; //array Asociativo (hashtable)
+
+	var data = CodaData;
+	var numeroNotasEscalaDiatonica = data.constants.octaveSemitones;
+	var delay = data.midi.delay;
+	var velocity = data.midi.velocity;
+	var channel = data.midi.channel;
+	var Cinicial = data.midi.initialMidiNote;
+	var notas = data.notes;
+	var intervalos = data.intervals;
+	var escalas = data.scales;
+	var acordes = data.chords;
+	var afinaciones = data.tunings;
+	var circuloQuintas = data.circleOfFifths;
+	var dominantesSecundarios = data.extendedHarmony.secondaryDominants;
+	var subDominantesSecundarios = data.extendedHarmony.secondarySubdominants;
+	var tritonosSustitutos = data.extendedHarmony.tritoneSubstitutes;
+	var segundosMenoresRelativos = data.extendedHarmony.relativeMinorSeconds;
+
 	var playbackService = CodaPlayback.create({
 		midi: MIDI,
 		notes: notas,

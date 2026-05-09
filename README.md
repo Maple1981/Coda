@@ -23,6 +23,12 @@ It uses locally vendored jQuery 4.0.0 and jQuery UI 1.14.2 for the current legac
 
 The long-term direction is to keep extracting music-domain logic into small JavaScript modules and progressively reduce UI coupling with jQuery where it makes the code easier to maintain.
 
+Run the domain checks with:
+
+```bash
+node tests/domain-tests.js
+```
+
 The layout needs some small improvements to be fully responsive.
 
 I should translate the app into English. 
