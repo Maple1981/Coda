@@ -7,27 +7,15 @@
 $(document).ready(function () {
 	'use strict';
 
-	var data = CodaData;
-	var playbackService = CodaPlayback.create({
-		channel: data.midi.channel,
-		delay: data.midi.delay,
-		initialMidiNote: data.midi.initialMidiNote,
-		instrument: 'acoustic_grand_piano',
-		midi: MIDI,
-		notes: data.notes,
-		soundfontUrl: './soundfont/',
-		velocity: data.midi.velocity
-	});
-
-	CodaScaleReportController.initialize({
+	CodaBootstrap.start({
 		$: $,
 		application: CodaApplication,
-		data: data,
+		controller: CodaScaleReportController,
+		data: CodaData,
 		domain: CodaDomain,
-		playbackService: playbackService,
+		midi: MIDI,
+		playbackFactory: CodaPlayback,
 		renderers: CodaRenderers,
 		ui: CodaUi
 	});
-
-	playbackService.load();
 });

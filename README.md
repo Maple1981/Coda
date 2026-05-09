@@ -28,10 +28,11 @@ Run the domain checks with:
 ```bash
 node tests/domain-tests.js
 node tests/app-layer-tests.js
+node tests/architecture-tests.js
 node tests/renderers-tests.js
 ```
 
-These checks cover representative scales, diatonic chords, modal chord labels, application report orchestration, instrument models, secondary dominants, tritone substitutes and relative minor seconds.
+These checks cover representative scales, diatonic chords, modal chord labels, application report orchestration, architecture wiring, instrument models, secondary dominants, tritone substitutes and relative minor seconds.
 
 The layout needs some small improvements to be fully responsive.
 
