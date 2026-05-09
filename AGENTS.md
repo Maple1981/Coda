@@ -71,7 +71,7 @@ Los nuevos modulos deben poder probarse de forma aislada siempre que sea razonab
   - `chord-domain.js`: acordes diatonicos, acordes desde fundamental y etiquetas modales.
   - `extended-harmony-domain.js`: dominantes secundarios, subdominantes secundarios, sustitutos tritonales e ii relativos.
   - `music-domain.js`: fachada de compatibilidad `CodaDomain` para la aplicacion legacy.
-- `js/renderers/`: modulos de renderizado. `scale-summary-renderer.js` genera el titulo/lista de escala y relaciones tonal relativa/paralela, `scale-chords-renderer.js` genera la tabla de acordes diatonicos y `extended-harmony-renderer.js` genera las tablas de armonia extendida desde datos de escala/acordes y delega el calculo musical en dominio.
+- `js/renderers/`: modulos de renderizado. `scale-summary-renderer.js` genera el titulo/lista de escala y relaciones tonal relativa/paralela, `scale-chords-renderer.js` genera la tabla de acordes diatonicos, `extended-harmony-renderer.js` genera las tablas de armonia extendida e `instrument-renderer.js` genera las vistas de guitarra y piano.
 - `js/services/`: servicios extraidos progresivamente para reproduccion, exportacion MIDI y otras integraciones de navegador.
 - `js/midi/`: utilidades relacionadas con MIDI y reproduccion.
 - `soundfont/`: instrumentos y muestras usadas para preescucha.

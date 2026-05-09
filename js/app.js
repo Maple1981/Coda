@@ -324,82 +324,12 @@ $( document ).ready(function() {
 	//función de output html que devuelve una tabla con el diapasón completo
 	//marcando con una cssclass específica las notas que sí pertenecen a la escala elegida. 
 	function generaTablaDiapason(){
-		
-		var html ='<h4>Afinación: ' + afinacionElegida['nombre'] + '&nbsp;';
-		
-		//selector de afinaciones
-		html += '<select id="selectorAfinaciones"><option value="-1">Cambiar&nbsp;</option>';
-		
-		for(var i=0; i<afinaciones.length; i++)
-		{
-			
-			if (afinaciones[i]['nombre'] != afinacionElegida['nombre'])
-			{
-				html += '<option value="' + i + '">' + afinaciones[i]['nombre'] + '</option>';
-			};
-			
-		};
-		
-		
-		html += '</select>';
-		
-		html += '</h4>';
-		
-		html += '<table class="diapason"><tbody>';
-		
-		for(var i=0;i<cuerdas.length;i++)
-		{
-			html+='<tr>';	
-			
-			//cuerdas al aire
-			//determinamos la css class de la celda
-			var cssClassCeldaAire = ' noPerteneceEscala';
-			if(cuerdas[i]['perteneceEscala'])	cssClassCeldaAire = ' perteneceEscala';
-			
-			var cssModal = ''
-			if(escalaElegida['modal'] == 'true' && cuerdas[i]['tipo'] != ''){
-				cssModal = ' class="' + cuerdas[i]['tipo'] + '"';
-			};
-			
-			html+='<td class="celdaNota' + cssClassCeldaAire + '"><span' + cssModal + '>' + cuerdas[i]['aire'] + '</span></td>';
-			
-			//trastes
-			for(var j=0;j<cuerdas[i]['trastes'].length;j++)
-			{
-				//determinamos la css class de la celda
-				var cssClassCelda = ' noPerteneceEscala';
-				if(cuerdas[i]['trastes'][j]['perteneceEscala'])
-				{
-					cssClassCelda = ' perteneceEscala';
-				};
-				
-				var cssModal = ''
-				if(escalaElegida['modal'] == 'true' && cuerdas[i]['trastes'][j]['tipo'] != ''){
-					cssModal = ' class="' + cuerdas[i]['trastes'][j]['tipo'] + '"';
-				};
-				
-				html+='<td class="celdaNota ' + cssClassCelda + '"><span' + cssModal + '>' + cuerdas[i]['trastes'][j]['nombre'] + '</span></td>';
-				
-			};
-			
-			html+='</tr>';
-		};
-		
-		html+='</tbody>';
-		
-		//añadimos fila de numeración
-		html+='<tfoot><tr>';
-		for(var k = 0;k<cuerdas[0]['trastes'].length + 1;k++)
-		{
-			html+='<td><span>' + k + '</span></td>';
-		};
-		
-		
-		html+='</tr></tfoot>';
-		
-		html+='</table>';
-		
-		return html;
+		return CodaRenderers.instruments.renderGuitar({
+			scaleDefinition: escalaElegida,
+			strings: cuerdas,
+			tuning: afinacionElegida,
+			tunings: afinaciones
+		});
 			
 	};
 	
@@ -407,133 +337,14 @@ $( document ).ready(function() {
 	//marcando con una cssclass específica las notas que sí pertenecen a la escala elegida. 
 	function generaTablaPiano(arrayNotas)
 	{
-		var numOctavas = 2;
-	
-		var html = '<h4>Vista de piano</h4>';
-		html += '<div class="teclado">';
-		
-		html += '<table class="teclasNegras">';
-		html += '<tbody>';
-		html += '<tr>';
-		
-		for(var i=0;i<numOctavas;i++)
-		{
-			
-			for(var j=0;j<notas.length;j++)
-			{
-				var nombreNota = '';
-				nombreNota = notas[j]['nombre'];
-				
-				//comprobamos si la nota renderizada en el piano pertenece a la escala seleccionada o no, para marcarla.
-				var perteneceEscala = false;
-				var tipoModal = '';
-				for(var key in arrayNotas)
-				{
-					if(arrayNotas[key]['nombre']==notas[j]['nombre'])
-					{
-						if(!compruebaSiGradoEstaSuprimido(key))
-						{
-							perteneceEscala = true;
-							if(escalaElegida['modal'] && arrayNotas[key]['tipo'] != '')	tipoModal = arrayNotas[key]['tipo'];
-							break;
-						}
-					}else if(notas[j]['enarmonica']!=null){
-						if(arrayNotas[key]['nombre']==notas[j]['enarmonica']){
-							if(!compruebaSiGradoEstaSuprimido(key))
-							{
-								perteneceEscala = true;
-								if(escalaElegida['modal'] && arrayNotas[key]['tipo'] != '')	tipoModal = arrayNotas[key]['tipo'];
-								break;
-							};
-						};
-					};
-				};
-				
-				var cssClassPerteneceEscala = '';
-				var cssModal = '';
-				if (perteneceEscala){cssClassPerteneceEscala=' perteneceEscala';}
-				else{cssClassPerteneceEscala=' noPerteneceEscala';}
-				
-				if(tipoModal!=''){cssModal = ' class="' + tipoModal + '"';}
-				
-				if(notas[j]['enarmonica'] != null){
-					
-					if($("#interface input:radio:checked").val()==1)
-					{
-					//si se ha pulsado bemoles, cargamos las notas correspondientes en el caso de las alteraciones
-					
-						nombreNota = notas[j]['enarmonica'];
-						
-					}
-					
-					html+='<td class="celdaNota' + cssClassPerteneceEscala + '"><span' + cssModal + '>' + nombreNota + '</span></td>';
-					
-				}else{
-					nombreNota = '&nbsp;&nbsp;'; //dejamos vacías las celdas donde no hay teclas negras
-					html+='<td class="huecoBlanco hueco' + notas[j]['nombre'] + '"><span>' + nombreNota + '</span></td>';
-				};
-				
-				
-			};
-		
-		};
-		
-		html+='</tr>';
-		html+='</table>';
-		
-		html += '<table class="teclasBlancas">';
-		html += '<tbody>';
-		html += '<tr>';
-		
-		for(var i=0;i<numOctavas;i++)
-		{
-			
-			for(var j=0;j<notas.length;j++)
-			{
-				
-				if(notas[j]['enarmonica'] == null){
-					var nombreNota = '';
-					nombreNota = notas[j]['nombre'];
-					
-					
-					//comprobamos si la nota renderizada en el piano pertenece a la escala seleccionada o no, para marcarla.
-					var perteneceEscala = false;
-					var tipoModal = '';
-					for(var key in arrayNotas)
-					{
-						if(arrayNotas[key]['nombre']==notas[j]['nombre'])
-						{
-							if(!compruebaSiGradoEstaSuprimido(key))
-							{
-								perteneceEscala = true;
-								if(escalaElegida['modal'] && arrayNotas[key]['tipo'] != '')	tipoModal = arrayNotas[key]['tipo'];
-								break;
-							}; //en este caso no  miramos enarmonías, porque son notas naturales, sin alteraciones
-						};
-					};
-					var cssClassPerteneceEscala = '';
-					var cssModal = '';
-					if (perteneceEscala){cssClassPerteneceEscala=' perteneceEscala';}
-					else{cssClassPerteneceEscala=' noPerteneceEscala';}
-					
-					if(tipoModal!=''){cssModal = ' class="' + tipoModal + '"';}
-					
-					html+='<td class="celdaNota ' + cssClassPerteneceEscala + '"><span' + cssModal + '>' + nombreNota + '</span></td>';
-				};
-				
-				
-				
-			};
-		
-		};
-		
-		html+='</tr>';
-		html+='</table>';
-		
-		
-		html+='</div>';
-		
-		return html;
+		return CodaRenderers.instruments.renderPiano({
+			isDegreeSuppressed: compruebaSiGradoEstaSuprimido,
+			notes: notas,
+			octaveCount: 2,
+			preferFlats: $("#interface input:radio:checked").val()==1,
+			scaleDefinition: escalaElegida,
+			scaleNotes: arrayNotas
+		});
 	};
 	
 	//función de output html que devuelve una tabla para simular un círculo de quintas contenido en circuloQuintas, siempre que hayamos elegido una escala tonificable.

@@ -25,12 +25,14 @@ function runScript(relativePath) {
 	'js/domain/music-domain.js',
 	'js/renderers/scale-summary-renderer.js',
 	'js/renderers/scale-chords-renderer.js',
-	'js/renderers/extended-harmony-renderer.js'
+	'js/renderers/extended-harmony-renderer.js',
+	'js/renderers/instrument-renderer.js'
 ].forEach(runScript);
 
 const data = context.window.CodaData;
 const domain = context.window.CodaDomain;
 const extendedHarmonyRenderer = context.window.CodaRenderers.extendedHarmony;
+const instrumentsRenderer = context.window.CodaRenderers.instruments;
 const scaleChordsRenderer = context.window.CodaRenderers.scaleChords;
 const scaleSummaryRenderer = context.window.CodaRenderers.scaleSummary;
 
@@ -93,6 +95,41 @@ assert.ok(scaleSummaryHtml.indexOf('<span id="A_m_" class="revamp estiloEnlace">
 assert.ok(scaleSummaryHtml.indexOf('<span id="C_m" class="revamp estiloEnlace">Cm</span>') > -1);
 assert.ok(scaleSummaryHtml.indexOf('<ul class="notasEscala">') > -1);
 assert.ok(scaleSummaryHtml.indexOf('C<sup>I</sup>') > -1);
+
+const guitarHtml = instrumentsRenderer.renderGuitar({
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	strings: [
+		{
+			aire: 'E',
+			perteneceEscala: true,
+			trastes: [
+				{ nombre: 'F', perteneceEscala: true },
+				{ nombre: 'F#', perteneceEscala: false }
+			]
+		}
+	],
+	tuning: data.tunings[0],
+	tunings: data.tunings
+});
+
+assert.ok(guitarHtml.indexOf('<select id="selectorAfinaciones">') > -1);
+assert.ok(guitarHtml.indexOf('<table class="diapason">') > -1);
+assert.ok(guitarHtml.indexOf('<td class="celdaNota perteneceEscala"><span>E</span></td>') > -1);
+assert.ok(guitarHtml.indexOf('<td><span>2</span></td>') > -1);
+
+const pianoHtml = instrumentsRenderer.renderPiano({
+	isDegreeSuppressed: function () { return false; },
+	notes: data.notes,
+	octaveCount: 1,
+	preferFlats: true,
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	scaleNotes: cMajor
+});
+
+assert.ok(pianoHtml.indexOf('<table class="teclasNegras">') > -1);
+assert.ok(pianoHtml.indexOf('<table class="teclasBlancas">') > -1);
+assert.ok(pianoHtml.indexOf('<span>Bb</span>') > -1);
+assert.ok(pianoHtml.indexOf('<td class="celdaNota  perteneceEscala"><span>C</span></td>') > -1);
 
 const scaleChordsHtml = scaleChordsRenderer.render({
 	mode: 'M',
