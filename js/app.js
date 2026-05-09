@@ -59,73 +59,18 @@ $( document ).ready(function() {
 	//según la elección del usuario	en el front-end
 	function obtenEscala(tonicaElegida, numeroEscalaElegida, arrayEscala)
 	{
-		
 		escalaElegida = escalas[numeroEscalaElegida];
 
-		var patronEscalaElegida = escalaElegida['patron'];
-		var intervalosEscalaElegida = patronEscalaElegida.split('-');
-		
-		
-		
-		var posicion = tonicaElegida;
-		var sumaSemitonos = 0;
-		
-		//si la escala elegida es modal, marcamos ya las notas principales y secundarias del modo.
-		var notaPrincipal = 0;
-		var notaSecundaria = 0;
-		if(escalaElegida['modal'] == 'true'){
-					var notasCaracteristicasPart = escalaElegida['caracteristicas'].split('-');
-					var notaPrincipal = parseInt(notasCaracteristicasPart[0]);
-					var notaSecundaria = parseInt(notasCaracteristicasPart[1]);
-		};
-		
-		for(var i=0; i<intervalosEscalaElegida.length; i++)
-		{
-			
-			posicion += parseInt(intervalosEscalaElegida[i]);
-			if (posicion >=numeroNotasEscalaDiatonica){
-				posicion = posicion - numeroNotasEscalaDiatonica;
-			};
-			
-			sumaSemitonos += parseInt(intervalosEscalaElegida[i]);
-			
-			var nombreGrado = "";
-			var grado = "";
-			var enarmonica = "";
-			for(var j=0;j<intervalos.length;j++)
-			{
-				if(parseInt(sumaSemitonos)==parseInt(intervalos[j]['semitonos']))
-				{
-					nombreGrado = intervalos[j]['nombre'];
-					grado = intervalos[j]['grado'];
-					break;
-				};
-			};
-			
-			var nombre = notas[posicion]['nombre'];
-			if($("#interface input:radio:checked").val()==1){
-					if (notas[posicion]['enarmonica'] != undefined){ nombre= notas[posicion]['enarmonica'];} 
-			};
-			
-			
-			if(escalaElegida['modal'] == 'true' && notaPrincipal > 0 && notaSecundaria > 0){	
-					var tipoDeLaActual;
-					if(i+1==notaPrincipal){
-						tipoDeLaActual = "principal";
-					}else if(i+1==notaSecundaria){
-						tipoDeLaActual = "secundaria";
-					}else{
-						tipoDeLaActual = null;	
-					};
-					
-					arrayEscala.push({"nombre" : nombre, "semitonos" : sumaSemitonos, "nombreGrado" : nombreGrado, "grado" : grado, "tipo" : tipoDeLaActual});
-					
-			}else{
-				arrayEscala.push({"nombre" : nombre, "semitonos" : sumaSemitonos, "nombreGrado" : nombreGrado, "grado" : grado});	
-			};
-			
-			
-		};
+		var notasCalculadas = CodaDomain.buildScale({
+			tonicIndex: tonicaElegida,
+			scaleDefinition: escalaElegida,
+			notes: notas,
+			intervals: intervalos,
+			octaveSemitones: numeroNotasEscalaDiatonica,
+			preferFlats: $("#interface input:radio:checked").val()==1
+		});
+
+		Array.prototype.push.apply(arrayEscala, notasCalculadas);
 
 	};
 	
@@ -134,119 +79,15 @@ $( document ).ready(function() {
 	//según el hashTable notasEscalaElegida
 	function obtenAcordesEscala(arrayNotas, arrayAcordes)
 	{
-		//distancias de heptatónicas
-		//los acordes se forman por superposición de terceras (2 tonos) desde la fundamental
-		
-		var superposicionTerceras = 2;
-		var stepsHastaTercera = superposicionTerceras;
-		var stepsHastaQuinta = superposicionTerceras * 2;
-		var stepsHastaSeptima = superposicionTerceras * 3;
-		
-		//para los acordes suspendidos obtenemos sus segundas(sus2) y sus cuartas (sus4)
-		var stepsHastaSegunda = 1; //un tono
-		var stepsHastaCuarta = 3; //tres tonos
+		var acordesCalculados = CodaDomain.buildScaleChords({
+			scaleNotes: arrayNotas,
+			scaleDefinition: escalaElegida,
+			chordDefinitions: acordes,
+			octaveSemitones: numeroNotasEscalaDiatonica,
+			isDegreeSuppressed: compruebaSiGradoEstaSuprimido
+		});
 
-		for(var i=0; i<arrayNotas.length; i++)
-		{
-		//acordes de la escala
-			
-			if(!compruebaSiGradoEstaSuprimido(i)){
-				
-				var acordeEncontrado;
-				var intervalosEncontrados;
-				var terceraEncontrada;
-				var quintaEncontrada;
-				var septimaEncontrada;
-				
-				var segundaEncontrada;
-				var cuartaEncontrada;
-				
-				var primerIntervalo;
-				var segundoIntervalo;
-				var tercerIntervalo;
-				
-				var sus2Intervalo;
-				var sus4Intervalo;
-				
-				//para cada nota fundamental, buscamos su tercera, quinta y séptima, y obtenemos su cuatriada
-				if(i<arrayNotas.length - stepsHastaTercera){
-					terceraEncontrada = arrayNotas[i + stepsHastaTercera];
-					primerIntervalo = parseInt(terceraEncontrada['semitonos']) - parseInt(arrayNotas[i]['semitonos']);
-				}else{
-					terceraEncontrada = arrayNotas[stepsHastaTercera - (arrayNotas.length - i)];
-					primerIntervalo = (numeroNotasEscalaDiatonica - parseInt(arrayNotas[i]['semitonos'])) + parseInt(terceraEncontrada['semitonos']);	
-				};
-				
-				if(i<(arrayNotas.length - stepsHastaQuinta)){
-					quintaEncontrada = arrayNotas[i + stepsHastaQuinta];
-					segundoIntervalo = parseInt(quintaEncontrada['semitonos']) - parseInt(arrayNotas[i]['semitonos']);
-				}else{
-					quintaEncontrada = arrayNotas[stepsHastaQuinta - (arrayNotas.length - i)];
-					segundoIntervalo = (numeroNotasEscalaDiatonica - parseInt(arrayNotas[i]['semitonos'])) + parseInt(quintaEncontrada['semitonos']);	
-				};
-				
-				if(i<(arrayNotas.length - stepsHastaSeptima)){
-					septimaEncontrada = arrayNotas[i + stepsHastaSeptima];
-					tercerIntervalo = parseInt(septimaEncontrada['semitonos']) - parseInt(arrayNotas[i]['semitonos']);
-				}else{
-					septimaEncontrada = arrayNotas[stepsHastaSeptima - (arrayNotas.length - i)];
-					tercerIntervalo = (numeroNotasEscalaDiatonica - parseInt(arrayNotas[i]['semitonos'])) + parseInt(septimaEncontrada['semitonos']);	
-				};
-
-				intervalosEncontrados = '1-' + primerIntervalo + '-' + segundoIntervalo + '-' + tercerIntervalo;
-				
-				
-			    //hacemos lo propio con los sus
-				//no rellenamos los intervalosEncontrados porque son acordes accesorios que obtendremos en la representación
-				if(i<(arrayNotas.length - stepsHastaSegunda)){
-					segundaEncontrada = arrayNotas[i + stepsHastaSegunda];
-				}else{
-					segundaEncontrada = arrayNotas[stepsHastaSegunda - (arrayNotas.length - i)];
-				};
-				if(i<(arrayNotas.length - stepsHastaCuarta)){
-					cuartaEncontrada = arrayNotas[i + stepsHastaCuarta];
-				}else{
-					cuartaEncontrada = arrayNotas[stepsHastaCuarta - (arrayNotas.length - i)];
-				};
-				
-				//sabiendo el patrón, buscamos el acorde
-				var tipoAcorde = "";
-				for(var j=0;j<acordes.length;j++){
-					
-					if(acordes[j]['patron'] == intervalosEncontrados){
-							tipoAcorde = acordes[j]['abreviatura'];
-							break;
-					};
-					
-				};
-				
-				//si la escala es modal, marcamos el acorde a evitar y los principales 
-				if(escalaElegida['modal'] == "true"){
-					var tipoAcordeModal = '';
-					
-					if((arrayNotas[i]['tipo'] == 'principal' || arrayNotas[i]['tipo'] == 'secundaria') && ((terceraEncontrada['tipo'] == 'principal' || terceraEncontrada['tipo'] == 'secundaria') || (quintaEncontrada['tipo'] == 'principal' || quintaEncontrada['tipo'] == 'secundaria') || (septimaEncontrada['tipo'] == 'principal' || septimaEncontrada['tipo'] == 'secundaria'))){
-						//si la fundamental es principal o secundaria, y además la tercera, la quinta o la séptima también lo son
-						//(el acorde contiene ambas notas-tritono-, y una está en su fundamental)
-						tipoAcordeModal = 'evitar';
-					}else if(arrayNotas[i]['tipo'] == 'principal' || terceraEncontrada['tipo'] == 'principal' || quintaEncontrada['tipo'] == 'principal' || septimaEncontrada['tipo'] == 'principal'){
-						//si el acorde no es el anterior pero contiene la nota principal en cualquiera de sus posiciones
-						tipoAcordeModal = 'cadencial';
-					}else{
-						tipoAcordeModal = '';
-					};
-					
-					arrayAcordes.push({"nombre" : arrayNotas[i]['nombre'] + tipoAcorde, "fundamental" : arrayNotas[i]['nombre'], "segunda" : segundaEncontrada['nombre'], "tercera" : terceraEncontrada['nombre'], "cuarta" : cuartaEncontrada['nombre'], "quinta" : quintaEncontrada['nombre'], "septima" : septimaEncontrada['nombre'], "tipo" : tipoAcordeModal});
-					
-					
-				}else{ //si la escala es tonal
-					arrayAcordes.push({"nombre" : arrayNotas[i]['nombre'] + tipoAcorde, "fundamental" : arrayNotas[i]['nombre'], "segunda" : segundaEncontrada['nombre'], "tercera" : terceraEncontrada['nombre'], "cuarta" : cuartaEncontrada['nombre'], "quinta" : quintaEncontrada['nombre'], "septima" : septimaEncontrada['nombre']});
-					
-				};
-				
-				
-		
-			};//fin if grado suprimido
-		};//for i
+		Array.prototype.push.apply(arrayAcordes, acordesCalculados);
 		
 	};
 	

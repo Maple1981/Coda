@@ -45,12 +45,23 @@ La base tecnica actual usa:
 - Preservar los recursos existentes de audio, teclado, diapason e interfaz salvo que haya una razon clara para cambiarlos.
 - Al modificar logica musical, documentar brevemente la regla armonica o ritmica si no es evidente en el codigo.
 
+## Direccion arquitectonica
+
+La modernizacion debe hacerse de forma progresiva, evitando una reescritura total. La prioridad es extraer primero la logica musical pura a modulos de dominio sin dependencias de DOM, jQuery, MIDI ni renderizado.
+
+- `js/domain/`: reglas musicales puras y entidades/servicios de dominio.
+- `js/app.js`: orquestacion legacy de interfaz, eventos y renderizado mientras se completa la migracion.
+- Futuros servicios pueden separarse por responsabilidad: escalas, acordes, progresiones, reproduccion, exportacion MIDI e instrumentos.
+
+Los nuevos modulos deben poder probarse de forma aislada siempre que sea razonable.
+
 ## Estructura relevante
 
 - `index.html`: entrada principal de la aplicacion.
 - `styles.css` y `src/css/`: estilos compilados y fuentes Sass.
 - `js/app.js`: logica principal de la aplicacion.
 - `js/data.js`: datos y estructuras musicales.
+- `js/domain/`: modulos de dominio extraidos progresivamente desde el monolito.
 - `js/midi/`: utilidades relacionadas con MIDI y reproduccion.
 - `soundfont/`: instrumentos y muestras usadas para preescucha.
 - `img/`: recursos visuales como teclado y diapason.
