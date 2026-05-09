@@ -49,7 +49,7 @@ La base tecnica actual usa:
 
 La modernizacion debe hacerse de forma progresiva, evitando una reescritura total. La prioridad es extraer primero la logica musical pura a modulos de dominio sin dependencias de DOM, jQuery, MIDI ni renderizado.
 
-- `js/domain/`: reglas musicales puras y entidades/servicios de dominio.
+- `js/domain/`: reglas musicales puras separadas por responsabilidad. `music-utils.js` contiene utilidades compartidas, `scale-domain.js` escalas, `chord-domain.js` acordes, `extended-harmony-domain.js` armonia extendida y `music-domain.js` conserva la fachada `CodaDomain`.
 - `js/data.js`: catalogos musicales expuestos mediante `CodaData`. Los nombres globales legacy siguen existiendo temporalmente, pero el codigo nuevo debe consumir `CodaData`.
 - `js/services/`: servicios de frontend para infraestructura del navegador, como preescucha y futura exportacion MIDI.
 - `js/app.js`: orquestacion legacy de interfaz, eventos y renderizado mientras se completa la migracion.
@@ -65,6 +65,11 @@ Los nuevos modulos deben poder probarse de forma aislada siempre que sea razonab
 - `js/app.js`: logica principal de la aplicacion.
 - `js/data.js`: datos y estructuras musicales agrupados en `CodaData`.
 - `js/domain/`: modulos de dominio extraidos progresivamente desde el monolito.
+  - `music-utils.js`: patrones, nombres de nota, indices circulares e intervalos compartidos.
+  - `scale-domain.js`: construccion de escalas y notas caracteristicas modales.
+  - `chord-domain.js`: acordes diatonicos, acordes desde fundamental y etiquetas modales.
+  - `extended-harmony-domain.js`: dominantes secundarios, subdominantes secundarios, sustitutos tritonales e ii relativos.
+  - `music-domain.js`: fachada de compatibilidad `CodaDomain` para la aplicacion legacy.
 - `js/services/`: servicios extraidos progresivamente para reproduccion, exportacion MIDI y otras integraciones de navegador.
 - `js/midi/`: utilidades relacionadas con MIDI y reproduccion.
 - `soundfont/`: instrumentos y muestras usadas para preescucha.

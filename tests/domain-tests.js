@@ -16,8 +16,14 @@ function runScript(relativePath) {
 	vm.runInContext(source, context, { filename: relativePath });
 }
 
-runScript('js/data.js');
-runScript('js/domain/music-domain.js');
+[
+	'js/data.js',
+	'js/domain/music-utils.js',
+	'js/domain/scale-domain.js',
+	'js/domain/chord-domain.js',
+	'js/domain/extended-harmony-domain.js',
+	'js/domain/music-domain.js'
+].forEach(runScript);
 
 const data = context.window.CodaData;
 const domain = context.window.CodaDomain;
