@@ -17,9 +17,11 @@ The system supports guitar fretboard view (with different tunings) and keyboard 
 
 CODE AND IMPROVEMENTS
 =============================
-This is a web application based on HTML5, CSS3 and JavaScript.
+This is a pure frontend web application based on HTML5, CSS3 and JavaScript.
 
-It has some dependencies: JQuery (I will remove it on future pull requests), WebMIDI API (necessary to play the chords - soundfonts in mp3 https://webaudio.github.io/web-midi-api/) and Google Fonts (no problem with this).
+It uses locally vendored jQuery 4.0.0 and jQuery UI 1.14.2 for the current legacy interface. It also uses Web MIDI / Web Audio utilities and MP3 soundfonts to play chords in the browser, plus Google Fonts / Material Icons for typography and icons.
+
+The long-term direction is to keep extracting music-domain logic into small JavaScript modules and progressively reduce UI coupling with jQuery where it makes the code easier to maintain.
 
 The layout needs some small improvements to be fully responsive.
 
