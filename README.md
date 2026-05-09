@@ -27,6 +27,7 @@ Run the domain checks with:
 
 ```bash
 node tests/domain-tests.js
+node tests/renderers-tests.js
 ```
 
 These checks cover representative scales, diatonic chords, modal chord labels, secondary dominants, tritone substitutes and relative minor seconds.

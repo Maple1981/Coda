@@ -52,6 +52,7 @@ La modernizacion debe hacerse de forma progresiva, evitando una reescritura tota
 - `js/domain/`: reglas musicales puras separadas por responsabilidad. `music-utils.js` contiene utilidades compartidas, `scale-domain.js` escalas, `chord-domain.js` acordes, `extended-harmony-domain.js` armonia extendida y `music-domain.js` conserva la fachada `CodaDomain`.
 - `js/data.js`: catalogos musicales expuestos mediante `CodaData`. Los nombres globales legacy siguen existiendo temporalmente, pero el codigo nuevo debe consumir `CodaData`.
 - `js/services/`: servicios de frontend para infraestructura del navegador, como preescucha y futura exportacion MIDI.
+- `js/renderers/`: renderizado HTML separado progresivamente desde `js/app.js`. Los renderers deben recibir datos y opciones explicitas, y no calcular reglas musicales.
 - `js/app.js`: orquestacion legacy de interfaz, eventos y renderizado mientras se completa la migracion.
 - Futuros servicios pueden separarse por responsabilidad: escalas, acordes, progresiones, reproduccion, exportacion MIDI e instrumentos.
 - La armonia extendida debe formalizarse en dominio antes de reutilizarse en generacion de progresiones o exportacion MIDI. `CodaDomain.buildExtendedHarmonyChord(...)` es la primera frontera extraida para dominantes secundarios, subdominantes secundarios, sustitutos tritonales y ii relativos.
@@ -70,6 +71,7 @@ Los nuevos modulos deben poder probarse de forma aislada siempre que sea razonab
   - `chord-domain.js`: acordes diatonicos, acordes desde fundamental y etiquetas modales.
   - `extended-harmony-domain.js`: dominantes secundarios, subdominantes secundarios, sustitutos tritonales e ii relativos.
   - `music-domain.js`: fachada de compatibilidad `CodaDomain` para la aplicacion legacy.
+- `js/renderers/`: modulos de renderizado. `extended-harmony-renderer.js` genera las tablas de armonia extendida desde datos de escala/acordes y delega el calculo musical en dominio.
 - `js/services/`: servicios extraidos progresivamente para reproduccion, exportacion MIDI y otras integraciones de navegador.
 - `js/midi/`: utilidades relacionadas con MIDI y reproduccion.
 - `soundfont/`: instrumentos y muestras usadas para preescucha.
@@ -77,6 +79,7 @@ Los nuevos modulos deben poder probarse de forma aislada siempre que sea razonab
 - `Docs/`: repositorio de teoria musical, reglas tecnico-musicales y referencias conceptuales.
 - `Docs/teoria-md/`: version Markdown separada por areas o grupos de conceptos.
 - `tests/domain-tests.js`: pruebas basicas de dominio para escalas, acordes diatonicos, etiquetas modales, dominantes secundarios, sustitutos tritonales, ii relativos y armonia extendida.
+- `tests/renderers-tests.js`: pruebas basicas de renderizado HTML desacoplado de la interfaz.
 
 ## Criterios para futuras mejoras
 

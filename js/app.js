@@ -32,10 +32,6 @@ $( document ).ready(function() {
 	var acordes = data.chords;
 	var afinaciones = data.tunings;
 	var circuloQuintas = data.circleOfFifths;
-	var dominantesSecundarios = data.extendedHarmony.secondaryDominants;
-	var subDominantesSecundarios = data.extendedHarmony.secondarySubdominants;
-	var tritonosSustitutos = data.extendedHarmony.tritoneSubstitutes;
-	var segundosMenoresRelativos = data.extendedHarmony.relativeMinorSeconds;
 
 	var playbackService = CodaPlayback.create({
 		midi: MIDI,
@@ -866,157 +862,18 @@ $( document ).ready(function() {
 	
 	//genera tablas con acordes derivados de las cuatriadas básicas (sus dominantes secundarias, etc.)
 	function generaArmoniaExtendida(arrayNotas, arrayAcordes){
-		
-		var html = '';
-		
-		html += '<h3>Armonía extendida de ' + nombreTonicaElegida + " " + nombreEscalaElegida + '</h3>';
-		html += '<div id="acordeonArmoniaExtendida">';
-		
-		html += generaTablaArmoniaExtendida('Dominantes secundarios (D)', arrayNotas, arrayAcordes);
-		html += generaTablaArmoniaExtendida('Subdominantes secundarios (SD)', arrayNotas, arrayAcordes);
-		html += generaTablaArmoniaExtendida('Tritonos sustitutos (D)', arrayNotas, arrayAcordes);
-		html += generaTablaArmoniaExtendida('II menor relativo (SD)', arrayNotas, arrayAcordes);
-		html += '</div>';
-		
-		html += '<p class="leyenda"><span class="cadencial">Color:</span> acorde más frecuente</h4>';
+		modalidadGeneralElegida = $('select#escala option:selected').val() == '0' ? "M" : "m";
 
-		return html;
-	
-	};
-	
-	//crea una tabla de acordes extendidos a partir del titulo pasado (dominantes secundarios, subdominantes secundarios, etc.)
-	function generaTablaArmoniaExtendida(titulo, arrayNotas, arrayAcordes){
-	
-		var html = '';
-		
-		
-		html +='<h3>' + titulo + '</h3><div>';
-		
-		html += '<table>';
-		html += generaCabeceraTablaArmoniaExtendida(arrayAcordes);
-		
-		html += '<tbody>';
-		
-		//determinar si la elección ha sido Mayor o menor
-		if($('select#escala option:selected').val() == '0'){ //si es mayor
-			modalidadGeneralElegida = "M";
-		}else{
-			modalidadGeneralElegida = "m";
-		};
-		
-		switch(titulo)
-		{
-			case 'Dominantes secundarios (D)':
-				
-				//dominantes secundarios (tipo V7)
-				html += generaFilaArmoniaExtendida(dominantesSecundarios, 'Dominante', 7, arrayNotas, arrayAcordes);
-				//dominantes secundarios (tipo vii7b5)
-				html += generaFilaArmoniaExtendida(dominantesSecundarios, 'semidisminuido', 11, arrayNotas, arrayAcordes);
-				//dominantes secundarios (tipo viiDim7)
-				html += generaFilaArmoniaExtendida(dominantesSecundarios, 'disminuído', 11, arrayNotas, arrayAcordes);
-				break;
-			case 'Subdominantes secundarios (SD)':
-			
-				//subdominantes secundarios (tipo IVmaj7)
-				html += generaFilaArmoniaExtendida(subDominantesSecundarios, 'Mayor séptima', 5, arrayNotas, arrayAcordes);
-				//subdominantes secundarios (tipo ii7)
-				html += generaFilaArmoniaExtendida(subDominantesSecundarios, 'menor séptima', 2, arrayNotas, arrayAcordes);
-				//subdominantes secundarios (tipo iv7)
-				html += generaFilaArmoniaExtendida(subDominantesSecundarios, 'menor séptima', 5, arrayNotas, arrayAcordes);
-				//subdominantes secundarios (tipo ii7b5)
-				html += generaFilaArmoniaExtendida(subDominantesSecundarios, 'semidisminuido', 2, arrayNotas, arrayAcordes);
-				//subdominantes secundarios (tipo IV7)
-				html += generaFilaArmoniaExtendida(subDominantesSecundarios, 'Dominante', 5, arrayNotas, arrayAcordes);
-
-				break;
-			case 'Tritonos sustitutos (D)':
-				//tritonos sustitutos (tipo bII7), a distancia de 4ª aug del dominante normal de la escala
-				html += generaFilaArmoniaExtendida(tritonosSustitutos, 'Dominante', 6, arrayNotas, arrayAcordes);
-				break;
-			case 'II menor relativo (SD)':
-				//Segundo menor relativo (tipo ii7)
-				html += generaFilaArmoniaExtendida(segundosMenoresRelativos, 'menor séptima', 2, arrayNotas, arrayAcordes);
-				//Segundo menor relativo (tipo ii7b5)
-				html += generaFilaArmoniaExtendida(segundosMenoresRelativos, 'semidisminuido', 2, arrayNotas, arrayAcordes);
-				break;
-		};
-		
-		
-		html += '<tbody>';
-		html += '</table>';
-		html += '</div>'; //fin div del acordeon
-		
-		return html;
-	
-	};
-	
-	//simplemente genera una thead con los acordes ya calculados de la escala elegida
-	//para que el usuario tenga una referencia rápida
-	function generaCabeceraTablaArmoniaExtendida(arrayAcordes)
-	{
-		var html = '';
-		//cabecera de referencia
-		html += '<thead><tr>';
-		for(var i=0; i<=arrayAcordes.length - 1; i++){
-			
-			html += '<td class="cabecera">';
-			html += arrayAcordes[i]['nombre'];
-			html += '</td>';
-		};
-		html += '</tr></thead>';
-		
-		return html;
-	};
-	
-	
-	//crea una tr con tds con todos los acordes extendidos a partir de un tipo de arrayExtendido (Dominantes secundarias, subdominantes secundarias,...), un nombre del tipo de acorde (dominante, disminuído,...) y el nº de semitonos hasta la fundamental del nuevo acorde
-	function generaFilaArmoniaExtendida(arrayExtendido, nombreAcordeExtendido, semitonosHastaNuevaFundamental, arrayNotas, arrayAcordes){
-		
-		var html = '';
-		
-		html += '<tr>';
-		for(var i=0; i<=arrayAcordes.length - 1; i++){
-
-			var acordeExtendido = CodaDomain.buildExtendedHarmonyChord({
-				extensionRules: arrayExtendido,
-				targetDegree: arrayNotas[i]['grado'],
-				chordTypeName: nombreAcordeExtendido,
-				rootSemitoneOffset: semitonosHastaNuevaFundamental,
-				scaleChord: arrayAcordes[i],
-				notes: notas,
-				chordDefinitions: acordes,
-				mode: modalidadGeneralElegida,
-				preferFlats: $("#interface input:radio:checked").val()==1,
-				octaveSemitones: numeroNotasEscalaDiatonica
-			});
-			
-			if(acordeExtendido){
-				
-				html += '<td class="celdaAcorde" id="' + acordeExtendido.noteId + '">';
-				
-				html += '<p>' + acordeExtendido.rootName + acordeExtendido.abbreviation + ' (' + acordeExtendido.ruleName + ')</p>';
-				
-				var classFrecuencia = '';
-				
-				if(acordeExtendido.important)	classFrecuencia = ' cadencial';
-				
-				html += '<p class="destacado' + classFrecuencia + '">' + acordeExtendido.noteId + '</p>'
-				
-			html += '</td>';
-			
-			}else{
-			
-				html += '<td>-</td>';
-			
-			};
-			
-			
-		};
-
-		html += '</tr>';
-	
-		return html;
-	
+		return CodaRenderers.extendedHarmony.render({
+			data: data,
+			domain: CodaDomain,
+			mode: modalidadGeneralElegida,
+			preferFlats: $("#interface input:radio:checked").val()==1,
+			scaleChords: arrayAcordes,
+			scaleName: nombreEscalaElegida,
+			scaleNotes: arrayNotas,
+			tonicName: nombreTonicaElegida
+		});
 	};
 	
 	
