@@ -29,6 +29,8 @@ Run the domain checks with:
 node tests/domain-tests.js
 ```
 
+These checks cover representative scales, diatonic chords, modal chord labels, secondary dominants, tritone substitutes and relative minor seconds.
+
 The layout needs some small improvements to be fully responsive.
 
 I should translate the app into English. 

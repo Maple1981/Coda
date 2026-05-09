@@ -71,7 +71,7 @@ Los nuevos modulos deben poder probarse de forma aislada siempre que sea razonab
 - `img/`: recursos visuales como teclado y diapason.
 - `Docs/`: repositorio de teoria musical, reglas tecnico-musicales y referencias conceptuales.
 - `Docs/teoria-md/`: version Markdown separada por areas o grupos de conceptos.
-- `tests/domain-tests.js`: pruebas basicas de dominio para escalas, acordes y armonia extendida.
+- `tests/domain-tests.js`: pruebas basicas de dominio para escalas, acordes diatonicos, etiquetas modales, dominantes secundarios, sustitutos tritonales, ii relativos y armonia extendida.
 
 ## Criterios para futuras mejoras
 
