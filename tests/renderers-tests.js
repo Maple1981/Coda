@@ -23,12 +23,14 @@ function runScript(relativePath) {
 	'js/domain/chord-domain.js',
 	'js/domain/extended-harmony-domain.js',
 	'js/domain/music-domain.js',
+	'js/renderers/scale-chords-renderer.js',
 	'js/renderers/extended-harmony-renderer.js'
 ].forEach(runScript);
 
 const data = context.window.CodaData;
 const domain = context.window.CodaDomain;
-const renderer = context.window.CodaRenderers.extendedHarmony;
+const extendedHarmonyRenderer = context.window.CodaRenderers.extendedHarmony;
+const scaleChordsRenderer = context.window.CodaRenderers.scaleChords;
 
 function byName(collection, name) {
 	return collection.find(function (item) {
@@ -58,7 +60,65 @@ const cMajorChords = domain.buildScaleChords({
 	octaveSemitones: data.constants.octaveSemitones
 });
 
-const html = renderer.render({
+const cMinorNatural = domain.buildScale({
+	tonicIndex: noteIndex('C'),
+	scaleDefinition: byName(data.scales, 'Menor natural'),
+	notes: data.notes,
+	intervals: data.intervals,
+	octaveSemitones: data.constants.octaveSemitones,
+	preferFlats: false
+});
+
+const cMinorNaturalChords = domain.buildScaleChords({
+	scaleNotes: cMinorNatural,
+	scaleDefinition: byName(data.scales, 'Menor natural'),
+	chordDefinitions: data.chords,
+	octaveSemitones: data.constants.octaveSemitones
+});
+
+const scaleChordsHtml = scaleChordsRenderer.render({
+	mode: 'M',
+	parallelScaleChords: cMinorNaturalChords,
+	scaleChords: cMajorChords,
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	scaleNotes: cMajor
+});
+
+assert.ok(scaleChordsHtml.indexOf('<table class="acordesEscala">') > -1);
+assert.ok(scaleChordsHtml.indexOf('Cmaj7') > -1);
+assert.ok(scaleChordsHtml.indexOf('class="celdaAcorde" id="G-B-D-F"') > -1);
+assert.ok(scaleChordsHtml.indexOf('<td>V7</td>') > -1);
+assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Función: </td>') > -1);
+
+const dDorian = domain.buildScale({
+	tonicIndex: noteIndex('D'),
+	scaleDefinition: byName(data.scales, 'Modo dórico'),
+	notes: data.notes,
+	intervals: data.intervals,
+	octaveSemitones: data.constants.octaveSemitones,
+	preferFlats: false
+});
+
+const dDorianChords = domain.buildScaleChords({
+	scaleNotes: dDorian,
+	scaleDefinition: byName(data.scales, 'Modo dórico'),
+	chordDefinitions: data.chords,
+	octaveSemitones: data.constants.octaveSemitones
+});
+
+const modalChordsHtml = scaleChordsRenderer.render({
+	mode: '',
+	parallelScaleChords: [],
+	scaleChords: dDorianChords,
+	scaleDefinition: byName(data.scales, 'Modo dórico'),
+	scaleNotes: dDorian
+});
+
+assert.ok(modalChordsHtml.indexOf('<span class="cadencial">') > -1);
+assert.ok(modalChordsHtml.indexOf('<span class="evitar">') > -1);
+assert.ok(modalChordsHtml.indexOf('Acorde cadencial') > -1);
+
+const html = extendedHarmonyRenderer.render({
 	data: data,
 	domain: domain,
 	mode: 'M',

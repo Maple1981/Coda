@@ -405,121 +405,13 @@ $( document ).ready(function() {
 	
 	//función de output html que devuelve una tabla con los acordes que se forma en cada grado de la escala
 	function generaTablaAcordes(arrayNotas, arrayAcordes, arrayAcordesParalelos){
-	
-		var html;
-		
-		if(arrayAcordes.length > 0){
-		
-			html = '<h4>Acordes de la tonalidad</h4>';
-			html += '<table class="acordesEscala">';
-
-			
-			var filaGrados = '',
-			filaNombreTriadas = '',
-			filaNombreAcordes = '',
-			filaNombreSus2 = '',
-			filaNombreSus4 = '',
-			filaNombreParalela = '',
-			filaNombreParalelaTri = '',
-			filaNotasAcordes = '',
-			filaFuncionesArmonicas = '';
-			
-			for(var i=0; i<arrayAcordes.length; i++)
-			{
-			//acordes de la escala
-			
-				filaGrados += '<td>';
-				
-				filaGrados += transformaGradoSegunAcorde(arrayNotas[i]['grado'], arrayAcordes[i]['nombre']);
-				filaGrados += '</td>';
-			
-			    filaNombreTriadas +=  '<td class="celdaAcorde" id="' + arrayAcordes[i]['fundamental'] + "-" + arrayAcordes[i]['tercera'] + "-" + arrayAcordes[i]['quinta'] + '">';
-				filaNombreTriadas += arrayAcordes[i]['nombre'].replace('maj7', '').replace('m7♭5', 'dim').replace('m7', 'm').replace('7', '');
-				filaNombreTriadas += '</td>';
-				
-				
-				filaNombreAcordes += '<td class="celdaAcorde" id="' + arrayAcordes[i]['fundamental'] + "-" + arrayAcordes[i]['tercera'] + "-" + arrayAcordes[i]['quinta'] + "-" + arrayAcordes[i]['septima'] + '">';
-				filaNombreAcordes += arrayAcordes[i]['nombre'];
-				filaNombreAcordes += '</td>';
-				
-				//acordes suspendidos
-				filaNombreSus2 +=  '<td class="celdaAcorde" id="' + arrayAcordes[i]['fundamental'] + "-" + arrayAcordes[i]['segunda'] + "-" + arrayAcordes[i]['quinta'] + '">';
-				filaNombreSus2 += arrayAcordes[i]['nombre'].replace('maj7', 'sus2').replace('Maj7', 'sus2').replace('m7♭5', 'sus2').replace('dim7', 'sus2').replace('m7', 'sus2').replace('7', '');
-				if(arrayAcordes[i]['nombre'].length==2) filaNombreSus2 += 'sus2';
-				filaNombreSus2 += '</td>';
-				filaNombreSus4 +=  '<td class="celdaAcorde" id="' + arrayAcordes[i]['fundamental'] + "-" + arrayAcordes[i]['cuarta'] + "-" + arrayAcordes[i]['quinta'] + '">';
-				filaNombreSus4 += arrayAcordes[i]['nombre'].replace('maj7', 'sus4').replace('Maj7', 'sus4').replace('m7♭5', 'sus4').replace('dim7', 'sus2').replace('m7', 'sus4').replace('7', '');
-				if(arrayAcordes[i]['nombre'].length==2) filaNombreSus4 += 'sus4';
-				filaNombreSus4 += '</td>';
-				
-				//tonalidad paralela
-				if (escalaElegida['funciones'] != null && arrayAcordesParalelos[i] != null){
-					filaNombreParalela +=  '<td class="celdaAcorde" id="' + arrayAcordesParalelos[i]['fundamental'] + "-" + arrayAcordesParalelos[i]['tercera'] + "-" + arrayAcordesParalelos[i]['quinta'] + "-" + arrayAcordesParalelos[i]['septima'] +  '">';
-					filaNombreParalela += arrayAcordesParalelos[i]['nombre'];
-					filaNombreParalela += '</td>';
-					
-					filaNombreParalelaTri +=  '<td class="celdaAcorde" id="' + arrayAcordesParalelos[i]['fundamental'] + "-" + arrayAcordesParalelos[i]['tercera'] + "-" + arrayAcordesParalelos[i]['quinta'] + '">';
-					filaNombreParalelaTri += arrayAcordesParalelos[i]['nombre'].replace('maj7', '').replace('m7♭5', 'dim').replace('m7', 'm').replace('7', '');
-					filaNombreParalelaTri += '</td>';
-					
-				};
-				
-				//notas del grado
-				filaNotasAcordes += '<td class="par">';
-				
-				if(escalaElegida['modal'] == 'true' && arrayAcordes[i]['tipo'] != ''){
-					filaNotasAcordes += '<span class="' + arrayAcordes[i]['tipo'] + '">';	
-				};
-				
-				filaNotasAcordes += arrayAcordes[i]['fundamental'] + "-" + arrayAcordes[i]['tercera'] + "-" + arrayAcordes[i]['quinta'] + "-" + arrayAcordes[i]['septima'];
-				
-				if(escalaElegida['modal'] == 'true' && arrayAcordes[i]['tipo'] != null){
-					filaNotasAcordes += '</span>';	
-				};
-				
-				filaNotasAcordes += '</td>';
-
-				if (escalaElegida['funciones'] != null){
-					filaFuncionesArmonicas += '<td>';
-					var splitFuncionesEscalaElegida  = escalaElegida['funciones'].split('-');
-					filaFuncionesArmonicas += splitFuncionesEscalaElegida[i];
-					filaFuncionesArmonicas += '</td>';
-				};
-
-			};
-			
-			html +='<thead><tr><td>Grados</td>' + filaGrados + '</tr></thead><tbody><tr><td class="cabecera">Triada</td>' + filaNombreTriadas + '</tr><tr><td class="cabecera">Cuatriada</td>' + filaNombreAcordes + '</tr>';
-			html +='<tr><td class="cabecera">Sus2</td>' + filaNombreSus2 + '</tr><tr><td class="cabecera">Sus4</td>' + filaNombreSus4 + '</tr>';
-			
-
-			if(filaFuncionesArmonicas != '' && modalidadGeneralElegida != ''){
-				if(filaNombreParalela != '')	html +='<tr><td class="cabecera">Paralela</td>' + filaNombreParalela + '</tr>';
-				if(filaNombreParalela != '')	html +='<tr><td class="cabecera">Paralela</td>' + filaNombreParalelaTri + '</tr>';
-				html += '<tr><td class="cabecera">Función: </td>' + filaFuncionesArmonicas + '</tr>';
-			};
-			
-			html +='<tr><td class="cabecera">Notas</td>' + filaNotasAcordes + '</tr>';
-			
-			html += '</tbody></table>';
-			
-			//leyendas de la tabla
-			if(filaFuncionesArmonicas != ''){
-				html += '<p class="leyenda"><strong>T</strong>: tónica, <strong>SD</strong>: subdominante, <strong>D</strong>: dominante</p>';
-			};
-			
-			//leyenda de las escalas modales
-			if(escalaElegida['modal']=='true'){
-				html += '<div class="leyendaAcordesModales">';
-				html += '<span class="cadencial">Acorde cadencial</span> - ';
-				html += '<span class="evitar">Acorde a evitar</span>';
-				html += '</div>';
-			};
-			
-			
-		};
-		
-		return html;
-		
+		return CodaRenderers.scaleChords.render({
+			mode: modalidadGeneralElegida,
+			parallelScaleChords: arrayAcordesParalelos,
+			scaleChords: arrayAcordes,
+			scaleDefinition: escalaElegida,
+			scaleNotes: arrayNotas
+		});
 	};
 	
 	//función de output html que devuelve una tabla con el diapasón completo
@@ -898,35 +790,6 @@ $( document ).ready(function() {
 			return gradoSuprimido;	
 	};
 	
-	//función que devuelve el número romano de un grado en formato estandarizado según el acorde que se forma en él.
-	//por ejemplo, un II con Dm7, lo transforma en ii7; un I con Cmaj7 lo transforma en Imaj7, etc.
-	function transformaGradoSegunAcorde(grado, acorde)
-	{
-		var gradoTransformado = '';
-		
-		grado = grado.replace('J', '').replace('M','').replace('m',''); //limpiamos posibles intervalos
-		
-		if(acorde.indexOf('mmaj7') >= 0){
-			gradoTransformado = grado.toLowerCase();
-		}else if(acorde.indexOf('maj7') >= 0){
-			gradoTransformado = grado.toUpperCase();
-		}else if(acorde.indexOf('m') >= 0){
-			gradoTransformado = grado.toLowerCase();
-		}else{
-			gradoTransformado = grado.toUpperCase();
-		};
-		
-		//quitamos el posible bemol o sostenido del acorde y finalmente eliminamos la letra de la nota
-		gradoTransformado += acorde.replace('b','').replace('#','').substring(1,acorde.length);
-		
-		//en el caso de los menores séptima, eliminamos la m por ser redundante, ya que hemos pasado a lcase previamente
-		if(gradoTransformado.indexOf('m7') >= 0 && gradoTransformado.indexOf('dim7') == -1){
-				gradoTransformado = gradoTransformado.replace('m','');
-		};
-
-		return gradoTransformado;
-	};
-	 
 	//responde al mouseover sobre la celda de un acorde de notación, coloreando la vista de instrumento
 	function coloreaAcordeElegido(objThis){
 	
