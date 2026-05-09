@@ -14,21 +14,19 @@ $( document ).ready(function() {
 	
 	//variable local para recoger cambios en diapasón y piano (evento on change)
 	var notasEscalaElegidaGlobal;
+	var informeEscalaActual;
 	
 	var numeroAfinacionElegida;
 	var afinacionElegida;
 	var cuerdas; //array Asociativo (hashtable)
 
 	var data = CodaData;
-	var numeroNotasEscalaDiatonica = data.constants.octaveSemitones;
 	var delay = data.midi.delay;
 	var velocity = data.midi.velocity;
 	var channel = data.midi.channel;
 	var Cinicial = data.midi.initialMidiNote;
 	var notas = data.notes;
-	var intervalos = data.intervals;
 	var escalas = data.scales;
-	var acordes = data.chords;
 	var afinaciones = data.tunings;
 	var circuloQuintas = data.circleOfFifths;
 
@@ -77,59 +75,22 @@ $( document ).ready(function() {
 		selec.empty().append(html);
 	};
 	 
-	//método que rellena la hashtable notasEscalaElegida con las columnas:
-	//nombre, semitonos, nombreGrado y grado
-	//según la elección del usuario	en el front-end
-	function obtenEscala(tonicaElegida, numeroEscalaElegida, arrayEscala)
-	{
-		escalaElegida = escalas[numeroEscalaElegida];
-
-		var notasCalculadas = CodaDomain.buildScale({
-			tonicIndex: tonicaElegida,
-			scaleDefinition: escalaElegida,
-			notes: notas,
-			intervals: intervalos,
-			octaveSemitones: numeroNotasEscalaDiatonica,
-			preferFlats: $("#interface input:radio:checked").val()==1
-		});
-
-		Array.prototype.push.apply(arrayEscala, notasCalculadas);
-
-	};
-	
-	//método que rellena la hashtable acordesEscalaElegida con las columnas:
-	//nombre, fundamental, tercera, quinta y septima
-	//según el hashTable notasEscalaElegida
-	function obtenAcordesEscala(arrayNotas, arrayAcordes)
-	{
-		var acordesCalculados = CodaDomain.buildScaleChords({
-			scaleNotes: arrayNotas,
-			scaleDefinition: escalaElegida,
-			chordDefinitions: acordes,
-			octaveSemitones: numeroNotasEscalaDiatonica,
-			isDegreeSuppressed: compruebaSiGradoEstaSuprimido
-		});
-
-		Array.prototype.push.apply(arrayAcordes, acordesCalculados);
-		
-	};
-	
 	//método que rellena el hashtable multidimensional cuerdas con las columnas:
 	//aire, trastes(nombre, perteneceAEscala), perteneceAEscala
 	//según indique la afinacion elegida (de momento sólo afinación estándar)
 	function obtenDiapason(arrayNotas)
 	{
-		afinacionElegida = afinaciones[numeroAfinacionElegida];
-
-		cuerdas = CodaDomain.buildGuitarFretboard({
-			fretCount: data.constants.fretCount,
-			isDegreeSuppressed: compruebaSiGradoEstaSuprimido,
-			notes: notas,
+		var instrumentView = CodaApplication.buildInstrumentView({
+			data: data,
+			domain: CodaDomain,
+			instrument: '0',
 			preferFlats: $("#interface input:radio:checked").val()==1,
-			scaleDefinition: escalaElegida,
-			scaleNotes: arrayNotas,
-			tuning: afinacionElegida
+			report: informeEscalaActual,
+			tuningIndex: Number(numeroAfinacionElegida)
 		});
+
+		afinacionElegida = instrumentView.tuning;
+		cuerdas = instrumentView.strings;
 		
 	};
 	
@@ -183,17 +144,17 @@ $( document ).ready(function() {
 	//marcando con una cssclass específica las notas que sí pertenecen a la escala elegida. 
 	function generaTablaPiano(arrayNotas)
 	{
-		var keyboard = CodaDomain.buildPianoKeyboard({
-			isDegreeSuppressed: compruebaSiGradoEstaSuprimido,
-			notes: notas,
+		var instrumentView = CodaApplication.buildInstrumentView({
+			data: data,
+			domain: CodaDomain,
+			instrument: '1',
 			octaveCount: 2,
 			preferFlats: $("#interface input:radio:checked").val()==1,
-			scaleDefinition: escalaElegida,
-			scaleNotes: arrayNotas
+			report: informeEscalaActual
 		});
 
 		return CodaRenderers.instruments.renderPiano({
-			keyboard: keyboard,
+			keyboard: instrumentView.keyboard,
 			scaleDefinition: escalaElegida
 		});
 	};
@@ -234,19 +195,11 @@ $( document ).ready(function() {
 	//y devuelve un booleano true en caso afirmativo
 	//se utiliza para impedir el cálculo de acordes en escalas no diatónicas
 	function compruebaSiGradoEstaSuprimido(i){
-		
-			var gradoSuprimido = false;
-			if('gradosEliminados' in escalaElegida){
+		if (informeEscalaActual && informeEscalaActual.isDegreeSuppressed) {
+			return informeEscalaActual.isDegreeSuppressed(i);
+		}
 
-				var gradosEliminados = escalaElegida['gradosEliminados'].split('-');
-				for(var j=0;j<gradosEliminados.length;j++){
-					if(notasEscalaElegida[i]['grado']==gradosEliminados[j]){
-						gradoSuprimido = true;
-						break;
-					};
-				};
-			};
-			return gradoSuprimido;	
+		return false;
 	};
 	
 	//responde al mouseover sobre la celda de un acorde de notación, coloreando la vista de instrumento
@@ -405,58 +358,48 @@ $( document ).ready(function() {
 	//(es decir, desata eventos como el click del botón, o el cambio entre inputs radio)
 	function generaInformacion()
 	{
-		//inicializamos las variables
-		var notasEscalaElegida = new Array();
-		var acordesEscalaElegida = new Array();
-		var notasEscalaParalela = new Array();
-		var acordesEscalaParalela = new Array();
 		escalaElegida = null;
 		nombreTonicaElegida = null;
 		nombreEscalaElegida = null;
+		informeEscalaActual = null;
 		
 		if($('select#escala option:selected').text()!='------------')
 		{
 			var tonicaElegida = parseInt($('select#tonica option:selected').val());
 		    var numeroEscalaElegida = parseInt($('select#escala option:selected').val());
-			
-			obtenEscala(tonicaElegida, numeroEscalaElegida, notasEscalaElegida); //llena el arreglo hashtable notasEscalaElegida con las notas pertenecientes a la elección de los selects
-			if(notasEscalaElegida.length==7){
-				obtenAcordesEscala(notasEscalaElegida, acordesEscalaElegida);	//solo agregamos acordes a escalas heptatónicas
-				
-				//obtención de escala y acordes paralelos
-				if(numeroEscalaElegida==0 ||numeroEscalaElegida ==2){
-					var numeroEscalaParalela;
-					if(numeroEscalaElegida == 0){
-						//si ha elegido mayor, la paralela es la menor
-						numeroEscalaParalela = 2;
-					};
-					if(numeroEscalaElegida==2){
-						numeroEscalaParalela = 0;
-					};
-					obtenEscala(tonicaElegida, numeroEscalaParalela, notasEscalaParalela);
-					obtenAcordesEscala(notasEscalaParalela, acordesEscalaParalela);
-				};
-				
-			};
-			
-			notasEscalaElegidaGlobal = notasEscalaElegida //para eventos de on change
+
+			informeEscalaActual = CodaApplication.buildScaleReport({
+				data: data,
+				domain: CodaDomain,
+				preferFlats: $("#interface input:radio:checked").val()==1,
+				scaleIndex: numeroEscalaElegida,
+				scaleName: $('select#escala option:selected').text(),
+				tonicIndex: tonicaElegida,
+				tonicName: $('select#tonica option:selected').text()
+			});
+
+			escalaElegida = informeEscalaActual.scaleDefinition;
+			nombreTonicaElegida = informeEscalaActual.tonicName;
+			nombreEscalaElegida = informeEscalaActual.scaleName;
+			modalidadGeneralElegida = informeEscalaActual.mode;
+			notasEscalaElegidaGlobal = informeEscalaActual.scaleNotes //para eventos de on change
 			
 
 			//empezamos a mostrar por pantalla
 			$('#notacion').empty().append(generaTituloEscala());
-			$('#notacion').append(generaListaEscala(notasEscalaElegida));
+			$('#notacion').append(generaListaEscala(informeEscalaActual.scaleNotes));
 			
 			//vaciamos el panel de armonía extendida
 			$( "#armoniaExtendida" ).empty();
 			
-			if(notasEscalaElegida.length==7){
+			if(informeEscalaActual.scaleNotes.length==7){
 				
-				$('#notacion').append(generaTablaAcordes(notasEscalaElegida, acordesEscalaElegida, acordesEscalaParalela)); //solo agregamos acordes a escalas heptatónicas
+				$('#notacion').append(generaTablaAcordes(informeEscalaActual.scaleNotes, informeEscalaActual.scaleChords, informeEscalaActual.parallelScaleChords)); //solo agregamos acordes a escalas heptatónicas
 				
 				//si, además, es tonificable, agregamos armonía extendida
-				if(escalaElegida['tonal']!= null && (numeroEscalaElegida==0 ||numeroEscalaElegida ==2)){
+				if(informeEscalaActual.extendedHarmonyEnabled){
 				
-					$('#armoniaExtendida').empty().append(generaArmoniaExtendida(notasEscalaElegida, acordesEscalaElegida));
+					$('#armoniaExtendida').empty().append(generaArmoniaExtendida(informeEscalaActual.scaleNotes, informeEscalaActual.scaleChords));
 					
 					//aprovechamos para crear el evento de jqueryui que permita hacer acordeon
 					//sobre las tablas de armonía extendida
@@ -489,7 +432,7 @@ $( document ).ready(function() {
 			};
 			
 
-			creaInterfazInstrumento(notasEscalaElegida);
+			creaInterfazInstrumento(informeEscalaActual.scaleNotes);
 			
 			$('#circuloQuintas').empty().append(generaCirculoQuintas());
 		};
