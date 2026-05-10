@@ -11,6 +11,7 @@
 		});
 		var notation = options.notation;
 		var preferences = options.preferences;
+		var staticText = options.staticText || global.CodaStaticText;
 		var uiState = options.uiState || global.CodaUiState.create({
 			initialNotation: notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon',
 			language: i18n && i18n.getLanguage ? i18n.getLanguage() : 'es'
@@ -23,8 +24,8 @@
 		fillSelectHashTable($, $('#tonica'), options.data.notes, false, null, 'notes', notation, uiState.getNotationStyle());
 		fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
 		keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
-		if (i18n) {
-			i18n.applyStatic($);
+		if (staticText) {
+			staticText.apply($, i18n);
 		}
 		if (options.changelogDialog) {
 			options.changelogDialog.initialize($, i18n);
@@ -73,7 +74,9 @@
 				uiState.setLanguage(i18n.getLanguage());
 				savePreference(preferences, 'language', i18n.getLanguage());
 				fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
-				i18n.applyStatic($);
+				if (staticText) {
+					staticText.apply($, i18n);
+				}
 			}
 
 			if (options.ui.hasRenderedResults($)) {

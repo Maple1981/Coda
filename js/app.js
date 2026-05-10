@@ -30,6 +30,7 @@ $(document).ready(function () {
 		playbackFactory: CodaPlayback,
 		preferences: preferences,
 		renderers: CodaRenderers,
+		staticText: CodaStaticText,
 		ui: CodaUi,
 		uiStateFactory: CodaUiState
 	});

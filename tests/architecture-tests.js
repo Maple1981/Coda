@@ -56,6 +56,7 @@ assert.ok(global.CodaRenderers.changelog);
 assert.ok(global.CodaRenderers.welcome);
 assert.ok(global.CodaRenderers.progressionWorkbench);
 assert.ok(global.CodaUiState.create);
+assert.ok(global.CodaStaticText.apply);
 assert.ok(global.CodaKeyNavigation.applyRecommendedNotation);
 assert.ok(global.CodaChangelogDialog.initialize);
 assert.ok(global.CodaUi.renderScaleReport);
@@ -75,6 +76,7 @@ assert.ok(manifestScripts.indexOf('js/renderers/changelog-renderer.js') > -1);
 assert.ok(manifestScripts.indexOf('js/renderers/welcome-renderer.js') > -1);
 assert.ok(manifestScripts.indexOf('js/renderers/progression-workbench-renderer.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/ui-state.js') > -1);
+assert.ok(manifestScripts.indexOf('js/ui/static-text-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/key-navigation-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/changelog-dialog-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/domain/progression-domain.js') > -1);
@@ -152,6 +154,7 @@ const startResult = global.CodaBootstrap.start({
 	keyNavigation: global.CodaKeyNavigation,
 	changelogDialog: { initialize: function () {} },
 	musicalContextFactory: global.CodaMusicalContext,
+	staticText: global.CodaStaticText,
 	ui: global.CodaUi,
 	uiStateFactory: global.CodaUiState
 });
@@ -177,8 +180,10 @@ assert.ok(controllerOptions.musicalContext.fromSelection);
 assert.equal(controllerOptions.notation, global.CodaNotation);
 assert.equal(controllerOptions.preferences, preferences);
 assert.equal(controllerOptions.renderers, global.CodaRenderers);
+assert.equal(controllerOptions.staticText, global.CodaStaticText);
 assert.equal(controllerOptions.ui, global.CodaUi);
 assert.equal(controllerOptions.uiState, startResult.uiState);
+assert.equal(i18n.applyStatic, undefined);
 assert.equal(startResult.uiState.getLanguage(), 'es');
 assert.equal(startResult.uiState.getNotationStyle(), 'latin');
 startResult.uiState.setSelection({ instrument: '0', tonicName: 'C' });

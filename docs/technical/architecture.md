@@ -31,7 +31,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/content/welcome-content.js`: contenido estructurado de bienvenida por idioma.
 - `js/data.js`: ensamblado de `CodaData`.
 - `js/i18n/translations.js`: diccionarios de interfaz para español de España e inglés.
-- `js/i18n/i18n-service.js`: servicio de traducción y aplicación de textos estáticos.
+- `js/i18n/i18n-service.js`: servicio de traducción, idioma actual y etiquetas de catálogos.
 - `js/services/notation-service.js`: formato visible de notas en notación anglosajona o latina sin alterar identificadores internos.
 - `js/services/data-index-service.js`: creación de `CodaData.indexes` y de índices no enumerables en las colecciones principales.
 - `js/services/musical-context-service.js`: construcción del contexto musical actual a partir de la selección de pantalla.
@@ -56,6 +56,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/renderers/welcome-renderer.js`: renderizado del contenido de bienvenida.
 - `js/renderers/progression-workbench-renderer.js`: renderizado inicial del área de progresiones.
 - `js/ui/ui-state.js`: factoría `CodaUiState.create(...)` para el estado mutable de pantalla.
+- `js/ui/static-text-controller.js`: aplicación de textos estáticos y contenido largo traducido sobre el DOM.
 - `js/ui/key-navigation-controller.js`: navegación desde el círculo de quintas y recomendación de formato bemol/sostenido.
 - `js/ui/changelog-dialog-controller.js`: apertura, cierre y configuración del diálogo de novedades.
 - `js/ui/scale-report-ui.js`: lectura/montaje de UI.
@@ -71,6 +72,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - La selección de tónica, escala, formato e instrumento debe transformarse en un contexto musical explícito mediante `CodaMusicalContext` antes de alimentar casos de uso de aplicación.
 - Las búsquedas repetidas en catálogos deben usar `CodaData.indexes` o los índices no enumerables generados por `js/services/data-index-service.js`; conservar siempre fallback lineal si una función acepta colecciones externas.
 - Los textos visibles nuevos deben pasar por `js/i18n/` cuando formen parte de la interfaz.
+- `js/i18n/` no debe escribir en el DOM. La aplicación de textos al HTML debe hacerse desde `js/ui/static-text-controller.js` o módulos UI equivalentes.
 - El contenido largo de interfaz debe vivir en `js/content/` como datos estructurados y renderizarse desde `js/renderers/`, evitando duplicarlo como HTML estático en `index.html`.
 - Los contenedores estáticos principales de `index.html` deben permanecer ligeros. Las áreas de bienvenida, novedades y progresiones se montan desde contenido o renderers.
 - Los catálogos de datos que se muestran al usuario deben mantener traducción en todos los idiomas disponibles. El dato canónico puede seguir en español si el dominio lo necesita, pero la etiqueta visible debe resolverse desde `js/i18n/`. Los nombres de las notas deben formatearse mediante `js/services/notation-service.js`.

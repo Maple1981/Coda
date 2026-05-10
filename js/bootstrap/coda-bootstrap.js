@@ -46,6 +46,7 @@
 			notation: options.notation,
 			preferences: options.preferences,
 			renderers: options.renderers,
+			staticText: options.staticText || global.CodaStaticText,
 			ui: options.ui,
 			uiState: uiState
 		});
