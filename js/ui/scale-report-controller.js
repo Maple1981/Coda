@@ -16,8 +16,12 @@
 		options.ui.syncDashboardWorkspaceHeight($);
 
 		$(window).on('resize', function () {
+			options.ui.syncSidebarPanelViewport($);
 			options.ui.syncInstrumentScale($);
 			options.ui.syncDashboardWorkspaceHeight($);
+		});
+		$(window).on('scroll', function () {
+			options.ui.syncSidebarPanelViewport($);
 		});
 
 		$('#btnEscala').click(function () {

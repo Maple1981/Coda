@@ -162,6 +162,21 @@
 
 		container.style.setProperty('--dashboard-workspace-height', workspaceHeight + 'px');
 		container.style.setProperty('--dashboard-sidebar-content-height', sidebarHeight + 'px');
+		syncSidebarPanelViewport($);
+	}
+
+	function syncSidebarPanelViewport($) {
+		var sidebarPanel = $('.dashboard__sidebarPanel')[0];
+		var container = $('#container')[0];
+
+		if (!sidebarPanel || !container) {
+			return;
+		}
+
+		var panelTop = Math.max(sidebarPanel.getBoundingClientRect().top, 19);
+		var panelHeight = Math.max(280, window.innerHeight - panelTop - 16);
+
+		container.style.setProperty('--dashboard-sidebar-max-height', panelHeight + 'px');
 	}
 
 	global.CodaUi = {
@@ -172,6 +187,7 @@
 		renderInstrument: renderInstrument,
 		renderScaleReport: renderScaleReport,
 		syncDashboardWorkspaceHeight: syncDashboardWorkspaceHeight,
-		syncInstrumentScale: syncInstrumentScale
+		syncInstrumentScale: syncInstrumentScale,
+		syncSidebarPanelViewport: syncSidebarPanelViewport
 	};
 })(window);

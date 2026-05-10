@@ -76,71 +76,86 @@
 
   <body>
     <div id="container" class="dashboard">
+      <header id="appHeader" class="appHeader">
+        <div id="encabezado" class="appHeader__brand">
+          <h1>CODA</h1>
+          <h2>Generador matemático de escalas, acordes y progresiones</h2>
+        </div>
+        <div class="appHeader__actions">
+          <label
+            >Idioma
+            <select id="selectorIdioma">
+              <option value="es" selected>ES</option>
+              <option value="en">EN</option>
+            </select>
+          </label>
+          <button
+            class="settingsButton"
+            type="button"
+            title="Configuración"
+            aria-label="Configuración"
+          >
+            <span class="material-icons" aria-hidden="true">settings</span>
+          </button>
+        </div>
+      </header>
+
       <aside id="panelTeorico" class="dashboard__sidebar">
         <div class="dashboard__sidebarPanel">
-          <header>
-            <div class="panelCabecera">
-            <div id="encabezado">
-              <h1>CODA</h1>
-              <h2>Generador matemático de escalas, acordes y progresiones</h2>
-            </div>
-            <div>
-              <fieldset id="interface">
-                <h3>Elige tu escala</h3>
-                <p>
-                  <label
-                    >Tónica
-                    <select id="tonica"></select
-                  ></label>
-                  <label
-                    >Escala
-                    <select id="escala"></select
-                  ></label>
-                </p>
-                <p>
-                  Formato
-                  <label
-                    >♯
-                    <input
-                      name="formato"
-                      id="sostenidos"
-                      value="0"
-                      checked="checked"
-                      type="radio"
-                  /></label>
-                  <label
-                    >♭ <input name="formato" id="bemoles" value="1" type="radio"
-                  /></label>
-                  <span class="opcion"
-                    >Instrumento
-                    <label
-                      >Piano
-                      <input
-                        name="instrumento"
-                        id="piano"
-                        value="1"
-                        checked="checked"
-                        type="radio"
-                    /></label>
-                    <label
-                      >Guitarra
-                      <input
-                        name="instrumento"
-                        id="guitarra"
-                        value="0"
-                        type="radio"
-                    /></label>
-                  </span>
-                </p>
+          <fieldset id="interface">
+            <h3>Elige tu escala</h3>
+            <p>
+              <label
+                >Tónica
+                <select id="tonica"></select
+              ></label>
+              <label
+                >Escala
+                <select id="escala"></select
+              ></label>
+            </p>
+            <p>
+              Formato
+              <label
+                >♯
                 <input
-                  id="btnEscala"
-                  value="Dame información de la escala"
-                  type="button"
-                />
-              </fieldset>
-            </div>
-            </div>
-          </header>
+                  name="formato"
+                  id="sostenidos"
+                  value="0"
+                  checked="checked"
+                  type="radio"
+              /></label>
+              <label
+                >♭
+                <input name="formato" id="bemoles" value="1" type="radio"
+              /></label>
+              <span class="opcion"
+                >Instrumento
+                <label
+                  >Piano
+                  <input
+                    name="instrumento"
+                    id="piano"
+                    value="1"
+                    checked="checked"
+                    type="radio"
+                /></label>
+                <label
+                  >Guitarra
+                  <input
+                    name="instrumento"
+                    id="guitarra"
+                    value="0"
+                    type="radio"
+                /></label>
+              </span>
+            </p>
+            <input
+              id="btnEscala"
+              value="Dame información de la escala"
+              type="button"
+            />
+          </fieldset>
 
           <div id="herramientasTeoricas" class="dashboard__theory">
             <section id="notacion"></section>
@@ -163,23 +178,53 @@
           <div class="progressionControls">
             <fieldset class="workbenchPanel">
               <legend>Tiempo</legend>
-              <label>Compases <input type="number" value="8" min="1" max="32" /></label>
-              <label>Compás <select><option>4/4</option><option>3/4</option><option>6/8</option></select></label>
-              <label>BPM <input type="number" value="96" min="40" max="240" /></label>
+              <label
+                >Compases <input type="number" value="8" min="1" max="32"
+              /></label>
+              <label
+                >Compás
+                <select>
+                  <option>4/4</option>
+                  <option>3/4</option>
+                  <option>6/8</option>
+                </select></label
+              >
+              <label
+                >BPM <input type="number" value="96" min="40" max="240"
+              /></label>
             </fieldset>
             <fieldset class="workbenchPanel">
               <legend>Escritura</legend>
-              <label>Voces <input type="number" value="4" min="2" max="6" /></label>
-              <label>Articulación <select><option>Sostenido</option><option>Legato</option><option>Staccato</option><option>Arpegio</option></select></label>
+              <label
+                >Voces <input type="number" value="4" min="2" max="6"
+              /></label>
+              <label
+                >Articulación
+                <select>
+                  <option>Sostenido</option>
+                  <option>Legato</option>
+                  <option>Staccato</option>
+                  <option>Arpegio</option>
+                </select></label
+              >
             </fieldset>
             <fieldset class="workbenchPanel">
               <legend>Color armónico</legend>
-              <label>Intercambio <input type="range" value="25" min="0" max="100" /></label>
-              <label>Tensiones <input type="range" value="35" min="0" max="100" /></label>
-              <label>Contrapunto <input type="range" value="20" min="0" max="100" /></label>
+              <label
+                >Intercambio <input type="range" value="25" min="0" max="100"
+              /></label>
+              <label
+                >Tensiones <input type="range" value="35" min="0" max="100"
+              /></label>
+              <label
+                >Contrapunto <input type="range" value="20" min="0" max="100"
+              /></label>
             </fieldset>
           </div>
-          <div class="progressionTimeline" aria-label="Visualizador de progresión">
+          <div
+            class="progressionTimeline"
+            aria-label="Visualizador de progresión"
+          >
             <div class="measure"><span>1</span><strong>Imaj7</strong></div>
             <div class="measure"><span>2</span><strong>vi7</strong></div>
             <div class="measure"><span>3</span><strong>ii7</strong></div>
@@ -200,7 +245,8 @@
             <div>
               <p>
                 <em>CODA</em> es una aplicación web para
-                <strong>estudiantes</strong> de armonía y
+                <strong>estudiantes</strong> de armonía,
+                <strong>compositores</strong>, <strong>productores</strong> y
                 <strong>músicos</strong> de todo tipo. Proporciona información
                 básica sobre tonalidades, escalas, acordes y progresiones. Con
                 un solo click, puede obtenerse ayuda rápida para componer una

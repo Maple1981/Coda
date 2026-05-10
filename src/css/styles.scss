@@ -134,14 +134,15 @@ div#container{
 	box-sizing:border-box;
 	display:grid;
 	grid-template-columns:minmax(420px, 32vw) minmax(0, 1fr);
-	grid-template-rows:minmax(var(--dashboard-workspace-height, calc(100vh - 2em)), auto) auto;
+	grid-template-rows:auto minmax(var(--dashboard-workspace-height, calc(100vh - 5.4em)), auto) auto;
 	grid-template-areas:
+		"appHeader appHeader"
 		"sidebar main"
 		"footer footer";
 	gap:1.2em;
 	width:100%;
 	min-height:100vh;
-	padding:1.2em;
+	padding:.55em 1.2em 1.2em 1.2em;
 	margin:0 auto; 
 	background-color: $basic_fill_color;  
 	-webkit-box-shadow: 0px 0px 40px 0px $shadow_color; 
@@ -152,7 +153,93 @@ div#container{
 header{
 	height:auto;
 	width:auto;
-	margin-bottom:1em;
+}
+
+.appHeader{
+	box-sizing:border-box;
+	grid-area:appHeader;
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	gap:1.2em;
+	min-width:0;
+	height:42px;
+	padding:0;
+	box-shadow:inset 0 -1px 0 $basic_fillbrightgrad_color;
+}
+
+.appHeader__brand{
+	display:flex;
+	align-items:center;
+	gap:.85em;
+	min-width:0;
+}
+
+.appHeader__brand h1{
+	font-size:1.75em;
+	line-height:1;
+	margin-top:0;
+	flex:0 0 auto;
+}
+
+.appHeader__brand h2{
+	margin:0;
+	font-size:.9em;
+	line-height:1.2;
+	white-space:nowrap;
+	overflow:hidden;
+	text-overflow:ellipsis;
+}
+
+.appHeader__actions{
+	display:flex;
+	align-items:center;
+	gap:.75em;
+	flex:0 0 auto;
+}
+
+.appHeader__actions label{
+	display:inline-flex;
+	align-items:center;
+	gap:.45em;
+	font-size:.85em;
+}
+
+.appHeader__actions select{
+	box-sizing:border-box;
+	height:24px;
+	background:$basic_fill_color;
+	color:$basic_front_color;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:4px;
+	padding:0 .45em;
+}
+
+.settingsButton{
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	width:24px;
+	height:24px;
+	overflow:hidden;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:50%;
+	background:$basic_filldarkgrad_color;
+	color:$basic_front_color;
+	cursor:pointer;
+}
+
+.settingsButton:hover{
+	border-color:$corporative_complementary_color;
+	color:$corporative_mainbright_color;
+}
+
+.settingsButton .material-icons{
+	font-size:18px;
+	width:1em;
+	height:1em;
+	line-height:1;
+	overflow:hidden;
 }
 
 .dashboard__sidebar{
@@ -165,9 +252,9 @@ header{
 .dashboard__sidebarPanel{
 	box-sizing:border-box;
 	position:sticky;
-	top:.8em;
+	top:1.2em;
 	width:100%;
-	max-height:calc(100vh - 2em);
+	max-height:var(--dashboard-sidebar-max-height, calc(100vh - 2.4em));
 	overflow-y:auto;
 	padding-right:.45em;
 	scrollbar-color:$corporative_complementary_color $basic_filldarkgrad_color;
@@ -191,19 +278,6 @@ header{
 .dashboard__main{
 	grid-area:main;
 	min-width:0;
-}
-
-.panelCabecera{
-	display:block;
-}
-
-.panelCabecera h1{
-	font-size:4.4em;
-	line-height:.95;
-}
-
-.panelCabecera h2{
-	max-width:28rem;
 }
 
 fieldset{
@@ -890,10 +964,25 @@ footer{
 @media (max-width:980px){
 	div#container{
 		grid-template-columns:minmax(0, 1fr);
+		grid-template-rows:auto auto auto auto;
 		grid-template-areas:
+			"appHeader"
 			"sidebar"
 			"main"
 			"footer";
+	}
+
+	.appHeader{
+		align-items:flex-start;
+	}
+
+	.appHeader__brand{
+		flex-direction:column;
+		gap:.1em;
+	}
+
+	.appHeader__brand h2{
+		white-space:normal;
 	}
 
 	.dashboard__sidebar{
@@ -917,8 +1006,17 @@ footer{
 		padding:.8em;
 	}
 
-	.panelCabecera h1{
+	.appHeader__brand h1{
 		font-size:3.4em;
+	}
+
+	.appHeader{
+		flex-direction:column;
+	}
+
+	.appHeader__actions{
+		width:100%;
+		justify-content:space-between;
 	}
 
 	.progressionControls{
