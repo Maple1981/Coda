@@ -94,6 +94,7 @@
     <script src="js/ui/static-text-controller.js"></script>
     <script src="js/ui/volume-controller.js"></script>
     <script src="js/ui/theme-controller.js"></script>
+    <script src="js/ui/random-select-controller.js"></script>
     <script src="js/ui/key-navigation-controller.js"></script>
     <script src="js/ui/changelog-dialog-controller.js"></script>
     <script src="js/ui/scale-report-ui.js"></script>
@@ -174,13 +175,37 @@
             <h3>Elige tu escala</h3>
             <p>
               <label
+                class="selectWithRandom"
                 ><span data-i18n="form.tonic">Tónica</span>
-                <select id="tonica"></select
-              ></label>
+                <select id="tonica"></select>
+                <button
+                  id="randomizeTonic"
+                  class="randomSelectButton"
+                  type="button"
+                  data-random-select-target="#tonica"
+                  data-random-i18n-key="randomSelect.tonic"
+                  title="Elegir tónica aleatoria"
+                  aria-label="Elegir tónica aleatoria"
+                >
+                  <span class="material-icons" aria-hidden="true">casino</span>
+                </button>
+              </label>
               <label
+                class="selectWithRandom"
                 ><span data-i18n="form.scale">Escala</span>
-                <select id="escala"></select
-              ></label>
+                <select id="escala"></select>
+                <button
+                  id="randomizeScale"
+                  class="randomSelectButton"
+                  type="button"
+                  data-random-select-target="#escala"
+                  data-random-i18n-key="randomSelect.scale"
+                  title="Elegir escala aleatoria"
+                  aria-label="Elegir escala aleatoria"
+                >
+                  <span class="material-icons" aria-hidden="true">casino</span>
+                </button>
+              </label>
             </p>
             <p>
               <span data-i18n="form.format">Formato</span>

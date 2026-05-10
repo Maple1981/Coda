@@ -51,6 +51,7 @@
 			notation: options.notation,
 			preferences: options.preferences,
 			playbackService: playbackService,
+			randomSelectControl: options.randomSelectControl || global.CodaRandomSelect,
 			renderers: options.renderers,
 			staticText: options.staticText || global.CodaStaticText,
 			themeControl: options.themeControl || global.CodaThemeControl,

@@ -59,6 +59,7 @@ assert.ok(global.CodaUiState.create);
 assert.ok(global.CodaStaticText.apply);
 assert.ok(global.CodaVolumeControl.initialize);
 assert.ok(global.CodaThemeControl.initialize);
+assert.ok(global.CodaRandomSelect.initialize);
 assert.ok(global.CodaKeyNavigation.applyRecommendedNotation);
 assert.ok(global.CodaChangelogDialog.initialize);
 assert.ok(global.CodaUi.renderScaleReport);
@@ -81,6 +82,7 @@ assert.ok(manifestScripts.indexOf('js/ui/ui-state.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/static-text-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/volume-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/theme-controller.js') > -1);
+assert.ok(manifestScripts.indexOf('js/ui/random-select-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/key-navigation-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/changelog-dialog-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/domain/progression-domain.js') > -1);
@@ -109,6 +111,10 @@ assert.ok(indexHtml.indexOf('<section id="controlVersiones" aria-live="polite"><
 assert.ok(indexHtml.indexOf('<section id="constructorProgresiones" class="progression-workbench"></section>') > -1);
 assert.ok(indexHtml.indexOf('<section id="bienvenida"></section>') > -1);
 assert.ok(indexHtml.indexOf('<select id="instrumentoSonoro"></select>') > -1);
+assert.ok(indexHtml.indexOf('id="randomizeTonic"') > -1);
+assert.ok(indexHtml.indexOf('data-random-select-target="#tonica"') > -1);
+assert.ok(indexHtml.indexOf('id="randomizeScale"') > -1);
+assert.ok(indexHtml.indexOf('data-random-select-target="#escala"') > -1);
 assert.ok(indexHtml.indexOf('Content-Security-Policy') > -1);
 assert.ok(indexHtml.indexOf("script-src 'self'") > -1);
 assert.ok(indexHtml.indexOf('fonts.googleapis.com') > -1);
@@ -158,6 +164,14 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 assert.ok(fs.readFileSync(path.join(root, 'js/midi/loader.js'), 'utf8').indexOf('root.USE_XHR = false') > -1);
 assert.equal(fs.readFileSync(path.join(root, 'js/midi/loader.js'), 'utf8').indexOf('script.text'), -1);
 assert.ok(fs.readFileSync(path.join(root, 'js/ui/static-text-controller.js'), 'utf8').indexOf('setTrustedHtml') > -1);
+assert.equal(global.CodaRandomSelect.isSelectableOption({ value: '7', text: '------------' }), false);
+assert.equal(global.CodaRandomSelect.isSelectableOption({ value: '3', text: 'Menor natural' }), true);
+assert.equal(global.CodaRandomSelect.isSelectableOption({ value: '3', text: 'Menor natural', disabled: true }), false);
+assert.deepEqual(global.CodaRandomSelect.pickOption([
+	{ value: '0', text: 'C' },
+	{ value: '1', text: 'D' },
+	{ value: '2', text: 'E' }
+], function () { return 0.99; }), { value: '2', text: 'E' });
 
 let controllerOptions;
 const i18n = global.CodaI18n.create({
@@ -246,6 +260,7 @@ assert.equal(controllerOptions.keyNavigation, global.CodaKeyNavigation);
 assert.ok(controllerOptions.musicalContext.fromSelection);
 assert.equal(controllerOptions.notation, global.CodaNotation);
 assert.equal(controllerOptions.playbackService, startResult.playbackService);
+assert.equal(controllerOptions.randomSelectControl, global.CodaRandomSelect);
 assert.equal(controllerOptions.preferences, preferences);
 assert.equal(controllerOptions.renderers, global.CodaRenderers);
 assert.equal(controllerOptions.staticText, global.CodaStaticText);

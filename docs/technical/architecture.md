@@ -59,6 +59,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/ui/static-text-controller.js`: aplicación de textos estáticos y contenido largo traducido sobre el DOM.
 - `js/ui/volume-controller.js`: fader de volumen maestro de la cabecera. Ajusta el porcentaje global de preescucha sin cambiar las reglas musicales ni la exportación MIDI.
 - `js/ui/theme-controller.js`: conmutador de tema visual día/noche. Aplica `data-theme` sobre `body` y guarda la preferencia en cookie.
+- `js/ui/random-select-controller.js`: patrón reutilizable para botones de azar asociados a selectores. Cambia el valor del `select` objetivo y dispara su evento `change` para reutilizar la lógica existente.
 - `js/ui/key-navigation-controller.js`: navegación desde el círculo de quintas y recomendación de formato bemol/sostenido.
 - `js/ui/changelog-dialog-controller.js`: apertura, cierre y configuración del diálogo de novedades.
 - `js/ui/scale-report-ui.js`: lectura/montaje de UI.

@@ -350,6 +350,19 @@ body[data-theme="day"] .iconHeaderButton {
   border-color: #b7c3ca;
 }
 
+body[data-theme="day"] .randomSelectButton {
+  background: #ffffff;
+  color: #a622ae;
+  border-color: #b7c3ca;
+}
+
+body[data-theme="day"] .randomSelectButton:hover,
+body[data-theme="day"] .randomSelectButton:focus {
+  background: #f3f6f8;
+  border-color: #a622ae;
+  color: #00764f;
+}
+
 body[data-theme="day"] fieldset,
 body[data-theme="day"] .progressionControls fieldset.workbenchPanel,
 body[data-theme="day"] .measure {
@@ -553,6 +566,41 @@ fieldset h3 {
 
 #interface select#instrumentoSonoro {
   width: min(100%, 12.5em);
+}
+
+.selectWithRandom {
+  white-space: nowrap;
+}
+
+.randomSelectButton {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  width: 1.9em;
+  height: 1.9em;
+  border: 1px solid #444;
+  border-radius: 50%;
+  background: #151515;
+  color: #d85ee0;
+  cursor: pointer;
+}
+
+.randomSelectButton:hover,
+.randomSelectButton:focus {
+  border-color: #a622ae;
+  color: #a3ffd9;
+  outline: none;
+}
+
+.randomSelectButton .material-icons {
+  font-size: 1.15em;
+  line-height: 1;
 }
 
 #interface input[type="radio"] {

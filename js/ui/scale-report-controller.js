@@ -53,6 +53,12 @@
 		if (options.changelogDialog) {
 			options.changelogDialog.initialize($, i18n);
 		}
+		if (options.randomSelectControl) {
+			options.randomSelectControl.initialize({
+				$: $,
+				i18n: i18n
+			});
+		}
 		options.ui.scheduleDashboardWorkspaceHeight($);
 
 		$(window).on('resize', function () {
@@ -108,6 +114,9 @@
 				}
 				if (options.themeControl) {
 					options.themeControl.updateButton($, i18n, $('body').attr('data-theme'));
+				}
+				if (options.randomSelectControl) {
+					options.randomSelectControl.updateLabels($, i18n);
 				}
 			}
 

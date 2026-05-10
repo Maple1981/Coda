@@ -31,6 +31,10 @@
 		setText($, i18n, 'span[data-i18n="form.sharps"]', 'form.sharps');
 		setText($, i18n, 'span[data-i18n="form.flats"]', 'form.flats');
 		setText($, i18n, 'span[data-i18n="form.instrument"]', 'form.instrument');
+		setAttribute($, i18n, '#randomizeTonic', 'title', 'randomSelect.tonic');
+		setAttribute($, i18n, '#randomizeTonic', 'aria-label', 'randomSelect.tonic');
+		setAttribute($, i18n, '#randomizeScale', 'title', 'randomSelect.scale');
+		setAttribute($, i18n, '#randomizeScale', 'aria-label', 'randomSelect.scale');
 		setValue($, i18n, '#btnEscala', 'form.submit');
 
 		ensureProgressionWorkbench($);
