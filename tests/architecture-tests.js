@@ -26,6 +26,7 @@ manifestScripts.filter(function (scriptPath) {
 const global = context.window;
 
 assert.ok(global.CodaData);
+assert.ok(global.CodaDataCatalogs);
 assert.ok(global.CodaDataIndex.create);
 assert.ok(global.CodaTranslations);
 assert.ok(global.CodaI18n.create);
@@ -54,6 +55,8 @@ assert.ok(global.CodaUi.scheduleSidebarPanelViewport);
 assert.ok(global.CodaScaleReportController.initialize);
 assert.ok(global.CodaPlayback.create);
 assert.ok(global.CodaBootstrap.start);
+assert.ok(manifestScripts.indexOf('js/data/constants-data.js') > -1);
+assert.ok(manifestScripts.indexOf('js/data/scales-data.js') > -1);
 assert.ok(manifestScripts.indexOf('js/domain/progression-domain.js') > -1);
 assert.ok(manifestScripts.indexOf('js/application/progression-application.js') > -1);
 assert.ok(manifestScripts.indexOf('js/i18n/translations.js') > -1);

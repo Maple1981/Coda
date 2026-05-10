@@ -8,7 +8,8 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 
 ## Capas actuales
 
-- `js/data.js`: catálogos musicales expuestos mediante `CodaData`. Los nombres globales legacy siguen existiendo temporalmente, pero el código nuevo debe consumir `CodaData`.
+- `js/data/*.js`: catálogos musicales separados por área: constantes, notas, intervalos, escalas, acordes, afinaciones, círculo de quintas y armonía extendida.
+- `js/data.js`: fachada estable que ensambla esos catálogos y expone `CodaData`. El código nuevo debe consumir `CodaData`, no leer directamente variables internas de los catálogos.
 - `js/services/data-index-service.js`: índices derivados de los catálogos de `CodaData` para búsquedas rápidas por nombre, patrón o semitonos sin modificar el contrato público de arrays.
 - `js/domain/`: reglas musicales puras sin DOM, jQuery, MIDI ni renderizado.
 - `js/application/`: casos de uso. Orquesta dominio y servicios sin generar HTML ni leer directamente del DOM.
@@ -23,6 +24,8 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 
 - `js/bootstrap/script-manifest.js`: orden canónico de carga de módulos de la aplicación.
 - `js/bootstrap/coda-bootstrap.js`: cablea datos, dominio, aplicación, renderers, UI, controlador y playback.
+- `js/data/*.js`: catálogos fuente del dominio musical.
+- `js/data.js`: ensamblado de `CodaData`.
 - `js/i18n/translations.js`: diccionarios de interfaz para español de España e inglés.
 - `js/i18n/i18n-service.js`: servicio de traducción y aplicación de textos estáticos.
 - `js/services/notation-service.js`: formato visible de notas en notación anglosajona o latina sin alterar identificadores internos.

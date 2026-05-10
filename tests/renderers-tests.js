@@ -17,6 +17,14 @@ function runScript(relativePath) {
 }
 
 [
+	'js/data/constants-data.js',
+	'js/data/notes-data.js',
+	'js/data/intervals-data.js',
+	'js/data/scales-data.js',
+	'js/data/chords-data.js',
+	'js/data/guitar-tunings-data.js',
+	'js/data/circle-of-fifths-data.js',
+	'js/data/extended-harmony-data.js',
 	'js/data.js',
 	'js/services/data-index-service.js',
 	'js/i18n/translations.js',
