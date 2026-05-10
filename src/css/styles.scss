@@ -244,6 +244,16 @@ header{
 	overflow:hidden;
 }
 
+.randomMasterButton{
+	width:30px;
+	height:30px;
+	color:$corporative_complementarybright_color;
+}
+
+.randomMasterButton .material-icons{
+	font-size:22px;
+}
+
 .dashboard__sidebar{
 	grid-area:sidebar;
 	min-width:0;
@@ -339,19 +349,17 @@ fieldset{
 	accent-color:$corporative_complementary_color;
 }
 
-#interface input[type="button"]{
-	border-radius:4px;
-	padding:.48em .8em;
-	font-weight:600;
-}
-
-
-span.opcion{
+.opcion{
 	margin-left:0;
 	display:inline-flex;
 	flex-wrap:wrap;
 	align-items:center;
 	gap:.45em;
+}
+
+.opcionInstrumento{
+	flex-wrap:nowrap;
+	white-space:nowrap;
 }
 
 input[type="text"],
@@ -804,8 +812,8 @@ section#bienvenida .columnata article{
 
 .progressionControls label{
 	display:grid;
-	grid-template-columns:minmax(6.6em, .7fr) minmax(0, 1fr);
-	gap:.65em;
+	grid-template-columns:minmax(6.6em, .7fr) minmax(0, 1fr) auto;
+	gap:.55em;
 	align-items:center;
 	font-size:.9em;
 }
@@ -824,7 +832,13 @@ section#bienvenida .columnata article{
 
 .progressionControls input[type="range"]{
 	width:100%;
+	min-width:0;
 	accent-color:$corporative_complementary_color;
+}
+
+.progressionControls .randomSelectButton{
+	width:1.75em;
+	height:1.75em;
 }
 
 .progressionTimeline{
@@ -866,6 +880,32 @@ section#bienvenida .columnata article{
 	gap:.75em;
 	justify-content:flex-end;
 	margin-top:1em;
+}
+
+.transportButton{
+	display:inline-flex;
+	align-items:center;
+	gap:.45em;
+	border:0;
+	border-radius:4px;
+	background:$corporative_complementary_color;
+	color:$basic_front_color;
+	cursor:pointer;
+	padding:.48em .8em;
+	font-weight:600;
+}
+
+.transportButton:hover,
+.transportButton:focus{
+	background:$corporative_main_color;
+	color:$basic_fill_color;
+	box-shadow:inset 0px 0px 15px 0px $shadow_color2;
+	outline:none;
+}
+
+.transportButton .material-icons{
+	font-size:1.2em;
+	line-height:1;
 }
 
 section#controlVersiones{

@@ -361,7 +361,17 @@ assert.ok(welcomeHtml.indexOf('piano, guitarra clásica, órgano y cuerdas') > -
 
 const progressionWorkbenchHtml = progressionWorkbenchRenderer.render();
 assert.ok(progressionWorkbenchHtml.indexOf('class="progressionControls"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('<select id="progressionBars"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('<option value="32">32</option>') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="progressionBpm" type="number" value="96" min="20" max="200"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="progressionVoices" type="number" value="4" min="1" max="6"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-random-control-target="#progressionCounterpoint"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-random-group="global"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.articulation.sustain"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('class="transportButton transportButton--listen"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('play_arrow') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('class="transportButton transportButton--export"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('ios_share') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<strong>Imaj7</strong>') > -1);
 
 console.log('Renderer tests passed');

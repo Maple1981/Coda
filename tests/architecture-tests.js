@@ -24,6 +24,7 @@ manifestScripts.filter(function (scriptPath) {
 }).forEach(runScript);
 
 const global = context.window;
+const scaleReportControllerSource = fs.readFileSync(path.join(root, 'js/ui/scale-report-controller.js'), 'utf8').replace(/\r\n/g, '\n');
 
 assert.ok(global.CodaData);
 assert.ok(global.CodaDataCatalogs);
@@ -60,6 +61,7 @@ assert.ok(global.CodaStaticText.apply);
 assert.ok(global.CodaVolumeControl.initialize);
 assert.ok(global.CodaThemeControl.initialize);
 assert.ok(global.CodaRandomSelect.initialize);
+assert.ok(global.CodaRandomSelect.randomizeAllAssociatedControls);
 assert.ok(global.CodaKeyNavigation.applyRecommendedNotation);
 assert.ok(global.CodaChangelogDialog.initialize);
 assert.ok(global.CodaUi.renderScaleReport);
@@ -70,6 +72,8 @@ assert.ok(global.CodaUi.scheduleSidebarPanelViewport);
 assert.ok(global.CodaScaleReportController.initialize);
 assert.ok(global.CodaPlayback.create);
 assert.ok(global.CodaBootstrap.start);
+assert.ok(scaleReportControllerSource.indexOf('renderReport();\n\n\t\treturn {') > -1);
+assert.ok(scaleReportControllerSource.indexOf("$('#tonica, #escala').change(function ()") > -1);
 assert.ok(manifestScripts.indexOf('js/data/constants-data.js') > -1);
 assert.ok(manifestScripts.indexOf('js/data/midi-data.js') > -1);
 assert.ok(manifestScripts.indexOf('js/data/scales-data.js') > -1);
@@ -110,9 +114,14 @@ assert.equal(indexHtml.indexOf('Novedades de la versión actual beta 0.5'), -1);
 assert.ok(indexHtml.indexOf('<section id="controlVersiones" aria-live="polite"></section>') > -1);
 assert.ok(indexHtml.indexOf('<section id="constructorProgresiones" class="progression-workbench"></section>') > -1);
 assert.ok(indexHtml.indexOf('<section id="bienvenida"></section>') > -1);
+assert.ok(indexHtml.indexOf('id="randomizeAll"') > -1);
+assert.ok(indexHtml.indexOf('data-random-master-groups="global"') > -1);
+assert.ok(indexHtml.indexOf('<label id="formatoLabel" class="opcion opcionFormato" for="sostenidos"') > -1);
+assert.ok(indexHtml.indexOf('<label class="opcion opcionInstrumento" for="instrumentoSonoro"') > -1);
 assert.ok(indexHtml.indexOf('<select id="instrumentoSonoro"></select>') > -1);
 assert.ok(indexHtml.indexOf('id="randomizeTonic"') > -1);
 assert.ok(indexHtml.indexOf('data-random-select-target="#tonica"') > -1);
+assert.ok(indexHtml.indexOf('data-random-group="global"') > -1);
 assert.ok(indexHtml.indexOf('id="randomizeScale"') > -1);
 assert.ok(indexHtml.indexOf('data-random-select-target="#escala"') > -1);
 assert.ok(indexHtml.indexOf('Content-Security-Policy') > -1);
@@ -172,6 +181,18 @@ assert.deepEqual(global.CodaRandomSelect.pickOption([
 	{ value: '1', text: 'D' },
 	{ value: '2', text: 'E' }
 ], function () { return 0.99; }), { value: '2', text: 'E' });
+assert.equal(global.CodaRandomSelect.pickNumericValue({
+	max: '200',
+	min: '20',
+	step: '1',
+	type: 'number'
+}, function () { return 0.999; }), '200');
+assert.equal(global.CodaRandomSelect.pickNumericValue({
+	max: '6',
+	min: '1',
+	step: '1',
+	type: 'number'
+}, function () { return 0; }), '1');
 
 let controllerOptions;
 const i18n = global.CodaI18n.create({

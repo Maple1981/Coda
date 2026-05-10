@@ -302,6 +302,16 @@ header {
   overflow: hidden;
 }
 
+.randomMasterButton {
+  width: 30px;
+  height: 30px;
+  color: #d85ee0;
+}
+
+.randomMasterButton .material-icons {
+  font-size: 22px;
+}
+
 body[data-theme="day"] {
   background-color: #d8dde1;
   color: #1f2528;
@@ -357,6 +367,10 @@ body[data-theme="day"] .iconHeaderButton {
   background: #ffffff;
   color: #1f2528;
   border-color: #b7c3ca;
+}
+
+body[data-theme="day"] .randomMasterButton {
+  color: #a622ae;
 }
 
 body[data-theme="day"] .volumeControl__slider::-webkit-slider-runnable-track {
@@ -647,13 +661,7 @@ fieldset h3 {
   accent-color: #a622ae;
 }
 
-#interface input[type="button"] {
-  border-radius: 4px;
-  padding: .48em .8em;
-  font-weight: 600;
-}
-
-span.opcion {
+.opcion {
   margin-left: 0;
   display: -webkit-inline-box;
   display: -ms-inline-flexbox;
@@ -666,7 +674,7 @@ span.opcion {
   gap: .45em;
 }
 
-span.opcionInstrumento {
+.opcionInstrumento {
   -ms-flex-wrap: nowrap;
       flex-wrap: nowrap;
   white-space: nowrap;
@@ -1147,9 +1155,9 @@ section#bienvenida .columnata article {
 .progressionControls label {
   display: -ms-grid;
   display: grid;
-  -ms-grid-columns: minmax(6.6em, 0.7fr) 0.65em minmax(0, 1fr);
-  grid-template-columns: minmax(6.6em, 0.7fr) minmax(0, 1fr);
-  gap: .65em;
+  -ms-grid-columns: minmax(6.6em, 0.7fr) 0.55em minmax(0, 1fr) 0.55em auto;
+  grid-template-columns: minmax(6.6em, 0.7fr) minmax(0, 1fr) auto;
+  gap: .55em;
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
@@ -1171,7 +1179,13 @@ section#bienvenida .columnata article {
 
 .progressionControls input[type="range"] {
   width: 100%;
+  min-width: 0;
   accent-color: #a622ae;
+}
+
+.progressionControls .randomSelectButton {
+  width: 1.75em;
+  height: 1.75em;
 }
 
 .progressionTimeline {
@@ -1225,6 +1239,37 @@ section#bienvenida .columnata article {
       -ms-flex-pack: end;
           justify-content: flex-end;
   margin-top: 1em;
+}
+
+.transportButton {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  gap: .45em;
+  border: 0;
+  border-radius: 4px;
+  background: #a622ae;
+  color: #eee;
+  cursor: pointer;
+  padding: .48em .8em;
+  font-weight: 600;
+}
+
+.transportButton:hover,
+.transportButton:focus {
+  background: #00ff95;
+  color: #111;
+  -webkit-box-shadow: inset 0px 0px 15px 0px rgba(0, 0, 0, 0.5);
+          box-shadow: inset 0px 0px 15px 0px rgba(0, 0, 0, 0.5);
+  outline: none;
+}
+
+.transportButton .material-icons {
+  font-size: 1.2em;
+  line-height: 1;
 }
 
 section#controlVersiones {

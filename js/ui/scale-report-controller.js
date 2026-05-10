@@ -20,6 +20,7 @@
 		var initialForm = resolveInitialForm(options.data, options.initialForm);
 
 		$('#interface input:radio[name="formato"][value="' + initialForm.format + '"]').prop('checked', true);
+		updateFormatLabelTarget($);
 		$('#selectorNotacion').val(uiState.getNotationStyle());
 		fillSelectHashTable($, $('#tonica'), options.data.notes, initialForm.format === '1', null, 'notes', notation, uiState.getNotationStyle());
 		$('#tonica').val(String(initialForm.tonicIndex));
@@ -30,6 +31,7 @@
 		setPlaybackInstrument(options, $('#instrumentoSonoro').val());
 		if (!hasInitialFormValue(options.initialForm, 'format')) {
 			keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
+			updateFormatLabelTarget($);
 		}
 		if (staticText) {
 			staticText.apply($, i18n);
@@ -70,36 +72,25 @@
 			options.ui.scheduleSidebarPanelViewport($);
 		});
 
-		$('#btnEscala').click(function () {
-			renderReport();
-		});
-
 		$('#tonica, #escala').change(function () {
 			keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
+			updateFormatLabelTarget($);
 			saveFormPreferences(preferences, $);
-
-			if (options.ui.hasRenderedResults($)) {
-				renderReport();
-			}
+			renderReport();
 		});
 
 		$('#interface input:radio[name="formato"]').change(function () {
 			var preferFlats = $(this).val() === '1';
 			fillSelectHashTable($, $('#tonica'), options.data.notes, preferFlats, null, 'notes', notation, uiState.getNotationStyle());
+			updateFormatLabelTarget($);
 			saveFormPreferences(preferences, $);
-
-			if (options.ui.hasRenderedResults($)) {
-				renderReport();
-			}
+			renderReport();
 		});
 
 		$('#instrumentoSonoro').change(function () {
 			setPlaybackInstrument(options, $(this).val());
 			saveFormPreferences(preferences, $);
-
-			if (options.ui.hasRenderedResults($)) {
-				renderInstrument(true);
-			}
+			renderReport();
 		});
 
 		$('#selectorIdioma').change(function () {
@@ -246,6 +237,8 @@
 			options.ui.scheduleInstrumentScale($);
 			options.ui.scheduleDashboardWorkspaceHeight($);
 		}
+
+		renderReport();
 
 		return {
 			renderInstrument: renderInstrument,
@@ -401,6 +394,14 @@
 
 		if (options.playbackService && typeof options.playbackService.setInstrument === 'function' && playbackInstrument) {
 			options.playbackService.setInstrument(playbackInstrument.id);
+		}
+	}
+
+	function updateFormatLabelTarget($) {
+		var checkedFormat = $('#interface input:radio[name="formato"]:checked');
+
+		if (checkedFormat.length) {
+			$('#formatoLabel').attr('for', checkedFormat.attr('id'));
 		}
 	}
 

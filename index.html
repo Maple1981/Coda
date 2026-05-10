@@ -112,6 +112,17 @@
           <h2>Generador matemático de escalas, acordes y progresiones</h2>
         </div>
         <div class="appHeader__actions">
+          <button
+            id="randomizeAll"
+            class="iconHeaderButton randomMasterButton"
+            type="button"
+            data-random-master-groups="global"
+            data-random-i18n-key="randomSelect.master"
+            title="Aleatorizador maestro"
+            aria-label="Aleatorizador maestro"
+          >
+            <span class="material-icons" aria-hidden="true">casino</span>
+          </button>
           <label
             ><span data-i18n="ui.language">Idioma</span>
             <select id="selectorIdioma">
@@ -183,6 +194,7 @@
                   class="randomSelectButton"
                   type="button"
                   data-random-select-target="#tonica"
+                  data-random-group="global"
                   data-random-i18n-key="randomSelect.tonic"
                   title="Elegir tónica aleatoria"
                   aria-label="Elegir tónica aleatoria"
@@ -199,6 +211,7 @@
                   class="randomSelectButton"
                   type="button"
                   data-random-select-target="#escala"
+                  data-random-group="global"
                   data-random-i18n-key="randomSelect.scale"
                   title="Elegir escala aleatoria"
                   aria-label="Elegir escala aleatoria"
@@ -208,7 +221,9 @@
               </label>
             </p>
             <p>
-              <span data-i18n="form.format">Formato</span>
+              <label id="formatoLabel" class="opcion opcionFormato" for="sostenidos"
+                ><span data-i18n="form.format">Formato</span></label
+              >
               <label
                 ><span data-i18n="form.sharps">♯</span>
                 <input
@@ -222,16 +237,11 @@
                 ><span data-i18n="form.flats">♭</span>
                 <input name="formato" id="bemoles" value="1" type="radio"
               /></label>
-              <span class="opcion opcionInstrumento"
+              <label class="opcion opcionInstrumento" for="instrumentoSonoro"
                 ><span data-i18n="form.instrument">Instrumento</span>
                 <select id="instrumentoSonoro"></select>
-              </span>
+              </label>
             </p>
-            <input
-              id="btnEscala"
-              value="Dame información de la escala"
-              type="button"
-            />
           </fieldset>
 
           <div id="herramientasTeoricas" class="dashboard__theory">

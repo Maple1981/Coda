@@ -19,6 +19,8 @@
 		setText($, i18n, 'option[data-i18n="notation.latin"]', 'notation.latin');
 		setAttribute($, i18n, '#selectorVolumen', 'aria-label', 'ui.volumeTitle');
 		setAttribute($, i18n, '#selectorVolumen', 'title', 'ui.volumeTitle');
+		setAttribute($, i18n, '#randomizeAll', 'title', 'randomSelect.master');
+		setAttribute($, i18n, '#randomizeAll', 'aria-label', 'randomSelect.master');
 		setAttribute($, i18n, '#themeToggleButton', 'title', 'theme.switchToDay');
 		setAttribute($, i18n, '#themeToggleButton', 'aria-label', 'theme.switchToDay');
 		setAttribute($, i18n, '#settingsButton', 'title', 'settings.label');
@@ -35,7 +37,6 @@
 		setAttribute($, i18n, '#randomizeTonic', 'aria-label', 'randomSelect.tonic');
 		setAttribute($, i18n, '#randomizeScale', 'title', 'randomSelect.scale');
 		setAttribute($, i18n, '#randomizeScale', 'aria-label', 'randomSelect.scale');
-		setValue($, i18n, '#btnEscala', 'form.submit');
 
 		ensureProgressionWorkbench($);
 		setText($, i18n, '.workbenchKicker', 'progression.subtitle');
@@ -80,8 +81,8 @@
 		setText($, i18n, 'option[data-i18n="progression.articulation.legato"]', 'progression.articulation.legato');
 		setText($, i18n, 'option[data-i18n="progression.articulation.staccato"]', 'progression.articulation.staccato');
 		setText($, i18n, 'option[data-i18n="progression.articulation.arpeggio"]', 'progression.articulation.arpeggio');
-		setValue($, i18n, '.transportControls input:eq(0)', 'progression.listen');
-		setValue($, i18n, '.transportControls input:eq(1)', 'progression.exportMidi');
+		setText($, i18n, '.transportButton--listen span[data-i18n="progression.listen"]', 'progression.listen');
+		setText($, i18n, '.transportButton--export span[data-i18n="progression.exportMidi"]', 'progression.exportMidi');
 	}
 
 	function ensureProgressionWorkbench($) {
