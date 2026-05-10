@@ -7,6 +7,7 @@
 
 		html += renderTuningSelect(options);
 		html += '</h4>';
+		html += '<div class="instrumentScaleViewport"><div class="instrumentScaleCanvas">';
 		html += '<table class="diapason"><tbody>';
 
 		for (var i = 0; i < options.strings.length; i++) {
@@ -30,6 +31,7 @@
 
 		html += '</tr></tfoot>';
 		html += '</table>';
+		html += '</div></div>';
 
 		return html;
 	}
@@ -59,10 +61,12 @@
 	function renderPiano(options) {
 		var html = '<h4>Vista de piano</h4>';
 
+		html += '<div class="instrumentScaleViewport"><div class="instrumentScaleCanvas">';
 		html += '<div class="teclado">';
 		html += renderBlackKeys(options);
 		html += renderWhiteKeys(options);
 		html += '</div>';
+		html += '</div></div>';
 
 		return html;
 	}

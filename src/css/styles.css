@@ -435,10 +435,24 @@ section table tr td.celdaAcorde {
 section#instrumento {
   text-align: center;
   font-size: .85em;
-  overflow-x: auto;
+  overflow-x: hidden;
   padding-bottom: .35em;
   /*width=13 trastes x (width traste sin sumar padding traste)*/
   /*(width teclaBlanca * 14) + (width teclaNegra * 10)*/
+}
+
+section#instrumento .instrumentScaleViewport {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+section#instrumento .instrumentScaleCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  -webkit-transform-origin: top left;
+          transform-origin: top left;
 }
 
 section#instrumento table.diapason {
@@ -458,6 +472,8 @@ section#instrumento table.diapason td {
 }
 
 section#instrumento div.teclado {
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
   width: 646px;
   height: 212px;
   background: transparent url("../../img/teclado.jpg") no-repeat 0 0;

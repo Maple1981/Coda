@@ -16,6 +16,7 @@
 		options.ui.syncDashboardWorkspaceHeight($);
 
 		$(window).on('resize', function () {
+			options.ui.syncInstrumentScale($);
 			options.ui.syncDashboardWorkspaceHeight($);
 		});
 
@@ -120,6 +121,7 @@
 				renderers: options.renderers,
 				report: report
 			});
+			options.ui.syncInstrumentScale($);
 			options.ui.syncDashboardWorkspaceHeight($);
 		}
 

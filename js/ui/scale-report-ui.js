@@ -116,6 +116,35 @@
 		options.$('#instrumento').empty().append(html);
 	}
 
+	function syncInstrumentScale($) {
+		var viewport = $('#instrumento .instrumentScaleViewport')[0];
+		var canvas = $('#instrumento .instrumentScaleCanvas')[0];
+
+		if (!viewport || !canvas) {
+			return;
+		}
+
+		canvas.style.transform = 'none';
+		canvas.style.left = '0px';
+		viewport.style.height = 'auto';
+
+		var baseWidth = canvas.offsetWidth;
+		var baseHeight = canvas.offsetHeight;
+		var availableWidth = viewport.clientWidth;
+
+		if (!baseWidth || !baseHeight || !availableWidth) {
+			return;
+		}
+
+		var scale = Math.min(1, availableWidth / baseWidth);
+		var scaledWidth = baseWidth * scale;
+		var offsetLeft = Math.max(0, (availableWidth - scaledWidth) / 2);
+
+		canvas.style.transform = 'scale(' + scale + ')';
+		canvas.style.left = offsetLeft + 'px';
+		viewport.style.height = Math.ceil(baseHeight * scale) + 'px';
+	}
+
 	function syncDashboardWorkspaceHeight($) {
 		var sidebar = $('#panelTeorico')[0];
 		var sidebarPanel = $('.dashboard__sidebarPanel')[0];
@@ -142,6 +171,7 @@
 		renderExtendedHarmony: renderExtendedHarmony,
 		renderInstrument: renderInstrument,
 		renderScaleReport: renderScaleReport,
-		syncDashboardWorkspaceHeight: syncDashboardWorkspaceHeight
+		syncDashboardWorkspaceHeight: syncDashboardWorkspaceHeight,
+		syncInstrumentScale: syncInstrumentScale
 	};
 })(window);

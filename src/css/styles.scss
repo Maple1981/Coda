@@ -452,8 +452,21 @@ section table tr td.celdaAcorde{
 section#instrumento{
 	text-align:center; 
 	font-size:.85em;
-	overflow-x:auto;
+	overflow-x:hidden;
 	padding-bottom:.35em;
+
+	.instrumentScaleViewport{
+		position:relative;
+		width:100%;
+		overflow:hidden;
+	}
+
+	.instrumentScaleCanvas{
+		position:absolute;
+		top:0;
+		left:0;
+		transform-origin:top left;
+	}
 
 	table.diapason{
 		width:650px;
@@ -473,6 +486,7 @@ section#instrumento{
 
 
 	div.teclado{
+		box-sizing:border-box;
 		width:646px;
 		height:212px;
 		background:transparent url("../../img/teclado.jpg") no-repeat 0 0;
