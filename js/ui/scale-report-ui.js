@@ -97,14 +97,49 @@
 			tonicName: report.tonicName
 		}));
 
-		$('#acordeonArmoniaExtendida').accordion({
-			activate: function () {
-				syncDashboardWorkspaceHeight($);
-			},
-			heightStyle: 'content'
-		});
-		$('#acordeonArmoniaExtendida').accordion('option', 'collapsible', true);
+		initializeMultiAccordion($, $('#acordeonArmoniaExtendida'));
 		syncDashboardWorkspaceHeight($);
+	}
+
+	function initializeMultiAccordion($, accordion) {
+		var headers = accordion.children('h3');
+
+		accordion.addClass('ui-accordion ui-widget ui-helper-reset');
+
+		headers.each(function (index) {
+			var header = $(this);
+			var panel = header.next('div');
+			var isOpen = index === 0;
+
+			header
+				.addClass('ui-accordion-header ui-corner-top ui-state-default')
+				.toggleClass('ui-accordion-header-active ui-state-active', isOpen)
+				.attr('tabindex', '0');
+
+			panel
+				.addClass('ui-accordion-content ui-corner-bottom ui-helper-reset ui-widget-content')
+				.toggle(isOpen);
+		});
+
+		headers.off('click.codaMultiAccordion keydown.codaMultiAccordion');
+		headers.on('click.codaMultiAccordion keydown.codaMultiAccordion', function (event) {
+			if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') {
+				return;
+			}
+
+			event.preventDefault();
+			toggleAccordionSection($, $(this));
+		});
+	}
+
+	function toggleAccordionSection($, header) {
+		var panel = header.next('div');
+		var willOpen = !panel.is(':visible');
+
+		header.toggleClass('ui-accordion-header-active ui-state-active', willOpen);
+		panel.stop(true, true).slideToggle(120, function () {
+			syncDashboardWorkspaceHeight($);
+		});
 	}
 
 	function attachChordEvents(options) {
@@ -221,6 +256,7 @@
 	global.CodaUi = {
 		attachChordEvents: attachChordEvents,
 		hasRenderedResults: hasRenderedResults,
+		initializeMultiAccordion: initializeMultiAccordion,
 		noteName: noteName,
 		readSelection: readSelection,
 		renderExtendedHarmony: renderExtendedHarmony,
@@ -228,6 +264,7 @@
 		renderScaleReport: renderScaleReport,
 		syncDashboardWorkspaceHeight: syncDashboardWorkspaceHeight,
 		syncInstrumentScale: syncInstrumentScale,
-		syncSidebarPanelViewport: syncSidebarPanelViewport
+		syncSidebarPanelViewport: syncSidebarPanelViewport,
+		toggleAccordionSection: toggleAccordionSection
 	};
 })(window);
