@@ -45,7 +45,7 @@ body{
 	font-weight:300; 
 	color: $basic_front_color;
 	text-rendering: optimizeLegibility;
-	height:100vh;
+	min-height:100vh;
 }
 
 
@@ -131,8 +131,16 @@ strong{
 }
 
 div#container{
-	padding:1em;
-	max-width:957px; 
+	box-sizing:border-box;
+	display:grid;
+	grid-template-columns:minmax(420px, 32vw) minmax(0, 1fr);
+	grid-template-areas:
+		"sidebar main"
+		"footer footer";
+	gap:1.2em;
+	width:100%;
+	min-height:100vh;
+	padding:1.2em;
 	margin:0 auto; 
 	background-color: $basic_fill_color;  
 	-webkit-box-shadow: 0px 0px 40px 0px $shadow_color; 
@@ -141,8 +149,54 @@ div#container{
 }
 
 header{
-	height:180px;
-	width:957px;
+	height:auto;
+	width:auto;
+	margin-bottom:1em;
+}
+
+.dashboard__sidebar{
+	grid-area:sidebar;
+	min-width:0;
+	align-self:start;
+	position:sticky;
+	top:.8em;
+	max-height:calc(100vh - 2em);
+	overflow-y:auto;
+	padding-right:.45em;
+	scrollbar-color:$corporative_complementary_color $basic_filldarkgrad_color;
+	scrollbar-width:thin;
+}
+
+.dashboard__sidebar::-webkit-scrollbar{
+	width:10px;
+}
+
+.dashboard__sidebar::-webkit-scrollbar-track{
+	background:$basic_filldarkgrad_color;
+}
+
+.dashboard__sidebar::-webkit-scrollbar-thumb{
+	background:$corporative_complementary_color;
+	border:3px solid $basic_filldarkgrad_color;
+	border-radius:8px;
+}
+
+.dashboard__main{
+	grid-area:main;
+	min-width:0;
+}
+
+.panelCabecera{
+	display:block;
+}
+
+.panelCabecera h1{
+	font-size:4.4em;
+	line-height:.95;
+}
+
+.panelCabecera h2{
+	max-width:28rem;
 }
 
 fieldset{
@@ -167,9 +221,16 @@ fieldset{
 
 }
 
+#interface p{
+	display:flex;
+	flex-wrap:wrap;
+	align-items:center;
+	gap:.7em 1em;
+}
+
 
 span.opcion{
-	margin-left:30px;
+	margin-left:0;
 }
 
 input[type="text"],
@@ -230,9 +291,10 @@ p.centrado{
 
 section#notacion{
 	font-size:1.2em; 
+	overflow-x:auto;
 
 	h3{
-		width:70%;
+		width:100%;
 	}
 
 	ul{
@@ -283,6 +345,7 @@ section#notacion{
 
 section#notacion, 
 section#armoniaExtendida{
+	overflow-x:auto;
 
 	table{
 		width:100%; 
@@ -344,6 +407,8 @@ section table tr td.celdaAcorde{
 section#instrumento{
 	text-align:center; 
 	font-size:.85em;
+	overflow-x:auto;
+	padding-bottom:.35em;
 
 	table.diapason{
 		width:650px;
@@ -448,13 +513,15 @@ section#instrumento{
 }
 
 section#circuloQuintas {
-	position:absolute; 
-	top:180px; 
-	margin-left:680px; 
-	height:220px;
+	position:static;
+	height:auto;
+	display:flex;
+	justify-content:center;
+	margin:0 0 2.1em 0;
 }
 
 div#circuloDesplegado {
+  position:relative;
   margin:20px 0 12px 0; 
   height: 200px;
   width: 200px;
@@ -503,6 +570,7 @@ section#armoniaExtendida table{
 }
 
 section#bienvenida{
+	margin-top:2em;
 
 	h2{
 		font-size:1.4em; 
@@ -515,6 +583,139 @@ section#bienvenida{
 		margin-bottom:5px;
 	}
 
+}
+
+section#bienvenida .columnata{
+	flex-wrap:wrap;
+	gap:1.2em;
+}
+
+section#bienvenida #principal > div,
+section#bienvenida .columnata article{
+	flex:1 1 220px;
+	min-width:0;
+}
+
+.dashboard__theory section:empty{
+	display:none;
+}
+
+.progression-workbench{
+	min-height:42vh;
+	padding:1em 0 1.4em 0;
+	border-bottom:1px solid $basic_fillbrightgrad_color;
+}
+
+.workbenchHeader{
+	display:flex;
+	flex-wrap:wrap;
+	align-items:flex-end;
+	justify-content:space-between;
+	gap:.8em;
+	margin-bottom:1em;
+}
+
+.workbenchHeader h2{
+	font-size:2em;
+	line-height:1;
+	margin-bottom:0;
+}
+
+.workbenchKicker{
+	width:100%;
+	margin-bottom:0;
+	font-size:.85em;
+	font-weight:600;
+	color:$corporative_complementary_color;
+}
+
+.progressionControls{
+	display:grid;
+	grid-template-columns:repeat(3, minmax(190px, 1fr));
+	gap:1em;
+	align-items:stretch;
+}
+
+.progressionControls fieldset.workbenchPanel{
+	display:flex;
+	flex-direction:column;
+	gap:.65em;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:6px;
+	padding:1em;
+	background:$basic_filldarkgrad_color;
+}
+
+.progressionControls legend{
+	padding:0 .3em;
+	color:$corporative_main_color;
+	font-weight:600;
+}
+
+.progressionControls label{
+	display:grid;
+	grid-template-columns:minmax(6.6em, .7fr) minmax(0, 1fr);
+	gap:.65em;
+	align-items:center;
+	font-size:.9em;
+}
+
+.progressionControls input[type="number"],
+.progressionControls select{
+	box-sizing:border-box;
+	width:100%;
+	min-width:0;
+	background:$basic_fill_color;
+	color:$basic_front_color;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:4px;
+	padding:.32em .45em;
+}
+
+.progressionControls input[type="range"]{
+	width:100%;
+	accent-color:$corporative_complementary_color;
+}
+
+.progressionTimeline{
+	display:grid;
+	grid-template-columns:repeat(4, minmax(120px, 1fr));
+	gap:.7em;
+	margin-top:1.2em;
+}
+
+.measure{
+	box-sizing:border-box;
+	min-height:92px;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:6px;
+	background:linear-gradient(
+		0deg,
+		$basic_filldarkgrad_color 0%,
+		$basic_fill_color 100%
+	);
+	padding:.75em;
+	display:flex;
+	flex-direction:column;
+	justify-content:space-between;
+}
+
+.measure span{
+	color:$neutral_color;
+	font-size:.8em;
+}
+
+.measure strong{
+	color:$corporative_mainbright_color;
+	font-size:1.25em;
+}
+
+.transportControls{
+	display:flex;
+	flex-wrap:wrap;
+	gap:.75em;
+	justify-content:flex-end;
+	margin-top:1em;
 }
 
 section#controlVersiones{
@@ -584,6 +785,7 @@ section#controlVersiones{
 }
 
 footer{
+	grid-area:footer;
 	text-align:center; 
 	border-top:1px solid $basic_back_color; 
 	font-size:.8em; 
@@ -614,4 +816,57 @@ footer{
 
 .ui-widget-content{
 	background-color: $basic_fill_color !important;
+}
+
+@media (max-width:1280px){
+	div#container{
+		grid-template-columns:minmax(390px, 36vw) minmax(0, 1fr);
+	}
+
+	.progressionControls{
+		grid-template-columns:repeat(2, minmax(190px, 1fr));
+	}
+}
+
+@media (max-width:980px){
+	div#container{
+		grid-template-columns:minmax(0, 1fr);
+		grid-template-areas:
+			"sidebar"
+			"main"
+			"footer";
+	}
+
+	.dashboard__sidebar{
+		position:static;
+		max-height:none;
+		overflow-y:visible;
+		padding-right:0;
+	}
+
+	.progressionTimeline{
+		grid-template-columns:repeat(2, minmax(120px, 1fr));
+	}
+}
+
+@media (max-width:620px){
+	div#container{
+		padding:.8em;
+	}
+
+	.panelCabecera h1{
+		font-size:3.4em;
+	}
+
+	.progressionControls{
+		grid-template-columns:1fr;
+	}
+
+	.progressionTimeline{
+		grid-template-columns:1fr;
+	}
+
+	.progressionControls label{
+		grid-template-columns:1fr;
+	}
 }

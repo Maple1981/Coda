@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
     <meta charset="utf-8" />
@@ -75,9 +75,10 @@
   </head>
 
   <body>
-    <div id="container">
-      <header>
-        <div class="columnata columnata--ultimaColumnaAlineadaDr">
+    <div id="container" class="dashboard">
+      <aside id="panelTeorico" class="dashboard__sidebar">
+        <header>
+          <div class="panelCabecera">
           <div id="encabezado">
             <h1>CODA</h1>
             <h2>Generador matemático de escalas, acordes y progresiones</h2>
@@ -137,17 +138,60 @@
               />
             </fieldset>
           </div>
+          </div>
+        </header>
+
+        <div id="herramientasTeoricas" class="dashboard__theory">
+          <section id="notacion"></section>
+
+          <section id="instrumento"></section>
+
+          <section id="circuloQuintas"></section>
+
+          <section id="armoniaExtendida"></section>
         </div>
-      </header>
+      </aside>
 
-      <main>
-        <section id="notacion"></section>
-
-        <section id="instrumento"></section>
-
-        <section id="armoniaExtendida"></section>
-
-        <section id="circuloQuintas"></section>
+      <main id="areaTrabajo" class="dashboard__main">
+        <section id="constructorProgresiones" class="progression-workbench">
+          <div class="workbenchHeader">
+            <p class="workbenchKicker">Constructor de progresiones</p>
+            <h2>Área de trabajo armónica</h2>
+          </div>
+          <div class="progressionControls">
+            <fieldset class="workbenchPanel">
+              <legend>Tiempo</legend>
+              <label>Compases <input type="number" value="8" min="1" max="32" /></label>
+              <label>Compás <select><option>4/4</option><option>3/4</option><option>6/8</option></select></label>
+              <label>BPM <input type="number" value="96" min="40" max="240" /></label>
+            </fieldset>
+            <fieldset class="workbenchPanel">
+              <legend>Escritura</legend>
+              <label>Voces <input type="number" value="4" min="2" max="6" /></label>
+              <label>Articulación <select><option>Sostenido</option><option>Legato</option><option>Staccato</option><option>Arpegio</option></select></label>
+            </fieldset>
+            <fieldset class="workbenchPanel">
+              <legend>Color armónico</legend>
+              <label>Intercambio <input type="range" value="25" min="0" max="100" /></label>
+              <label>Tensiones <input type="range" value="35" min="0" max="100" /></label>
+              <label>Contrapunto <input type="range" value="20" min="0" max="100" /></label>
+            </fieldset>
+          </div>
+          <div class="progressionTimeline" aria-label="Visualizador de progresión">
+            <div class="measure"><span>1</span><strong>Imaj7</strong></div>
+            <div class="measure"><span>2</span><strong>vi7</strong></div>
+            <div class="measure"><span>3</span><strong>ii7</strong></div>
+            <div class="measure"><span>4</span><strong>V7</strong></div>
+            <div class="measure"><span>5</span><strong>Imaj7</strong></div>
+            <div class="measure"><span>6</span><strong>IVmaj7</strong></div>
+            <div class="measure"><span>7</span><strong>V7sus4</strong></div>
+            <div class="measure"><span>8</span><strong>Imaj9</strong></div>
+          </div>
+          <div class="transportControls">
+            <input type="button" value="Preescuchar" />
+            <input type="button" value="Exportar MIDI" />
+          </div>
+        </section>
 
         <section id="bienvenida">
           <article id="principal" class="columnata">
