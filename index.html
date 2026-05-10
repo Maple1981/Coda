@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="es">
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
@@ -51,6 +51,7 @@
 
     <script src="js/bootstrap/script-manifest.js"></script>
     <script src="js/data/constants-data.js"></script>
+    <script src="js/data/midi-data.js"></script>
     <script src="js/data/notes-data.js"></script>
     <script src="js/data/intervals-data.js"></script>
     <script src="js/data/scales-data.js"></script>
@@ -59,10 +60,12 @@
     <script src="js/data/circle-of-fifths-data.js"></script>
     <script src="js/data/extended-harmony-data.js"></script>
     <script src="js/content/changelog-content.js"></script>
+    <script src="js/content/welcome-content.js"></script>
     <script src="js/data.js"></script>
     <script src="js/services/data-index-service.js"></script>
     <script src="js/i18n/translations.js"></script>
     <script src="js/i18n/i18n-service.js"></script>
+    <script src="js/services/musical-context-service.js"></script>
     <script src="js/services/notation-service.js"></script>
     <script src="js/services/preferences-service.js"></script>
     <script src="js/domain/music-utils.js"></script>
@@ -82,7 +85,11 @@
     <script src="js/renderers/instrument-renderer.js"></script>
     <script src="js/renderers/circle-of-fifths-renderer.js"></script>
     <script src="js/renderers/changelog-renderer.js"></script>
+    <script src="js/renderers/welcome-renderer.js"></script>
+    <script src="js/renderers/progression-workbench-renderer.js"></script>
     <script src="js/ui/ui-state.js"></script>
+    <script src="js/ui/key-navigation-controller.js"></script>
+    <script src="js/ui/changelog-dialog-controller.js"></script>
     <script src="js/ui/scale-report-ui.js"></script>
     <script src="js/ui/scale-report-controller.js"></script>
     <script src="js/services/playback-service.js"></script>
@@ -199,184 +206,9 @@
       </aside>
 
       <main id="areaTrabajo" class="dashboard__main">
-        <section id="constructorProgresiones" class="progression-workbench">
-          <div class="workbenchHeader">
-            <p class="workbenchKicker">Constructor de progresiones</p>
-            <h2>Área de trabajo armónica</h2>
-          </div>
-          <div class="progressionControls">
-            <fieldset class="workbenchPanel">
-              <legend><span data-i18n="progression.time">Tiempo</span></legend>
-              <label
-                ><span data-i18n="progression.bars">Compases</span>
-                <input type="number" value="8" min="1" max="32"
-              /></label>
-              <label
-                ><span data-i18n="progression.meter">Compás</span>
-                <select>
-                  <option>4/4</option>
-                  <option>3/4</option>
-                  <option>6/8</option>
-                </select></label
-              >
-              <label
-                >BPM <input type="number" value="96" min="40" max="240"
-              /></label>
-            </fieldset>
-            <fieldset class="workbenchPanel">
-              <legend>
-                <span data-i18n="progression.writing">Escritura</span>
-              </legend>
-              <label
-                ><span data-i18n="progression.voices">Voces</span>
-                <input type="number" value="4" min="2" max="6"
-              /></label>
-              <label
-                ><span data-i18n="progression.articulation">Articulación</span>
-                <select>
-                  <option data-i18n="progression.articulation.sustain">
-                    Sostenido
-                  </option>
-                  <option data-i18n="progression.articulation.legato">
-                    Legato
-                  </option>
-                  <option data-i18n="progression.articulation.staccato">
-                    Staccato
-                  </option>
-                  <option data-i18n="progression.articulation.arpeggio">
-                    Arpegio
-                  </option>
-                </select></label
-              >
-            </fieldset>
-            <fieldset class="workbenchPanel">
-              <legend>
-                <span data-i18n="progression.harmonicColor"
-                  >Color armónico</span
-                >
-              </legend>
-              <label
-                ><span data-i18n="progression.modalInterchange"
-                  >Intercambio</span
-                >
-                <input type="range" value="25" min="0" max="100"
-              /></label>
-              <label
-                ><span data-i18n="progression.tensions">Tensiones</span>
-                <input type="range" value="35" min="0" max="100"
-              /></label>
-              <label
-                ><span data-i18n="progression.counterpoint">Contrapunto</span>
-                <input type="range" value="20" min="0" max="100"
-              /></label>
-            </fieldset>
-          </div>
-          <div
-            class="progressionTimeline"
-            aria-label="Visualizador de progresión"
-          >
-            <div class="measure"><span>1</span><strong>Imaj7</strong></div>
-            <div class="measure"><span>2</span><strong>vi7</strong></div>
-            <div class="measure"><span>3</span><strong>ii7</strong></div>
-            <div class="measure"><span>4</span><strong>V7</strong></div>
-            <div class="measure"><span>5</span><strong>Imaj7</strong></div>
-            <div class="measure"><span>6</span><strong>IVmaj7</strong></div>
-            <div class="measure"><span>7</span><strong>V7sus4</strong></div>
-            <div class="measure"><span>8</span><strong>Imaj9</strong></div>
-          </div>
-          <div class="transportControls">
-            <input type="button" value="Preescuchar" />
-            <input type="button" value="Exportar MIDI" />
-          </div>
-        </section>
+        <section id="constructorProgresiones" class="progression-workbench"></section>
 
-        <section id="bienvenida">
-          <article id="principal" class="columnata">
-            <div>
-              <p>
-                <em>CODA</em> es una aplicación web para
-                <strong>estudiantes</strong> de armonía,
-                <strong>compositores</strong>, <strong>productores</strong> y
-                <strong>músicos</strong> de todo tipo. Proporciona información
-                básica sobre tonalidades, escalas, acordes y progresiones. Con
-                un solo click, puede obtenerse ayuda rápida para componer una
-                canción nueva, efectuar arreglos, armonizar una melodía,
-                utilizar modos griegos o cambiar la tonalidad de una obra.
-              </p>
-
-              <p></p>
-            </div>
-            <div>
-              <p>
-                El sistema es muy sencillo: escoges una
-                <strong>tónica</strong> y un <strong>tipo de escala</strong>, y
-                pulsas el botón. Aparecerá toda la información disponible al
-                respecto en forma de una vista de la escala elegida, un gestor
-                de los acordes que pueden formarse sobre ella y una vista del
-                instrumento seleccionado (piano o guitarra).
-              </p>
-            </div>
-          </article>
-          <div class="columnata">
-            <article id="funciones">
-              <h2>Fundamentos</h2>
-              <p class="centrado">
-                <span class="material-icons icono fundamentos">class</span>
-              </p>
-              <p>
-                La aplicación se basa en las reglas esenciales de la
-                <a
-                  href="http://es.wikipedia.org/wiki/Armon%C3%ADa"
-                  title="Ver en Wikipedia información sobre armonía tonal o funcional"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  >armonía funcional</a
-                >, pero también ofrece información sobre
-                <a
-                  href="http://es.wikipedia.org/wiki/Modos_musicales"
-                  title="Ver en Wikipedia información sobre armonía modal"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  >armonía modal</a
-                >
-                y sobre escalas no diatónicas o poco utilizadas en occidente
-                (exóticas).
-              </p>
-            </article>
-            <article id="instrumentos">
-              <h2>Instrumentos</h2>
-              <p class="centrado">
-                <span class="material-icons icono instrumentos">piano</span>
-              </p>
-              <p>
-                Además de la información puramente teórica, CODA incluye una
-                vista de <strong>guitarra</strong> y otra de
-                <strong>piano</strong>, para que a los practicantes de esos
-                instrumentos les resulte más fácil familiarizarse con la escala
-                elegida.
-              </p>
-            </article>
-            <article id="libre">
-              <h2>Licencia</h2>
-              <p class="centrado">
-                <span class="material-icons icono licencia">flaky</span>
-              </p>
-              <p>
-                Esta aplicación está creada utilizando solamente
-                especificaciones y estándares <strong>abiertos</strong> como
-                HTML5, CSS3 y JavaScript a través de JQuery. Su código fuente es
-                <strong>libre</strong> y utiliza una licencia
-                <a
-                  href="https://creativecommons.org/licenses/by-sa/4.0/"
-                  title="Licencia Creative Commons Atribución/Reconocimiento - Compartir igual 4.0 Internacional"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  >Creative Commons by-sa 4.0 International</a
-                >.
-              </p>
-            </article>
-          </div>
-        </section>
+        <section id="bienvenida"></section>
 
         <section id="controlVersiones" aria-live="polite"></section>
       </main>
@@ -427,3 +259,5 @@
     </div>
   </body>
 </html>
+
+

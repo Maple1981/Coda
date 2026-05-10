@@ -18,6 +18,7 @@ function runScript(relativePath) {
 
 [
 	'js/data/constants-data.js',
+	'js/data/midi-data.js',
 	'js/data/notes-data.js',
 	'js/data/intervals-data.js',
 	'js/data/scales-data.js',
@@ -26,6 +27,7 @@ function runScript(relativePath) {
 	'js/data/circle-of-fifths-data.js',
 	'js/data/extended-harmony-data.js',
 	'js/content/changelog-content.js',
+	'js/content/welcome-content.js',
 	'js/data.js',
 	'js/services/data-index-service.js',
 	'js/i18n/translations.js',
@@ -44,7 +46,9 @@ function runScript(relativePath) {
 	'js/renderers/extended-harmony-renderer.js',
 	'js/renderers/instrument-renderer.js',
 	'js/renderers/circle-of-fifths-renderer.js',
-	'js/renderers/changelog-renderer.js'
+	'js/renderers/changelog-renderer.js',
+	'js/renderers/welcome-renderer.js',
+	'js/renderers/progression-workbench-renderer.js'
 ].forEach(runScript);
 
 const data = context.window.CodaData;
@@ -55,6 +59,8 @@ const extendedHarmonyRenderer = context.window.CodaRenderers.extendedHarmony;
 const instrumentsRenderer = context.window.CodaRenderers.instruments;
 const scaleChordsRenderer = context.window.CodaRenderers.scaleChords;
 const scaleSummaryRenderer = context.window.CodaRenderers.scaleSummary;
+const welcomeRenderer = context.window.CodaRenderers.welcome;
+const progressionWorkbenchRenderer = context.window.CodaRenderers.progressionWorkbench;
 const notation = context.window.CodaNotation;
 const englishI18n = context.window.CodaI18n.create({
 	initialLanguage: 'en',
@@ -344,5 +350,15 @@ assert.ok(changelogHtml.indexOf('<script>') === -1);
 const englishChangelogHtml = changelogRenderer.render(context.window.CodaChangelogContent.en);
 assert.ok(englishChangelogHtml.indexOf('<h3>Current beta 0.5 release notes</h3>') > -1);
 assert.ok(englishChangelogHtml.indexOf('<dt>More direct interface</dt>') > -1);
+
+const welcomeHtml = welcomeRenderer.render(context.window.CodaWelcomeContent.es);
+assert.ok(welcomeHtml.indexOf('<article id="principal" class="columnata">') > -1);
+assert.ok(welcomeHtml.indexOf('<h2>Fundamentos</h2>') > -1);
+assert.ok(welcomeHtml.indexOf('piano o guitarra') > -1);
+
+const progressionWorkbenchHtml = progressionWorkbenchRenderer.render();
+assert.ok(progressionWorkbenchHtml.indexOf('class="progressionControls"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.articulation.sustain"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('<strong>Imaj7</strong>') > -1);
 
 console.log('Renderer tests passed');

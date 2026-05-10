@@ -7,6 +7,7 @@
 
 		var state = {
 			language: options.language || 'es',
+			musicalContext: null,
 			notationStyle: options.initialNotation || 'anglosaxon',
 			report: null,
 			selectedTuningIndex: 0,
@@ -26,6 +27,9 @@
 			getNotationStyle: function () {
 				return state.notationStyle;
 			},
+			getMusicalContext: function () {
+				return state.musicalContext;
+			},
 			getReport: function () {
 				return state.report;
 			},
@@ -40,6 +44,9 @@
 			},
 			setLanguage: function (language) {
 				state.language = language || state.language;
+			},
+			setMusicalContext: function (musicalContext) {
+				state.musicalContext = musicalContext || null;
 			},
 			setNotationStyle: function (notationStyle) {
 				state.notationStyle = notationStyle || state.notationStyle;
@@ -56,6 +63,7 @@
 			toJSON: function () {
 				return {
 					language: state.language,
+					musicalContext: state.musicalContext,
 					notationStyle: state.notationStyle,
 					report: state.report,
 					selectedTuningIndex: state.selectedTuningIndex,

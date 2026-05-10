@@ -29,9 +29,12 @@ assert.ok(global.CodaData);
 assert.ok(global.CodaDataCatalogs);
 assert.ok(global.CodaChangelogContent.es);
 assert.ok(global.CodaChangelogContent.en);
+assert.ok(global.CodaWelcomeContent.es);
+assert.ok(global.CodaWelcomeContent.en);
 assert.ok(global.CodaDataIndex.create);
 assert.ok(global.CodaTranslations);
 assert.ok(global.CodaI18n.create);
+assert.ok(global.CodaMusicalContext.create);
 assert.ok(global.CodaNotation.formatNoteName);
 assert.ok(global.CodaPreferences.create);
 assert.ok(global.CodaDomain.buildScale);
@@ -50,7 +53,11 @@ assert.ok(global.CodaRenderers.extendedHarmony);
 assert.ok(global.CodaRenderers.instruments);
 assert.ok(global.CodaRenderers.circleOfFifths);
 assert.ok(global.CodaRenderers.changelog);
+assert.ok(global.CodaRenderers.welcome);
+assert.ok(global.CodaRenderers.progressionWorkbench);
 assert.ok(global.CodaUiState.create);
+assert.ok(global.CodaKeyNavigation.applyRecommendedNotation);
+assert.ok(global.CodaChangelogDialog.initialize);
 assert.ok(global.CodaUi.renderScaleReport);
 assert.ok(global.CodaUi.attachInstrumentEvents);
 assert.ok(global.CodaUi.scheduleDashboardWorkspaceHeight);
@@ -60,15 +67,22 @@ assert.ok(global.CodaScaleReportController.initialize);
 assert.ok(global.CodaPlayback.create);
 assert.ok(global.CodaBootstrap.start);
 assert.ok(manifestScripts.indexOf('js/data/constants-data.js') > -1);
+assert.ok(manifestScripts.indexOf('js/data/midi-data.js') > -1);
 assert.ok(manifestScripts.indexOf('js/data/scales-data.js') > -1);
 assert.ok(manifestScripts.indexOf('js/content/changelog-content.js') > -1);
+assert.ok(manifestScripts.indexOf('js/content/welcome-content.js') > -1);
 assert.ok(manifestScripts.indexOf('js/renderers/changelog-renderer.js') > -1);
+assert.ok(manifestScripts.indexOf('js/renderers/welcome-renderer.js') > -1);
+assert.ok(manifestScripts.indexOf('js/renderers/progression-workbench-renderer.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/ui-state.js') > -1);
+assert.ok(manifestScripts.indexOf('js/ui/key-navigation-controller.js') > -1);
+assert.ok(manifestScripts.indexOf('js/ui/changelog-dialog-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/domain/progression-domain.js') > -1);
 assert.ok(manifestScripts.indexOf('js/application/progression-application.js') > -1);
 assert.ok(manifestScripts.indexOf('js/i18n/translations.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/data-index-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/i18n/i18n-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/musical-context-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/notation-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/preferences-service.js') > -1);
 assert.deepEqual(manifestScripts.slice(-1), ['js/app.js']);
@@ -86,8 +100,14 @@ assert.ok(manifestIndex > -1);
 assert.deepEqual(htmlScripts.slice(manifestIndex + 1, manifestIndex + 1 + manifestScripts.length), manifestScripts);
 assert.equal(indexHtml.indexOf('Novedades de la versión actual beta 0.5'), -1);
 assert.ok(indexHtml.indexOf('<section id="controlVersiones" aria-live="polite"></section>') > -1);
+assert.ok(indexHtml.indexOf('<section id="constructorProgresiones" class="progression-workbench"></section>') > -1);
+assert.ok(indexHtml.indexOf('<section id="bienvenida"></section>') > -1);
+assert.equal(indexHtml.indexOf('<strong>estudiantes</strong>'), -1);
+assert.equal(indexHtml.indexOf('Imaj7'), -1);
 assert.equal(global.CodaTranslations.es['changelog.html'], undefined);
 assert.equal(global.CodaTranslations.en['changelog.html'], undefined);
+assert.equal(global.CodaTranslations.es['welcome.main1'], undefined);
+assert.equal(global.CodaTranslations.en['welcome.main1'], undefined);
 
 let controllerOptions;
 const i18n = global.CodaI18n.create({
@@ -129,6 +149,9 @@ const startResult = global.CodaBootstrap.start({
 	},
 	preferences: preferences,
 	renderers: global.CodaRenderers,
+	keyNavigation: global.CodaKeyNavigation,
+	changelogDialog: { initialize: function () {} },
+	musicalContextFactory: global.CodaMusicalContext,
 	ui: global.CodaUi,
 	uiStateFactory: global.CodaUiState
 });
@@ -141,13 +164,16 @@ assert.equal(playbackOptions.notes, global.CodaData.notes);
 assert.equal(global.CodaData.indexes.notes.indexByName['F#'], 6);
 assert.equal(global.CodaData.indexes.chords.byName.Dominante.abreviatura, '7');
 assert.equal(playbackOptions.channel, global.CodaData.midi.channel);
-assert.equal(playbackOptions.instrument, 'acoustic_grand_piano');
+assert.equal(playbackOptions.instrument, global.CodaData.midiInstruments[0].id);
 assert.equal(controllerOptions.application, global.CodaApplication);
+assert.equal(controllerOptions.changelogDialog.initialize != null, true);
 assert.equal(controllerOptions.chordPlayback, startResult.chordPlayback);
 assert.equal(controllerOptions.domain, global.CodaDomain);
 assert.equal(controllerOptions.i18n, i18n);
 assert.equal(controllerOptions.initialNotation, 'latin');
 assert.equal(controllerOptions.instrumentPlayback, startResult.instrumentPlayback);
+assert.equal(controllerOptions.keyNavigation, global.CodaKeyNavigation);
+assert.ok(controllerOptions.musicalContext.fromSelection);
 assert.equal(controllerOptions.notation, global.CodaNotation);
 assert.equal(controllerOptions.preferences, preferences);
 assert.equal(controllerOptions.renderers, global.CodaRenderers);
@@ -156,8 +182,10 @@ assert.equal(controllerOptions.uiState, startResult.uiState);
 assert.equal(startResult.uiState.getLanguage(), 'es');
 assert.equal(startResult.uiState.getNotationStyle(), 'latin');
 startResult.uiState.setSelection({ instrument: '0', tonicName: 'C' });
+startResult.uiState.setMusicalContext({ tonicName: 'C', scaleName: 'Mayor' });
 startResult.uiState.setSelectedTuningIndex(2);
 assert.equal(startResult.uiState.getInstrument(), '0');
+assert.equal(startResult.uiState.getMusicalContext().scaleName, 'Mayor');
 assert.equal(startResult.uiState.getSelectedTuningIndex(), 2);
 startResult.uiState.resetSelectedTuningIndex();
 assert.equal(startResult.uiState.getSelectedTuningIndex(), 0);

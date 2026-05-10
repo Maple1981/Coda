@@ -8,6 +8,7 @@
 	global.CodaData = {
 		constants: catalogs.constants,
 		midi: catalogs.midi,
+		midiInstruments: catalogs.midiInstruments,
 		notes: catalogs.notes,
 		intervals: catalogs.intervals,
 		scales: catalogs.scales,

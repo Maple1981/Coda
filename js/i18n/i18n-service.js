@@ -63,6 +63,7 @@
 			setText($, 'span[data-i18n="form.guitar"]', 'form.guitar');
 			setValue($, '#btnEscala', 'form.submit');
 
+			ensureProgressionWorkbench($);
 			setText($, '.workbenchKicker', 'progression.subtitle');
 			setText($, '.workbenchHeader h2', 'progression.title');
 			setAttribute($, '.progressionTimeline', 'aria-label', 'progression.aria');
@@ -89,6 +90,7 @@
 		}
 
 		function applyProgressionLabels($) {
+			ensureProgressionWorkbench($);
 			setText($, 'span[data-i18n="progression.time"]', 'progression.time');
 			setText($, 'span[data-i18n="progression.bars"]', 'progression.bars');
 			setText($, 'span[data-i18n="progression.meter"]', 'progression.meter');
@@ -107,15 +109,19 @@
 			setValue($, '.transportControls input:eq(1)', 'progression.exportMidi');
 		}
 
+		function ensureProgressionWorkbench($) {
+			if ($('#constructorProgresiones').children().length === 0 && global.CodaRenderers && global.CodaRenderers.progressionWorkbench) {
+				$('#constructorProgresiones').html(global.CodaRenderers.progressionWorkbench.render());
+			}
+		}
+
 		function applyWelcome($) {
-			setHtml($, '#principal > div:eq(0) p:eq(0)', 'welcome.main1');
-			setHtml($, '#principal > div:eq(1) p:eq(0)', 'welcome.main2');
-			setText($, '#funciones h2', 'welcome.foundationTitle');
-			setHtml($, '#funciones p:last', 'welcome.foundationBody');
-			setText($, '#instrumentos h2', 'welcome.instrumentsTitle');
-			setHtml($, '#instrumentos p:last', 'welcome.instrumentsBody');
-			setText($, '#libre h2', 'welcome.licenseTitle');
-			setHtml($, '#libre p:last', 'welcome.licenseBody');
+			var content = global.CodaWelcomeContent || {};
+			var welcome = content[currentLanguage] || content.es;
+
+			if (welcome && global.CodaRenderers && global.CodaRenderers.welcome) {
+				$('#bienvenida').html(global.CodaRenderers.welcome.render(welcome));
+			}
 		}
 
 		function applyChangelog($) {

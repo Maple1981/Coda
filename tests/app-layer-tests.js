@@ -18,6 +18,7 @@ function runScript(relativePath) {
 
 [
 	'js/data/constants-data.js',
+	'js/data/midi-data.js',
 	'js/data/notes-data.js',
 	'js/data/intervals-data.js',
 	'js/data/scales-data.js',

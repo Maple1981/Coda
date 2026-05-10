@@ -5,6 +5,10 @@
 	function initialize(options) {
 		var $ = options.$;
 		var i18n = options.i18n;
+		var keyNavigation = options.keyNavigation || global.CodaKeyNavigation;
+		var musicalContextService = options.musicalContext || global.CodaMusicalContext.create({
+			data: options.data
+		});
 		var notation = options.notation;
 		var preferences = options.preferences;
 		var uiState = options.uiState || global.CodaUiState.create({
@@ -18,11 +22,13 @@
 		$('#selectorNotacion').val(uiState.getNotationStyle());
 		fillSelectHashTable($, $('#tonica'), options.data.notes, false, null, 'notes', notation, uiState.getNotationStyle());
 		fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
-		applyRecommendedNotation($, options);
+		keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
 		if (i18n) {
 			i18n.applyStatic($);
 		}
-		initializeChangelogDialog($, i18n);
+		if (options.changelogDialog) {
+			options.changelogDialog.initialize($, i18n);
+		}
 		options.ui.scheduleDashboardWorkspaceHeight($);
 
 		$(window).on('resize', function () {
@@ -39,7 +45,7 @@
 		});
 
 		$('#interface select').change(function () {
-			applyRecommendedNotation($, options);
+			keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
 
 			if (options.ui.hasRenderedResults($)) {
 				renderReport();
@@ -48,7 +54,7 @@
 
 		$('#interface input:radio[name="formato"]').change(function () {
 			var preferFlats = $(this).val() === '1';
-			fillSelectHashTable($, $('#tonica'), options.data.notes, preferFlats, null, 'notes', notation, currentNotation);
+			fillSelectHashTable($, $('#tonica'), options.data.notes, preferFlats, null, 'notes', notation, uiState.getNotationStyle());
 
 			if (options.ui.hasRenderedResults($)) {
 				renderReport();
@@ -101,8 +107,8 @@
 		});
 
 		$(document).on('click', '.revamp', function (event) {
-			navigateToLinkedKey($, options.data.notes, event.target.id, notation, uiState.getNotationStyle());
-			applyRecommendedNotation($, options);
+			keyNavigation.navigateToLinkedKey($, options.data.notes, event.target.id, notation, uiState.getNotationStyle(), fillSelectHashTable);
+			keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
 			renderReport();
 		});
 
@@ -115,10 +121,12 @@
 
 		function renderReport() {
 			var selection = options.ui.readSelection($, options.data);
+			var musicalContext = musicalContextService.fromSelection(selection);
 			var report;
 			uiState.setSelection(selection);
+			uiState.setMusicalContext(musicalContext);
 
-			if (selection.scaleName === '------------') {
+			if (musicalContext.isScaleSeparator) {
 				uiState.clearReport();
 				return;
 			}
@@ -126,11 +134,11 @@
 			report = options.application.buildScaleReport({
 				data: options.data,
 				domain: options.domain,
-				preferFlats: selection.preferFlats,
-				scaleIndex: selection.scaleIndex,
-				scaleName: selection.scaleName,
-				tonicIndex: selection.tonicIndex,
-				tonicName: selection.tonicName
+				preferFlats: musicalContext.preferFlats,
+				scaleIndex: musicalContext.scaleIndex,
+				scaleName: musicalContext.scaleName,
+				tonicIndex: musicalContext.tonicIndex,
+				tonicName: musicalContext.tonicName
 			});
 			uiState.setReport(report);
 
@@ -154,23 +162,25 @@
 
 		function renderInstrument(resetTuning) {
 			var selection = options.ui.readSelection($, options.data);
+			var musicalContext = musicalContextService.fromSelection(selection);
 			var report = uiState.getReport();
 			uiState.setSelection(selection);
+			uiState.setMusicalContext(musicalContext);
 
 			if (!report) {
 				return;
 			}
 
-			if (resetTuning && selection.instrument === '0') {
+			if (resetTuning && musicalContext.instrument === '0') {
 				uiState.resetSelectedTuningIndex();
 			}
 
 			var instrumentView = options.application.buildInstrumentView({
 				data: options.data,
 				domain: options.domain,
-				instrument: selection.instrument,
+				instrument: musicalContext.instrument,
 				octaveCount: 2,
-				preferFlats: selection.preferFlats,
+				preferFlats: musicalContext.preferFlats,
 				report: report,
 				tuningIndex: uiState.getSelectedTuningIndex()
 			});
@@ -228,102 +238,6 @@
 		select.empty().append(html);
 	}
 
-	function initializeChangelogDialog($, i18n) {
-		if (typeof $('#controlVersiones').dialog !== 'function') {
-			return;
-		}
-
-		$('#controlVersiones').dialog({
-			autoOpen: false,
-			classes: {
-				'ui-dialog': 'dialogoNovedades'
-			},
-			height: Math.min(720, $(window).height() - 60),
-			modal: true,
-			title: i18n ? i18n.t('changelog.dialogTitle') : 'Novedades y mejoras',
-			width: Math.min(920, $(window).width() - 40)
-		});
-
-		$('#enlaceNovedades').click(function (event) {
-			event.preventDefault();
-			$('#controlVersiones').dialog('open');
-		});
-
-		$(document).on('mousedown', '.ui-widget-overlay', function () {
-			$('#controlVersiones').dialog('close');
-		});
-	}
-
-	function navigateToLinkedKey($, notes, targetId, notation, notationStyle) {
-		var selectedOption = targetId.split('_');
-		var noteValue = findNoteValue(notes, selectedOption[0]);
-
-		if (selectedOption[1].indexOf('m') > -1) {
-			$('select#escala').val('2');
-		} else {
-			$('select#escala').val('0');
-		}
-
-		if (selectedOption[0].indexOf('#') > 0) {
-			fillSelectHashTable($, $('#tonica'), notes, false, null, 'notes', notation, notationStyle);
-		}
-
-		if (selectedOption[0].indexOf('b') > 0) {
-			fillSelectHashTable($, $('#tonica'), notes, true, null, 'notes', notation, notationStyle);
-		}
-
-		if (noteValue > -1) {
-			$('select#tonica').val(String(noteValue));
-		}
-	}
-
-	function findNoteValue(notes, noteName) {
-		if (notes._codaIndex && notes._codaIndex.indexByName && notes._codaIndex.indexByName[noteName] !== undefined) {
-			return notes._codaIndex.indexByName[noteName];
-		}
-
-		for (var i = 0; i < notes.length; i++) {
-			if (notes[i].nombre === noteName || notes[i].enarmonica === noteName) {
-				return i;
-			}
-		}
-
-		return -1;
-	}
-
-	function applyRecommendedNotation($, options) {
-		var scaleIndex = parseInt($('select#escala option:selected').val(), 10);
-		var scaleDefinition = options.data.scales[scaleIndex];
-		var tonicIndex = parseInt($('select#tonica option:selected').val(), 10);
-		var tonicDefinition = options.data.notes[tonicIndex];
-
-		if (!tonicDefinition) {
-			return;
-		}
-
-		var preferFlats = options.domain.shouldPreferFlatsForKeySignature({
-			notes: options.data.notes,
-			scaleDefinition: scaleDefinition,
-			selectedScaleIndex: scaleIndex,
-			tonicName: options.ui.noteName(tonicDefinition, $('#interface input:radio[name="formato"]:checked').val() === '1')
-		});
-
-		if (preferFlats == null) {
-			return;
-		}
-
-		$('#interface input:radio[name="formato"][value="' + (preferFlats ? '1' : '0') + '"]').prop('checked', true);
-		fillSelectHashTable($, $('#tonica'), options.data.notes, preferFlats, null, 'notes', options.notation, resolveNotationStyle(options));
-	}
-
-	function resolveNotationStyle(options) {
-		if (options.uiState) {
-			return options.uiState.getNotationStyle();
-		}
-
-		return options.notation ? options.notation.normalizeStyle(options.initialNotation || $('#selectorNotacion').val()) : 'anglosaxon';
-	}
-
 	function highlightChord($) {
 		return function (element) {
 			var noteNames = element.id.split('-');
@@ -369,13 +283,9 @@
 
 	global.CodaScaleReportController = {
 		clearChordHighlight: clearChordHighlight,
-		applyRecommendedNotation: applyRecommendedNotation,
 		fillSelectHashTable: fillSelectHashTable,
-		findNoteValue: findNoteValue,
 		highlightChord: highlightChord,
-		initializeChangelogDialog: initializeChangelogDialog,
 		initialize: initialize,
-		navigateToLinkedKey: navigateToLinkedKey,
 		playChord: playChord,
 		playInstrumentNote: playInstrumentNote
 	};

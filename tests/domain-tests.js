@@ -18,6 +18,7 @@ function runScript(relativePath) {
 
 [
 	'js/data/constants-data.js',
+	'js/data/midi-data.js',
 	'js/data/notes-data.js',
 	'js/data/intervals-data.js',
 	'js/data/scales-data.js',
@@ -41,6 +42,8 @@ const data = context.window.CodaData;
 const domain = context.window.CodaDomain;
 
 assert.equal(data.constants.octaveSemitones, 12);
+assert.equal(data.midi.initialMidiNote, 60);
+assert.equal(data.midiInstruments[0].id, 'acoustic_grand_piano');
 assert.equal(data.notes.length, 12);
 assert.equal(data.indexes.notes.indexByName.C, 0);
 assert.equal(data.indexes.notes.indexByName.Db, 1);
