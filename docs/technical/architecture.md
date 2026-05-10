@@ -50,5 +50,6 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - El HTML debe concentrarse en `js/renderers/`.
 - La interacción con jQuery y el DOM debe quedarse en `js/ui/`.
 - Los textos visibles nuevos deben pasar por `js/i18n/` cuando formen parte de la interfaz.
+- Los catálogos de datos que se muestran al usuario deben mantener traducción en todos los idiomas disponibles. El dato canónico puede seguir en español si el dominio lo necesita, pero la etiqueta visible debe resolverse desde `js/i18n/`. Los nombres de las notas se tratarán aparte.
 - El orden de carga de módulos debe mantenerse en `js/bootstrap/script-manifest.js` y verificarse con `tests/architecture-tests.js`.
 - Si una mejora requiere servidor, cuentas de usuario, sincronización externa o almacenamiento persistente, debe tratarse como cambio de alcance.

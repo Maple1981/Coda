@@ -18,6 +18,8 @@ function runScript(relativePath) {
 
 [
 	'js/data.js',
+	'js/i18n/translations.js',
+	'js/i18n/i18n-service.js',
 	'js/domain/music-utils.js',
 	'js/domain/scale-domain.js',
 	'js/domain/chord-domain.js',
@@ -40,6 +42,10 @@ const extendedHarmonyRenderer = context.window.CodaRenderers.extendedHarmony;
 const instrumentsRenderer = context.window.CodaRenderers.instruments;
 const scaleChordsRenderer = context.window.CodaRenderers.scaleChords;
 const scaleSummaryRenderer = context.window.CodaRenderers.scaleSummary;
+const englishI18n = context.window.CodaI18n.create({
+	initialLanguage: 'en',
+	translations: context.window.CodaTranslations
+});
 
 function byName(collection, name) {
 	return collection.find(function (item) {
@@ -164,6 +170,29 @@ assert.ok(pianoHtml.indexOf('<table class="teclasNegras">') > -1);
 assert.ok(pianoHtml.indexOf('<table class="teclasBlancas">') > -1);
 assert.ok(pianoHtml.indexOf('<span>Bb</span>') > -1);
 assert.ok(pianoHtml.indexOf('<td class="celdaNota  perteneceEscala"><span>C</span></td>') > -1);
+
+const englishPianoHtml = instrumentsRenderer.renderPiano({
+	i18n: englishI18n,
+	keyboard: pianoKeyboard,
+	scaleDefinition: byName(data.scales, 'Mayor')
+});
+assert.ok(englishPianoHtml.indexOf('<h4>Piano view</h4>') > -1);
+
+const englishGuitarHtml = instrumentsRenderer.renderGuitar({
+	i18n: englishI18n,
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	strings: [
+		{
+			aire: 'E',
+			perteneceEscala: true,
+			trastes: []
+		}
+	],
+	tuning: data.tunings[0],
+	tunings: data.tunings
+});
+assert.ok(englishGuitarHtml.indexOf('<h4>Tuning: Standard E') > -1);
+assert.ok(englishGuitarHtml.indexOf('E♭ tuning') > -1);
 
 const scaleChordsHtml = scaleChordsRenderer.render({
 	mode: 'M',

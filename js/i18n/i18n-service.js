@@ -32,6 +32,13 @@
 			return currentLanguage;
 		}
 
+		function dataLabel(collectionName, index, fallback) {
+			var key = 'data.' + collectionName + '.' + index;
+			var text = t(key);
+
+			return text === key ? fallback : text;
+		}
+
 		function applyStatic($) {
 			$('html').attr('lang', currentLanguage === 'en' ? 'en' : 'es-ES');
 			$('meta[name="description"]').attr('content', t('meta.description'));
@@ -127,6 +134,7 @@
 
 		return {
 			applyStatic: applyStatic,
+			dataLabel: dataLabel,
 			getLanguage: getLanguage,
 			setLanguage: setLanguage,
 			t: t

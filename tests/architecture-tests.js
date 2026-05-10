@@ -68,6 +68,10 @@ const i18n = global.CodaI18n.create({
 	initialLanguage: 'es',
 	translations: global.CodaTranslations
 });
+const englishI18n = global.CodaI18n.create({
+	initialLanguage: 'en',
+	translations: global.CodaTranslations
+});
 let playbackOptions;
 let loadCalled = false;
 
@@ -110,5 +114,16 @@ assert.equal(controllerOptions.domain, global.CodaDomain);
 assert.equal(controllerOptions.i18n, i18n);
 assert.equal(controllerOptions.renderers, global.CodaRenderers);
 assert.equal(controllerOptions.ui, global.CodaUi);
+
+global.CodaData.scales.forEach(function (scale, index) {
+	assert.ok(global.CodaTranslations.es['data.scales.' + index] != null);
+	assert.ok(global.CodaTranslations.en['data.scales.' + index] != null);
+});
+global.CodaData.tunings.forEach(function (tuning, index) {
+	assert.ok(global.CodaTranslations.es['data.tunings.' + index] != null);
+	assert.ok(global.CodaTranslations.en['data.tunings.' + index] != null);
+});
+assert.equal(englishI18n.dataLabel('scales', 0, 'Mayor'), 'Major');
+assert.equal(englishI18n.dataLabel('tunings', 0, 'Estándar E'), 'Standard E');
 
 console.log('Architecture tests passed');

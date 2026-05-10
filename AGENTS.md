@@ -45,6 +45,7 @@ La base técnica actual usa:
 - Preservar los recursos existentes de audio, teclado, diapasón e interfaz salvo que haya una razón clara para cambiarlos.
 - Al modificar lógica musical, documentar brevemente la regla armónica o rítmica si no es evidente en el código.
 - Toda documentación debe redactarse en español estándar escrupuloso, con tildes, signos y ortografía correctos. Mantener este criterio hasta que se acuerde una traducción al inglés.
+- Cualquier cambio de texto visible en la interfaz o en catálogos de datos presentados al usuario debe actualizarse en todos los idiomas disponibles. De momento, los idiomas disponibles son español de España e inglés. Los nombres de las notas quedan fuera de esta regla hasta que se defina explícitamente su tratamiento.
 
 ## Documentación técnica
 

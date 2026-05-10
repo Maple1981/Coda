@@ -3,7 +3,7 @@
 	'use strict';
 
 	function renderGuitar(options) {
-		var html = '<h4>' + t(options, 'instrument.tuning') + ': ' + options.tuning.nombre + '&nbsp;';
+		var html = '<h4>' + t(options, 'instrument.tuning') + ': ' + tuningLabel(options, options.tuning) + '&nbsp;';
 
 		html += renderTuningSelect(options);
 		html += '</h4>';
@@ -41,7 +41,7 @@
 
 		for (var i = 0; i < options.tunings.length; i++) {
 			if (options.tunings[i].nombre !== options.tuning.nombre) {
-				html += '<option value="' + i + '">' + options.tunings[i].nombre + '</option>';
+				html += '<option value="' + i + '">' + tuningLabel(options, options.tunings[i], i) + '</option>';
 			}
 		}
 
@@ -132,12 +132,29 @@
 		return fallback[key] || key;
 	}
 
+	function tuningLabel(options, tuning, index) {
+		if (options.i18n && options.tunings) {
+			var tuningIndex = index;
+
+			if (tuningIndex == null) {
+				tuningIndex = options.tunings.indexOf(tuning);
+			}
+
+			if (tuningIndex > -1) {
+				return options.i18n.dataLabel('tunings', tuningIndex, tuning.nombre);
+			}
+		}
+
+		return tuning.nombre;
+	}
+
 	global.CodaRenderers = global.CodaRenderers || {};
 	global.CodaRenderers.instruments = {
 		renderBlackKeys: renderBlackKeys,
 		renderGuitar: renderGuitar,
 		renderPiano: renderPiano,
 		renderTuningSelect: renderTuningSelect,
+		tuningLabel: tuningLabel,
 		renderWhiteKeys: renderWhiteKeys
 	};
 })(window);

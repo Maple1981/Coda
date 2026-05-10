@@ -11,7 +11,7 @@
 		$('#interface input:radio[name="formato"][value="0"]').prop('checked', true);
 		$('#interface input:radio[name="instrumento"][value="1"]').prop('checked', true);
 		fillSelectHashTable($, $('#tonica'), options.data.notes, false);
-		fillSelectHashTable($, $('#escala'), options.data.scales, false);
+		fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
 		applyRecommendedNotation($, options);
 		if (i18n) {
 			i18n.applyStatic($);
@@ -58,6 +58,7 @@
 		$('#selectorIdioma').change(function () {
 			if (i18n) {
 				i18n.setLanguage($(this).val());
+				fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
 				i18n.applyStatic($);
 			}
 
@@ -155,7 +156,7 @@
 		};
 	}
 
-	function fillSelectHashTable($, select, values, preferFlats) {
+	function fillSelectHashTable($, select, values, preferFlats, i18n, collectionName) {
 		var html = '';
 
 		for (var i = 0; i < values.length; i++) {
@@ -168,6 +169,10 @@
 
 			if (preferFlats && values[i].enarmonica !== undefined) {
 				name = values[i].enarmonica;
+			}
+
+			if (i18n && collectionName) {
+				name = i18n.dataLabel(collectionName, i, name);
 			}
 
 			html += '<option value="';
