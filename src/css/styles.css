@@ -1099,6 +1099,12 @@ footer ul#redesSociales li {
   }
 }
 
+@media (max-width: 1120px) {
+  .appHeader__brand h2 {
+    display: none;
+  }
+}
+
 @media (max-width: 980px) {
   div#container {
     -ms-grid-columns: minmax(0, 1fr);
