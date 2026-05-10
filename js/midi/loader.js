@@ -23,7 +23,7 @@ MIDI.Player = MIDI.Player || {};
 (function(root) { 'use strict';
 
 	root.DEBUG = true;
-	root.USE_XHR = true;
+	root.USE_XHR = false;
 	root.soundfontUrl = './soundfont/';
 
 	/*
@@ -161,34 +161,26 @@ MIDI.Player = MIDI.Player || {};
 	};
 
 	var sendRequest = function(instrumentId, audioFormat, onprogress, onsuccess, onerror) {
-		var soundfontPath = root.soundfontUrl + instrumentId + '-' + audioFormat + '.js';
-		if (root.USE_XHR) {
-			root.util.request({
-				url: soundfontPath,
-				format: 'text',
-				onerror: onerror,
-				onprogress: onprogress,
-				onsuccess: function(event, responseText) {
-					var script = document.createElement('script');
-					script.language = 'javascript';
-					script.type = 'text/javascript';
-					script.text = responseText;
-					document.body.appendChild(script);
-					///
-					onsuccess();
-				}
-			});
-		} else {
-			dom.loadScript.add({
-				url: soundfontPath,
-				verify: 'MIDI.Soundfont["' + instrumentId + '"]',
-				onerror: onerror,
-				onsuccess: function() {
-					onsuccess();
-				}
-			});
+		if (!isSafeSoundfontToken(instrumentId) || !isSafeSoundfontToken(audioFormat)) {
+			onerror && onerror(new Error('Unsafe soundfont path'));
+			return;
 		}
+
+		var soundfontPath = root.soundfontUrl + instrumentId + '-' + audioFormat + '.js';
+		dom.loadScript.add({
+			url: soundfontPath,
+			verify: 'MIDI.Soundfont["' + instrumentId + '"]',
+			onerror: onerror,
+			onprogress: onprogress,
+			onsuccess: function() {
+				onsuccess();
+			}
+		});
 	};
+
+	function isSafeSoundfontToken(value) {
+		return /^[a-z0-9_]+$/.test(String(value || ''));
+	}
 
 	root.setDefaultPlugin = function(midi) {
 		for (var key in midi) {

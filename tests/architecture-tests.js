@@ -109,6 +109,12 @@ assert.ok(indexHtml.indexOf('<section id="controlVersiones" aria-live="polite"><
 assert.ok(indexHtml.indexOf('<section id="constructorProgresiones" class="progression-workbench"></section>') > -1);
 assert.ok(indexHtml.indexOf('<section id="bienvenida"></section>') > -1);
 assert.ok(indexHtml.indexOf('<select id="instrumentoSonoro"></select>') > -1);
+assert.ok(indexHtml.indexOf('Content-Security-Policy') > -1);
+assert.ok(indexHtml.indexOf("script-src 'self'") > -1);
+assert.ok(indexHtml.indexOf('fonts.googleapis.com') > -1);
+assert.ok(indexHtml.indexOf('fonts.gstatic.com') > -1);
+assert.ok(indexHtml.indexOf('material-icons') > -1);
+assert.equal(indexHtml.indexOf('script-src https://'), -1);
 assert.ok(indexHtml.indexOf('id="themeToggleButton"') > -1);
 assert.equal(indexHtml.indexOf('name="instrumento"'), -1);
 assert.equal(indexHtml.indexOf('<strong>estudiantes</strong>'), -1);
@@ -119,6 +125,39 @@ assert.equal(global.CodaTranslations.es['welcome.main1'], undefined);
 assert.equal(global.CodaTranslations.en['welcome.main1'], undefined);
 assert.ok(global.CodaTranslations.es['footer.soundfonts'].indexOf('MIDI.js Soundfonts') > -1);
 assert.ok(global.CodaTranslations.en['footer.soundfonts'].indexOf('Creative Commons Attribution 3.0') > -1);
+assert.deepEqual(global.CodaPreferences.sanitizeValues({
+	format: '1',
+	language: 'en',
+	midiInstrument: 'drawbar_organ',
+	notation: 'latin',
+	scaleIndex: '3',
+	theme: 'day',
+	tonicIndex: '8',
+	unknown: '<script>',
+	volume: '73'
+}), {
+	format: '1',
+	language: 'en',
+	midiInstrument: 'drawbar_organ',
+	notation: 'latin',
+	scaleIndex: 3,
+	theme: 'day',
+	tonicIndex: 8,
+	volume: 73
+});
+assert.deepEqual(global.CodaPreferences.sanitizeValues({
+	format: '9',
+	language: 'fr',
+	midiInstrument: '../bad',
+	notation: 'bad',
+	scaleIndex: 999,
+	theme: 'dusk',
+	tonicIndex: -1,
+	volume: 101
+}), {});
+assert.ok(fs.readFileSync(path.join(root, 'js/midi/loader.js'), 'utf8').indexOf('root.USE_XHR = false') > -1);
+assert.equal(fs.readFileSync(path.join(root, 'js/midi/loader.js'), 'utf8').indexOf('script.text'), -1);
+assert.ok(fs.readFileSync(path.join(root, 'js/ui/static-text-controller.js'), 'utf8').indexOf('setTrustedHtml') > -1);
 
 let controllerOptions;
 const i18n = global.CodaI18n.create({
@@ -260,6 +299,7 @@ const lazyPlayback = global.CodaPlayback.create({
 lazyPlayback.playChordFromNames(['C', 'E', 'G']);
 assert.ok(midiLoadOptions);
 assert.equal(playedChord, null);
+assert.equal(midiLoadOptions.api, 'webaudio');
 midiLoadOptions.onsuccess();
 assert.deepEqual(playedChord, [60, 64, 67]);
 assert.deepEqual(stoppedChord, [60, 64, 67]);

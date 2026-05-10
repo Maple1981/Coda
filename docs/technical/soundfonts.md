@@ -17,4 +17,14 @@ Los nuevos instrumentos descargados proceden del banco `FluidR3_GM` del proyecto
 
 El motor de playback debe seguir cargando soundfonts de forma diferida. Cambiar el instrumento en la interfaz solo selecciona el preset activo; el archivo de soundfont se carga con la primera preescucha que lo necesite.
 
+Los soundfonts se cargan como scripts locales desde `soundfont/`. No deben inyectarse como texto JavaScript obtenido por XHR, porque eso obligaría a relajar `script-src` en la política CSP. Los identificadores de instrumento y formato deben mantenerse como tokens simples (`a-z`, `0-9` y guion bajo) antes de construir la ruta del archivo.
+
 La lógica de negocio debe referirse a los instrumentos por su identificador General MIDI (`id`) declarado en `js/data/midi-data.js`. La selección visible del usuario es un selector de instrumentos sonoros; la vista gráfica asociada se decide mediante `viewInstrument`: guitarra clásica muestra diapasón, y piano, órgano y cuerdas muestran teclado.
+
+## Integridad local
+
+Los hashes SHA-256 de los soundfonts vendorizados se registran en `docs/technical/soundfont-checksums.sha256`. Tras descargar o sustituir un instrumento, recalcular esos hashes y ejecutar:
+
+```powershell
+.\tools\verify-soundfonts.ps1
+```

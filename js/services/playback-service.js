@@ -61,6 +61,7 @@
 
 			loadingInstruments[instrumentId] = true;
 			midi.loadPlugin({
+				api: options.api || 'webaudio',
 				soundfontUrl: options.soundfontUrl || './soundfont/',
 				instrument: instrumentId,
 				onprogress: options.onprogress || function () {},

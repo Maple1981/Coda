@@ -53,6 +53,8 @@ La documentación técnica vive en `docs/technical/` para no mezclarla con la ba
 
 - `docs/technical/architecture.md`: capas, módulos relevantes, manifest de scripts y reglas de evolución.
 - `docs/technical/development-workflow.md`: flujo recomendado con Live Server, comandos de prueba y smoke tests.
+- `docs/technical/security.md`: CSP, permisos del navegador, validación de preferencias y uso de HTML confiable.
+- `docs/technical/soundfonts.md`: origen, licencia, carga diferida e integridad local de los soundfonts.
 
 Las herramientas locales de apoyo viven en `tools/`. El flujo recomendado para publicar cambios es `tools/publish.ps1`, que ejecuta pruebas, prepara cambios, crea el commit y hace push de forma controlada. Si se quiere reforzar la comprobación antes de publicar, `tools/install-pre-push-hook.ps1` instala un hook local que ejecuta las pruebas antes de cada `git push`.
 

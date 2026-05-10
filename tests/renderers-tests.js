@@ -354,6 +354,9 @@ assert.ok(englishChangelogHtml.indexOf('<dt>More direct interface</dt>') > -1);
 const welcomeHtml = welcomeRenderer.render(context.window.CodaWelcomeContent.es);
 assert.ok(welcomeHtml.indexOf('<article id="principal" class="columnata">') > -1);
 assert.ok(welcomeHtml.indexOf('<h2>Fundamentos</h2>') > -1);
+assert.ok(welcomeHtml.indexOf('<span class="material-icons icono fundamentos">class</span>') > -1);
+assert.ok(welcomeHtml.indexOf('<span class="material-icons icono instrumentos">piano</span>') > -1);
+assert.ok(welcomeHtml.indexOf('<span class="material-icons icono licencia">flaky</span>') > -1);
 assert.ok(welcomeHtml.indexOf('piano, guitarra clásica, órgano y cuerdas') > -1);
 
 const progressionWorkbenchHtml = progressionWorkbenchRenderer.render();

@@ -47,7 +47,8 @@
 		$(selector).text(i18n.t(key));
 	}
 
-	function setHtml($, i18n, selector, key) {
+	function setTrustedHtml($, i18n, selector, key) {
+		// HTML controlado por `js/i18n/translations.js`: solo enlaces y énfasis locales revisados.
 		$(selector).html(i18n.t(key));
 	}
 
@@ -112,9 +113,9 @@
 		setAttribute($, i18n, '#enlaceNovedades', 'title', 'footer.newsTitle');
 		setText($, i18n, 'footer a[href="https://github.com/Maple1981/Coda"]', 'footer.github');
 		setAttribute($, i18n, 'footer a[href="https://creativecommons.org/licenses/by-sa/4.0/"]', 'title', 'footer.licenseTitle');
-		setHtml($, i18n, '#creditosSoundfonts', 'footer.soundfonts');
-		setHtml($, i18n, '#estadoBeta', 'footer.beta');
-		setHtml($, i18n, '#contactoAutor', 'footer.contact');
+		setTrustedHtml($, i18n, '#creditosSoundfonts', 'footer.soundfonts');
+		setTrustedHtml($, i18n, '#estadoBeta', 'footer.beta');
+		setTrustedHtml($, i18n, '#contactoAutor', 'footer.contact');
 	}
 
 	global.CodaStaticText = {
