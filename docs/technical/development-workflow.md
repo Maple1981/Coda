@@ -58,3 +58,4 @@ Flujos mínimos a comprobar tras cambios de arquitectura o UI:
 - Cambiar afinación de guitarra.
 - Navegar por el círculo de quintas.
 - Hacer hover/click en un acorde para resaltar/preescuchar.
+- Cambiar el selector de idioma entre español e inglés y comprobar que se actualizan cabecera, formulario, área de progresiones, textos de ayuda, novedades, tablas e instrumento.

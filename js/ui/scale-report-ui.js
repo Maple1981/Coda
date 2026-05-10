@@ -23,12 +23,14 @@
 		var report = options.report;
 
 		$('#notacion').empty().append(options.renderers.scaleSummary.renderTitle({
+			i18n: options.i18n,
 			scaleName: report.scaleName,
 			tonicName: report.tonicName
 		}));
 
 		$('#notacion').append(options.renderers.scaleSummary.renderList({
 			circleOfFifths: options.data.circleOfFifths,
+			i18n: options.i18n,
 			isDegreeSuppressed: report.isDegreeSuppressed,
 			scaleDefinition: report.scaleDefinition,
 			scaleNotes: report.scaleNotes,
@@ -41,6 +43,7 @@
 		if (report.scaleNotes.length === 7) {
 			$('#notacion').append(options.renderers.scaleChords.render({
 				mode: report.mode,
+				i18n: options.i18n,
 				parallelScaleChords: report.parallelScaleChords,
 				scaleChords: report.scaleChords,
 				scaleDefinition: report.scaleDefinition,
@@ -64,6 +67,7 @@
 		$('#armoniaExtendida').empty().append(options.renderers.extendedHarmony.render({
 			data: options.data,
 			domain: options.domain,
+			i18n: options.i18n,
 			mode: report.mode,
 			preferFlats: options.selection.preferFlats,
 			scaleChords: report.scaleChords,
@@ -101,11 +105,13 @@
 
 		if (options.instrumentView.type === 'piano') {
 			html = options.renderers.instruments.renderPiano({
+				i18n: options.i18n,
 				keyboard: options.instrumentView.keyboard,
 				scaleDefinition: options.report.scaleDefinition
 			});
 		} else {
 			html = options.renderers.instruments.renderGuitar({
+				i18n: options.i18n,
 				scaleDefinition: options.report.scaleDefinition,
 				strings: options.instrumentView.strings,
 				tuning: options.instrumentView.tuning,

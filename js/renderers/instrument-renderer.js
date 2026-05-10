@@ -3,7 +3,7 @@
 	'use strict';
 
 	function renderGuitar(options) {
-		var html = '<h4>Afinación: ' + options.tuning.nombre + '&nbsp;';
+		var html = '<h4>' + t(options, 'instrument.tuning') + ': ' + options.tuning.nombre + '&nbsp;';
 
 		html += renderTuningSelect(options);
 		html += '</h4>';
@@ -37,7 +37,7 @@
 	}
 
 	function renderTuningSelect(options) {
-		var html = '<select id="selectorAfinaciones"><option value="-1">Cambiar&nbsp;</option>';
+		var html = '<select id="selectorAfinaciones"><option value="-1">' + t(options, 'instrument.change') + '&nbsp;</option>';
 
 		for (var i = 0; i < options.tunings.length; i++) {
 			if (options.tunings[i].nombre !== options.tuning.nombre) {
@@ -59,7 +59,7 @@
 	}
 
 	function renderPiano(options) {
-		var html = '<h4>Vista de piano</h4>';
+		var html = '<h4>' + t(options, 'instrument.pianoView') + '</h4>';
 
 		html += '<div class="instrumentScaleViewport"><div class="instrumentScaleCanvas">';
 		html += '<div class="teclado">';
@@ -116,6 +116,20 @@
 		}
 
 		return '';
+	}
+
+	function t(options, key) {
+		if (options.i18n) {
+			return options.i18n.t(key);
+		}
+
+		var fallback = {
+			'instrument.change': 'Cambiar',
+			'instrument.pianoView': 'Vista de piano',
+			'instrument.tuning': 'Afinación'
+		};
+
+		return fallback[key] || key;
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};

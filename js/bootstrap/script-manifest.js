@@ -6,6 +6,8 @@
 	global.CodaScriptManifest = {
 		applicationScripts: [
 			'js/data.js',
+			'js/i18n/translations.js',
+			'js/i18n/i18n-service.js',
 			'js/domain/music-utils.js',
 			'js/domain/scale-domain.js',
 			'js/domain/chord-domain.js',

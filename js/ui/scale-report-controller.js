@@ -4,6 +4,7 @@
 
 	function initialize(options) {
 		var $ = options.$;
+		var i18n = options.i18n;
 		var report = null;
 		var selectedTuningIndex = 0;
 
@@ -12,7 +13,10 @@
 		fillSelectHashTable($, $('#tonica'), options.data.notes, false);
 		fillSelectHashTable($, $('#escala'), options.data.scales, false);
 		applyRecommendedNotation($, options);
-		initializeChangelogDialog($);
+		if (i18n) {
+			i18n.applyStatic($);
+		}
+		initializeChangelogDialog($, i18n);
 		options.ui.syncDashboardWorkspaceHeight($);
 
 		$(window).on('resize', function () {
@@ -49,6 +53,20 @@
 			if (options.ui.hasRenderedResults($)) {
 				renderInstrument(true);
 			}
+		});
+
+		$('#selectorIdioma').change(function () {
+			if (i18n) {
+				i18n.setLanguage($(this).val());
+				i18n.applyStatic($);
+			}
+
+			if (options.ui.hasRenderedResults($)) {
+				renderReport();
+			}
+
+			options.ui.syncInstrumentScale($);
+			options.ui.syncDashboardWorkspaceHeight($);
 		});
 
 		$(document).on('click', '.revamp', function (event) {
@@ -89,6 +107,7 @@
 				onChordClick: playChord(options.chordPlayback),
 				onChordMouseOut: clearChordHighlight($),
 				onChordMouseOver: highlightChord($),
+				i18n: i18n,
 				renderers: options.renderers,
 				report: report,
 				selection: selection
@@ -121,6 +140,7 @@
 			options.ui.renderInstrument({
 				$: $,
 				data: options.data,
+				i18n: i18n,
 				instrumentView: instrumentView,
 				renderers: options.renderers,
 				report: report
@@ -158,7 +178,7 @@
 		select.empty().append(html);
 	}
 
-	function initializeChangelogDialog($) {
+	function initializeChangelogDialog($, i18n) {
 		if (typeof $('#controlVersiones').dialog !== 'function') {
 			return;
 		}
@@ -170,7 +190,7 @@
 			},
 			height: Math.min(720, $(window).height() - 60),
 			modal: true,
-			title: 'Novedades y mejoras',
+			title: i18n ? i18n.t('changelog.dialogTitle') : 'Novedades y mejoras',
 			width: Math.min(920, $(window).width() - 40)
 		});
 

@@ -7,12 +7,18 @@
 $(document).ready(function () {
 	'use strict';
 
+	var i18n = CodaI18n.create({
+		initialLanguage: $('#selectorIdioma').val(),
+		translations: CodaTranslations
+	});
+
 	CodaBootstrap.start({
 		$: $,
 		application: CodaApplication,
 		controller: CodaScaleReportController,
 		data: CodaData,
 		domain: CodaDomain,
+		i18n: i18n,
 		midi: MIDI,
 		playbackFactory: CodaPlayback,
 		renderers: CodaRenderers,

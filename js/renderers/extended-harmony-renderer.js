@@ -6,11 +6,14 @@
 	function render(options) {
 		var html = '';
 
-		html += '<h3>Armonía extendida de ' + options.tonicName + ' ' + options.scaleName + '</h3>';
+		html += '<h3>' + t(options, 'extended.title', {
+			scale: options.scaleName,
+			tonic: options.tonicName
+		}) + '</h3>';
 		html += '<div id="acordeonArmoniaExtendida">';
 
 		html += renderSection({
-			title: 'Dominantes secundarios (D)',
+			title: t(options, 'extended.secondaryDominants'),
 			rows: [
 				{ rules: options.data.extendedHarmony.secondaryDominants, chordTypeName: 'Dominante', rootSemitoneOffset: 7 },
 				{ rules: options.data.extendedHarmony.secondaryDominants, chordTypeName: 'semidisminuido', rootSemitoneOffset: 11 },
@@ -20,7 +23,7 @@
 		});
 
 		html += renderSection({
-			title: 'Subdominantes secundarios (SD)',
+			title: t(options, 'extended.secondarySubdominants'),
 			rows: [
 				{ rules: options.data.extendedHarmony.secondarySubdominants, chordTypeName: 'Mayor séptima', rootSemitoneOffset: 5 },
 				{ rules: options.data.extendedHarmony.secondarySubdominants, chordTypeName: 'menor séptima', rootSemitoneOffset: 2 },
@@ -32,7 +35,7 @@
 		});
 
 		html += renderSection({
-			title: 'Tritonos sustitutos (D)',
+			title: t(options, 'extended.tritoneSubstitutes'),
 			rows: [
 				{ rules: options.data.extendedHarmony.tritoneSubstitutes, chordTypeName: 'Dominante', rootSemitoneOffset: 6 }
 			],
@@ -40,7 +43,7 @@
 		});
 
 		html += renderSection({
-			title: 'II menor relativo (SD)',
+			title: t(options, 'extended.relativeMinorSeconds'),
 			rows: [
 				{ rules: options.data.extendedHarmony.relativeMinorSeconds, chordTypeName: 'menor séptima', rootSemitoneOffset: 2 },
 				{ rules: options.data.extendedHarmony.relativeMinorSeconds, chordTypeName: 'semidisminuido', rootSemitoneOffset: 2 }
@@ -49,7 +52,7 @@
 		});
 
 		html += '</div>';
-		html += '<p class="leyenda"><span class="cadencial">Color:</span> acorde más frecuente</h4>';
+		html += '<p class="leyenda"><span class="cadencial">' + t(options, 'extended.colorLegend') + '</span></p>';
 
 		return html;
 	}
@@ -123,6 +126,30 @@
 		html += '</tr>';
 
 		return html;
+	}
+
+	function t(options, key, values) {
+		if (options.i18n) {
+			return options.i18n.t(key, values);
+		}
+
+		var fallback = {
+			'extended.colorLegend': 'Color: acorde más frecuente',
+			'extended.relativeMinorSeconds': 'II menor relativo (SD)',
+			'extended.secondaryDominants': 'Dominantes secundarios (D)',
+			'extended.secondarySubdominants': 'Subdominantes secundarios (SD)',
+			'extended.title': 'Armonía extendida de {tonic} {scale}',
+			'extended.tritoneSubstitutes': 'Tritonos sustitutos (D)'
+		};
+		var text = fallback[key] || key;
+
+		if (!values) {
+			return text;
+		}
+
+		return text.replace(/\{([^}]+)\}/g, function (match, name) {
+			return values[name] != null ? values[name] : match;
+		});
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};

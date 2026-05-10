@@ -13,6 +13,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/application/`: casos de uso. Orquesta dominio y servicios sin generar HTML ni leer directamente del DOM.
 - `js/renderers/`: renderizado HTML. Recibe datos explícitos y no calcula reglas musicales.
 - `js/ui/`: coordinación de interfaz legacy con jQuery. Lee selección del DOM, monta vistas y conecta eventos de pantalla.
+- `js/i18n/`: traducciones de interfaz y servicio ligero de internacionalización.
 - `js/services/`: infraestructura de navegador, como playback y futura exportación MIDI.
 - `js/bootstrap/`: composition root y manifest de carga de scripts.
 - `js/app.js`: bootstrap mínimo; llama a `CodaBootstrap.start(...)`.
@@ -21,6 +22,8 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 
 - `js/bootstrap/script-manifest.js`: orden canónico de carga de módulos de la aplicación.
 - `js/bootstrap/coda-bootstrap.js`: cablea datos, dominio, aplicación, renderers, UI, controlador y playback.
+- `js/i18n/translations.js`: diccionarios de interfaz para español de España e inglés.
+- `js/i18n/i18n-service.js`: servicio de traducción y aplicación de textos estáticos.
 - `js/application/scale-report-application.js`: construye informes de escala e instrumentos.
 - `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI a notas y delega en playback.
 - `js/application/progression-application.js`: casos de uso iniciales para progresiones armónicas.
@@ -46,5 +49,6 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - La orquestación de casos de uso debe vivir en `js/application/`.
 - El HTML debe concentrarse en `js/renderers/`.
 - La interacción con jQuery y el DOM debe quedarse en `js/ui/`.
+- Los textos visibles nuevos deben pasar por `js/i18n/` cuando formen parte de la interfaz.
 - El orden de carga de módulos debe mantenerse en `js/bootstrap/script-manifest.js` y verificarse con `tests/architecture-tests.js`.
 - Si una mejora requiere servidor, cuentas de usuario, sincronización externa o almacenamiento persistente, debe tratarse como cambio de alcance.

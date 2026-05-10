@@ -51,6 +51,8 @@
 
     <script src="js/bootstrap/script-manifest.js"></script>
     <script src="js/data.js"></script>
+    <script src="js/i18n/translations.js"></script>
+    <script src="js/i18n/i18n-service.js"></script>
     <script src="js/domain/music-utils.js"></script>
     <script src="js/domain/scale-domain.js"></script>
     <script src="js/domain/chord-domain.js"></script>
@@ -83,7 +85,7 @@
         </div>
         <div class="appHeader__actions">
           <label
-            >Idioma
+            ><span data-i18n="ui.language">Idioma</span>
             <select id="selectorIdioma">
               <option value="es" selected>ES</option>
               <option value="en">EN</option>
@@ -106,18 +108,18 @@
             <h3>Elige tu escala</h3>
             <p>
               <label
-                >Tónica
+                ><span data-i18n="form.tonic">Tónica</span>
                 <select id="tonica"></select
               ></label>
               <label
-                >Escala
+                ><span data-i18n="form.scale">Escala</span>
                 <select id="escala"></select
               ></label>
             </p>
             <p>
-              Formato
+              <span data-i18n="form.format">Formato</span>
               <label
-                >♯
+                ><span data-i18n="form.sharps">♯</span>
                 <input
                   name="formato"
                   id="sostenidos"
@@ -126,13 +128,13 @@
                   type="radio"
               /></label>
               <label
-                >♭
+                ><span data-i18n="form.flats">♭</span>
                 <input name="formato" id="bemoles" value="1" type="radio"
               /></label>
               <span class="opcion"
-                >Instrumento
+                ><span data-i18n="form.instrument">Instrumento</span>
                 <label
-                  >Piano
+                  ><span data-i18n="form.piano">Piano</span>
                   <input
                     name="instrumento"
                     id="piano"
@@ -141,7 +143,7 @@
                     type="radio"
                 /></label>
                 <label
-                  >Guitarra
+                  ><span data-i18n="form.guitar">Guitarra</span>
                   <input
                     name="instrumento"
                     id="guitarra"
@@ -177,12 +179,12 @@
           </div>
           <div class="progressionControls">
             <fieldset class="workbenchPanel">
-              <legend>Tiempo</legend>
+              <legend><span data-i18n="progression.time">Tiempo</span></legend>
               <label
-                >Compases <input type="number" value="8" min="1" max="32"
+                ><span data-i18n="progression.bars">Compases</span> <input type="number" value="8" min="1" max="32"
               /></label>
               <label
-                >Compás
+                ><span data-i18n="progression.meter">Compás</span>
                 <select>
                   <option>4/4</option>
                   <option>3/4</option>
@@ -194,30 +196,30 @@
               /></label>
             </fieldset>
             <fieldset class="workbenchPanel">
-              <legend>Escritura</legend>
+              <legend><span data-i18n="progression.writing">Escritura</span></legend>
               <label
-                >Voces <input type="number" value="4" min="2" max="6"
+                ><span data-i18n="progression.voices">Voces</span> <input type="number" value="4" min="2" max="6"
               /></label>
               <label
-                >Articulación
+                ><span data-i18n="progression.articulation">Articulación</span>
                 <select>
-                  <option>Sostenido</option>
-                  <option>Legato</option>
-                  <option>Staccato</option>
-                  <option>Arpegio</option>
+                  <option data-i18n="progression.articulation.sustain">Sostenido</option>
+                  <option data-i18n="progression.articulation.legato">Legato</option>
+                  <option data-i18n="progression.articulation.staccato">Staccato</option>
+                  <option data-i18n="progression.articulation.arpeggio">Arpegio</option>
                 </select></label
               >
             </fieldset>
             <fieldset class="workbenchPanel">
-              <legend>Color armónico</legend>
+              <legend><span data-i18n="progression.harmonicColor">Color armónico</span></legend>
               <label
-                >Intercambio <input type="range" value="25" min="0" max="100"
+                ><span data-i18n="progression.modalInterchange">Intercambio</span> <input type="range" value="25" min="0" max="100"
               /></label>
               <label
-                >Tensiones <input type="range" value="35" min="0" max="100"
+                ><span data-i18n="progression.tensions">Tensiones</span> <input type="range" value="35" min="0" max="100"
               /></label>
               <label
-                >Contrapunto <input type="range" value="20" min="0" max="100"
+                ><span data-i18n="progression.counterpoint">Contrapunto</span> <input type="range" value="20" min="0" max="100"
               /></label>
             </fieldset>
           </div>

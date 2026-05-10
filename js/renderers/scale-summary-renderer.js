@@ -18,15 +18,15 @@
 			html += renderTonalRelationships(options);
 		}
 
-		html += '<h4>Grados de la escala</h4>';
+		html += '<h4>' + t(options, 'scaleSummary.degrees') + '</h4>';
 		html += '<ul class="notasEscala">';
 		html += renderScaleNotes(options);
 		html += '</ul>';
 
 		if (options.scaleDefinition.modal === 'true') {
 			html += '<div class="leyendaModal">';
-			html += '<span class="principal">Nota principal</span> - ';
-			html += '<span class="secundaria">Nota secundaria</span>';
+			html += '<span class="principal">' + t(options, 'scaleSummary.mainNote') + '</span> - ';
+			html += '<span class="secundaria">' + t(options, 'scaleSummary.secondaryNote') + '</span>';
 			html += '</div>';
 		}
 
@@ -40,9 +40,9 @@
 		var html = '';
 
 		html += '<p class="infoAdicional">';
-		html += '<strong>Tonalidad relativa</strong>: ';
+		html += '<strong>' + t(options, 'scaleSummary.relativeKey') + '</strong>: ';
 		html += '<span id="' + relativeKey.id + '" class="revamp estiloEnlace">' + relativeKey.label + '</span>';
-		html += '&nbsp;<strong>Tonalidad paralela</strong>: ';
+		html += '&nbsp;<strong>' + t(options, 'scaleSummary.parallelKey') + '</strong>: ';
 		html += '<span id="' + options.tonicName + '_' + parallelMode + '" class="revamp estiloEnlace">' + parallelKey + '</span>';
 		html += '</p>';
 
@@ -100,6 +100,22 @@
 
 	function isMajorScale(options) {
 		return String(options.selectedScaleIndex) === '0';
+	}
+
+	function t(options, key) {
+		if (options.i18n) {
+			return options.i18n.t(key);
+		}
+
+		var fallback = {
+			'scaleSummary.degrees': 'Grados de la escala',
+			'scaleSummary.mainNote': 'Nota principal',
+			'scaleSummary.parallelKey': 'Tonalidad paralela',
+			'scaleSummary.relativeKey': 'Tonalidad relativa',
+			'scaleSummary.secondaryNote': 'Nota secundaria'
+		};
+
+		return fallback[key] || key;
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};

@@ -25,6 +25,7 @@
 			chordPlayback: chordPlayback,
 			data: data,
 			domain: options.domain,
+			i18n: options.i18n,
 			renderers: options.renderers,
 			ui: options.ui
 		});

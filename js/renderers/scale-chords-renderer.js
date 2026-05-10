@@ -11,36 +11,36 @@
 		}
 
 		var rows = buildRows(options);
-		var html = '<h4>Acordes de la tonalidad</h4>';
+		var html = '<h4>' + t(options, 'scaleChords.chordsTitle') + '</h4>';
 
 		html += '<table class="acordesEscala">';
-		html += '<thead><tr><td>Grados</td>' + rows.degrees + '</tr></thead>';
-		html += '<tbody><tr><td class="cabecera">Triada</td>' + rows.triads + '</tr>';
-		html += '<tr><td class="cabecera">Cuatriada</td>' + rows.seventhChords + '</tr>';
+		html += '<thead><tr><td>' + t(options, 'scaleChords.degrees') + '</td>' + rows.degrees + '</tr></thead>';
+		html += '<tbody><tr><td class="cabecera">' + t(options, 'scaleChords.triad') + '</td>' + rows.triads + '</tr>';
+		html += '<tr><td class="cabecera">' + t(options, 'scaleChords.seventh') + '</td>' + rows.seventhChords + '</tr>';
 		html += '<tr><td class="cabecera">Sus2</td>' + rows.sus2 + '</tr>';
 		html += '<tr><td class="cabecera">Sus4</td>' + rows.sus4 + '</tr>';
 
 		if (rows.functions !== '' && options.mode !== '') {
 			if (rows.parallelSeventhChords !== '') {
-				html += '<tr><td class="cabecera">Paralela</td>' + rows.parallelSeventhChords + '</tr>';
+				html += '<tr><td class="cabecera">' + t(options, 'scaleChords.parallel') + '</td>' + rows.parallelSeventhChords + '</tr>';
 			}
 			if (rows.parallelSeventhChords !== '') {
-				html += '<tr><td class="cabecera">Paralela</td>' + rows.parallelTriads + '</tr>';
+				html += '<tr><td class="cabecera">' + t(options, 'scaleChords.parallel') + '</td>' + rows.parallelTriads + '</tr>';
 			}
-			html += '<tr><td class="cabecera">Función: </td>' + rows.functions + '</tr>';
+			html += '<tr><td class="cabecera">' + t(options, 'scaleChords.functionRow') + ': </td>' + rows.functions + '</tr>';
 		}
 
-		html += '<tr><td class="cabecera">Notas</td>' + rows.notes + '</tr>';
+		html += '<tr><td class="cabecera">' + t(options, 'scaleChords.notes') + '</td>' + rows.notes + '</tr>';
 		html += '</tbody></table>';
 
 		if (rows.functions !== '') {
-			html += '<p class="leyenda"><strong>T</strong>: tónica, <strong>SD</strong>: subdominante, <strong>D</strong>: dominante</p>';
+			html += '<p class="leyenda">' + t(options, 'scaleChords.functionLegend') + '</p>';
 		}
 
 		if (options.scaleDefinition.modal === 'true') {
 			html += '<div class="leyendaAcordesModales">';
-			html += '<span class="cadencial">Acorde cadencial</span> - ';
-			html += '<span class="evitar">Acorde a evitar</span>';
+			html += '<span class="cadencial">' + t(options, 'scaleChords.cadential') + '</span> - ';
+			html += '<span class="evitar">' + t(options, 'scaleChords.avoid') + '</span>';
 			html += '</div>';
 		}
 
@@ -158,6 +158,27 @@
 		}
 
 		return transformedDegree;
+	}
+
+	function t(options, key) {
+		if (options.i18n) {
+			return options.i18n.t(key);
+		}
+
+		var fallback = {
+			'scaleChords.avoid': 'Acorde a evitar',
+			'scaleChords.cadential': 'Acorde cadencial',
+			'scaleChords.chordsTitle': 'Acordes de la tonalidad',
+			'scaleChords.degrees': 'Grados',
+			'scaleChords.functionLegend': '<strong>T</strong>: tónica, <strong>SD</strong>: subdominante, <strong>D</strong>: dominante',
+			'scaleChords.functionRow': 'Función',
+			'scaleChords.notes': 'Notas',
+			'scaleChords.parallel': 'Paralela',
+			'scaleChords.seventh': 'Cuatriada',
+			'scaleChords.triad': 'Triada'
+		};
+
+		return fallback[key] || key;
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};
