@@ -116,6 +116,8 @@ assert.ok(indexHtml.indexOf('<section id="constructorProgresiones" class="progre
 assert.ok(indexHtml.indexOf('<section id="bienvenida"></section>') > -1);
 assert.ok(indexHtml.indexOf('id="randomizeAll"') > -1);
 assert.ok(indexHtml.indexOf('data-random-master-groups="global"') > -1);
+assert.ok(indexHtml.indexOf('id="toggleTheoryControls"') > -1);
+assert.ok(indexHtml.indexOf('aria-controls="theoryControlsBody"') > -1);
 assert.ok(indexHtml.indexOf('<label id="formatoLabel" class="opcion opcionFormato" for="sostenidos"') > -1);
 assert.ok(indexHtml.indexOf('<label class="opcion opcionInstrumento" for="instrumentoSonoro"') > -1);
 assert.ok(indexHtml.indexOf('<select id="instrumentoSonoro"></select>') > -1);

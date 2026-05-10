@@ -46,6 +46,7 @@
 	function renderScaleReport(options) {
 		var $ = options.$;
 		var report = options.report;
+		var scaleDetails = $('<div id="scaleTheoryDetails" class="scaleTheoryDetails"></div>');
 
 		$('#notacion').empty().append(options.renderers.scaleSummary.renderTitle({
 			i18n: options.i18n,
@@ -56,7 +57,7 @@
 			tonicName: report.tonicName
 		}));
 
-		$('#notacion').append(options.renderers.scaleSummary.renderList({
+		scaleDetails.append(options.renderers.scaleSummary.renderList({
 			circleOfFifths: options.data.circleOfFifths,
 			i18n: options.i18n,
 			isDegreeSuppressed: report.isDegreeSuppressed,
@@ -71,7 +72,7 @@
 		$('#armoniaExtendida').empty();
 
 		if (report.scaleNotes.length === 7) {
-			$('#notacion').append(options.renderers.scaleChords.render({
+			scaleDetails.append(options.renderers.scaleChords.render({
 				mode: report.mode,
 				i18n: options.i18n,
 				notation: options.notation,
@@ -86,6 +87,8 @@
 				renderExtendedHarmony(options);
 			}
 		}
+
+		$('#notacion').append(scaleDetails);
 
 		$('#circuloQuintas').empty().append(options.renderers.circleOfFifths.render({
 			notation: options.notation,

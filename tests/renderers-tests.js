@@ -121,7 +121,9 @@ const scaleSummaryHtml = scaleSummaryRenderer.render({
 	tonicName: 'C'
 });
 
-assert.ok(scaleSummaryHtml.indexOf('<h3>C Mayor</h3>') > -1);
+assert.ok(scaleSummaryHtml.indexOf('<h3 class="scaleTitleHeader"><span>C Mayor</span>') > -1);
+assert.ok(scaleSummaryHtml.indexOf('id="toggleScaleTheoryDetails"') > -1);
+assert.ok(scaleSummaryHtml.indexOf('aria-controls="scaleTheoryDetails instrumento"') > -1);
 assert.ok(scaleSummaryHtml.indexOf('<span id="A_m_" class="revamp estiloEnlace">Am</span>') > -1);
 assert.ok(scaleSummaryHtml.indexOf('<span id="C_m" class="revamp estiloEnlace">Cm</span>') > -1);
 assert.ok(scaleSummaryHtml.indexOf('<ul class="notasEscala">') > -1);
@@ -229,7 +231,7 @@ const latinSummaryHtml = scaleSummaryRenderer.render({
 	selectedScaleIndex: 0,
 	tonicName: 'C'
 });
-assert.ok(latinSummaryHtml.indexOf('<h3>Do Major</h3>') > -1);
+assert.ok(latinSummaryHtml.indexOf('<h3 class="scaleTitleHeader"><span>Do Major</span>') > -1);
 assert.ok(latinSummaryHtml.indexOf('<span id="A_m_" class="revamp estiloEnlace">Lam</span>') > -1);
 assert.ok(latinSummaryHtml.indexOf('Do<sup>I</sup>') > -1);
 

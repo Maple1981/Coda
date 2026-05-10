@@ -26,7 +26,7 @@
 		setAttribute($, i18n, '#settingsButton', 'title', 'settings.label');
 		setAttribute($, i18n, '#settingsButton', 'aria-label', 'settings.label');
 
-		setText($, i18n, '#interface h3', 'form.title');
+		setText($, i18n, '#interface h3 span[data-i18n="form.title"]', 'form.title');
 		setText($, i18n, 'span[data-i18n="form.tonic"]', 'form.tonic');
 		setText($, i18n, 'span[data-i18n="form.scale"]', 'form.scale');
 		setText($, i18n, 'span[data-i18n="form.format"]', 'form.format');

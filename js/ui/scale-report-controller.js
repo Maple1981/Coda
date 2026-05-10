@@ -61,6 +61,7 @@
 				i18n: i18n
 			});
 		}
+		updateCollapsiblePanelStates($, i18n);
 		options.ui.scheduleDashboardWorkspaceHeight($);
 
 		$(window).on('resize', function () {
@@ -70,6 +71,21 @@
 		});
 		$(window).on('scroll', function () {
 			options.ui.scheduleSidebarPanelViewport($);
+		});
+
+		$('#toggleTheoryControls').click(function () {
+			$('#interface').toggleClass('isCollapsed');
+			updateCollapsiblePanelStates($, i18n);
+			options.ui.scheduleSidebarPanelViewport($);
+			options.ui.scheduleDashboardWorkspaceHeight($);
+		});
+
+		$(document).on('click', '#toggleScaleTheoryDetails', function () {
+			$('#herramientasTeoricas').toggleClass('scaleDetailsCollapsed');
+			updateCollapsiblePanelStates($, i18n);
+			options.ui.scheduleInstrumentScale($);
+			options.ui.scheduleSidebarPanelViewport($);
+			options.ui.scheduleDashboardWorkspaceHeight($);
 		});
 
 		$('#tonica, #escala').change(function () {
@@ -103,6 +119,7 @@
 				if (staticText) {
 					staticText.apply($, i18n);
 				}
+				updateCollapsiblePanelStates($, i18n);
 				if (options.themeControl) {
 					options.themeControl.updateButton($, i18n, $('body').attr('data-theme'));
 				}
@@ -193,6 +210,7 @@
 				report: report,
 				selection: selection
 			});
+			updateCollapsiblePanelStates($, i18n);
 
 			renderInstrument(true);
 		}
@@ -403,6 +421,35 @@
 		if (checkedFormat.length) {
 			$('#formatoLabel').attr('for', checkedFormat.attr('id'));
 		}
+	}
+
+	function updateCollapsiblePanelStates($, i18n) {
+		var controlsExpanded = !$('#interface').hasClass('isCollapsed');
+		var scaleDetailsExpanded = !$('#herramientasTeoricas').hasClass('scaleDetailsCollapsed');
+
+		updateCollapseToggleButton($, $('#toggleTheoryControls'), controlsExpanded, {
+			collapse: translate(i18n, 'panel.controls.collapse'),
+			expand: translate(i18n, 'panel.controls.expand')
+		});
+		updateCollapseToggleButton($, $('#toggleScaleTheoryDetails'), scaleDetailsExpanded, {
+			collapse: translate(i18n, 'scaleSummary.collapseDetails'),
+			expand: translate(i18n, 'scaleSummary.expandDetails')
+		});
+	}
+
+	function updateCollapseToggleButton($, button, expanded, labels) {
+		if (!button || !button.length) {
+			return;
+		}
+
+		button.attr('aria-expanded', expanded ? 'true' : 'false');
+		button.attr('title', expanded ? labels.collapse : labels.expand);
+		button.attr('aria-label', expanded ? labels.collapse : labels.expand);
+		button.find('.material-icons').text(expanded ? 'expand_less' : 'expand_more');
+	}
+
+	function translate(i18n, key) {
+		return i18n && typeof i18n.t === 'function' ? i18n.t(key) : key;
 	}
 
 	function resolvePlaybackInstrument(data, selectedInstrument) {

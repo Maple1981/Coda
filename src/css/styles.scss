@@ -362,6 +362,53 @@ fieldset{
 	white-space:nowrap;
 }
 
+.collapsiblePanelHeader,
+.scaleTitleHeader{
+	box-sizing:border-box;
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	gap:.65em;
+	width:100%;
+}
+
+.collapsiblePanelHeader span,
+.scaleTitleHeader span{
+	min-width:0;
+}
+
+.collapseToggleButton{
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	flex:0 0 auto;
+	width:1.5em;
+	height:1.5em;
+	border:0;
+	border-radius:0;
+	background:transparent;
+	color:$corporative_complementarybright_color;
+	cursor:pointer;
+	padding:0;
+}
+
+.collapseToggleButton:hover,
+.collapseToggleButton:focus{
+	color:$corporative_mainbright_color;
+	outline:none;
+}
+
+.collapseToggleButton .material-icons{
+	font-size:1.2em;
+	line-height:1;
+}
+
+#interface.isCollapsed .theoryControlsBody,
+#herramientasTeoricas.scaleDetailsCollapsed #scaleTheoryDetails,
+#herramientasTeoricas.scaleDetailsCollapsed #instrumento{
+	display:none;
+}
+
 input[type="text"],
 select, 
 textarea{
@@ -424,6 +471,10 @@ section#notacion{
 
 	h3{
 		width:100%;
+		margin-top:.85em;
+	}
+
+	h3.scaleTitleHeader{
 		margin-top:.85em;
 	}
 

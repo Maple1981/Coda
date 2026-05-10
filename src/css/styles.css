@@ -373,6 +373,10 @@ body[data-theme="day"] .randomMasterButton {
   color: #a622ae;
 }
 
+body[data-theme="day"] .collapseToggleButton {
+  color: #1f2528;
+}
+
 body[data-theme="day"] .volumeControl__slider::-webkit-slider-runnable-track {
   background: #dfe5e9;
   border-color: #b7c3ca;
@@ -680,6 +684,68 @@ fieldset h3 {
   white-space: nowrap;
 }
 
+.collapsiblePanelHeader,
+.scaleTitleHeader {
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  gap: .65em;
+  width: 100%;
+}
+
+.collapsiblePanelHeader span,
+.scaleTitleHeader span {
+  min-width: 0;
+}
+
+.collapseToggleButton {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-flex: 0;
+      -ms-flex: 0 0 auto;
+          flex: 0 0 auto;
+  width: 1.5em;
+  height: 1.5em;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #d85ee0;
+  cursor: pointer;
+  padding: 0;
+}
+
+.collapseToggleButton:hover,
+.collapseToggleButton:focus {
+  color: #a3ffd9;
+  outline: none;
+}
+
+.collapseToggleButton .material-icons {
+  font-size: 1.2em;
+  line-height: 1;
+}
+
+#interface.isCollapsed .theoryControlsBody,
+#herramientasTeoricas.scaleDetailsCollapsed #scaleTheoryDetails,
+#herramientasTeoricas.scaleDetailsCollapsed #instrumento {
+  display: none;
+}
+
 input[type="text"],
 select,
 textarea {
@@ -743,6 +809,10 @@ section#notacion {
 
 section#notacion h3 {
   width: 100%;
+  margin-top: .85em;
+}
+
+section#notacion h3.scaleTitleHeader {
   margin-top: .85em;
 }
 

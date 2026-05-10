@@ -183,65 +183,80 @@
       <aside id="panelTeorico" class="dashboard__sidebar">
         <div class="dashboard__sidebarPanel">
           <fieldset id="interface">
-            <h3>Elige tu escala</h3>
-            <p>
-              <label
-                class="selectWithRandom"
-                ><span data-i18n="form.tonic">Tónica</span>
-                <select id="tonica"></select>
-                <button
-                  id="randomizeTonic"
-                  class="randomSelectButton"
-                  type="button"
-                  data-random-select-target="#tonica"
-                  data-random-group="global"
-                  data-random-i18n-key="randomSelect.tonic"
-                  title="Elegir tónica aleatoria"
-                  aria-label="Elegir tónica aleatoria"
-                >
-                  <span class="material-icons" aria-hidden="true">casino</span>
-                </button>
-              </label>
-              <label
-                class="selectWithRandom"
-                ><span data-i18n="form.scale">Escala</span>
-                <select id="escala"></select>
-                <button
-                  id="randomizeScale"
-                  class="randomSelectButton"
-                  type="button"
-                  data-random-select-target="#escala"
-                  data-random-group="global"
-                  data-random-i18n-key="randomSelect.scale"
-                  title="Elegir escala aleatoria"
-                  aria-label="Elegir escala aleatoria"
-                >
-                  <span class="material-icons" aria-hidden="true">casino</span>
-                </button>
-              </label>
-            </p>
-            <p>
-              <label id="formatoLabel" class="opcion opcionFormato" for="sostenidos"
-                ><span data-i18n="form.format">Formato</span></label
+            <h3 class="collapsiblePanelHeader">
+              <span data-i18n="form.title">Elige tu escala</span>
+              <button
+                id="toggleTheoryControls"
+                class="collapseToggleButton"
+                type="button"
+                aria-expanded="true"
+                aria-controls="theoryControlsBody"
+                title="Contraer controles de selección"
+                aria-label="Contraer controles de selección"
               >
-              <label
-                ><span data-i18n="form.sharps">♯</span>
-                <input
-                  name="formato"
-                  id="sostenidos"
-                  value="0"
-                  checked="checked"
-                  type="radio"
-              /></label>
-              <label
-                ><span data-i18n="form.flats">♭</span>
-                <input name="formato" id="bemoles" value="1" type="radio"
-              /></label>
-              <label class="opcion opcionInstrumento" for="instrumentoSonoro"
-                ><span data-i18n="form.instrument">Instrumento</span>
-                <select id="instrumentoSonoro"></select>
-              </label>
-            </p>
+                <span class="material-icons" aria-hidden="true">expand_less</span>
+              </button>
+            </h3>
+            <div id="theoryControlsBody" class="theoryControlsBody">
+              <p>
+                <label
+                  class="selectWithRandom"
+                  ><span data-i18n="form.tonic">Tónica</span>
+                  <select id="tonica"></select>
+                  <button
+                    id="randomizeTonic"
+                    class="randomSelectButton"
+                    type="button"
+                    data-random-select-target="#tonica"
+                    data-random-group="global"
+                    data-random-i18n-key="randomSelect.tonic"
+                    title="Elegir tónica aleatoria"
+                    aria-label="Elegir tónica aleatoria"
+                  >
+                    <span class="material-icons" aria-hidden="true">casino</span>
+                  </button>
+                </label>
+                <label
+                  class="selectWithRandom"
+                  ><span data-i18n="form.scale">Escala</span>
+                  <select id="escala"></select>
+                  <button
+                    id="randomizeScale"
+                    class="randomSelectButton"
+                    type="button"
+                    data-random-select-target="#escala"
+                    data-random-group="global"
+                    data-random-i18n-key="randomSelect.scale"
+                    title="Elegir escala aleatoria"
+                    aria-label="Elegir escala aleatoria"
+                  >
+                    <span class="material-icons" aria-hidden="true">casino</span>
+                  </button>
+                </label>
+              </p>
+              <p>
+                <label id="formatoLabel" class="opcion opcionFormato" for="sostenidos"
+                  ><span data-i18n="form.format">Formato</span></label
+                >
+                <label
+                  ><span data-i18n="form.sharps">♯</span>
+                  <input
+                    name="formato"
+                    id="sostenidos"
+                    value="0"
+                    checked="checked"
+                    type="radio"
+                /></label>
+                <label
+                  ><span data-i18n="form.flats">♭</span>
+                  <input name="formato" id="bemoles" value="1" type="radio"
+                /></label>
+                <label class="opcion opcionInstrumento" for="instrumentoSonoro"
+                  ><span data-i18n="form.instrument">Instrumento</span>
+                  <select id="instrumentoSonoro"></select>
+                </label>
+              </p>
+            </div>
           </fieldset>
 
           <div id="herramientasTeoricas" class="dashboard__theory">

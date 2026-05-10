@@ -8,7 +8,10 @@
 	}
 
 	function renderTitle(options) {
-		return '<h3>' + formatNote(options, options.tonicName) + ' ' + scaleLabel(options) + '</h3>';
+		var title = formatNote(options, options.tonicName) + ' ' + scaleLabel(options);
+		var collapseLabel = t(options, 'scaleSummary.collapseDetails');
+
+		return '<h3 class="scaleTitleHeader"><span>' + title + '</span><button id="toggleScaleTheoryDetails" class="collapseToggleButton" type="button" aria-expanded="true" aria-controls="scaleTheoryDetails instrumento" title="' + collapseLabel + '" aria-label="' + collapseLabel + '"><span class="material-icons" aria-hidden="true">expand_less</span></button></h3>';
 	}
 
 	function renderList(options) {
@@ -109,6 +112,8 @@
 
 		var fallback = {
 			'scaleSummary.degrees': 'Grados de la escala',
+			'scaleSummary.collapseDetails': 'Contraer detalles de escala',
+			'scaleSummary.expandDetails': 'Expandir detalles de escala',
 			'scaleSummary.mainNote': 'Nota principal',
 			'scaleSummary.parallelKey': 'Tonalidad paralela',
 			'scaleSummary.relativeKey': 'Tonalidad relativa',
