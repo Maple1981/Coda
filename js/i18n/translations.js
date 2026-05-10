@@ -132,6 +132,8 @@
 			'settings.label': 'Configuración',
 			'ui.language': 'Idioma',
 			'ui.notation': 'Notación',
+			'ui.volume': 'Volumen',
+			'ui.volumeTitle': 'Volumen general',
 			'notation.anglosaxon': 'C D E',
 			'notation.latin': 'Do Re Mi',
 		},
@@ -263,6 +265,8 @@
 			'settings.label': 'Settings',
 			'ui.language': 'Language',
 			'ui.notation': 'Notation',
+			'ui.volume': 'Volume',
+			'ui.volumeTitle': 'Master volume',
 			'notation.anglosaxon': 'C D E',
 			'notation.latin': 'Do Re Mi',
 		}

@@ -27,6 +27,12 @@
 		if (staticText) {
 			staticText.apply($, i18n);
 		}
+		if (options.volumeControl) {
+			options.volumeControl.initialize({
+				$: $,
+				playbackService: options.playbackService
+			});
+		}
 		if (options.changelogDialog) {
 			options.changelogDialog.initialize($, i18n);
 		}

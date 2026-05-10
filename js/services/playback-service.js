@@ -7,11 +7,26 @@
 		return value !== undefined ? value : fallback;
 	}
 
+	function clamp(value, min, max) {
+		return Math.max(min, Math.min(max, value));
+	}
+
+	function normalizeVolumePercent(value) {
+		var numericValue = Number(value);
+
+		if (isNaN(numericValue)) {
+			return 100;
+		}
+
+		return clamp(numericValue, 0, 100);
+	}
+
 	function create(options) {
 		var midi = options.midi;
 		var notes = options.notes || [];
 		var channel = defaultValue(options.channel, 0);
-		var velocity = defaultValue(options.velocity, 127);
+		var baseVelocity = defaultValue(options.velocity, 127);
+		var volumePercent = normalizeVolumePercent(defaultValue(options.volumePercent, 100));
 		var delay = defaultValue(options.delay, 0);
 		var initialMidiNote = defaultValue(options.initialMidiNote, 60);
 		var loading = false;
@@ -46,7 +61,7 @@
 					loading = false;
 					ready = true;
 					if (typeof midi.setVolume === 'function') {
-						midi.setVolume(channel, velocity);
+						midi.setVolume(channel, currentVelocity());
 					}
 
 					if (typeof options.onsuccess === 'function') {
@@ -104,7 +119,7 @@
 			var startDelay = defaultValue(playbackOptions.delay, delay);
 			var duration = defaultValue(playbackOptions.duration, 0.75);
 
-			midi.chordOn(channel, chord, velocity, startDelay);
+			midi.chordOn(channel, chord, currentVelocity(), startDelay);
 			midi.chordOff(channel, chord, startDelay + duration);
 		}
 
@@ -135,8 +150,22 @@
 			var startDelay = defaultValue(playbackOptions.delay, delay);
 			var duration = defaultValue(playbackOptions.duration, 0.55);
 
-			midi.noteOn(channel, noteNumber, velocity, startDelay);
+			midi.noteOn(channel, noteNumber, currentVelocity(), startDelay);
 			midi.noteOff(channel, noteNumber, startDelay + duration);
+		}
+
+		function currentVelocity() {
+			return clamp(Math.round(baseVelocity * volumePercent / 100), 0, baseVelocity);
+		}
+
+		function setVolume(value) {
+			volumePercent = normalizeVolumePercent(value);
+
+			if (ready && midi && typeof midi.setVolume === 'function') {
+				midi.setVolume(channel, currentVelocity());
+			}
+
+			return volumePercent;
 		}
 
 		function flushReadyCallbacks() {
@@ -165,7 +194,11 @@
 			noteNameToMidi: noteNameToMidi,
 			chordNamesToMidi: chordNamesToMidi,
 			playChordFromNames: playChordFromNames,
-			playMidiNote: playMidiNote
+			playMidiNote: playMidiNote,
+			setVolume: setVolume,
+			getVolume: function () {
+				return volumePercent;
+			}
 		};
 	}
 

@@ -32,6 +32,7 @@ $(document).ready(function () {
 		renderers: CodaRenderers,
 		staticText: CodaStaticText,
 		ui: CodaUi,
-		uiStateFactory: CodaUiState
+		uiStateFactory: CodaUiState,
+		volumeControl: CodaVolumeControl
 	});
 });

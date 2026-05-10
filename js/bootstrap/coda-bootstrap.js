@@ -45,10 +45,12 @@
 			}),
 			notation: options.notation,
 			preferences: options.preferences,
+			playbackService: playbackService,
 			renderers: options.renderers,
 			staticText: options.staticText || global.CodaStaticText,
 			ui: options.ui,
-			uiState: uiState
+			uiState: uiState,
+			volumeControl: options.volumeControl || global.CodaVolumeControl
 		});
 
 		return {

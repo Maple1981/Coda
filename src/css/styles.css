@@ -206,6 +206,60 @@ header {
   padding: 0 .45em;
 }
 
+.volumeControl {
+  min-width: 176px;
+}
+
+.volumeControl__slider {
+  width: 96px;
+  height: 18px;
+  accent-color: #d85ee0;
+  cursor: pointer;
+  -webkit-appearance: none;
+          appearance: none;
+  background: transparent;
+}
+
+.volumeControl__slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: #2b2b2b;
+  border: 1px solid #4d4d4d;
+}
+
+.volumeControl__slider::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: #d85ee0;
+  border: 1px solid #f3a8f7;
+  -webkit-appearance: none;
+          appearance: none;
+}
+
+.volumeControl__slider::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: #2b2b2b;
+  border: 1px solid #4d4d4d;
+}
+
+.volumeControl__slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #d85ee0;
+  border: 1px solid #f3a8f7;
+}
+
+#valorVolumen {
+  min-width: 3.2em;
+  color: #f3d3f6;
+  font-size: .9em;
+  text-align: right;
+}
+
 .settingsButton {
   display: -webkit-inline-box;
   display: -ms-inline-flexbox;
@@ -1060,6 +1114,7 @@ footer ul#redesSociales li {
     -webkit-box-align: start;
         -ms-flex-align: start;
             align-items: flex-start;
+    height: auto;
   }
   .appHeader__brand {
     -webkit-box-orient: vertical;
@@ -1070,6 +1125,10 @@ footer ul#redesSociales li {
   }
   .appHeader__brand h2 {
     white-space: normal;
+  }
+  .appHeader__actions {
+    -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
   }
   .dashboard__sidebar {
     -ms-grid-row: 2;

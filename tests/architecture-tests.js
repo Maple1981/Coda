@@ -57,6 +57,7 @@ assert.ok(global.CodaRenderers.welcome);
 assert.ok(global.CodaRenderers.progressionWorkbench);
 assert.ok(global.CodaUiState.create);
 assert.ok(global.CodaStaticText.apply);
+assert.ok(global.CodaVolumeControl.initialize);
 assert.ok(global.CodaKeyNavigation.applyRecommendedNotation);
 assert.ok(global.CodaChangelogDialog.initialize);
 assert.ok(global.CodaUi.renderScaleReport);
@@ -77,6 +78,7 @@ assert.ok(manifestScripts.indexOf('js/renderers/welcome-renderer.js') > -1);
 assert.ok(manifestScripts.indexOf('js/renderers/progression-workbench-renderer.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/ui-state.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/static-text-controller.js') > -1);
+assert.ok(manifestScripts.indexOf('js/ui/volume-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/key-navigation-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/changelog-dialog-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/domain/progression-domain.js') > -1);
@@ -178,11 +180,13 @@ assert.equal(controllerOptions.instrumentPlayback, startResult.instrumentPlaybac
 assert.equal(controllerOptions.keyNavigation, global.CodaKeyNavigation);
 assert.ok(controllerOptions.musicalContext.fromSelection);
 assert.equal(controllerOptions.notation, global.CodaNotation);
+assert.equal(controllerOptions.playbackService, startResult.playbackService);
 assert.equal(controllerOptions.preferences, preferences);
 assert.equal(controllerOptions.renderers, global.CodaRenderers);
 assert.equal(controllerOptions.staticText, global.CodaStaticText);
 assert.equal(controllerOptions.ui, global.CodaUi);
 assert.equal(controllerOptions.uiState, startResult.uiState);
+assert.equal(controllerOptions.volumeControl, global.CodaVolumeControl);
 assert.equal(i18n.applyStatic, undefined);
 assert.equal(startResult.uiState.getLanguage(), 'es');
 assert.equal(startResult.uiState.getNotationStyle(), 'latin');
@@ -198,6 +202,8 @@ assert.equal(startResult.uiState.getSelectedTuningIndex(), 0);
 let midiLoadOptions = null;
 let playedChord = null;
 let stoppedChord = null;
+let volumeVelocity = null;
+let chordVelocity = null;
 const lazyPlayback = global.CodaPlayback.create({
 	channel: 0,
 	initialMidiNote: 60,
@@ -205,9 +211,12 @@ const lazyPlayback = global.CodaPlayback.create({
 		loadPlugin: function (options) {
 			midiLoadOptions = options;
 		},
-		setVolume: function () {},
-		chordOn: function (channel, chord) {
+		setVolume: function (channel, velocity) {
+			volumeVelocity = velocity;
+		},
+		chordOn: function (channel, chord, velocity) {
 			playedChord = chord;
+			chordVelocity = velocity;
 		},
 		chordOff: function (channel, chord) {
 			stoppedChord = chord;
@@ -222,6 +231,15 @@ assert.equal(playedChord, null);
 midiLoadOptions.onsuccess();
 assert.deepEqual(playedChord, [60, 64, 67]);
 assert.deepEqual(stoppedChord, [60, 64, 67]);
+assert.equal(volumeVelocity, 127);
+assert.equal(chordVelocity, 127);
+lazyPlayback.setVolume(50);
+lazyPlayback.playChordFromNames(['C', 'E', 'G']);
+assert.equal(volumeVelocity, 64);
+assert.equal(chordVelocity, 64);
+lazyPlayback.setVolume(0);
+lazyPlayback.playChordFromNames(['C', 'E', 'G']);
+assert.equal(chordVelocity, 0);
 
 global.CodaData.scales.forEach(function (scale, index) {
 	assert.ok(global.CodaTranslations.es['data.scales.' + index] != null);

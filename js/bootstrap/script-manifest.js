@@ -44,6 +44,7 @@
 			'js/renderers/progression-workbench-renderer.js',
 			'js/ui/ui-state.js',
 			'js/ui/static-text-controller.js',
+			'js/ui/volume-controller.js',
 			'js/ui/key-navigation-controller.js',
 			'js/ui/changelog-dialog-controller.js',
 			'js/ui/scale-report-ui.js',

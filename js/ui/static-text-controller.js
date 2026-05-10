@@ -14,8 +14,11 @@
 		setText($, i18n, '#appHeader h2', 'app.subtitle');
 		setText($, i18n, 'span[data-i18n="ui.language"]', 'ui.language');
 		setText($, i18n, 'span[data-i18n="ui.notation"]', 'ui.notation');
+		setText($, i18n, 'span[data-i18n="ui.volume"]', 'ui.volume');
 		setText($, i18n, 'option[data-i18n="notation.anglosaxon"]', 'notation.anglosaxon');
 		setText($, i18n, 'option[data-i18n="notation.latin"]', 'notation.latin');
+		setAttribute($, i18n, '#selectorVolumen', 'aria-label', 'ui.volumeTitle');
+		setAttribute($, i18n, '#selectorVolumen', 'title', 'ui.volumeTitle');
 		setAttribute($, i18n, '.settingsButton', 'title', 'settings.label');
 		setAttribute($, i18n, '.settingsButton', 'aria-label', 'settings.label');
 

@@ -89,6 +89,7 @@
     <script src="js/renderers/progression-workbench-renderer.js"></script>
     <script src="js/ui/ui-state.js"></script>
     <script src="js/ui/static-text-controller.js"></script>
+    <script src="js/ui/volume-controller.js"></script>
     <script src="js/ui/key-navigation-controller.js"></script>
     <script src="js/ui/changelog-dialog-controller.js"></script>
     <script src="js/ui/scale-report-ui.js"></script>
@@ -125,6 +126,21 @@
               </option>
               <option value="latin" data-i18n="notation.latin">Do Re Mi</option>
             </select>
+          </label>
+          <label class="volumeControl">
+            <span data-i18n="ui.volume">Volumen</span>
+            <input
+              id="selectorVolumen"
+              class="volumeControl__slider"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value="100"
+              aria-label="Volumen general"
+              aria-valuetext="100%"
+            />
+            <output id="valorVolumen" for="selectorVolumen">100%</output>
           </label>
           <button
             class="settingsButton"
