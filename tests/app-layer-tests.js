@@ -18,6 +18,7 @@ function runScript(relativePath) {
 
 [
 	'js/data.js',
+	'js/services/data-index-service.js',
 	'js/domain/music-utils.js',
 	'js/domain/scale-domain.js',
 	'js/domain/chord-domain.js',

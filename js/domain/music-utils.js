@@ -21,6 +21,12 @@
 	}
 
 	function findInterval(intervals, semitones) {
+		var semitoneKey = String(parseInt(semitones, 10));
+
+		if (intervals._codaIndex && intervals._codaIndex.bySemitones && intervals._codaIndex.bySemitones[semitoneKey]) {
+			return intervals._codaIndex.bySemitones[semitoneKey];
+		}
+
 		for (var i = 0; i < intervals.length; i++) {
 			if (parseInt(intervals[i].semitonos, 10) === parseInt(semitones, 10)) {
 				return intervals[i];
@@ -52,6 +58,10 @@
 	}
 
 	function findChordDefinitionByName(chordDefinitions, name) {
+		if (chordDefinitions._codaIndex && chordDefinitions._codaIndex.byName && chordDefinitions._codaIndex.byName[name]) {
+			return chordDefinitions._codaIndex.byName[name];
+		}
+
 		for (var i = 0; i < chordDefinitions.length; i++) {
 			if (chordDefinitions[i].nombre === name) {
 				return chordDefinitions[i];
@@ -60,6 +70,14 @@
 	}
 
 	function noteIndex(notes, noteNameValue) {
+		if (
+			notes._codaIndex &&
+			notes._codaIndex.indexByName &&
+			notes._codaIndex.indexByName[noteNameValue] !== undefined
+		) {
+			return notes._codaIndex.indexByName[noteNameValue];
+		}
+
 		for (var i = 0; i < notes.length; i++) {
 			if (notes[i].nombre === noteNameValue || notes[i].enarmonica === noteNameValue) {
 				return i;

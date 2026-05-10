@@ -163,6 +163,10 @@
 	}
 
 	function findNoteIndex(notes, noteName) {
+		if (notes._codaIndex && notes._codaIndex.indexByName && notes._codaIndex.indexByName[noteName] !== undefined) {
+			return notes._codaIndex.indexByName[noteName];
+		}
+
 		for (var i = 0; i < notes.length; i++) {
 			if (notes[i].nombre === noteName || notes[i].enarmonica === noteName) {
 				return i;

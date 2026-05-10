@@ -18,6 +18,7 @@ function runScript(relativePath) {
 
 [
 	'js/data.js',
+	'js/services/data-index-service.js',
 	'js/i18n/translations.js',
 	'js/i18n/i18n-service.js',
 	'js/services/notation-service.js',

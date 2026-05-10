@@ -18,6 +18,7 @@ function runScript(relativePath) {
 
 [
 	'js/data.js',
+	'js/services/data-index-service.js',
 	'js/domain/music-utils.js',
 	'js/domain/scale-domain.js',
 	'js/domain/chord-domain.js',
@@ -33,6 +34,10 @@ const domain = context.window.CodaDomain;
 
 assert.equal(data.constants.octaveSemitones, 12);
 assert.equal(data.notes.length, 12);
+assert.equal(data.indexes.notes.indexByName.C, 0);
+assert.equal(data.indexes.notes.indexByName.Db, 1);
+assert.equal(data.indexes.chords.byPattern['1-4-7-11'].abreviatura, 'maj7');
+assert.equal(data.indexes.intervals.bySemitones['7'].grado, 'VJ');
 assert.ok(data.extendedHarmony.secondaryDominants.length > 0);
 assert.ok(data.extendedHarmony.tritoneSubstitutes.length > 0);
 assert.ok(data.extendedHarmony.relativeMinorSeconds.length > 0);

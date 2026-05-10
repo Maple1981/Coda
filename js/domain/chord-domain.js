@@ -5,6 +5,10 @@
 	var utils = global.CodaMusicUtils;
 
 	function findChordType(chordDefinitions, pattern) {
+		if (chordDefinitions._codaIndex && chordDefinitions._codaIndex.byPattern && chordDefinitions._codaIndex.byPattern[pattern]) {
+			return chordDefinitions._codaIndex.byPattern[pattern].abreviatura;
+		}
+
 		for (var i = 0; i < chordDefinitions.length; i++) {
 			if (chordDefinitions[i].patron === pattern) {
 				return chordDefinitions[i].abreviatura;

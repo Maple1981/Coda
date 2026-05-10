@@ -26,6 +26,7 @@ manifestScripts.filter(function (scriptPath) {
 const global = context.window;
 
 assert.ok(global.CodaData);
+assert.ok(global.CodaDataIndex.create);
 assert.ok(global.CodaTranslations);
 assert.ok(global.CodaI18n.create);
 assert.ok(global.CodaNotation.formatNoteName);
@@ -56,6 +57,7 @@ assert.ok(global.CodaBootstrap.start);
 assert.ok(manifestScripts.indexOf('js/domain/progression-domain.js') > -1);
 assert.ok(manifestScripts.indexOf('js/application/progression-application.js') > -1);
 assert.ok(manifestScripts.indexOf('js/i18n/translations.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/data-index-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/i18n/i18n-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/notation-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/preferences-service.js') > -1);
@@ -121,6 +123,8 @@ assert.ok(startResult.chordPlayback.playChordFromCellId);
 assert.ok(startResult.instrumentPlayback.playMidiNote);
 assert.equal(loadCalled, false);
 assert.equal(playbackOptions.notes, global.CodaData.notes);
+assert.equal(global.CodaData.indexes.notes.indexByName['F#'], 6);
+assert.equal(global.CodaData.indexes.chords.byName.Dominante.abreviatura, '7');
 assert.equal(playbackOptions.channel, global.CodaData.midi.channel);
 assert.equal(playbackOptions.instrument, 'acoustic_grand_piano');
 assert.equal(controllerOptions.application, global.CodaApplication);

@@ -9,6 +9,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 ## Capas actuales
 
 - `js/data.js`: catálogos musicales expuestos mediante `CodaData`. Los nombres globales legacy siguen existiendo temporalmente, pero el código nuevo debe consumir `CodaData`.
+- `js/services/data-index-service.js`: índices derivados de los catálogos de `CodaData` para búsquedas rápidas por nombre, patrón o semitonos sin modificar el contrato público de arrays.
 - `js/domain/`: reglas musicales puras sin DOM, jQuery, MIDI ni renderizado.
 - `js/application/`: casos de uso. Orquesta dominio y servicios sin generar HTML ni leer directamente del DOM.
 - `js/renderers/`: renderizado HTML. Recibe datos explícitos y no calcula reglas musicales.
@@ -25,6 +26,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/i18n/translations.js`: diccionarios de interfaz para español de España e inglés.
 - `js/i18n/i18n-service.js`: servicio de traducción y aplicación de textos estáticos.
 - `js/services/notation-service.js`: formato visible de notas en notación anglosajona o latina sin alterar identificadores internos.
+- `js/services/data-index-service.js`: creación de `CodaData.indexes` y de índices no enumerables en las colecciones principales.
 - `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma y notación.
 - `js/application/scale-report-application.js`: construye informes de escala e instrumentos.
 - `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI y alturas MIDI de instrumentos a eventos de playback.
@@ -51,6 +53,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - La orquestación de casos de uso debe vivir en `js/application/`.
 - El HTML debe concentrarse en `js/renderers/`.
 - La interacción con jQuery y el DOM debe quedarse en `js/ui/`.
+- Las búsquedas repetidas en catálogos deben usar `CodaData.indexes` o los índices no enumerables generados por `js/services/data-index-service.js`; conservar siempre fallback lineal si una función acepta colecciones externas.
 - Los textos visibles nuevos deben pasar por `js/i18n/` cuando formen parte de la interfaz.
 - Los catálogos de datos que se muestran al usuario deben mantener traducción en todos los idiomas disponibles. El dato canónico puede seguir en español si el dominio lo necesita, pero la etiqueta visible debe resolverse desde `js/i18n/`. Los nombres de las notas deben formatearse mediante `js/services/notation-service.js`.
 - La notación de notas es una preferencia de presentación. Los cálculos, ids de acordes, navegación tonal y playback deben conservar identificadores internos anglosajones.
