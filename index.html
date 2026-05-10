@@ -77,78 +77,80 @@
   <body>
     <div id="container" class="dashboard">
       <aside id="panelTeorico" class="dashboard__sidebar">
-        <header>
-          <div class="panelCabecera">
-          <div id="encabezado">
-            <h1>CODA</h1>
-            <h2>Generador matemático de escalas, acordes y progresiones</h2>
-          </div>
-          <div>
-            <fieldset id="interface">
-              <h3>Elige tu escala</h3>
-              <p>
-                <label
-                  >Tónica
-                  <select id="tonica"></select
-                ></label>
-                <label
-                  >Escala
-                  <select id="escala"></select
-                ></label>
-              </p>
-              <p>
-                Formato
-                <label
-                  >♯
-                  <input
-                    name="formato"
-                    id="sostenidos"
-                    value="0"
-                    checked="checked"
-                    type="radio"
-                /></label>
-                <label
-                  >♭ <input name="formato" id="bemoles" value="1" type="radio"
-                /></label>
-                <span class="opcion"
-                  >Instrumento
+        <div class="dashboard__sidebarPanel">
+          <header>
+            <div class="panelCabecera">
+            <div id="encabezado">
+              <h1>CODA</h1>
+              <h2>Generador matemático de escalas, acordes y progresiones</h2>
+            </div>
+            <div>
+              <fieldset id="interface">
+                <h3>Elige tu escala</h3>
+                <p>
                   <label
-                    >Piano
+                    >Tónica
+                    <select id="tonica"></select
+                  ></label>
+                  <label
+                    >Escala
+                    <select id="escala"></select
+                  ></label>
+                </p>
+                <p>
+                  Formato
+                  <label
+                    >♯
                     <input
-                      name="instrumento"
-                      id="piano"
-                      value="1"
+                      name="formato"
+                      id="sostenidos"
+                      value="0"
                       checked="checked"
                       type="radio"
                   /></label>
                   <label
-                    >Guitarra
-                    <input
-                      name="instrumento"
-                      id="guitarra"
-                      value="0"
-                      type="radio"
+                    >♭ <input name="formato" id="bemoles" value="1" type="radio"
                   /></label>
-                </span>
-              </p>
-              <input
-                id="btnEscala"
-                value="Dame información de la escala"
-                type="button"
-              />
-            </fieldset>
+                  <span class="opcion"
+                    >Instrumento
+                    <label
+                      >Piano
+                      <input
+                        name="instrumento"
+                        id="piano"
+                        value="1"
+                        checked="checked"
+                        type="radio"
+                    /></label>
+                    <label
+                      >Guitarra
+                      <input
+                        name="instrumento"
+                        id="guitarra"
+                        value="0"
+                        type="radio"
+                    /></label>
+                  </span>
+                </p>
+                <input
+                  id="btnEscala"
+                  value="Dame información de la escala"
+                  type="button"
+                />
+              </fieldset>
+            </div>
+            </div>
+          </header>
+
+          <div id="herramientasTeoricas" class="dashboard__theory">
+            <section id="notacion"></section>
+
+            <section id="instrumento"></section>
+
+            <section id="circuloQuintas"></section>
+
+            <section id="armoniaExtendida"></section>
           </div>
-          </div>
-        </header>
-
-        <div id="herramientasTeoricas" class="dashboard__theory">
-          <section id="notacion"></section>
-
-          <section id="instrumento"></section>
-
-          <section id="circuloQuintas"></section>
-
-          <section id="armoniaExtendida"></section>
         </div>
       </aside>
 

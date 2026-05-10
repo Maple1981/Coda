@@ -73,9 +73,13 @@
 		}));
 
 		$('#acordeonArmoniaExtendida').accordion({
+			activate: function () {
+				syncDashboardWorkspaceHeight($);
+			},
 			heightStyle: 'content'
 		});
 		$('#acordeonArmoniaExtendida').accordion('option', 'collapsible', true);
+		syncDashboardWorkspaceHeight($);
 	}
 
 	function attachChordEvents(options) {
@@ -112,12 +116,32 @@
 		options.$('#instrumento').empty().append(html);
 	}
 
+	function syncDashboardWorkspaceHeight($) {
+		var sidebar = $('#panelTeorico')[0];
+		var sidebarPanel = $('.dashboard__sidebarPanel')[0];
+		var main = $('#areaTrabajo')[0];
+		var container = $('#container')[0];
+
+		if (!sidebar || !sidebarPanel || !main || !container) {
+			return;
+		}
+
+		var viewportHeight = Math.max(0, window.innerHeight - 32);
+		var sidebarHeight = sidebarPanel.scrollHeight;
+		var mainHeight = main.scrollHeight;
+		var workspaceHeight = Math.max(viewportHeight, sidebarHeight, mainHeight);
+
+		container.style.setProperty('--dashboard-workspace-height', workspaceHeight + 'px');
+		container.style.setProperty('--dashboard-sidebar-content-height', sidebarHeight + 'px');
+	}
+
 	global.CodaUi = {
 		attachChordEvents: attachChordEvents,
 		hasRenderedResults: hasRenderedResults,
 		readSelection: readSelection,
 		renderExtendedHarmony: renderExtendedHarmony,
 		renderInstrument: renderInstrument,
-		renderScaleReport: renderScaleReport
+		renderScaleReport: renderScaleReport,
+		syncDashboardWorkspaceHeight: syncDashboardWorkspaceHeight
 	};
 })(window);

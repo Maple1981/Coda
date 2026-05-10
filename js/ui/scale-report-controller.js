@@ -13,6 +13,11 @@
 		fillSelectHashTable($, $('#escala'), options.data.scales, false);
 		applyRecommendedNotation($, options);
 		initializeChangelogDialog($);
+		options.ui.syncDashboardWorkspaceHeight($);
+
+		$(window).on('resize', function () {
+			options.ui.syncDashboardWorkspaceHeight($);
+		});
 
 		$('#btnEscala').click(function () {
 			renderReport();
@@ -115,6 +120,7 @@
 				renderers: options.renderers,
 				report: report
 			});
+			options.ui.syncDashboardWorkspaceHeight($);
 		}
 
 		return {

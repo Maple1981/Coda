@@ -134,7 +134,7 @@ div#container{
 	box-sizing:border-box;
 	display:grid;
 	grid-template-columns:minmax(420px, 32vw) minmax(0, 1fr);
-	grid-template-rows:minmax(calc(100vh - 2em), auto) auto;
+	grid-template-rows:minmax(var(--dashboard-workspace-height, calc(100vh - 2em)), auto) auto;
 	grid-template-areas:
 		"sidebar main"
 		"footer footer";
@@ -159,8 +159,14 @@ header{
 	grid-area:sidebar;
 	min-width:0;
 	align-self:start;
+	min-height:var(--dashboard-sidebar-content-height, 0);
+}
+
+.dashboard__sidebarPanel{
+	box-sizing:border-box;
 	position:sticky;
 	top:.8em;
+	width:100%;
 	max-height:calc(100vh - 2em);
 	overflow-y:auto;
 	padding-right:.45em;
@@ -168,15 +174,15 @@ header{
 	scrollbar-width:thin;
 }
 
-.dashboard__sidebar::-webkit-scrollbar{
+.dashboard__sidebarPanel::-webkit-scrollbar{
 	width:10px;
 }
 
-.dashboard__sidebar::-webkit-scrollbar-track{
+.dashboard__sidebarPanel::-webkit-scrollbar-track{
 	background:$basic_filldarkgrad_color;
 }
 
-.dashboard__sidebar::-webkit-scrollbar-thumb{
+.dashboard__sidebarPanel::-webkit-scrollbar-thumb{
 	background:$corporative_complementary_color;
 	border:3px solid $basic_filldarkgrad_color;
 	border-radius:8px;
@@ -877,6 +883,10 @@ footer{
 	}
 
 	.dashboard__sidebar{
+		min-height:0;
+	}
+
+	.dashboard__sidebarPanel{
 		position:static;
 		max-height:none;
 		overflow-y:visible;

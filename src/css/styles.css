@@ -99,8 +99,8 @@ div#container {
   display: grid;
   -ms-grid-columns: minmax(420px, 32vw) 1.2em minmax(0, 1fr);
   grid-template-columns: minmax(420px, 32vw) minmax(0, 1fr);
-  -ms-grid-rows: minmax(calc(100vh - 2em), auto) 1.2em auto;
-  grid-template-rows: minmax(calc(100vh - 2em), auto) auto;
+  -ms-grid-rows: minmax(var(--dashboard-workspace-height, calc(100vh - 2em)), auto) 1.2em auto;
+  grid-template-rows: minmax(var(--dashboard-workspace-height, calc(100vh - 2em)), auto) auto;
       grid-template-areas: "sidebar main" "footer footer";
   gap: 1.2em;
   width: 100%;
@@ -126,9 +126,16 @@ header {
   min-width: 0;
   -ms-grid-row-align: start;
       align-self: start;
+  min-height: var(--dashboard-sidebar-content-height, 0);
+}
+
+.dashboard__sidebarPanel {
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
   position: -webkit-sticky;
   position: sticky;
   top: .8em;
+  width: 100%;
   max-height: calc(100vh - 2em);
   overflow-y: auto;
   padding-right: .45em;
@@ -136,15 +143,15 @@ header {
   scrollbar-width: thin;
 }
 
-.dashboard__sidebar::-webkit-scrollbar {
+.dashboard__sidebarPanel::-webkit-scrollbar {
   width: 10px;
 }
 
-.dashboard__sidebar::-webkit-scrollbar-track {
+.dashboard__sidebarPanel::-webkit-scrollbar-track {
   background: #151515;
 }
 
-.dashboard__sidebar::-webkit-scrollbar-thumb {
+.dashboard__sidebarPanel::-webkit-scrollbar-thumb {
   background: #a622ae;
   border: 3px solid #151515;
   border-radius: 8px;
@@ -909,6 +916,9 @@ footer ul#redesSociales li {
   .dashboard__sidebar {
     -ms-grid-row: 1;
     -ms-grid-column: 1;
+    min-height: 0;
+  }
+  .dashboard__sidebarPanel {
     position: static;
     max-height: none;
     overflow-y: visible;
