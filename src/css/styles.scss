@@ -134,6 +134,7 @@ div#container{
 	box-sizing:border-box;
 	display:grid;
 	grid-template-columns:minmax(420px, 32vw) minmax(0, 1fr);
+	grid-template-rows:minmax(calc(100vh - 2em), auto) auto;
 	grid-template-areas:
 		"sidebar main"
 		"footer footer";
@@ -201,15 +202,15 @@ header{
 
 fieldset{
 	font-size:.9em; 
-	border-radius:10px; 
-	padding:20px; 
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:6px; 
+	padding:1.25em; 
 	
 	background: $basic_filldarkgrad_color; //retro compatibility old browsers
 	background: linear-gradient(
 		0deg, 
-		$basic_fill_color 0%, 
-		$basic_filldarkgrad_color 35%, 
-		$basic_fillbrightgrad_color 100%
+		$basic_filldarkgrad_color 0%, 
+		$basic_fill_color 100%
 	);
 
 	h3{
@@ -228,9 +229,47 @@ fieldset{
 	gap:.7em 1em;
 }
 
+#interface label{
+	display:inline-flex;
+	align-items:center;
+	gap:.35em;
+}
+
+#interface select{
+	box-sizing:border-box;
+	min-width:0;
+	background:$basic_fill_color;
+	color:$basic_front_color;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:4px;
+	padding:.32em .45em;
+}
+
+#interface select#tonica{
+	width:4.6em;
+}
+
+#interface select#escala{
+	width:min(100%, 16.5em);
+}
+
+#interface input[type="radio"]{
+	accent-color:$corporative_complementary_color;
+}
+
+#interface input[type="button"]{
+	border-radius:4px;
+	padding:.48em .8em;
+	font-weight:600;
+}
+
 
 span.opcion{
 	margin-left:0;
+	display:inline-flex;
+	flex-wrap:wrap;
+	align-items:center;
+	gap:.45em;
 }
 
 input[type="text"],
