@@ -473,6 +473,10 @@ section#notacion table.acordesEscala {
   margin-top: .15em;
 }
 
+section#notacion table.acordesEscala tr td:first-child {
+  text-align: left;
+}
+
 section#notacion div.leyendaAcordesModales {
   width: 100%;
   margin: 0 auto;

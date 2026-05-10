@@ -27,7 +27,7 @@
 			if (rows.parallelSeventhChords !== '') {
 				html += '<tr><td class="cabecera">' + t(options, 'scaleChords.parallel') + '</td>' + rows.parallelTriads + '</tr>';
 			}
-			html += '<tr><td class="cabecera">' + t(options, 'scaleChords.functionRow') + ': </td>' + rows.functions + '</tr>';
+			html += '<tr><td class="cabecera">' + t(options, 'scaleChords.functionRow') + '</td>' + rows.functions + '</tr>';
 		}
 
 		html += '<tr><td class="cabecera">' + t(options, 'scaleChords.notes') + '</td>' + rows.notes + '</tr>';

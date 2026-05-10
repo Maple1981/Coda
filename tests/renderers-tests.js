@@ -243,7 +243,7 @@ assert.ok(scaleChordsHtml.indexOf('<table class="acordesEscala">') > -1);
 assert.ok(scaleChordsHtml.indexOf('Cmaj7') > -1);
 assert.ok(scaleChordsHtml.indexOf('class="celdaAcorde" id="G-B-D-F"') > -1);
 assert.ok(scaleChordsHtml.indexOf('<td>V7</td>') > -1);
-assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Función: </td>') > -1);
+assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Función</td>') > -1);
 
 const latinScaleChordsHtml = scaleChordsRenderer.render({
 	mode: 'M',
