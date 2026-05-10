@@ -17,12 +17,34 @@
 			id: 'acoustic_grand_piano',
 			nombre: 'Piano acústico',
 			family: 'piano',
+			program: 0,
+			usage: ['instrument-view', 'progressions'],
+			viewInstrument: '1',
+			sustained: false
+		},
+		{
+			id: 'acoustic_guitar_nylon',
+			nombre: 'Guitarra clásica',
+			family: 'guitar',
+			program: 24,
+			usage: ['instrument-view', 'progressions'],
+			viewInstrument: '0',
 			sustained: false
 		},
 		{
 			id: 'drawbar_organ',
 			nombre: 'Órgano drawbar',
 			family: 'organ',
+			program: 16,
+			usage: ['progressions'],
+			sustained: true
+		},
+		{
+			id: 'string_ensemble_1',
+			nombre: 'Cuerdas',
+			family: 'strings',
+			program: 48,
+			usage: ['progressions'],
 			sustained: true
 		}
 	];

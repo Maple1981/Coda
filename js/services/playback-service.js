@@ -24,55 +24,92 @@
 	function create(options) {
 		var midi = options.midi;
 		var notes = options.notes || [];
+		var instruments = options.instruments || [];
 		var channel = defaultValue(options.channel, 0);
 		var baseVelocity = defaultValue(options.velocity, 127);
 		var volumePercent = normalizeVolumePercent(defaultValue(options.volumePercent, 100));
 		var delay = defaultValue(options.delay, 0);
 		var initialMidiNote = defaultValue(options.initialMidiNote, 60);
-		var loading = false;
-		var readyCallbacks = [];
-		var ready = false;
+		var activeInstrument = options.instrument || 'acoustic_grand_piano';
+		var loadingInstruments = {};
+		var loadedInstruments = {};
+		var readyCallbacks = {};
 
 		function load(callback) {
-			if (ready) {
+			return loadInstrument(activeInstrument, callback);
+		}
+
+		function loadInstrument(instrumentId, callback) {
+			if (loadedInstruments[instrumentId]) {
+				applyInstrument(instrumentId);
 				runCallback(callback);
 				return true;
 			}
 
 			if (typeof callback === 'function') {
-				readyCallbacks.push(callback);
+				addReadyCallback(instrumentId, callback);
 			}
 
-			if (loading) {
+			if (loadingInstruments[instrumentId]) {
 				return true;
 			}
 
 			if (!midi || typeof midi.loadPlugin !== 'function') {
-				readyCallbacks = [];
+				readyCallbacks[instrumentId] = [];
 				return false;
 			}
 
-			loading = true;
+			loadingInstruments[instrumentId] = true;
 			midi.loadPlugin({
 				soundfontUrl: options.soundfontUrl || './soundfont/',
-				instrument: options.instrument || 'acoustic_grand_piano',
+				instrument: instrumentId,
 				onprogress: options.onprogress || function () {},
 				onsuccess: function () {
-					loading = false;
-					ready = true;
+					loadingInstruments[instrumentId] = false;
+					loadedInstruments[instrumentId] = true;
+					if (activeInstrument === instrumentId) {
+						applyInstrument(instrumentId);
+					}
 					if (typeof midi.setVolume === 'function') {
 						midi.setVolume(channel, currentVelocity());
 					}
 
 					if (typeof options.onsuccess === 'function') {
-						options.onsuccess();
+						options.onsuccess(instrumentId);
 					}
 
-					flushReadyCallbacks();
+					flushReadyCallbacks(instrumentId);
 				}
 			});
 
 			return true;
+		}
+
+		function applyInstrument(instrumentId) {
+			var instrument = findInstrument(instrumentId);
+
+			if (midi && typeof midi.programChange === 'function' && instrument && instrument.program !== undefined) {
+				midi.programChange(channel, instrument.program);
+			}
+		}
+
+		function findInstrument(instrumentId) {
+			for (var i = 0; i < instruments.length; i++) {
+				if (instruments[i].id === instrumentId) {
+					return instruments[i];
+				}
+			}
+
+			if (midi && midi.GM && midi.GM.byName && midi.GM.byName[instrumentId]) {
+				return {
+					id: instrumentId,
+					program: midi.GM.byName[instrumentId].number
+				};
+			}
+
+			return {
+				id: instrumentId
+			};
 		}
 
 		function noteNameToMidi(noteName, offset) {
@@ -104,7 +141,7 @@
 				return;
 			}
 
-			if (!ready) {
+			if (!isReady()) {
 				load(function () {
 					playChordFromNames(noteNames, playbackOptions);
 				});
@@ -130,7 +167,7 @@
 				return;
 			}
 
-			if (!ready) {
+			if (!isReady()) {
 				load(function () {
 					playMidiNote(midiNote, playbackOptions);
 				});
@@ -161,16 +198,35 @@
 		function setVolume(value) {
 			volumePercent = normalizeVolumePercent(value);
 
-			if (ready && midi && typeof midi.setVolume === 'function') {
+			if (midi && typeof midi.setVolume === 'function') {
 				midi.setVolume(channel, currentVelocity());
 			}
 
 			return volumePercent;
 		}
 
-		function flushReadyCallbacks() {
-			var callbacks = readyCallbacks.slice();
-			readyCallbacks = [];
+		function setInstrument(instrumentId) {
+			if (!instrumentId) {
+				return activeInstrument;
+			}
+
+			activeInstrument = instrumentId;
+
+			if (loadedInstruments[activeInstrument]) {
+				applyInstrument(activeInstrument);
+			}
+
+			return activeInstrument;
+		}
+
+		function addReadyCallback(instrumentId, callback) {
+			readyCallbacks[instrumentId] = readyCallbacks[instrumentId] || [];
+			readyCallbacks[instrumentId].push(callback);
+		}
+
+		function flushReadyCallbacks(instrumentId) {
+			var callbacks = (readyCallbacks[instrumentId] || []).slice();
+			readyCallbacks[instrumentId] = [];
 
 			for (var i = 0; i < callbacks.length; i++) {
 				runCallback(callbacks[i]);
@@ -183,18 +239,36 @@
 			}
 		}
 
+		function isReady() {
+			return loadedInstruments[activeInstrument] === true;
+		}
+
+		function isLoading() {
+			for (var instrumentId in loadingInstruments) {
+				if (loadingInstruments[instrumentId]) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
 		return {
 			load: load,
 			isReady: function () {
-				return ready;
+				return isReady();
 			},
 			isLoading: function () {
-				return loading;
+				return isLoading();
+			},
+			getInstrument: function () {
+				return activeInstrument;
 			},
 			noteNameToMidi: noteNameToMidi,
 			chordNamesToMidi: chordNamesToMidi,
 			playChordFromNames: playChordFromNames,
 			playMidiNote: playMidiNote,
+			setInstrument: setInstrument,
 			setVolume: setVolume,
 			getVolume: function () {
 				return volumePercent;

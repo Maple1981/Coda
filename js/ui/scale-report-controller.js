@@ -23,6 +23,7 @@
 		$('#selectorNotacion').val(uiState.getNotationStyle());
 		fillSelectHashTable($, $('#tonica'), options.data.notes, false, null, 'notes', notation, uiState.getNotationStyle());
 		fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
+		setPlaybackInstrument(options, $('#interface input:radio[name="instrumento"]:checked').val());
 		keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
 		if (staticText) {
 			staticText.apply($, i18n);
@@ -71,6 +72,8 @@
 		});
 
 		$('#interface input:radio[name="instrumento"]').change(function () {
+			setPlaybackInstrument(options, $(this).val());
+
 			if (options.ui.hasRenderedResults($)) {
 				renderInstrument(true);
 			}
@@ -136,6 +139,7 @@
 			var report;
 			uiState.setSelection(selection);
 			uiState.setMusicalContext(musicalContext);
+			setPlaybackInstrument(options, musicalContext.instrument);
 
 			if (musicalContext.isScaleSeparator) {
 				uiState.clearReport();
@@ -177,6 +181,7 @@
 			var report = uiState.getReport();
 			uiState.setSelection(selection);
 			uiState.setMusicalContext(musicalContext);
+			setPlaybackInstrument(options, musicalContext.instrument);
 
 			if (!report) {
 				return;
@@ -292,12 +297,34 @@
 		}
 	}
 
+	function setPlaybackInstrument(options, selectedInstrument) {
+		var playbackInstrument = resolvePlaybackInstrument(options.data, selectedInstrument);
+
+		if (options.playbackService && typeof options.playbackService.setInstrument === 'function' && playbackInstrument) {
+			options.playbackService.setInstrument(playbackInstrument.id);
+		}
+	}
+
+	function resolvePlaybackInstrument(data, selectedInstrument) {
+		var instruments = data && data.midiInstruments ? data.midiInstruments : [];
+
+		for (var i = 0; i < instruments.length; i++) {
+			if (instruments[i].viewInstrument === selectedInstrument) {
+				return instruments[i];
+			}
+		}
+
+		return instruments.length ? instruments[0] : null;
+	}
+
 	global.CodaScaleReportController = {
 		clearChordHighlight: clearChordHighlight,
 		fillSelectHashTable: fillSelectHashTable,
 		highlightChord: highlightChord,
 		initialize: initialize,
 		playChord: playChord,
-		playInstrumentNote: playInstrumentNote
+		playInstrumentNote: playInstrumentNote,
+		resolvePlaybackInstrument: resolvePlaybackInstrument,
+		setPlaybackInstrument: setPlaybackInstrument
 	};
 })(window);

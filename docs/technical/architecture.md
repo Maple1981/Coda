@@ -82,6 +82,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - El playback debe cargarse de forma diferida: el soundfont y el motor MIDI se inicializan con la primera acción de preescucha, no durante el arranque de la aplicación.
 - El volumen maestro de la interfaz debe aplicarse desde `js/services/playback-service.js`, escalando la velocidad MIDI base. El 100% equivale al volumen histórico de la aplicación y el valor elegido por el usuario se conserva en `coda_preferences`.
 - Los instrumentos MIDI/soundfont deben declararse en `js/data/midi-data.js`; el bootstrap no debe depender de literales de instrumento salvo como fallback defensivo.
+- La fuente, licencia y reglas de carga de los soundfonts locales se documentan en `docs/technical/soundfonts.md`.
 - Los eventos sobre acordes y notas de instrumento deben delegarse desde contenedores estables. Evitar reenlazar manejadores sobre cada celda renderizada.
 - Los reajustes de layout dependientes de medidas del DOM deben programarse con `requestAnimationFrame` mediante las funciones `schedule...` de `js/ui/scale-report-ui.js`.
 - Las preferencias ligeras pueden guardarse en la cookie `coda_preferences`; cualquier valor nuevo debe añadirse de forma compatible con los existentes.

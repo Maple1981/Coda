@@ -171,6 +171,7 @@ assert.equal(global.CodaData.indexes.notes.indexByName['F#'], 6);
 assert.equal(global.CodaData.indexes.chords.byName.Dominante.abreviatura, '7');
 assert.equal(playbackOptions.channel, global.CodaData.midi.channel);
 assert.equal(playbackOptions.instrument, global.CodaData.midiInstruments[0].id);
+assert.equal(playbackOptions.instruments, global.CodaData.midiInstruments);
 assert.equal(playbackOptions.volumePercent, 73);
 assert.equal(controllerOptions.application, global.CodaApplication);
 assert.equal(controllerOptions.changelogDialog.initialize != null, true);
@@ -207,6 +208,7 @@ let playedChord = null;
 let stoppedChord = null;
 let volumeVelocity = null;
 let chordVelocity = null;
+let selectedProgram = null;
 const lazyPlayback = global.CodaPlayback.create({
 	channel: 0,
 	initialMidiNote: 60,
@@ -217,6 +219,9 @@ const lazyPlayback = global.CodaPlayback.create({
 		setVolume: function (channel, velocity) {
 			volumeVelocity = velocity;
 		},
+		programChange: function (channel, program) {
+			selectedProgram = program;
+		},
 		chordOn: function (channel, chord, velocity) {
 			playedChord = chord;
 			chordVelocity = velocity;
@@ -225,6 +230,7 @@ const lazyPlayback = global.CodaPlayback.create({
 			stoppedChord = chord;
 		}
 	},
+	instruments: global.CodaData.midiInstruments,
 	notes: global.CodaData.notes
 });
 
@@ -236,6 +242,7 @@ assert.deepEqual(playedChord, [60, 64, 67]);
 assert.deepEqual(stoppedChord, [60, 64, 67]);
 assert.equal(volumeVelocity, 127);
 assert.equal(chordVelocity, 127);
+assert.equal(selectedProgram, 0);
 lazyPlayback.setVolume(50);
 lazyPlayback.playChordFromNames(['C', 'E', 'G']);
 assert.equal(volumeVelocity, 64);
@@ -243,6 +250,16 @@ assert.equal(chordVelocity, 64);
 lazyPlayback.setVolume(0);
 lazyPlayback.playChordFromNames(['C', 'E', 'G']);
 assert.equal(chordVelocity, 0);
+assert.equal(lazyPlayback.setInstrument('acoustic_guitar_nylon'), 'acoustic_guitar_nylon');
+assert.equal(lazyPlayback.isReady(), false);
+playedChord = null;
+midiLoadOptions = null;
+lazyPlayback.playChordFromNames(['C', 'E', 'G']);
+assert.equal(midiLoadOptions.instrument, 'acoustic_guitar_nylon');
+assert.equal(playedChord, null);
+midiLoadOptions.onsuccess();
+assert.equal(selectedProgram, 24);
+assert.deepEqual(playedChord, [60, 64, 67]);
 
 let sliderValue = '100';
 let volumeInputHandler = null;

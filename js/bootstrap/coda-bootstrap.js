@@ -10,6 +10,7 @@
 			channel: data.midi.channel,
 			delay: data.midi.delay,
 			initialMidiNote: data.midi.initialMidiNote,
+			instruments: data.midiInstruments,
 			instrument: defaultMidiInstrument.id,
 			midi: options.midi,
 			notes: data.notes,
