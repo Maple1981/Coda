@@ -5,6 +5,7 @@
 
 	function buildGuitarFretboard(options) {
 		var openStrings = options.preferFlats ? options.tuning.patron.split('-') : options.tuning.enarmonica.split('-');
+		var openStringMidiNotes = resolveTuningMidiNotes(openStrings, options.notes);
 		var strings = [];
 
 		for (var i = openStrings.length - 1; i >= 0; i--) {
@@ -16,16 +17,17 @@
 
 			strings.push({
 				aire: openStrings[i],
+				midiNote: openStringMidiNotes[i],
 				perteneceEscala: openState.belongsToScale,
 				tipo: openState.modalType,
-				trastes: buildStringFrets(openStrings[i], options)
+				trastes: buildStringFrets(openStrings[i], options, openStringMidiNotes[i])
 			});
 		}
 
 		return strings;
 	}
 
-	function buildStringFrets(openStringName, options) {
+	function buildStringFrets(openStringName, options, openStringMidiNote) {
 		var frets = [];
 		var currentPosition = findNoteIndex(options.notes, openStringName);
 
@@ -40,6 +42,7 @@
 			});
 
 			frets.push({
+				midiNote: openStringMidiNote != null ? openStringMidiNote + i + 1 : undefined,
 				nombre: noteName,
 				perteneceEscala: noteState.belongsToScale,
 				tipo: noteState.modalType
@@ -58,10 +61,12 @@
 
 	function buildBlackKeys(options) {
 		var keys = [];
+		var firstMidiNote = options.pianoStartMidiNote || 48;
 
 		for (var octave = 0; octave < options.octaveCount; octave++) {
 			for (var i = 0; i < options.notes.length; i++) {
 				var note = options.notes[i];
+				var midiNote = firstMidiNote + (octave * options.notes.length) + i;
 
 				if (note.enarmonica != null) {
 					var noteState = findScaleNoteStateForPitch({
@@ -72,6 +77,7 @@
 					});
 
 					keys.push({
+						midiNote: midiNote,
 						type: 'note',
 						nombre: options.preferFlats ? note.enarmonica : note.nombre,
 						perteneceEscala: noteState.belongsToScale,
@@ -91,10 +97,12 @@
 
 	function buildWhiteKeys(options) {
 		var keys = [];
+		var firstMidiNote = options.pianoStartMidiNote || 48;
 
 		for (var octave = 0; octave < options.octaveCount; octave++) {
 			for (var i = 0; i < options.notes.length; i++) {
 				var note = options.notes[i];
+				var midiNote = firstMidiNote + (octave * options.notes.length) + i;
 
 				if (note.enarmonica == null) {
 					var noteState = findScaleNoteStateForPitch({
@@ -105,6 +113,7 @@
 					});
 
 					keys.push({
+						midiNote: midiNote,
 						type: 'note',
 						nombre: note.nombre,
 						perteneceEscala: noteState.belongsToScale,
@@ -171,6 +180,32 @@
 		return note.nombre;
 	}
 
+	function resolveTuningMidiNotes(openStrings, notes) {
+		var standardGuitarMidiNotes = [40, 45, 50, 55, 59, 64];
+		var midiNotes = [];
+
+		for (var i = 0; i < openStrings.length; i++) {
+			midiNotes.push(resolveNearestMidiForNoteName(openStrings[i], notes, standardGuitarMidiNotes[i]));
+		}
+
+		return midiNotes;
+	}
+
+	function resolveNearestMidiForNoteName(noteName, notes, referenceMidiNote) {
+		var pitchClass = findNoteIndex(notes, noteName);
+		var closestMidiNote = pitchClass;
+
+		while (closestMidiNote < referenceMidiNote - 6) {
+			closestMidiNote += notes.length;
+		}
+
+		while (closestMidiNote > referenceMidiNote + 6) {
+			closestMidiNote -= notes.length;
+		}
+
+		return closestMidiNote;
+	}
+
 	global.CodaInstrumentDomain = {
 		buildBlackKeys: buildBlackKeys,
 		buildGuitarFretboard: buildGuitarFretboard,
@@ -180,6 +215,8 @@
 		findNoteIndex: findNoteIndex,
 		findScaleNoteStateByName: findScaleNoteStateByName,
 		findScaleNoteStateForPitch: findScaleNoteStateForPitch,
-		noteNameForFormat: noteNameForFormat
+		noteNameForFormat: noteNameForFormat,
+		resolveNearestMidiForNoteName: resolveNearestMidiForNoteName,
+		resolveTuningMidiNotes: resolveTuningMidiNotes
 	};
 })(window);

@@ -647,6 +647,7 @@ section#instrumento table td.celdaNota span {
   height: 22px;
   display: block;
   margin: 0 auto;
+  cursor: pointer;
 }
 
 section#instrumento table td.noPerteneceEscala span {

@@ -138,10 +138,11 @@ const guitarHtml = instrumentsRenderer.renderGuitar({
 	strings: [
 		{
 			aire: 'E',
+			midiNote: 64,
 			perteneceEscala: true,
 			trastes: [
-				{ nombre: 'F', perteneceEscala: true },
-				{ nombre: 'F#', perteneceEscala: false }
+				{ nombre: 'F', midiNote: 65, perteneceEscala: true },
+				{ nombre: 'F#', midiNote: 66, perteneceEscala: false }
 			]
 		}
 	],
@@ -151,7 +152,7 @@ const guitarHtml = instrumentsRenderer.renderGuitar({
 
 assert.ok(guitarHtml.indexOf('<select id="selectorAfinaciones">') > -1);
 assert.ok(guitarHtml.indexOf('<table class="diapason">') > -1);
-assert.ok(guitarHtml.indexOf('<td class="celdaNota perteneceEscala"><span data-note-name="E">E</span></td>') > -1);
+assert.ok(guitarHtml.indexOf('<td class="celdaNota perteneceEscala"><span data-note-name="E" data-midi-note="64">E</span></td>') > -1);
 assert.ok(guitarHtml.indexOf('<td><span>2</span></td>') > -1);
 
 const pianoKeyboard = domain.buildPianoKeyboard({
@@ -170,8 +171,8 @@ const pianoHtml = instrumentsRenderer.renderPiano({
 
 assert.ok(pianoHtml.indexOf('<table class="teclasNegras">') > -1);
 assert.ok(pianoHtml.indexOf('<table class="teclasBlancas">') > -1);
-assert.ok(pianoHtml.indexOf('<span data-note-name="Bb">Bb</span>') > -1);
-assert.ok(pianoHtml.indexOf('<td class="celdaNota  perteneceEscala"><span data-note-name="C">C</span></td>') > -1);
+assert.ok(pianoHtml.indexOf('<span data-note-name="Bb" data-midi-note="58">Bb</span>') > -1);
+assert.ok(pianoHtml.indexOf('<td class="celdaNota  perteneceEscala"><span data-note-name="C" data-midi-note="48">C</span></td>') > -1);
 
 const englishPianoHtml = instrumentsRenderer.renderPiano({
 	i18n: englishI18n,
@@ -186,6 +187,7 @@ const englishGuitarHtml = instrumentsRenderer.renderGuitar({
 	strings: [
 		{
 			aire: 'E',
+			midiNote: 64,
 			perteneceEscala: true,
 			trastes: []
 		}
@@ -221,6 +223,7 @@ const latinGuitarHtml = instrumentsRenderer.renderGuitar({
 	strings: [
 		{
 			aire: 'E',
+			midiNote: 64,
 			perteneceEscala: true,
 			trastes: []
 		}
@@ -229,7 +232,7 @@ const latinGuitarHtml = instrumentsRenderer.renderGuitar({
 	tunings: data.tunings
 });
 assert.ok(latinGuitarHtml.indexOf('<h4>Tuning: Standard Mi') > -1);
-assert.ok(latinGuitarHtml.indexOf('<span data-note-name="E">Mi</span>') > -1);
+assert.ok(latinGuitarHtml.indexOf('<span data-note-name="E" data-midi-note="64">Mi</span>') > -1);
 
 const scaleChordsHtml = scaleChordsRenderer.render({
 	mode: 'M',

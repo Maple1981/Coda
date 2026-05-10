@@ -13,7 +13,7 @@ const delay = 0; // toca la nota cada cuarto de segundo
 const note = -1; // la nota MIDI
 const velocity = 127; // volumen de dicha nota
 const channel = 0; // canal
-const Cinicial = 60; //nota MIDI de la octava inicial desde donde reproducir sonidos de ejemplo. C0 = 0, C1 = 12, C2 = 24, C3 = 36, C4 = 48, C5 = 60, C6 = 72, etc.
+const Cinicial = 60; //nota MIDI de la octava inicial desde donde reproducir sonidos de ejemplo. En notación científica MIDI, C4 = 60.
 
 //arreglo tipo hashtable de las 12 notas de la escala diatónica y sus correspondientes enarmonías
 const notas = new Array();

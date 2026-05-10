@@ -108,6 +108,7 @@ const cMajorGuitar = app.buildInstrumentView({
 assert.equal(cMajorGuitar.type, 'guitar');
 assert.equal(cMajorGuitar.tuning.nombre, 'Estándar E');
 assert.equal(cMajorGuitar.strings.length, 6);
+assert.equal(cMajorGuitar.strings[0].midiNote, 64);
 assert.deepEqual(cMajorGuitar.strings[0].trastes.slice(0, 3).map(function (fret) { return fret.nombre; }), ['F', 'F#', 'G']);
 
 const cMajorPiano = app.buildInstrumentView({
@@ -123,6 +124,7 @@ assert.equal(cMajorPiano.type, 'piano');
 assert.equal(cMajorPiano.keyboard.blackKeys.length, 12);
 assert.equal(cMajorPiano.keyboard.whiteKeys.length, 7);
 assert.equal(cMajorPiano.keyboard.blackKeys[1].nombre, 'Db');
+assert.equal(cMajorPiano.keyboard.whiteKeys[0].midiNote, 48);
 
 let playedNotes = null;
 let playedOptions = null;
@@ -141,6 +143,23 @@ assert.deepEqual(playedNotes, ['C', 'E', 'G', 'B']);
 assert.deepEqual(playedOptions, {
 	bassOctaveOffset: -12,
 	duration: 0.75
+});
+
+let playedMidiNote = null;
+let playedMidiOptions = null;
+const instrumentPlayback = app.createInstrumentPlayback({
+	playbackService: {
+		playMidiNote: function (midiNote, options) {
+			playedMidiNote = midiNote;
+			playedMidiOptions = options;
+		}
+	}
+});
+
+assert.equal(instrumentPlayback.playMidiNote('60'), 60);
+assert.equal(playedMidiNote, 60);
+assert.deepEqual(playedMidiOptions, {
+	duration: 0.55
 });
 
 const modalReport = app.buildScaleReport({

@@ -220,24 +220,42 @@ const cMajorGuitar = domain.buildGuitarFretboard({
 
 assert.equal(cMajorGuitar.length, 6);
 assert.equal(cMajorGuitar[0].aire, 'E');
+assert.equal(cMajorGuitar[0].midiNote, 64);
+assert.equal(cMajorGuitar[5].aire, 'E');
+assert.equal(cMajorGuitar[5].midiNote, 40);
 assert.equal(cMajorGuitar[0].trastes.length, 12);
 assert.deepEqual(cMajorGuitar[0].trastes.slice(0, 3).map(function (fret) { return fret.nombre; }), ['F', 'F#', 'G']);
+assert.deepEqual(cMajorGuitar[5].trastes.slice(0, 3).map(function (fret) { return fret.midiNote; }), [41, 42, 43]);
 assert.equal(cMajorGuitar[0].trastes[0].perteneceEscala, true);
 assert.equal(cMajorGuitar[0].trastes[1].perteneceEscala, false);
+
+const ebTuningGuitar = domain.buildGuitarFretboard({
+	fretCount: data.constants.fretCount,
+	isDegreeSuppressed: function () { return false; },
+	notes: data.notes,
+	preferFlats: true,
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	scaleNotes: cMajor,
+	tuning: data.tunings[1]
+});
+
+assert.deepEqual(ebTuningGuitar.map(function (string) { return string.midiNote; }), [63, 58, 54, 49, 44, 39]);
 
 const cMajorPiano = domain.buildPianoKeyboard({
 	isDegreeSuppressed: function () { return false; },
 	notes: data.notes,
-	octaveCount: 1,
+	octaveCount: 2,
 	preferFlats: true,
 	scaleDefinition: byName(data.scales, 'Mayor'),
 	scaleNotes: cMajor
 });
 
-assert.equal(cMajorPiano.blackKeys.length, 12);
-assert.equal(cMajorPiano.whiteKeys.length, 7);
+assert.equal(cMajorPiano.blackKeys.length, 24);
+assert.equal(cMajorPiano.whiteKeys.length, 14);
 assert.equal(cMajorPiano.blackKeys[1].nombre, 'Db');
 assert.equal(cMajorPiano.whiteKeys[0].nombre, 'C');
+assert.equal(cMajorPiano.whiteKeys[0].midiNote, 48);
+assert.equal(cMajorPiano.whiteKeys[7].midiNote, 60);
 assert.equal(cMajorPiano.whiteKeys[0].perteneceEscala, true);
 
 const cMajorChords = buildScaleChords(cMajor, 'Mayor');

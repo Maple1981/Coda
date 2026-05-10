@@ -180,6 +180,20 @@
 		}
 
 		options.$('#instrumento').empty().append(html);
+		attachInstrumentEvents(options);
+	}
+
+	function attachInstrumentEvents(options) {
+		var $ = options.$;
+
+		if (typeof options.onInstrumentNoteClick !== 'function') {
+			return;
+		}
+
+		$('#instrumento td.celdaNota span[data-midi-note]').off('click.codaInstrumentPlayback');
+		$('#instrumento td.celdaNota span[data-midi-note]').on('click.codaInstrumentPlayback', function () {
+			options.onInstrumentNoteClick(this);
+		});
 	}
 
 	function syncInstrumentScale($) {
@@ -255,6 +269,7 @@
 
 	global.CodaUi = {
 		attachChordEvents: attachChordEvents,
+		attachInstrumentEvents: attachInstrumentEvents,
 		hasRenderedResults: hasRenderedResults,
 		initializeMultiAccordion: initializeMultiAccordion,
 		noteName: noteName,

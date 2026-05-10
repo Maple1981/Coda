@@ -174,6 +174,7 @@
 				instrumentView: instrumentView,
 				notation: notation,
 				notationStyle: currentNotation,
+				onInstrumentNoteClick: playInstrumentNote(options.instrumentPlayback),
 				renderers: options.renderers,
 				report: report
 			});
@@ -338,6 +339,18 @@
 		};
 	}
 
+	function playInstrumentNote(instrumentPlayback) {
+		return function (element) {
+			if (!instrumentPlayback) {
+				return;
+			}
+
+			instrumentPlayback.playMidiNote(element.getAttribute('data-midi-note'), {
+				duration: 0.55
+			});
+		};
+	}
+
 	function savePreference(preferences, key, value) {
 		if (preferences) {
 			preferences.setValue(key, value);
@@ -353,6 +366,7 @@
 		initializeChangelogDialog: initializeChangelogDialog,
 		initialize: initialize,
 		navigateToLinkedKey: navigateToLinkedKey,
-		playChord: playChord
+		playChord: playChord,
+		playInstrumentNote: playInstrumentNote
 	};
 })(window);

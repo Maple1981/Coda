@@ -630,10 +630,11 @@ section#instrumento{
 
 	table td.celdaNota span{
 		border-radius:11px;
-		width:22px; 
+		width:22px;
 		height:22px;
-		display:block; 
+		display:block;
 		margin:0 auto;
+		cursor:pointer;
 	}
 
 	table td.noPerteneceEscala span{

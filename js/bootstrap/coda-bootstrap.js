@@ -18,6 +18,9 @@
 		var chordPlayback = options.application.createChordPlayback({
 			playbackService: playbackService
 		});
+		var instrumentPlayback = options.application.createInstrumentPlayback({
+			playbackService: playbackService
+		});
 
 		var controller = options.controller.initialize({
 			$: options.$,
@@ -27,6 +30,7 @@
 			domain: options.domain,
 			i18n: options.i18n,
 			initialNotation: options.initialNotation,
+			instrumentPlayback: instrumentPlayback,
 			notation: options.notation,
 			preferences: options.preferences,
 			renderers: options.renderers,
@@ -38,6 +42,7 @@
 		return {
 			chordPlayback: chordPlayback,
 			controller: controller,
+			instrumentPlayback: instrumentPlayback,
 			playbackService: playbackService
 		};
 	}

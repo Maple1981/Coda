@@ -96,6 +96,7 @@
 					isDegreeSuppressed: options.report.isDegreeSuppressed,
 					notes: options.data.notes,
 					octaveCount: options.octaveCount || 2,
+					pianoStartMidiNote: options.pianoStartMidiNote || 48,
 					preferFlats: options.preferFlats,
 					scaleDefinition: options.report.scaleDefinition,
 					scaleNotes: options.report.scaleNotes

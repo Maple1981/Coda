@@ -71,6 +71,26 @@
 			midi.chordOff(channel, chord, startDelay + duration);
 		}
 
+		function playMidiNote(midiNote, playbackOptions) {
+			playbackOptions = playbackOptions || {};
+
+			if (!ready || !midi || typeof midi.noteOn !== 'function' || typeof midi.noteOff !== 'function') {
+				return;
+			}
+
+			var noteNumber = Number(midiNote);
+
+			if (isNaN(noteNumber)) {
+				return;
+			}
+
+			var startDelay = defaultValue(playbackOptions.delay, delay);
+			var duration = defaultValue(playbackOptions.duration, 0.55);
+
+			midi.noteOn(channel, noteNumber, velocity, startDelay);
+			midi.noteOff(channel, noteNumber, startDelay + duration);
+		}
+
 		return {
 			load: load,
 			isReady: function () {
@@ -78,7 +98,8 @@
 			},
 			noteNameToMidi: noteNameToMidi,
 			chordNamesToMidi: chordNamesToMidi,
-			playChordFromNames: playChordFromNames
+			playChordFromNames: playChordFromNames,
+			playMidiNote: playMidiNote
 		};
 	}
 

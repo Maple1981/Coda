@@ -27,14 +27,14 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/services/notation-service.js`: formato visible de notas en notación anglosajona o latina sin alterar identificadores internos.
 - `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma y notación.
 - `js/application/scale-report-application.js`: construye informes de escala e instrumentos.
-- `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI a notas y delega en playback.
+- `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI y alturas MIDI de instrumentos a eventos de playback.
 - `js/application/progression-application.js`: casos de uso iniciales para progresiones armónicas.
 - `js/domain/music-utils.js`: patrones, nombres de nota, índices circulares e intervalos compartidos.
 - `js/domain/scale-domain.js`: construcción de escalas y notas características modales.
 - `js/domain/chord-domain.js`: acordes diatónicos, acordes desde fundamental y etiquetas modales.
 - `js/domain/extended-harmony-domain.js`: dominantes secundarios, subdominantes secundarios, sustitutos tritonales e ii relativos.
 - `js/domain/circle-of-fifths-domain.js`: normalización de tonalidad y ordenación del círculo de quintas.
-- `js/domain/instrument-domain.js`: modelos puros de diapasón de guitarra y teclado de piano.
+- `js/domain/instrument-domain.js`: modelos puros de diapasón de guitarra y teclado de piano, incluyendo la altura MIDI de cada nota visible.
 - `js/domain/progression-domain.js`: resolución pura de grados de progresión contra acordes de escala.
 - `js/domain/music-domain.js`: fachada de compatibilidad `CodaDomain`.
 - `js/renderers/scale-summary-renderer.js`: título/lista de escala y relaciones relativa/paralela.
@@ -54,6 +54,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - Los textos visibles nuevos deben pasar por `js/i18n/` cuando formen parte de la interfaz.
 - Los catálogos de datos que se muestran al usuario deben mantener traducción en todos los idiomas disponibles. El dato canónico puede seguir en español si el dominio lo necesita, pero la etiqueta visible debe resolverse desde `js/i18n/`. Los nombres de las notas deben formatearse mediante `js/services/notation-service.js`.
 - La notación de notas es una preferencia de presentación. Los cálculos, ids de acordes, navegación tonal y playback deben conservar identificadores internos anglosajones.
+- La vista de instrumento usa alturas MIDI explícitas en notación científica estándar: C4 es el C central y equivale a la nota MIDI 60. El teclado actual comienza en C3, y la guitarra estándar parte de 6ª E2, 5ª A2, 4ª D3, 3ª G3, 2ª B3 y 1ª E4.
 - Las preferencias ligeras pueden guardarse en la cookie `coda_preferences`; cualquier valor nuevo debe añadirse de forma compatible con los existentes.
 - El orden de carga de módulos debe mantenerse en `js/bootstrap/script-manifest.js` y verificarse con `tests/architecture-tests.js`.
 - Si una mejora requiere servidor, cuentas de usuario, sincronización externa o almacenamiento persistente, debe tratarse como cambio de alcance.

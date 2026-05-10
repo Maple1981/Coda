@@ -16,6 +16,18 @@
 		};
 	}
 
+	function createInstrumentPlayback(options) {
+		return {
+			playMidiNote: function (midiNote, playbackOptions) {
+				return playMidiNote({
+					duration: playbackOptions && playbackOptions.duration,
+					midiNote: midiNote,
+					playbackService: options.playbackService
+				});
+			}
+		};
+	}
+
 	function playChordFromCellId(options) {
 		var noteNames = options.cellId.split('-').filter(function (noteName) {
 			return noteName !== '';
@@ -29,7 +41,23 @@
 		return noteNames;
 	}
 
+	function playMidiNote(options) {
+		var noteNumber = Number(options.midiNote);
+
+		if (isNaN(noteNumber)) {
+			return null;
+		}
+
+		options.playbackService.playMidiNote(noteNumber, {
+			duration: options.duration != null ? options.duration : 0.55
+		});
+
+		return noteNumber;
+	}
+
 	global.CodaApplication = global.CodaApplication || {};
 	global.CodaApplication.createChordPlayback = createChordPlayback;
+	global.CodaApplication.createInstrumentPlayback = createInstrumentPlayback;
 	global.CodaApplication.playChordFromCellId = playChordFromCellId;
+	global.CodaApplication.playMidiNote = playMidiNote;
 })(window);
