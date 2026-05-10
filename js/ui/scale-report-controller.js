@@ -7,14 +7,16 @@
 		var i18n = options.i18n;
 		var notation = options.notation;
 		var preferences = options.preferences;
-		var currentNotation = notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon';
-		var report = null;
-		var selectedTuningIndex = 0;
+		var uiState = options.uiState || global.CodaUiState.create({
+			initialNotation: notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon',
+			language: i18n && i18n.getLanguage ? i18n.getLanguage() : 'es'
+		});
+		uiState.setNotationStyle(notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon');
 
 		$('#interface input:radio[name="formato"][value="0"]').prop('checked', true);
 		$('#interface input:radio[name="instrumento"][value="1"]').prop('checked', true);
-		$('#selectorNotacion').val(currentNotation);
-		fillSelectHashTable($, $('#tonica'), options.data.notes, false, null, 'notes', notation, currentNotation);
+		$('#selectorNotacion').val(uiState.getNotationStyle());
+		fillSelectHashTable($, $('#tonica'), options.data.notes, false, null, 'notes', notation, uiState.getNotationStyle());
 		fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
 		applyRecommendedNotation($, options);
 		if (i18n) {
@@ -62,6 +64,7 @@
 		$('#selectorIdioma').change(function () {
 			if (i18n) {
 				i18n.setLanguage($(this).val());
+				uiState.setLanguage(i18n.getLanguage());
 				savePreference(preferences, 'language', i18n.getLanguage());
 				fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
 				i18n.applyStatic($);
@@ -76,8 +79,8 @@
 		});
 
 		$('#selectorNotacion').change(function () {
-			currentNotation = notation ? notation.normalizeStyle($(this).val()) : 'anglosaxon';
-			savePreference(preferences, 'notation', currentNotation);
+			uiState.setNotationStyle(notation ? notation.normalizeStyle($(this).val()) : 'anglosaxon');
+			savePreference(preferences, 'notation', uiState.getNotationStyle());
 			fillSelectHashTable(
 				$,
 				$('#tonica'),
@@ -86,7 +89,7 @@
 				null,
 				'notes',
 				notation,
-				currentNotation
+				uiState.getNotationStyle()
 			);
 
 			if (options.ui.hasRenderedResults($)) {
@@ -98,23 +101,25 @@
 		});
 
 		$(document).on('click', '.revamp', function (event) {
-			navigateToLinkedKey($, options.data.notes, event.target.id, notation, currentNotation);
+			navigateToLinkedKey($, options.data.notes, event.target.id, notation, uiState.getNotationStyle());
 			applyRecommendedNotation($, options);
 			renderReport();
 		});
 
 		$(document).on('change', '#selectorAfinaciones', function () {
-			selectedTuningIndex = Number($(this).val());
-			if (selectedTuningIndex >= 0) {
+			uiState.setSelectedTuningIndex(Number($(this).val()));
+			if (uiState.getSelectedTuningIndex() >= 0) {
 				renderInstrument(false);
 			}
 		});
 
 		function renderReport() {
 			var selection = options.ui.readSelection($, options.data);
+			var report;
+			uiState.setSelection(selection);
 
 			if (selection.scaleName === '------------') {
-				report = null;
+				uiState.clearReport();
 				return;
 			}
 
@@ -127,6 +132,7 @@
 				tonicIndex: selection.tonicIndex,
 				tonicName: selection.tonicName
 			});
+			uiState.setReport(report);
 
 			options.ui.renderScaleReport({
 				$: $,
@@ -137,7 +143,7 @@
 				onChordMouseOver: highlightChord($),
 				i18n: i18n,
 				notation: notation,
-				notationStyle: currentNotation,
+				notationStyle: uiState.getNotationStyle(),
 				renderers: options.renderers,
 				report: report,
 				selection: selection
@@ -148,13 +154,15 @@
 
 		function renderInstrument(resetTuning) {
 			var selection = options.ui.readSelection($, options.data);
+			var report = uiState.getReport();
+			uiState.setSelection(selection);
 
 			if (!report) {
 				return;
 			}
 
 			if (resetTuning && selection.instrument === '0') {
-				selectedTuningIndex = 0;
+				uiState.resetSelectedTuningIndex();
 			}
 
 			var instrumentView = options.application.buildInstrumentView({
@@ -164,7 +172,7 @@
 				octaveCount: 2,
 				preferFlats: selection.preferFlats,
 				report: report,
-				tuningIndex: selectedTuningIndex
+				tuningIndex: uiState.getSelectedTuningIndex()
 			});
 
 			options.ui.renderInstrument({
@@ -173,7 +181,7 @@
 				i18n: i18n,
 				instrumentView: instrumentView,
 				notation: notation,
-				notationStyle: currentNotation,
+				notationStyle: uiState.getNotationStyle(),
 				onInstrumentNoteClick: playInstrumentNote(options.instrumentPlayback),
 				renderers: options.renderers,
 				report: report
@@ -184,7 +192,8 @@
 
 		return {
 			renderInstrument: renderInstrument,
-			renderReport: renderReport
+			renderReport: renderReport,
+			uiState: uiState
 		};
 	}
 
@@ -304,7 +313,15 @@
 		}
 
 		$('#interface input:radio[name="formato"][value="' + (preferFlats ? '1' : '0') + '"]').prop('checked', true);
-		fillSelectHashTable($, $('#tonica'), options.data.notes, preferFlats, null, 'notes', options.notation, options.notation ? options.notation.normalizeStyle(options.initialNotation || $('#selectorNotacion').val()) : 'anglosaxon');
+		fillSelectHashTable($, $('#tonica'), options.data.notes, preferFlats, null, 'notes', options.notation, resolveNotationStyle(options));
+	}
+
+	function resolveNotationStyle(options) {
+		if (options.uiState) {
+			return options.uiState.getNotationStyle();
+		}
+
+		return options.notation ? options.notation.normalizeStyle(options.initialNotation || $('#selectorNotacion').val()) : 'anglosaxon';
 	}
 
 	function highlightChord($) {

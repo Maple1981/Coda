@@ -27,6 +27,7 @@ $(document).ready(function () {
 		playbackFactory: CodaPlayback,
 		preferences: preferences,
 		renderers: CodaRenderers,
-		ui: CodaUi
+		ui: CodaUi,
+		uiStateFactory: CodaUiState
 	});
 });

@@ -27,6 +27,8 @@ const global = context.window;
 
 assert.ok(global.CodaData);
 assert.ok(global.CodaDataCatalogs);
+assert.ok(global.CodaChangelogContent.es);
+assert.ok(global.CodaChangelogContent.en);
 assert.ok(global.CodaDataIndex.create);
 assert.ok(global.CodaTranslations);
 assert.ok(global.CodaI18n.create);
@@ -47,6 +49,8 @@ assert.ok(global.CodaRenderers.scaleChords);
 assert.ok(global.CodaRenderers.extendedHarmony);
 assert.ok(global.CodaRenderers.instruments);
 assert.ok(global.CodaRenderers.circleOfFifths);
+assert.ok(global.CodaRenderers.changelog);
+assert.ok(global.CodaUiState.create);
 assert.ok(global.CodaUi.renderScaleReport);
 assert.ok(global.CodaUi.attachInstrumentEvents);
 assert.ok(global.CodaUi.scheduleDashboardWorkspaceHeight);
@@ -57,6 +61,9 @@ assert.ok(global.CodaPlayback.create);
 assert.ok(global.CodaBootstrap.start);
 assert.ok(manifestScripts.indexOf('js/data/constants-data.js') > -1);
 assert.ok(manifestScripts.indexOf('js/data/scales-data.js') > -1);
+assert.ok(manifestScripts.indexOf('js/content/changelog-content.js') > -1);
+assert.ok(manifestScripts.indexOf('js/renderers/changelog-renderer.js') > -1);
+assert.ok(manifestScripts.indexOf('js/ui/ui-state.js') > -1);
 assert.ok(manifestScripts.indexOf('js/domain/progression-domain.js') > -1);
 assert.ok(manifestScripts.indexOf('js/application/progression-application.js') > -1);
 assert.ok(manifestScripts.indexOf('js/i18n/translations.js') > -1);
@@ -77,6 +84,10 @@ while ((match = scriptRegex.exec(indexHtml)) !== null) {
 const manifestIndex = htmlScripts.indexOf('js/bootstrap/script-manifest.js');
 assert.ok(manifestIndex > -1);
 assert.deepEqual(htmlScripts.slice(manifestIndex + 1, manifestIndex + 1 + manifestScripts.length), manifestScripts);
+assert.equal(indexHtml.indexOf('Novedades de la versión actual beta 0.5'), -1);
+assert.ok(indexHtml.indexOf('<section id="controlVersiones" aria-live="polite"></section>') > -1);
+assert.equal(global.CodaTranslations.es['changelog.html'], undefined);
+assert.equal(global.CodaTranslations.en['changelog.html'], undefined);
 
 let controllerOptions;
 const i18n = global.CodaI18n.create({
@@ -118,7 +129,8 @@ const startResult = global.CodaBootstrap.start({
 	},
 	preferences: preferences,
 	renderers: global.CodaRenderers,
-	ui: global.CodaUi
+	ui: global.CodaUi,
+	uiStateFactory: global.CodaUiState
 });
 
 assert.equal(startResult.controller.initialized, true);
@@ -140,6 +152,15 @@ assert.equal(controllerOptions.notation, global.CodaNotation);
 assert.equal(controllerOptions.preferences, preferences);
 assert.equal(controllerOptions.renderers, global.CodaRenderers);
 assert.equal(controllerOptions.ui, global.CodaUi);
+assert.equal(controllerOptions.uiState, startResult.uiState);
+assert.equal(startResult.uiState.getLanguage(), 'es');
+assert.equal(startResult.uiState.getNotationStyle(), 'latin');
+startResult.uiState.setSelection({ instrument: '0', tonicName: 'C' });
+startResult.uiState.setSelectedTuningIndex(2);
+assert.equal(startResult.uiState.getInstrument(), '0');
+assert.equal(startResult.uiState.getSelectedTuningIndex(), 2);
+startResult.uiState.resetSelectedTuningIndex();
+assert.equal(startResult.uiState.getSelectedTuningIndex(), 0);
 
 let midiLoadOptions = null;
 let playedChord = null;

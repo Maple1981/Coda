@@ -25,6 +25,7 @@ function runScript(relativePath) {
 	'js/data/guitar-tunings-data.js',
 	'js/data/circle-of-fifths-data.js',
 	'js/data/extended-harmony-data.js',
+	'js/content/changelog-content.js',
 	'js/data.js',
 	'js/services/data-index-service.js',
 	'js/i18n/translations.js',
@@ -42,12 +43,14 @@ function runScript(relativePath) {
 	'js/renderers/scale-chords-renderer.js',
 	'js/renderers/extended-harmony-renderer.js',
 	'js/renderers/instrument-renderer.js',
-	'js/renderers/circle-of-fifths-renderer.js'
+	'js/renderers/circle-of-fifths-renderer.js',
+	'js/renderers/changelog-renderer.js'
 ].forEach(runScript);
 
 const data = context.window.CodaData;
 const domain = context.window.CodaDomain;
 const circleOfFifthsRenderer = context.window.CodaRenderers.circleOfFifths;
+const changelogRenderer = context.window.CodaRenderers.changelog;
 const extendedHarmonyRenderer = context.window.CodaRenderers.extendedHarmony;
 const instrumentsRenderer = context.window.CodaRenderers.instruments;
 const scaleChordsRenderer = context.window.CodaRenderers.scaleChords;
@@ -331,5 +334,15 @@ assert.ok(html.indexOf('Dominantes secundarios (D)') > -1);
 assert.ok(html.indexOf('D7 (V-V)') > -1);
 assert.ok(html.indexOf('D-F#-A-C') > -1);
 assert.ok(html.indexOf('class="celdaAcorde" id="D-F#-A-C"') > -1);
+
+const changelogHtml = changelogRenderer.render(context.window.CodaChangelogContent.es);
+assert.ok(changelogHtml.indexOf('<h3>Novedades de la versión actual beta 0.5</h3>') > -1);
+assert.ok(changelogHtml.indexOf('<dt>Interfaz más directa</dt>') > -1);
+assert.ok(changelogHtml.indexOf('<dd>El piano pasa a ser el instrumento seleccionado por defecto') > -1);
+assert.ok(changelogHtml.indexOf('<script>') === -1);
+
+const englishChangelogHtml = changelogRenderer.render(context.window.CodaChangelogContent.en);
+assert.ok(englishChangelogHtml.indexOf('<h3>Current beta 0.5 release notes</h3>') > -1);
+assert.ok(englishChangelogHtml.indexOf('<dt>More direct interface</dt>') > -1);
 
 console.log('Renderer tests passed');

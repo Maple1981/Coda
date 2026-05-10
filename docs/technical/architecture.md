@@ -9,12 +9,14 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 ## Capas actuales
 
 - `js/data/*.js`: catálogos musicales separados por área: constantes, notas, intervalos, escalas, acordes, afinaciones, círculo de quintas y armonía extendida.
+- `js/content/*.js`: contenido largo de interfaz que no pertenece al dominio musical, como novedades y mejoras.
 - `js/data.js`: fachada estable que ensambla esos catálogos y expone `CodaData`. El código nuevo debe consumir `CodaData`, no leer directamente variables internas de los catálogos.
 - `js/services/data-index-service.js`: índices derivados de los catálogos de `CodaData` para búsquedas rápidas por nombre, patrón o semitonos sin modificar el contrato público de arrays.
 - `js/domain/`: reglas musicales puras sin DOM, jQuery, MIDI ni renderizado.
 - `js/application/`: casos de uso. Orquesta dominio y servicios sin generar HTML ni leer directamente del DOM.
 - `js/renderers/`: renderizado HTML. Recibe datos explícitos y no calcula reglas musicales.
 - `js/ui/`: coordinación de interfaz legacy con jQuery. Lee selección del DOM, monta vistas y conecta eventos de pantalla.
+- `js/ui/ui-state.js`: estado explícito de pantalla. Conserva selección actual, informe renderizado, instrumento, afinación, idioma y notación sin dispersarlos en closures del controlador.
 - `js/i18n/`: traducciones de interfaz y servicio ligero de internacionalización.
 - `js/services/`: infraestructura de navegador, como playback y futura exportación MIDI.
 - `js/bootstrap/`: composition root y manifest de carga de scripts.
@@ -25,6 +27,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/bootstrap/script-manifest.js`: orden canónico de carga de módulos de la aplicación.
 - `js/bootstrap/coda-bootstrap.js`: cablea datos, dominio, aplicación, renderers, UI, controlador y playback.
 - `js/data/*.js`: catálogos fuente del dominio musical.
+- `js/content/changelog-content.js`: contenido estructurado de novedades por idioma.
 - `js/data.js`: ensamblado de `CodaData`.
 - `js/i18n/translations.js`: diccionarios de interfaz para español de España e inglés.
 - `js/i18n/i18n-service.js`: servicio de traducción y aplicación de textos estáticos.
@@ -47,6 +50,8 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/renderers/extended-harmony-renderer.js`: tablas de armonía extendida.
 - `js/renderers/instrument-renderer.js`: vistas de guitarra y piano.
 - `js/renderers/circle-of-fifths-renderer.js`: navegación del círculo de quintas.
+- `js/renderers/changelog-renderer.js`: renderizado del contenido de novedades.
+- `js/ui/ui-state.js`: factoría `CodaUiState.create(...)` para el estado mutable de pantalla.
 - `js/ui/scale-report-ui.js`: lectura/montaje de UI.
 - `js/ui/scale-report-controller.js`: inicialización de selects, eventos, navegación tonal y delegación en aplicación/UI.
 
@@ -56,8 +61,10 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - La orquestación de casos de uso debe vivir en `js/application/`.
 - El HTML debe concentrarse en `js/renderers/`.
 - La interacción con jQuery y el DOM debe quedarse en `js/ui/`.
+- El estado mutable de pantalla debe vivir en `CodaUiState`; el controlador puede orquestar eventos, pero no debe acumular nuevos valores de sesión como variables sueltas en closures.
 - Las búsquedas repetidas en catálogos deben usar `CodaData.indexes` o los índices no enumerables generados por `js/services/data-index-service.js`; conservar siempre fallback lineal si una función acepta colecciones externas.
 - Los textos visibles nuevos deben pasar por `js/i18n/` cuando formen parte de la interfaz.
+- El contenido largo de interfaz debe vivir en `js/content/` como datos estructurados y renderizarse desde `js/renderers/`, evitando duplicarlo como HTML estático en `index.html`.
 - Los catálogos de datos que se muestran al usuario deben mantener traducción en todos los idiomas disponibles. El dato canónico puede seguir en español si el dominio lo necesita, pero la etiqueta visible debe resolverse desde `js/i18n/`. Los nombres de las notas deben formatearse mediante `js/services/notation-service.js`.
 - La notación de notas es una preferencia de presentación. Los cálculos, ids de acordes, navegación tonal y playback deben conservar identificadores internos anglosajones.
 - La vista de instrumento usa alturas MIDI explícitas en notación científica estándar: C4 es el C central y equivale a la nota MIDI 60. El teclado actual comienza en C3, y la guitarra estándar parte de 6ª E2, 5ª A2, 4ª D3, 3ª G3, 2ª B3 y 1ª E4.

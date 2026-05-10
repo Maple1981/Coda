@@ -21,6 +21,11 @@
 		var instrumentPlayback = options.application.createInstrumentPlayback({
 			playbackService: playbackService
 		});
+		var uiStateFactory = options.uiStateFactory || global.CodaUiState;
+		var uiState = uiStateFactory.create({
+			initialNotation: options.initialNotation,
+			language: options.i18n && options.i18n.getLanguage ? options.i18n.getLanguage() : 'es'
+		});
 
 		var controller = options.controller.initialize({
 			$: options.$,
@@ -34,14 +39,16 @@
 			notation: options.notation,
 			preferences: options.preferences,
 			renderers: options.renderers,
-			ui: options.ui
+			ui: options.ui,
+			uiState: uiState
 		});
 
 		return {
 			chordPlayback: chordPlayback,
 			controller: controller,
 			instrumentPlayback: instrumentPlayback,
-			playbackService: playbackService
+			playbackService: playbackService,
+			uiState: uiState
 		};
 	}
 

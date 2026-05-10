@@ -58,6 +58,7 @@
     <script src="js/data/guitar-tunings-data.js"></script>
     <script src="js/data/circle-of-fifths-data.js"></script>
     <script src="js/data/extended-harmony-data.js"></script>
+    <script src="js/content/changelog-content.js"></script>
     <script src="js/data.js"></script>
     <script src="js/services/data-index-service.js"></script>
     <script src="js/i18n/translations.js"></script>
@@ -80,6 +81,8 @@
     <script src="js/renderers/extended-harmony-renderer.js"></script>
     <script src="js/renderers/instrument-renderer.js"></script>
     <script src="js/renderers/circle-of-fifths-renderer.js"></script>
+    <script src="js/renderers/changelog-renderer.js"></script>
+    <script src="js/ui/ui-state.js"></script>
     <script src="js/ui/scale-report-ui.js"></script>
     <script src="js/ui/scale-report-controller.js"></script>
     <script src="js/services/playback-service.js"></script>
@@ -375,140 +378,7 @@
           </div>
         </section>
 
-        <section id="controlVersiones">
-          <article>
-            <h3>Novedades de la versión actual beta 0.5</h3>
-            <dl>
-              <dt>Interfaz más directa</dt>
-              <dd>
-                El piano pasa a ser el instrumento seleccionado por defecto y
-                aparece antes que la guitarra en el formulario.
-              </dd>
-              <dt>Notación más musical</dt>
-              <dd>
-                El formato de bemoles o sostenidos se propone automáticamente
-                según la tónica, la escala elegida y la armadura
-                correspondiente.
-              </dd>
-              <dt>Círculo de quintas más claro</dt>
-              <dd>
-                El círculo permanece fijo en su disposición clásica y marca la
-                tonalidad seleccionada en violeta.
-              </dd>
-              <dd>
-                La pareja enarmónica central cambia entre Gb/Ebm y F#/D#m al
-                alternar bemoles o sostenidos.
-              </dd>
-              <dt>Preparación para progresiones</dt>
-              <dd>
-                La aplicación queda preparada para incorporar progresiones
-                armónicas, preescucha secuenciada y futuras mejoras de
-                exportación MIDI.
-              </dd>
-            </dl>
-          </article>
-          <article>
-            <h3>Novedades de la versión beta 0.4</h3>
-            <dl>
-              <dt>Acordes de la tonalidad paralela</dt>
-              <dd>
-                Para las escalas heptatónicas tonales, la tabla de acordes
-                muestra los acordes de la tonalidad paralela.
-              </dd>
-            </dl>
-          </article>
-          <article>
-            <h3>Novedades de la versión beta 0.3</h3>
-            <dl>
-              <dt>Web Audio</dt>
-              <dd>
-                Al hacer click sobre cualquier acorde de una tabla, se reproduce
-                su sonido.
-              </dd>
-              <dt>Círculo de quintas</dt>
-              <dd>
-                Ahora, a elegir una escala "tonificable", bajo la vista de
-                instrumento, aparece un círculo de quintas dinámico por el que
-                poder navegar.
-              </dd>
-              <dt>Vista de instrumentos</dt>
-              <dd>
-                Añadidas distintas afinaciones seleccionables en la vista del
-                diapasón de guitarra.
-              </dd>
-              <dd>
-                Al pasar sobre un acorde en el Gestor de acordes, las notas que
-                lo forman se iluminan en otro color en el instrumento.
-              </dd>
-              <dt>Armonía extendida</dt>
-              <dd>
-                Tablas de armonía ampliada: dominantes secundarias,
-                subdominantes secundarias, sustitutos, relativo menor, ...
-              </dd>
-            </dl>
-          </article>
-          <article>
-            <h3>Novedades de la versión beta 0.2</h3>
-            <dl>
-              <dt>Vista de escalas y de instrumentos</dt>
-              <dd>
-                Música modal: notas principales y secundarias de las escalas de
-                cada modo
-              </dd>
-              <dt>Gestor de acordes</dt>
-              <dd>
-                Armonía modal: acordes fundamentales, cadenciales, no de tónica
-                y a evitar.
-              </dd>
-            </dl>
-          </article>
-          <article>
-            <h3>Novedades de la versión beta 0.1</h3>
-            <dl>
-              <dt>Vista de escalas</dt>
-              <dd>Información sobre las escalas relativas y paralelas.</dd>
-              <dt>Gestor de acordes</dt>
-              <dd>
-                Ahora, los acordes generados son de cuatriada en lugar de triada
-                siempre que sea posible.
-              </dd>
-              <dd>
-                Información sobre las funciones armónicas de cada grado en la
-                tonalidad de la escala elegida.
-              </dd>
-              <dt>Vista de instrumentos</dt>
-              <dd>Vista de piano.</dd>
-              <dt>Otros</dt>
-              <dd>
-                Cambios menores en la interfaz (ahora es asíncrona) y en el
-                diseño.
-              </dd>
-              <dd>Presentación y guía rápida de uso.</dd>
-              <dd>Mejoras en la estructura del código y los comentarios.</dd>
-            </dl>
-          </article>
-          <article>
-            <h3>Mejoras para la siguiente versión</h3>
-            <dl>
-              <dt>Gestor de acordes</dt>
-              <dd>
-                Al hacer click sobre un acorde, aparece la siguiente información
-                adicional:
-                <br />
-                construcción de tensiones de novena, onceava y treceava en la
-                escala elegida. Inversiones posibles.
-              </dd>
-              <dt>Vista de instrumentos</dt>
-              <dd>Ampliación del diapasón hasta los 22-24 trastes</dd>
-              <dd>Vista de bajo.</dd>
-              <dt>Gestor de progresiones</dt>
-              <dd>
-                Cadencias y progresiones típicas de la tonalidad, opciones de
-                modulación a otras tonalidades.
-              </dd>
-            </dl>
-          </article>
-        </section>
+        <section id="controlVersiones" aria-live="polite"></section>
       </main>
 
       <footer>

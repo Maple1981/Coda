@@ -119,7 +119,12 @@
 		}
 
 		function applyChangelog($) {
-			$('#controlVersiones').html(t('changelog.html'));
+			var content = global.CodaChangelogContent || {};
+			var articles = content[currentLanguage] || content.es || [];
+
+			if (global.CodaRenderers && global.CodaRenderers.changelog) {
+				$('#controlVersiones').html(global.CodaRenderers.changelog.render(articles));
+			}
 
 			if (typeof $('#controlVersiones').dialog === 'function' && $('#controlVersiones').hasClass('ui-dialog-content')) {
 				$('#controlVersiones').dialog('option', 'title', t('changelog.dialogTitle'));
