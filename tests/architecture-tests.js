@@ -58,6 +58,7 @@ assert.ok(global.CodaRenderers.progressionWorkbench);
 assert.ok(global.CodaUiState.create);
 assert.ok(global.CodaStaticText.apply);
 assert.ok(global.CodaVolumeControl.initialize);
+assert.ok(global.CodaThemeControl.initialize);
 assert.ok(global.CodaKeyNavigation.applyRecommendedNotation);
 assert.ok(global.CodaChangelogDialog.initialize);
 assert.ok(global.CodaUi.renderScaleReport);
@@ -79,6 +80,7 @@ assert.ok(manifestScripts.indexOf('js/renderers/progression-workbench-renderer.j
 assert.ok(manifestScripts.indexOf('js/ui/ui-state.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/static-text-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/volume-controller.js') > -1);
+assert.ok(manifestScripts.indexOf('js/ui/theme-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/key-navigation-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/changelog-dialog-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/domain/progression-domain.js') > -1);
@@ -107,6 +109,7 @@ assert.ok(indexHtml.indexOf('<section id="controlVersiones" aria-live="polite"><
 assert.ok(indexHtml.indexOf('<section id="constructorProgresiones" class="progression-workbench"></section>') > -1);
 assert.ok(indexHtml.indexOf('<section id="bienvenida"></section>') > -1);
 assert.ok(indexHtml.indexOf('<select id="instrumentoSonoro"></select>') > -1);
+assert.ok(indexHtml.indexOf('id="themeToggleButton"') > -1);
 assert.equal(indexHtml.indexOf('name="instrumento"'), -1);
 assert.equal(indexHtml.indexOf('<strong>estudiantes</strong>'), -1);
 assert.equal(indexHtml.indexOf('Imaj7'), -1);
@@ -149,6 +152,7 @@ const startResult = global.CodaBootstrap.start({
 		tonicIndex: '5'
 	},
 	initialNotation: 'latin',
+	initialTheme: 'day',
 	initialVolume: 73,
 	midi: { plugin: {} },
 	notation: global.CodaNotation,
@@ -168,6 +172,7 @@ const startResult = global.CodaBootstrap.start({
 	changelogDialog: { initialize: function () {} },
 	musicalContextFactory: global.CodaMusicalContext,
 	staticText: global.CodaStaticText,
+	themeControl: global.CodaThemeControl,
 	ui: global.CodaUi,
 	uiStateFactory: global.CodaUiState
 });
@@ -195,6 +200,7 @@ assert.deepEqual(controllerOptions.initialForm, {
 	tonicIndex: '5'
 });
 assert.equal(controllerOptions.initialNotation, 'latin');
+assert.equal(controllerOptions.initialTheme, 'day');
 assert.equal(controllerOptions.initialVolume, 73);
 assert.equal(controllerOptions.instrumentPlayback, startResult.instrumentPlayback);
 assert.equal(controllerOptions.keyNavigation, global.CodaKeyNavigation);
@@ -204,6 +210,7 @@ assert.equal(controllerOptions.playbackService, startResult.playbackService);
 assert.equal(controllerOptions.preferences, preferences);
 assert.equal(controllerOptions.renderers, global.CodaRenderers);
 assert.equal(controllerOptions.staticText, global.CodaStaticText);
+assert.equal(controllerOptions.themeControl, global.CodaThemeControl);
 assert.equal(controllerOptions.ui, global.CodaUi);
 assert.equal(controllerOptions.uiState, startResult.uiState);
 assert.equal(controllerOptions.volumeControl, global.CodaVolumeControl);
@@ -278,6 +285,9 @@ assert.equal(selectedProgram, 24);
 assert.deepEqual(playedChord, [60, 64, 67]);
 assert.equal(global.CodaScaleReportController.resolvePlaybackInstrument(global.CodaData, 'string_ensemble_1').viewInstrument, '1');
 assert.equal(global.CodaScaleReportController.resolvePlaybackInstrument(global.CodaData, '0').id, 'acoustic_guitar_nylon');
+assert.equal(global.CodaThemeControl.normalizeTheme('day'), 'day');
+assert.equal(global.CodaThemeControl.normalizeTheme('night'), 'night');
+assert.equal(global.CodaThemeControl.normalizeTheme('missing'), 'night');
 assert.deepEqual(global.CodaScaleReportController.resolveInitialForm(global.CodaData, {
 	format: '1',
 	midiInstrument: 'drawbar_organ',

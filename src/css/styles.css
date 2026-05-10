@@ -260,7 +260,7 @@ header {
   text-align: right;
 }
 
-.settingsButton {
+.iconHeaderButton {
   display: -webkit-inline-box;
   display: -ms-inline-flexbox;
   display: inline-flex;
@@ -280,17 +280,172 @@ header {
   cursor: pointer;
 }
 
-.settingsButton:hover {
+.iconHeaderButton:hover {
   border-color: #a622ae;
   color: #a3ffd9;
 }
 
-.settingsButton .material-icons {
+.iconHeaderButton .material-icons {
   font-size: 18px;
   width: 1em;
   height: 1em;
   line-height: 1;
   overflow: hidden;
+}
+
+body[data-theme="day"] {
+  background-color: #d8dde1;
+  color: #1f2528;
+}
+
+body[data-theme="day"] h2,
+body[data-theme="day"] h3,
+body[data-theme="day"] h4,
+body[data-theme="day"] h5,
+body[data-theme="day"] h6,
+body[data-theme="day"] .cadencial {
+  color: #00764f;
+}
+
+body[data-theme="day"] h3 {
+  border-bottom-color: #00764f;
+}
+
+body[data-theme="day"] a {
+  color: #006e9c;
+}
+
+body[data-theme="day"] dl dt {
+  color: #006e58;
+}
+
+body[data-theme="day"] .estiloEnlace {
+  color: #00764f;
+}
+
+body[data-theme="day"] div#container {
+  background-color: #edf1f4;
+  -webkit-box-shadow: 0px 0px 32px 0px rgba(25, 36, 42, 0.28);
+          box-shadow: 0px 0px 32px 0px rgba(25, 36, 42, 0.28);
+  border-top-color: #00b875;
+}
+
+body[data-theme="day"] .appHeader {
+  -webkit-box-shadow: inset 0 -1px 0 #bcc6cc;
+          box-shadow: inset 0 -1px 0 #bcc6cc;
+}
+
+body[data-theme="day"] .appHeader__actions select,
+body[data-theme="day"] #interface select,
+body[data-theme="day"] .progressionControls input[type="number"],
+body[data-theme="day"] .progressionControls select {
+  background: #ffffff;
+  color: #1f2528;
+  border-color: #b7c3ca;
+}
+
+body[data-theme="day"] .iconHeaderButton {
+  background: #ffffff;
+  color: #1f2528;
+  border-color: #b7c3ca;
+}
+
+body[data-theme="day"] fieldset,
+body[data-theme="day"] .progressionControls fieldset.workbenchPanel,
+body[data-theme="day"] .measure {
+  background: #ffffff;
+  background: -webkit-gradient(linear, left bottom, left top, from(#ffffff), to(#f3f6f8));
+  background: linear-gradient(0deg, #ffffff 0%, #f3f6f8 100%);
+  border-color: #b7c3ca;
+}
+
+body[data-theme="day"] .dashboard__sidebarPanel {
+  scrollbar-color: #a622ae #dfe5e9;
+}
+
+body[data-theme="day"] .dashboard__sidebarPanel::-webkit-scrollbar-track,
+body[data-theme="day"] .dialogoNovedades .ui-dialog-content::-webkit-scrollbar-track {
+  background: #dfe5e9;
+}
+
+body[data-theme="day"] .dashboard__sidebarPanel::-webkit-scrollbar-thumb,
+body[data-theme="day"] .dialogoNovedades .ui-dialog-content::-webkit-scrollbar-thumb {
+  border-color: #dfe5e9;
+}
+
+body[data-theme="day"] section#notacion table tr td,
+body[data-theme="day"] section#armoniaExtendida table tr td {
+  border-color: #b7c3ca;
+}
+
+body[data-theme="day"] section#notacion table tr td.cabecera,
+body[data-theme="day"] section#notacion table thead tr td,
+body[data-theme="day"] section#armoniaExtendida table tr td.cabecera,
+body[data-theme="day"] section#armoniaExtendida table thead tr td {
+  background: #dfe5e9;
+  background: -webkit-gradient(linear, left bottom, left top, from(#dfe5e9), to(#c9d3d9));
+  background: linear-gradient(0deg, #dfe5e9 0%, #c9d3d9 100%);
+  color: #1f2528;
+}
+
+body[data-theme="day"] section#notacion table tr td.par,
+body[data-theme="day"] section#armoniaExtendida table tr td.par {
+  background-color: #f6f8f9;
+}
+
+body[data-theme="day"] section#instrumento table td.noPerteneceEscala span {
+  color: #59656b;
+}
+
+body[data-theme="day"] section#instrumento table td.perteneceEscala span,
+body[data-theme="day"] div.circulo p span {
+  color: #1f2528;
+}
+
+body[data-theme="day"] div.circulo p.actual span {
+  color: #ffffff;
+}
+
+body[data-theme="day"] .progression-workbench {
+  border-bottom-color: #b7c3ca;
+}
+
+body[data-theme="day"] .workbenchKicker,
+body[data-theme="day"] section table tr td.celdaAcorde {
+  color: #a622ae;
+}
+
+body[data-theme="day"] .measure span {
+  color: #59656b;
+}
+
+body[data-theme="day"] .measure strong {
+  color: #006e58;
+}
+
+body[data-theme="day"] .dialogoNovedades,
+body[data-theme="day"] .dialogoNovedades .ui-dialog-content {
+  background: #ffffff !important;
+  color: #1f2528 !important;
+  border-color: #b7c3ca !important;
+}
+
+body[data-theme="day"] .dialogoNovedades .ui-dialog-titlebar,
+body[data-theme="day"] .dialogoNovedades .ui-dialog-titlebar-close {
+  background: #dfe5e9 !important;
+  border-color: #b7c3ca !important;
+  color: #1f2528 !important;
+}
+
+body[data-theme="day"] .dialogoNovedades .ui-dialog-title,
+body[data-theme="day"] .dialogoNovedades .ui-dialog-content p,
+body[data-theme="day"] .dialogoNovedades .ui-dialog-content dd,
+body[data-theme="day"] .dialogoNovedades .ui-dialog-content li {
+  color: #1f2528 !important;
+}
+
+body[data-theme="day"] footer {
+  border-top-color: #b7c3ca;
 }
 
 .dashboard__sidebar {

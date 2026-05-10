@@ -30,6 +30,7 @@ $(document).ready(function () {
 			tonicIndex: storedPreferences.tonicIndex
 		},
 		initialNotation: storedPreferences.notation,
+		initialTheme: storedPreferences.theme,
 		initialVolume: storedPreferences.volume,
 		musicalContextFactory: CodaMusicalContext,
 		midi: MIDI,
@@ -38,6 +39,7 @@ $(document).ready(function () {
 		preferences: preferences,
 		renderers: CodaRenderers,
 		staticText: CodaStaticText,
+		themeControl: CodaThemeControl,
 		ui: CodaUi,
 		uiStateFactory: CodaUiState,
 		volumeControl: CodaVolumeControl

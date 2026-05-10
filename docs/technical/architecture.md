@@ -35,7 +35,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/services/notation-service.js`: formato visible de notas en notación anglosajona o latina sin alterar identificadores internos.
 - `js/services/data-index-service.js`: creación de `CodaData.indexes` y de índices no enumerables en las colecciones principales.
 - `js/services/musical-context-service.js`: construcción del contexto musical actual a partir de la selección de pantalla.
-- `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma, notación, volumen maestro, tónica, escala, formato e instrumento sonoro.
+- `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma, notación, tema visual, volumen maestro, tónica, escala, formato e instrumento sonoro.
 - `js/application/scale-report-application.js`: construye informes de escala e instrumentos.
 - `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI y alturas MIDI de instrumentos a eventos de playback.
 - `js/application/progression-application.js`: casos de uso iniciales para progresiones armónicas.
@@ -58,6 +58,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/ui/ui-state.js`: factoría `CodaUiState.create(...)` para el estado mutable de pantalla.
 - `js/ui/static-text-controller.js`: aplicación de textos estáticos y contenido largo traducido sobre el DOM.
 - `js/ui/volume-controller.js`: fader de volumen maestro de la cabecera. Ajusta el porcentaje global de preescucha sin cambiar las reglas musicales ni la exportación MIDI.
+- `js/ui/theme-controller.js`: conmutador de tema visual día/noche. Aplica `data-theme` sobre `body` y guarda la preferencia en cookie.
 - `js/ui/key-navigation-controller.js`: navegación desde el círculo de quintas y recomendación de formato bemol/sostenido.
 - `js/ui/changelog-dialog-controller.js`: apertura, cierre y configuración del diálogo de novedades.
 - `js/ui/scale-report-ui.js`: lectura/montaje de UI.

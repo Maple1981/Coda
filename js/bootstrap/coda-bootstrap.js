@@ -40,6 +40,7 @@
 			i18n: options.i18n,
 			initialForm: options.initialForm,
 			initialNotation: options.initialNotation,
+			initialTheme: options.initialTheme,
 			initialVolume: options.initialVolume,
 			instrumentPlayback: instrumentPlayback,
 			keyNavigation: options.keyNavigation || global.CodaKeyNavigation,
@@ -52,6 +53,7 @@
 			playbackService: playbackService,
 			renderers: options.renderers,
 			staticText: options.staticText || global.CodaStaticText,
+			themeControl: options.themeControl || global.CodaThemeControl,
 			ui: options.ui,
 			uiState: uiState,
 			volumeControl: options.volumeControl || global.CodaVolumeControl

@@ -90,6 +90,7 @@
     <script src="js/ui/ui-state.js"></script>
     <script src="js/ui/static-text-controller.js"></script>
     <script src="js/ui/volume-controller.js"></script>
+    <script src="js/ui/theme-controller.js"></script>
     <script src="js/ui/key-navigation-controller.js"></script>
     <script src="js/ui/changelog-dialog-controller.js"></script>
     <script src="js/ui/scale-report-ui.js"></script>
@@ -143,7 +144,18 @@
             <output id="valorVolumen" for="selectorVolumen">100%</output>
           </label>
           <button
-            class="settingsButton"
+            id="themeToggleButton"
+            class="iconHeaderButton themeToggleButton"
+            type="button"
+            title="Cambiar a modo día"
+            aria-label="Cambiar a modo día"
+            aria-pressed="false"
+          >
+            <span class="material-icons" aria-hidden="true">light_mode</span>
+          </button>
+          <button
+            id="settingsButton"
+            class="iconHeaderButton settingsButton"
             type="button"
             title="Configuración"
             aria-label="Configuración"

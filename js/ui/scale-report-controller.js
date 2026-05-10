@@ -34,6 +34,14 @@
 		if (staticText) {
 			staticText.apply($, i18n);
 		}
+		if (options.themeControl) {
+			options.themeControl.initialize({
+				$: $,
+				i18n: i18n,
+				initialTheme: options.initialTheme,
+				preferences: preferences
+			});
+		}
 		if (options.volumeControl) {
 			options.volumeControl.initialize({
 				$: $,
@@ -97,6 +105,9 @@
 				fillInstrumentSelect($, $('#instrumentoSonoro'), options.data.midiInstruments, i18n);
 				if (staticText) {
 					staticText.apply($, i18n);
+				}
+				if (options.themeControl) {
+					options.themeControl.updateButton($, i18n, $('body').attr('data-theme'));
 				}
 			}
 

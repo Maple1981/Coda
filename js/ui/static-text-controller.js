@@ -19,8 +19,10 @@
 		setText($, i18n, 'option[data-i18n="notation.latin"]', 'notation.latin');
 		setAttribute($, i18n, '#selectorVolumen', 'aria-label', 'ui.volumeTitle');
 		setAttribute($, i18n, '#selectorVolumen', 'title', 'ui.volumeTitle');
-		setAttribute($, i18n, '.settingsButton', 'title', 'settings.label');
-		setAttribute($, i18n, '.settingsButton', 'aria-label', 'settings.label');
+		setAttribute($, i18n, '#themeToggleButton', 'title', 'theme.switchToDay');
+		setAttribute($, i18n, '#themeToggleButton', 'aria-label', 'theme.switchToDay');
+		setAttribute($, i18n, '#settingsButton', 'title', 'settings.label');
+		setAttribute($, i18n, '#settingsButton', 'aria-label', 'settings.label');
 
 		setText($, i18n, '#interface h3', 'form.title');
 		setText($, i18n, 'span[data-i18n="form.tonic"]', 'form.tonic');
