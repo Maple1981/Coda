@@ -139,6 +139,7 @@ const startResult = global.CodaBootstrap.start({
 	domain: global.CodaDomain,
 	i18n: i18n,
 	initialNotation: 'latin',
+	initialVolume: 73,
 	midi: { plugin: {} },
 	notation: global.CodaNotation,
 	playbackFactory: {
@@ -170,12 +171,14 @@ assert.equal(global.CodaData.indexes.notes.indexByName['F#'], 6);
 assert.equal(global.CodaData.indexes.chords.byName.Dominante.abreviatura, '7');
 assert.equal(playbackOptions.channel, global.CodaData.midi.channel);
 assert.equal(playbackOptions.instrument, global.CodaData.midiInstruments[0].id);
+assert.equal(playbackOptions.volumePercent, 73);
 assert.equal(controllerOptions.application, global.CodaApplication);
 assert.equal(controllerOptions.changelogDialog.initialize != null, true);
 assert.equal(controllerOptions.chordPlayback, startResult.chordPlayback);
 assert.equal(controllerOptions.domain, global.CodaDomain);
 assert.equal(controllerOptions.i18n, i18n);
 assert.equal(controllerOptions.initialNotation, 'latin');
+assert.equal(controllerOptions.initialVolume, 73);
 assert.equal(controllerOptions.instrumentPlayback, startResult.instrumentPlayback);
 assert.equal(controllerOptions.keyNavigation, global.CodaKeyNavigation);
 assert.ok(controllerOptions.musicalContext.fromSelection);
@@ -240,6 +243,73 @@ assert.equal(chordVelocity, 64);
 lazyPlayback.setVolume(0);
 lazyPlayback.playChordFromNames(['C', 'E', 'G']);
 assert.equal(chordVelocity, 0);
+
+let sliderValue = '100';
+let volumeInputHandler = null;
+let volumeOutputText = null;
+let volumeAriaText = null;
+let savedVolume = null;
+let appliedVolume = null;
+function fakeVolumeElement() {
+	return {
+		length: 1,
+		attr: function (name, value) {
+			if (name === 'aria-valuetext') {
+				volumeAriaText = value;
+			}
+			return this;
+		},
+		on: function (events, handler) {
+			if (events === 'input change') {
+				volumeInputHandler = handler;
+			}
+			return this;
+		},
+		text: function (value) {
+			volumeOutputText = value;
+			return this;
+		},
+		val: function (value) {
+			if (value !== undefined) {
+				sliderValue = String(value);
+				return this;
+			}
+			return sliderValue;
+		}
+	};
+}
+const fakeSlider = fakeVolumeElement();
+const fakeOutput = fakeVolumeElement();
+global.CodaVolumeControl.initialize({
+	$: function (selector) {
+		return selector === '#selectorVolumen' ? fakeSlider : fakeOutput;
+	},
+	initialVolume: 42,
+	playbackService: {
+		getVolume: function () {
+			return 100;
+		},
+		setVolume: function (value) {
+			appliedVolume = Number(value);
+			return appliedVolume;
+		}
+	},
+	preferences: {
+		setValue: function (key, value) {
+			if (key === 'volume') {
+				savedVolume = value;
+			}
+		}
+	}
+});
+assert.equal(appliedVolume, 42);
+assert.equal(volumeOutputText, '42%');
+assert.equal(volumeAriaText, '42%');
+assert.equal(savedVolume, null);
+sliderValue = '25';
+volumeInputHandler();
+assert.equal(savedVolume, 25);
+assert.equal(appliedVolume, 25);
 
 global.CodaData.scales.forEach(function (scale, index) {
 	assert.ok(global.CodaTranslations.es['data.scales.' + index] != null);

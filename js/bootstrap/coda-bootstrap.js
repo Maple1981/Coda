@@ -14,7 +14,8 @@
 			midi: options.midi,
 			notes: data.notes,
 			soundfontUrl: './soundfont/',
-			velocity: data.midi.velocity
+			velocity: data.midi.velocity,
+			volumePercent: options.initialVolume
 		});
 		var chordPlayback = options.application.createChordPlayback({
 			playbackService: playbackService
@@ -37,6 +38,7 @@
 			domain: options.domain,
 			i18n: options.i18n,
 			initialNotation: options.initialNotation,
+			initialVolume: options.initialVolume,
 			instrumentPlayback: instrumentPlayback,
 			keyNavigation: options.keyNavigation || global.CodaKeyNavigation,
 			changelogDialog: options.changelogDialog || global.CodaChangelogDialog,

@@ -24,6 +24,7 @@ $(document).ready(function () {
 		changelogDialog: CodaChangelogDialog,
 		keyNavigation: CodaKeyNavigation,
 		initialNotation: storedPreferences.notation,
+		initialVolume: storedPreferences.volume,
 		musicalContextFactory: CodaMusicalContext,
 		midi: MIDI,
 		notation: CodaNotation,

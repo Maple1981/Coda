@@ -35,7 +35,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/services/notation-service.js`: formato visible de notas en notación anglosajona o latina sin alterar identificadores internos.
 - `js/services/data-index-service.js`: creación de `CodaData.indexes` y de índices no enumerables en las colecciones principales.
 - `js/services/musical-context-service.js`: construcción del contexto musical actual a partir de la selección de pantalla.
-- `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma y notación.
+- `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma, notación y volumen maestro.
 - `js/application/scale-report-application.js`: construye informes de escala e instrumentos.
 - `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI y alturas MIDI de instrumentos a eventos de playback.
 - `js/application/progression-application.js`: casos de uso iniciales para progresiones armónicas.
@@ -80,7 +80,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - La notación de notas es una preferencia de presentación. Los cálculos, ids de acordes, navegación tonal y playback deben conservar identificadores internos anglosajones.
 - La vista de instrumento usa alturas MIDI explícitas en notación científica estándar: C4 es el C central y equivale a la nota MIDI 60. El teclado actual comienza en C3, y la guitarra estándar parte de 6ª E2, 5ª A2, 4ª D3, 3ª G3, 2ª B3 y 1ª E4.
 - El playback debe cargarse de forma diferida: el soundfont y el motor MIDI se inicializan con la primera acción de preescucha, no durante el arranque de la aplicación.
-- El volumen maestro de la interfaz debe aplicarse desde `js/services/playback-service.js`, escalando la velocidad MIDI base. El 100% equivale al volumen histórico de la aplicación.
+- El volumen maestro de la interfaz debe aplicarse desde `js/services/playback-service.js`, escalando la velocidad MIDI base. El 100% equivale al volumen histórico de la aplicación y el valor elegido por el usuario se conserva en `coda_preferences`.
 - Los instrumentos MIDI/soundfont deben declararse en `js/data/midi-data.js`; el bootstrap no debe depender de literales de instrumento salvo como fallback defensivo.
 - Los eventos sobre acordes y notas de instrumento deben delegarse desde contenedores estables. Evitar reenlazar manejadores sobre cada celda renderizada.
 - Los reajustes de layout dependientes de medidas del DOM deben programarse con `requestAnimationFrame` mediante las funciones `schedule...` de `js/ui/scale-report-ui.js`.

@@ -30,7 +30,9 @@
 		if (options.volumeControl) {
 			options.volumeControl.initialize({
 				$: $,
-				playbackService: options.playbackService
+				initialVolume: options.initialVolume,
+				playbackService: options.playbackService,
+				preferences: preferences
 			});
 		}
 		if (options.changelogDialog) {
