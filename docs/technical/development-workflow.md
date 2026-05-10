@@ -41,6 +41,64 @@ Cobertura actual:
 - `tests/architecture-tests.js`: carga de módulos, manifest de scripts y bootstrap.
 - `tests/renderers-tests.js`: renderizado HTML desacoplado de la interfaz real.
 
+También puede usarse el runner común:
+
+```powershell
+.\tools\run-tests.ps1
+```
+
+## Publicación en Git
+
+Para evitar repetir manualmente la secuencia de pruebas, commit y push, el proyecto incluye un script local de publicación:
+
+```powershell
+.\tools\publish.ps1 "Resumen breve del cambio"
+```
+
+El flujo que ejecuta es:
+
+- Detectar la rama actual.
+- Mostrar el estado de Git.
+- Ejecutar las pruebas automatizadas.
+- Preparar todos los cambios con `git add --all`.
+- Crear el commit con el mensaje indicado.
+- Hacer `git push` hacia el upstream configurado; si la rama no tiene upstream, lo crea en `origin`.
+
+Si el usuario pide simplemente publicar los cambios, el mensaje de commit lo decide Codex después de revisar el diff. La convención del repositorio es usar un mensaje breve en inglés con un prefijo de tres letras:
+
+- `Add`: funcionalidad, documentación o recursos nuevos.
+- `Upd`: mejora o evolución de algo existente.
+- `Del`: eliminación de código, contenido o recursos.
+- `Fix`: corrección de errores o regresiones.
+
+Después del prefijo se añaden de dos a cinco palabras descriptivas en inglés. Ejemplos válidos:
+
+```text
+Add publish workflow tools
+Upd instrument playback docs
+Fix fifths circle layout
+Del obsolete jquery files
+```
+
+Opciones útiles:
+
+```powershell
+.\tools\publish.ps1 "Resumen breve del cambio" -DryRun
+.\tools\publish.ps1 "Resumen breve del cambio" -NoPush
+.\tools\publish.ps1 "Resumen breve del cambio" -SkipTests
+.\tools\publish.ps1 "Resumen breve del cambio" -Remote origin -Branch main
+```
+
+`-DryRun` comprueba la rama y muestra el estado sin modificar Git. `-NoPush` sirve para crear el commit sin publicarlo todavía. `-SkipTests` debe reservarse para casos excepcionales, porque el flujo normal de Coda es publicar solo después de comprobar que la base sigue estable.
+
+De forma opcional, puede instalarse un hook local de Git para ejecutar las mismas pruebas antes de cada `git push`:
+
+```powershell
+.\tools\install-pre-push-hook.ps1
+```
+
+El hook se instala en `.git/hooks/pre-push`, que es una zona local del repositorio y no se versiona. El script versionado que ejecuta el hook vive en `tools/git-hooks/pre-push.ps1`.
+
 ## Smoke tests
 
 Para pruebas de navegador, usar Live Server:
