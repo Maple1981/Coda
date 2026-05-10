@@ -53,6 +53,8 @@
     <script src="js/data.js"></script>
     <script src="js/i18n/translations.js"></script>
     <script src="js/i18n/i18n-service.js"></script>
+    <script src="js/services/notation-service.js"></script>
+    <script src="js/services/preferences-service.js"></script>
     <script src="js/domain/music-utils.js"></script>
     <script src="js/domain/scale-domain.js"></script>
     <script src="js/domain/chord-domain.js"></script>
@@ -89,6 +91,13 @@
             <select id="selectorIdioma">
               <option value="es" selected>ES</option>
               <option value="en">EN</option>
+            </select>
+          </label>
+          <label
+            ><span data-i18n="ui.notation">Notación</span>
+            <select id="selectorNotacion">
+              <option value="anglosaxon" data-i18n="notation.anglosaxon" selected>C D E</option>
+              <option value="latin" data-i18n="notation.latin">Do Re Mi</option>
             </select>
           </label>
           <button

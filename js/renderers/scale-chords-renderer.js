@@ -70,28 +70,28 @@
 			rows.degrees += '</td>';
 
 			rows.triads += '<td class="celdaAcorde" id="' + chord.fundamental + '-' + chord.tercera + '-' + chord.quinta + '">';
-			rows.triads += triadName(chord.nombre);
+			rows.triads += formatChord(options, triadName(chord.nombre));
 			rows.triads += '</td>';
 
 			rows.seventhChords += '<td class="celdaAcorde" id="' + chord.fundamental + '-' + chord.tercera + '-' + chord.quinta + '-' + chord.septima + '">';
-			rows.seventhChords += chord.nombre;
+			rows.seventhChords += formatChord(options, chord.nombre);
 			rows.seventhChords += '</td>';
 
 			rows.sus2 += '<td class="celdaAcorde" id="' + chord.fundamental + '-' + chord.segunda + '-' + chord.quinta + '">';
-			rows.sus2 += suspendedName(chord.nombre, 'sus2');
+			rows.sus2 += formatChord(options, suspendedName(chord.nombre, 'sus2'));
 			rows.sus2 += '</td>';
 
 			rows.sus4 += '<td class="celdaAcorde" id="' + chord.fundamental + '-' + chord.cuarta + '-' + chord.quinta + '">';
-			rows.sus4 += suspendedName(chord.nombre, 'sus4');
+			rows.sus4 += formatChord(options, suspendedName(chord.nombre, 'sus4'));
 			rows.sus4 += '</td>';
 
 			if (options.scaleDefinition.funciones != null && parallelChord != null) {
 				rows.parallelSeventhChords += '<td class="celdaAcorde" id="' + parallelChord.fundamental + '-' + parallelChord.tercera + '-' + parallelChord.quinta + '-' + parallelChord.septima + '">';
-				rows.parallelSeventhChords += parallelChord.nombre;
+				rows.parallelSeventhChords += formatChord(options, parallelChord.nombre);
 				rows.parallelSeventhChords += '</td>';
 
 				rows.parallelTriads += '<td class="celdaAcorde" id="' + parallelChord.fundamental + '-' + parallelChord.tercera + '-' + parallelChord.quinta + '">';
-				rows.parallelTriads += triadName(parallelChord.nombre);
+				rows.parallelTriads += formatChord(options, triadName(parallelChord.nombre));
 				rows.parallelTriads += '</td>';
 			}
 
@@ -100,7 +100,7 @@
 				rows.notes += '<span class="' + chord.tipo + '">';
 			}
 
-			rows.notes += chord.fundamental + '-' + chord.tercera + '-' + chord.quinta + '-' + chord.septima;
+			rows.notes += formatNoteSequence(options, chord.fundamental + '-' + chord.tercera + '-' + chord.quinta + '-' + chord.septima);
 
 			if (options.scaleDefinition.modal === 'true' && chord.tipo != null) {
 				rows.notes += '</span>';
@@ -179,6 +179,22 @@
 		};
 
 		return fallback[key] || key;
+	}
+
+	function formatChord(options, chordName) {
+		if (options.notation) {
+			return options.notation.formatChordName(chordName, options.notationStyle);
+		}
+
+		return chordName;
+	}
+
+	function formatNoteSequence(options, noteSequence) {
+		if (options.notation) {
+			return options.notation.formatNoteSequence(noteSequence, options.notationStyle);
+		}
+
+		return noteSequence;
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};

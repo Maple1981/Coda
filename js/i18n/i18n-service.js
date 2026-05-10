@@ -45,7 +45,10 @@
 			$('#selectorIdioma').val(currentLanguage);
 
 			setText($, '#appHeader h2', 'app.subtitle');
-			setText($, '.appHeader__actions label span', 'ui.language');
+			setText($, 'span[data-i18n="ui.language"]', 'ui.language');
+			setText($, 'span[data-i18n="ui.notation"]', 'ui.notation');
+			setText($, 'option[data-i18n="notation.anglosaxon"]', 'notation.anglosaxon');
+			setText($, 'option[data-i18n="notation.latin"]', 'notation.latin');
 			setAttribute($, '.settingsButton', 'title', 'settings.label');
 			setAttribute($, '.settingsButton', 'aria-label', 'settings.label');
 

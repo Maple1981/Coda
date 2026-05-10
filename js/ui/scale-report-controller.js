@@ -5,12 +5,16 @@
 	function initialize(options) {
 		var $ = options.$;
 		var i18n = options.i18n;
+		var notation = options.notation;
+		var preferences = options.preferences;
+		var currentNotation = notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon';
 		var report = null;
 		var selectedTuningIndex = 0;
 
 		$('#interface input:radio[name="formato"][value="0"]').prop('checked', true);
 		$('#interface input:radio[name="instrumento"][value="1"]').prop('checked', true);
-		fillSelectHashTable($, $('#tonica'), options.data.notes, false);
+		$('#selectorNotacion').val(currentNotation);
+		fillSelectHashTable($, $('#tonica'), options.data.notes, false, null, 'notes', notation, currentNotation);
 		fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
 		applyRecommendedNotation($, options);
 		if (i18n) {
@@ -42,7 +46,7 @@
 
 		$('#interface input:radio[name="formato"]').change(function () {
 			var preferFlats = $(this).val() === '1';
-			fillSelectHashTable($, $('#tonica'), options.data.notes, preferFlats);
+			fillSelectHashTable($, $('#tonica'), options.data.notes, preferFlats, null, 'notes', notation, currentNotation);
 
 			if (options.ui.hasRenderedResults($)) {
 				renderReport();
@@ -58,6 +62,7 @@
 		$('#selectorIdioma').change(function () {
 			if (i18n) {
 				i18n.setLanguage($(this).val());
+				savePreference(preferences, 'language', i18n.getLanguage());
 				fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
 				i18n.applyStatic($);
 			}
@@ -70,8 +75,30 @@
 			options.ui.syncDashboardWorkspaceHeight($);
 		});
 
+		$('#selectorNotacion').change(function () {
+			currentNotation = notation ? notation.normalizeStyle($(this).val()) : 'anglosaxon';
+			savePreference(preferences, 'notation', currentNotation);
+			fillSelectHashTable(
+				$,
+				$('#tonica'),
+				options.data.notes,
+				$('#interface input:radio[name="formato"]:checked').val() === '1',
+				null,
+				'notes',
+				notation,
+				currentNotation
+			);
+
+			if (options.ui.hasRenderedResults($)) {
+				renderReport();
+			}
+
+			options.ui.syncInstrumentScale($);
+			options.ui.syncDashboardWorkspaceHeight($);
+		});
+
 		$(document).on('click', '.revamp', function (event) {
-			navigateToLinkedKey($, options.data.notes, event.target.id);
+			navigateToLinkedKey($, options.data.notes, event.target.id, notation, currentNotation);
 			applyRecommendedNotation($, options);
 			renderReport();
 		});
@@ -84,7 +111,7 @@
 		});
 
 		function renderReport() {
-			var selection = options.ui.readSelection($);
+			var selection = options.ui.readSelection($, options.data);
 
 			if (selection.scaleName === '------------') {
 				report = null;
@@ -109,6 +136,8 @@
 				onChordMouseOut: clearChordHighlight($),
 				onChordMouseOver: highlightChord($),
 				i18n: i18n,
+				notation: notation,
+				notationStyle: currentNotation,
 				renderers: options.renderers,
 				report: report,
 				selection: selection
@@ -118,7 +147,7 @@
 		}
 
 		function renderInstrument(resetTuning) {
-			var selection = options.ui.readSelection($);
+			var selection = options.ui.readSelection($, options.data);
 
 			if (!report) {
 				return;
@@ -143,6 +172,8 @@
 				data: options.data,
 				i18n: i18n,
 				instrumentView: instrumentView,
+				notation: notation,
+				notationStyle: currentNotation,
 				renderers: options.renderers,
 				report: report
 			});
@@ -156,7 +187,7 @@
 		};
 	}
 
-	function fillSelectHashTable($, select, values, preferFlats, i18n, collectionName) {
+	function fillSelectHashTable($, select, values, preferFlats, i18n, collectionName, notation, notationStyle) {
 		var html = '';
 
 		for (var i = 0; i < values.length; i++) {
@@ -173,6 +204,10 @@
 
 			if (i18n && collectionName) {
 				name = i18n.dataLabel(collectionName, i, name);
+			}
+
+			if (notation && collectionName === 'notes') {
+				name = notation.formatNoteName(name, notationStyle);
 			}
 
 			html += '<option value="';
@@ -209,7 +244,7 @@
 		});
 	}
 
-	function navigateToLinkedKey($, notes, targetId) {
+	function navigateToLinkedKey($, notes, targetId, notation, notationStyle) {
 		var selectedOption = targetId.split('_');
 		var noteValue = findNoteValue(notes, selectedOption[0]);
 
@@ -220,11 +255,11 @@
 		}
 
 		if (selectedOption[0].indexOf('#') > 0) {
-			fillSelectHashTable($, $('#tonica'), notes, false);
+			fillSelectHashTable($, $('#tonica'), notes, false, null, 'notes', notation, notationStyle);
 		}
 
 		if (selectedOption[0].indexOf('b') > 0) {
-			fillSelectHashTable($, $('#tonica'), notes, true);
+			fillSelectHashTable($, $('#tonica'), notes, true, null, 'notes', notation, notationStyle);
 		}
 
 		if (noteValue > -1) {
@@ -245,11 +280,18 @@
 	function applyRecommendedNotation($, options) {
 		var scaleIndex = parseInt($('select#escala option:selected').val(), 10);
 		var scaleDefinition = options.data.scales[scaleIndex];
+		var tonicIndex = parseInt($('select#tonica option:selected').val(), 10);
+		var tonicDefinition = options.data.notes[tonicIndex];
+
+		if (!tonicDefinition) {
+			return;
+		}
+
 		var preferFlats = options.domain.shouldPreferFlatsForKeySignature({
 			notes: options.data.notes,
 			scaleDefinition: scaleDefinition,
 			selectedScaleIndex: scaleIndex,
-			tonicName: $('select#tonica option:selected').text()
+			tonicName: options.ui.noteName(tonicDefinition, $('#interface input:radio[name="formato"]:checked').val() === '1')
 		});
 
 		if (preferFlats == null) {
@@ -257,7 +299,7 @@
 		}
 
 		$('#interface input:radio[name="formato"][value="' + (preferFlats ? '1' : '0') + '"]').prop('checked', true);
-		fillSelectHashTable($, $('#tonica'), options.data.notes, preferFlats);
+		fillSelectHashTable($, $('#tonica'), options.data.notes, preferFlats, null, 'notes', options.notation, options.notation ? options.notation.normalizeStyle(options.initialNotation || $('#selectorNotacion').val()) : 'anglosaxon');
 	}
 
 	function highlightChord($) {
@@ -268,6 +310,8 @@
 			for (var i = 0; i < noteNames.length; i++) {
 				for (var j = 0; j < instrumentNoteCells.length; j++) {
 					if ($(instrumentNoteCells[j]).html() === noteNames[i]) {
+						$(instrumentNoteCells[j]).addClass('resaltada');
+					} else if ($(instrumentNoteCells[j]).attr('data-note-name') === noteNames[i]) {
 						$(instrumentNoteCells[j]).addClass('resaltada');
 					}
 				}
@@ -292,6 +336,12 @@
 				duration: 0.75
 			});
 		};
+	}
+
+	function savePreference(preferences, key, value) {
+		if (preferences) {
+			preferences.setValue(key, value);
+		}
 	}
 
 	global.CodaScaleReportController = {

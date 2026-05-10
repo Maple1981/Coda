@@ -12,11 +12,11 @@
 
 		for (var i = 0; i < options.strings.length; i++) {
 			html += '<tr>';
-			html += renderGuitarCell(options.strings[i].aire, options.strings[i].perteneceEscala, options.strings[i].tipo, options.scaleDefinition);
+			html += renderGuitarCell(options, options.strings[i].aire, options.strings[i].perteneceEscala, options.strings[i].tipo, options.scaleDefinition);
 
 			for (var j = 0; j < options.strings[i].trastes.length; j++) {
 				var fret = options.strings[i].trastes[j];
-				html += renderGuitarCell(fret.nombre, fret.perteneceEscala, fret.tipo, options.scaleDefinition, true);
+				html += renderGuitarCell(options, fret.nombre, fret.perteneceEscala, fret.tipo, options.scaleDefinition, true);
 			}
 
 			html += '</tr>';
@@ -50,12 +50,12 @@
 		return html;
 	}
 
-	function renderGuitarCell(noteName, belongsToScale, modalType, scaleDefinition, addSpace) {
+	function renderGuitarCell(options, noteName, belongsToScale, modalType, scaleDefinition, addSpace) {
 		var scaleClass = belongsToScale ? ' perteneceEscala' : ' noPerteneceEscala';
 		var modalClass = modalSpanClass(modalType, scaleDefinition);
 		var cellClass = addSpace ? 'celdaNota ' : 'celdaNota';
 
-		return '<td class="' + cellClass + scaleClass + '"><span' + modalClass + '>' + noteName + '</span></td>';
+		return '<td class="' + cellClass + scaleClass + '"><span data-note-name="' + noteName + '"' + modalClass + '>' + formatNote(options, noteName) + '</span></td>';
 	}
 
 	function renderPiano(options) {
@@ -78,7 +78,7 @@
 			var key = options.keyboard.blackKeys[i];
 
 			if (key.type === 'note') {
-				html += renderPianoNoteCell(key.nombre, key.perteneceEscala, key.tipo, options.scaleDefinition);
+				html += renderPianoNoteCell(options, key.nombre, key.perteneceEscala, key.tipo, options.scaleDefinition);
 			} else {
 				html += '<td class="huecoBlanco hueco' + key.nombre + '"><span>&nbsp;&nbsp;</span></td>';
 			}
@@ -94,7 +94,7 @@
 
 		for (var i = 0; i < options.keyboard.whiteKeys.length; i++) {
 			var key = options.keyboard.whiteKeys[i];
-			html += renderPianoNoteCell(key.nombre, key.perteneceEscala, key.tipo, options.scaleDefinition, true);
+			html += renderPianoNoteCell(options, key.nombre, key.perteneceEscala, key.tipo, options.scaleDefinition, true);
 		}
 
 		html += '</tr></table>';
@@ -102,12 +102,12 @@
 		return html;
 	}
 
-	function renderPianoNoteCell(noteName, belongsToScale, modalType, scaleDefinition, addSpace) {
+	function renderPianoNoteCell(options, noteName, belongsToScale, modalType, scaleDefinition, addSpace) {
 		var scaleClass = belongsToScale ? ' perteneceEscala' : ' noPerteneceEscala';
 		var modalClass = modalSpanClass(modalType, scaleDefinition);
 		var cellClass = addSpace ? 'celdaNota ' : 'celdaNota';
 
-		return '<td class="' + cellClass + scaleClass + '"><span' + modalClass + '>' + noteName + '</span></td>';
+		return '<td class="' + cellClass + scaleClass + '"><span data-note-name="' + noteName + '"' + modalClass + '>' + formatNote(options, noteName) + '</span></td>';
 	}
 
 	function modalSpanClass(modalType, scaleDefinition) {
@@ -133,6 +133,8 @@
 	}
 
 	function tuningLabel(options, tuning, index) {
+		var label = tuning.nombre;
+
 		if (options.i18n && options.tunings) {
 			var tuningIndex = index;
 
@@ -141,11 +143,23 @@
 			}
 
 			if (tuningIndex > -1) {
-				return options.i18n.dataLabel('tunings', tuningIndex, tuning.nombre);
+				label = options.i18n.dataLabel('tunings', tuningIndex, tuning.nombre);
 			}
 		}
 
-		return tuning.nombre;
+		if (options.notation) {
+			return options.notation.formatTextNotes(label, options.notationStyle);
+		}
+
+		return label;
+	}
+
+	function formatNote(options, noteName) {
+		if (options.notation) {
+			return options.notation.formatNoteName(noteName, options.notationStyle);
+		}
+
+		return noteName;
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};

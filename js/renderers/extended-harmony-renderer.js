@@ -7,8 +7,8 @@
 		var html = '';
 
 		html += '<h3>' + t(options, 'extended.title', {
-			scale: options.scaleName,
-			tonic: options.tonicName
+			scale: scaleLabel(options),
+			tonic: formatNote(options, options.tonicName)
 		}) + '</h3>';
 		html += '<div id="acordeonArmoniaExtendida">';
 
@@ -62,7 +62,7 @@
 
 		html += '<h3>' + section.title + '</h3><div>';
 		html += '<table>';
-		html += renderHeader(section.options.scaleChords);
+		html += renderHeader(section.options);
 		html += '<tbody>';
 
 		for (var i = 0; i < section.rows.length; i++) {
@@ -76,13 +76,13 @@
 		return html;
 	}
 
-	function renderHeader(scaleChords) {
+	function renderHeader(options) {
 		var html = '';
 
 		html += '<thead><tr>';
-		for (var i = 0; i <= scaleChords.length - 1; i++) {
+		for (var i = 0; i <= options.scaleChords.length - 1; i++) {
 			html += '<td class="cabecera">';
-			html += scaleChords[i].nombre;
+			html += formatChord(options, options.scaleChords[i].nombre);
 			html += '</td>';
 		}
 		html += '</tr></thead>';
@@ -110,14 +110,14 @@
 
 			if (extendedChord) {
 				html += '<td class="celdaAcorde" id="' + extendedChord.noteId + '">';
-				html += '<p>' + extendedChord.rootName + extendedChord.abbreviation + ' (' + extendedChord.ruleName + ')</p>';
+				html += '<p>' + formatChord(options, extendedChord.rootName + extendedChord.abbreviation) + ' (' + extendedChord.ruleName + ')</p>';
 
 				var frequencyClass = '';
 				if (extendedChord.important) {
 					frequencyClass = ' cadencial';
 				}
 
-				html += '<p class="destacado' + frequencyClass + '">' + extendedChord.noteId + '</p>';
+				html += '<p class="destacado' + frequencyClass + '">' + formatNoteSequence(options, extendedChord.noteId) + '</p>';
 				html += '</td>';
 			} else {
 				html += '<td>-</td>';
@@ -150,6 +150,38 @@
 		return text.replace(/\{([^}]+)\}/g, function (match, name) {
 			return values[name] != null ? values[name] : match;
 		});
+	}
+
+	function scaleLabel(options) {
+		if (options.i18n && options.scaleIndex != null) {
+			return options.i18n.dataLabel('scales', options.scaleIndex, options.scaleName);
+		}
+
+		return options.scaleName;
+	}
+
+	function formatNote(options, noteName) {
+		if (options.notation) {
+			return options.notation.formatNoteName(noteName, options.notationStyle);
+		}
+
+		return noteName;
+	}
+
+	function formatChord(options, chordName) {
+		if (options.notation) {
+			return options.notation.formatChordName(chordName, options.notationStyle);
+		}
+
+		return chordName;
+	}
+
+	function formatNoteSequence(options, noteSequence) {
+		if (options.notation) {
+			return options.notation.formatNoteSequence(noteSequence, options.notationStyle);
+		}
+
+		return noteSequence;
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};

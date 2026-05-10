@@ -26,6 +26,9 @@
 			data: data,
 			domain: options.domain,
 			i18n: options.i18n,
+			initialNotation: options.initialNotation,
+			notation: options.notation,
+			preferences: options.preferences,
 			renderers: options.renderers,
 			ui: options.ui
 		});

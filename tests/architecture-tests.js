@@ -28,6 +28,8 @@ const global = context.window;
 assert.ok(global.CodaData);
 assert.ok(global.CodaTranslations);
 assert.ok(global.CodaI18n.create);
+assert.ok(global.CodaNotation.formatNoteName);
+assert.ok(global.CodaPreferences.create);
 assert.ok(global.CodaDomain.buildScale);
 assert.ok(global.CodaDomain.buildScaleReport === undefined);
 assert.ok(global.CodaDomain.resolveProgressionDegrees);
@@ -49,6 +51,8 @@ assert.ok(manifestScripts.indexOf('js/domain/progression-domain.js') > -1);
 assert.ok(manifestScripts.indexOf('js/application/progression-application.js') > -1);
 assert.ok(manifestScripts.indexOf('js/i18n/translations.js') > -1);
 assert.ok(manifestScripts.indexOf('js/i18n/i18n-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/notation-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/preferences-service.js') > -1);
 assert.deepEqual(manifestScripts.slice(-1), ['js/app.js']);
 
 const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
@@ -72,6 +76,7 @@ const englishI18n = global.CodaI18n.create({
 	initialLanguage: 'en',
 	translations: global.CodaTranslations
 });
+const preferences = global.CodaPreferences.create();
 let playbackOptions;
 let loadCalled = false;
 
@@ -87,7 +92,9 @@ const startResult = global.CodaBootstrap.start({
 	data: global.CodaData,
 	domain: global.CodaDomain,
 	i18n: i18n,
+	initialNotation: 'latin',
 	midi: { plugin: {} },
+	notation: global.CodaNotation,
 	playbackFactory: {
 		create: function (options) {
 			playbackOptions = options;
@@ -98,6 +105,7 @@ const startResult = global.CodaBootstrap.start({
 			};
 		}
 	},
+	preferences: preferences,
 	renderers: global.CodaRenderers,
 	ui: global.CodaUi
 });
@@ -112,6 +120,9 @@ assert.equal(controllerOptions.application, global.CodaApplication);
 assert.equal(controllerOptions.chordPlayback, startResult.chordPlayback);
 assert.equal(controllerOptions.domain, global.CodaDomain);
 assert.equal(controllerOptions.i18n, i18n);
+assert.equal(controllerOptions.initialNotation, 'latin');
+assert.equal(controllerOptions.notation, global.CodaNotation);
+assert.equal(controllerOptions.preferences, preferences);
 assert.equal(controllerOptions.renderers, global.CodaRenderers);
 assert.equal(controllerOptions.ui, global.CodaUi);
 
@@ -125,5 +136,7 @@ global.CodaData.tunings.forEach(function (tuning, index) {
 });
 assert.equal(englishI18n.dataLabel('scales', 0, 'Mayor'), 'Major');
 assert.equal(englishI18n.dataLabel('tunings', 0, 'Estándar E'), 'Standard E');
+assert.equal(global.CodaNotation.formatChordName('F#m7', 'latin'), 'Fa♯m7');
+assert.equal(global.CodaNotation.formatNoteSequence('D-F#-A-C', 'latin'), 'Re-Fa♯-La-Do');
 
 console.log('Architecture tests passed');

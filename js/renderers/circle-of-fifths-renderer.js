@@ -3,7 +3,7 @@
 	'use strict';
 
 	function render(viewModel) {
-		if (!viewModel) {
+		if (!viewModel || !viewModel.orderedKeys) {
 			return '';
 		}
 
@@ -11,7 +11,7 @@
 		var positions = buildPositions(viewModel.orderedKeys.length, 80, 80, 200);
 
 		for (var i = 0; i < viewModel.orderedKeys.length; i++) {
-			html += renderCircleItem(viewModel.orderedKeys[i], viewModel.selectedKey, positions[i], i);
+			html += renderCircleItem(viewModel.orderedKeys[i], viewModel.selectedKey, positions[i], i, viewModel);
 		}
 
 		html += '</div>';
@@ -39,15 +39,15 @@
 		return positions;
 	}
 
-	function renderCircleItem(key, selectedKey, position, index) {
+	function renderCircleItem(key, selectedKey, position, index, options) {
 		var isActual = isSelectedKey(key, selectedKey);
 		var circleClass = isActual ? ' actual' : '';
 		var actualClass = isActual ? ' class="actual"' : '';
 		var html = '';
 
 		html += '<div class="circulo numero' + index + circleClass + '" style="top: ' + position.top + 'px; left: ' + position.left + 'px;">';
-		html += '<p' + actualClass + '><span id="' + key.nombre + '_" class="revamp estiloEnlace">' + key.nombre + '</span></p>';
-		html += '<p' + actualClass + '><span id="' + key.enarmonica.replace('m', '') + '_m" class="revamp estiloEnlace">' + key.enarmonica + '</span></p>';
+		html += '<p' + actualClass + '><span id="' + key.nombre + '_" class="revamp estiloEnlace">' + formatKey(options, key.nombre) + '</span></p>';
+		html += '<p' + actualClass + '><span id="' + key.enarmonica.replace('m', '') + '_m" class="revamp estiloEnlace">' + formatKey(options, key.enarmonica) + '</span></p>';
 		html += '</div>';
 
 		return html;
@@ -68,6 +68,14 @@
 		};
 
 		return enharmonicKeys[keyName] === selectedKey;
+	}
+
+	function formatKey(options, keyName) {
+		if (options && options.notation) {
+			return options.notation.formatKeyName(keyName, options.notationStyle);
+		}
+
+		return keyName;
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};

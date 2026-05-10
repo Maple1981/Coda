@@ -20,6 +20,7 @@ function runScript(relativePath) {
 	'js/data.js',
 	'js/i18n/translations.js',
 	'js/i18n/i18n-service.js',
+	'js/services/notation-service.js',
 	'js/domain/music-utils.js',
 	'js/domain/scale-domain.js',
 	'js/domain/chord-domain.js',
@@ -42,6 +43,7 @@ const extendedHarmonyRenderer = context.window.CodaRenderers.extendedHarmony;
 const instrumentsRenderer = context.window.CodaRenderers.instruments;
 const scaleChordsRenderer = context.window.CodaRenderers.scaleChords;
 const scaleSummaryRenderer = context.window.CodaRenderers.scaleSummary;
+const notation = context.window.CodaNotation;
 const englishI18n = context.window.CodaI18n.create({
 	initialLanguage: 'en',
 	translations: context.window.CodaTranslations
@@ -149,7 +151,7 @@ const guitarHtml = instrumentsRenderer.renderGuitar({
 
 assert.ok(guitarHtml.indexOf('<select id="selectorAfinaciones">') > -1);
 assert.ok(guitarHtml.indexOf('<table class="diapason">') > -1);
-assert.ok(guitarHtml.indexOf('<td class="celdaNota perteneceEscala"><span>E</span></td>') > -1);
+assert.ok(guitarHtml.indexOf('<td class="celdaNota perteneceEscala"><span data-note-name="E">E</span></td>') > -1);
 assert.ok(guitarHtml.indexOf('<td><span>2</span></td>') > -1);
 
 const pianoKeyboard = domain.buildPianoKeyboard({
@@ -168,8 +170,8 @@ const pianoHtml = instrumentsRenderer.renderPiano({
 
 assert.ok(pianoHtml.indexOf('<table class="teclasNegras">') > -1);
 assert.ok(pianoHtml.indexOf('<table class="teclasBlancas">') > -1);
-assert.ok(pianoHtml.indexOf('<span>Bb</span>') > -1);
-assert.ok(pianoHtml.indexOf('<td class="celdaNota  perteneceEscala"><span>C</span></td>') > -1);
+assert.ok(pianoHtml.indexOf('<span data-note-name="Bb">Bb</span>') > -1);
+assert.ok(pianoHtml.indexOf('<td class="celdaNota  perteneceEscala"><span data-note-name="C">C</span></td>') > -1);
 
 const englishPianoHtml = instrumentsRenderer.renderPiano({
 	i18n: englishI18n,
@@ -194,6 +196,41 @@ const englishGuitarHtml = instrumentsRenderer.renderGuitar({
 assert.ok(englishGuitarHtml.indexOf('<h4>Tuning: Standard E') > -1);
 assert.ok(englishGuitarHtml.indexOf('E♭ tuning') > -1);
 
+const latinSummaryHtml = scaleSummaryRenderer.render({
+	circleOfFifths: data.circleOfFifths,
+	i18n: englishI18n,
+	isDegreeSuppressed: function () { return false; },
+	notation: notation,
+	notationStyle: 'latin',
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	scaleIndex: 0,
+	scaleName: 'Mayor',
+	scaleNotes: cMajor,
+	selectedScaleIndex: 0,
+	tonicName: 'C'
+});
+assert.ok(latinSummaryHtml.indexOf('<h3>Do Major</h3>') > -1);
+assert.ok(latinSummaryHtml.indexOf('<span id="A_m_" class="revamp estiloEnlace">Lam</span>') > -1);
+assert.ok(latinSummaryHtml.indexOf('Do<sup>I</sup>') > -1);
+
+const latinGuitarHtml = instrumentsRenderer.renderGuitar({
+	i18n: englishI18n,
+	notation: notation,
+	notationStyle: 'latin',
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	strings: [
+		{
+			aire: 'E',
+			perteneceEscala: true,
+			trastes: []
+		}
+	],
+	tuning: data.tunings[0],
+	tunings: data.tunings
+});
+assert.ok(latinGuitarHtml.indexOf('<h4>Tuning: Standard Mi') > -1);
+assert.ok(latinGuitarHtml.indexOf('<span data-note-name="E">Mi</span>') > -1);
+
 const scaleChordsHtml = scaleChordsRenderer.render({
 	mode: 'M',
 	parallelScaleChords: cMinorNaturalChords,
@@ -207,6 +244,19 @@ assert.ok(scaleChordsHtml.indexOf('Cmaj7') > -1);
 assert.ok(scaleChordsHtml.indexOf('class="celdaAcorde" id="G-B-D-F"') > -1);
 assert.ok(scaleChordsHtml.indexOf('<td>V7</td>') > -1);
 assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Función: </td>') > -1);
+
+const latinScaleChordsHtml = scaleChordsRenderer.render({
+	mode: 'M',
+	notation: notation,
+	notationStyle: 'latin',
+	parallelScaleChords: cMinorNaturalChords,
+	scaleChords: cMajorChords,
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	scaleNotes: cMajor
+});
+assert.ok(latinScaleChordsHtml.indexOf('Domaj7') > -1);
+assert.ok(latinScaleChordsHtml.indexOf('Sol7') > -1);
+assert.ok(latinScaleChordsHtml.indexOf('Do-Mi-Sol-Si') > -1);
 
 const dDorianDefinition = data.scales.find(function (scale) {
 	return scale.modal === 'true' && scale.nombre.indexOf('rico') > -1;

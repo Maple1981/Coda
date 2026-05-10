@@ -8,7 +8,7 @@
 	}
 
 	function renderTitle(options) {
-		return '<h3>' + options.tonicName + ' ' + options.scaleName + '</h3>';
+		return '<h3>' + formatNote(options, options.tonicName) + ' ' + scaleLabel(options) + '</h3>';
 	}
 
 	function renderList(options) {
@@ -41,9 +41,9 @@
 
 		html += '<p class="infoAdicional">';
 		html += '<strong>' + t(options, 'scaleSummary.relativeKey') + '</strong>: ';
-		html += '<span id="' + relativeKey.id + '" class="revamp estiloEnlace">' + relativeKey.label + '</span>';
+		html += '<span id="' + relativeKey.id + '" class="revamp estiloEnlace">' + formatKey(options, relativeKey.label) + '</span>';
 		html += '&nbsp;<strong>' + t(options, 'scaleSummary.parallelKey') + '</strong>: ';
-		html += '<span id="' + options.tonicName + '_' + parallelMode + '" class="revamp estiloEnlace">' + parallelKey + '</span>';
+		html += '<span id="' + options.tonicName + '_' + parallelMode + '" class="revamp estiloEnlace">' + formatKey(options, parallelKey) + '</span>';
 		html += '</p>';
 
 		return html;
@@ -65,7 +65,7 @@
 			var separator = j < visibleNotes.length - 1 ? ' - ' : '';
 
 			html += '<li' + cssClass + '>';
-			html += note.nombre + '<sup>' + note.grado + '</sup>' + separator;
+			html += formatNote(options, note.nombre) + '<sup>' + note.grado + '</sup>' + separator;
 			html += '</li>';
 		}
 
@@ -116,6 +116,30 @@
 		};
 
 		return fallback[key] || key;
+	}
+
+	function scaleLabel(options) {
+		if (options.i18n && options.scaleIndex != null) {
+			return options.i18n.dataLabel('scales', options.scaleIndex, options.scaleName);
+		}
+
+		return options.scaleName;
+	}
+
+	function formatNote(options, noteName) {
+		if (options.notation) {
+			return options.notation.formatNoteName(noteName, options.notationStyle);
+		}
+
+		return noteName;
+	}
+
+	function formatKey(options, keyName) {
+		if (options.notation) {
+			return options.notation.formatKeyName(keyName, options.notationStyle);
+		}
+
+		return keyName;
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};

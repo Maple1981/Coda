@@ -24,6 +24,8 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/bootstrap/coda-bootstrap.js`: cablea datos, dominio, aplicación, renderers, UI, controlador y playback.
 - `js/i18n/translations.js`: diccionarios de interfaz para español de España e inglés.
 - `js/i18n/i18n-service.js`: servicio de traducción y aplicación de textos estáticos.
+- `js/services/notation-service.js`: formato visible de notas en notación anglosajona o latina sin alterar identificadores internos.
+- `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma y notación.
 - `js/application/scale-report-application.js`: construye informes de escala e instrumentos.
 - `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI a notas y delega en playback.
 - `js/application/progression-application.js`: casos de uso iniciales para progresiones armónicas.
@@ -50,6 +52,8 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - El HTML debe concentrarse en `js/renderers/`.
 - La interacción con jQuery y el DOM debe quedarse en `js/ui/`.
 - Los textos visibles nuevos deben pasar por `js/i18n/` cuando formen parte de la interfaz.
-- Los catálogos de datos que se muestran al usuario deben mantener traducción en todos los idiomas disponibles. El dato canónico puede seguir en español si el dominio lo necesita, pero la etiqueta visible debe resolverse desde `js/i18n/`. Los nombres de las notas se tratarán aparte.
+- Los catálogos de datos que se muestran al usuario deben mantener traducción en todos los idiomas disponibles. El dato canónico puede seguir en español si el dominio lo necesita, pero la etiqueta visible debe resolverse desde `js/i18n/`. Los nombres de las notas deben formatearse mediante `js/services/notation-service.js`.
+- La notación de notas es una preferencia de presentación. Los cálculos, ids de acordes, navegación tonal y playback deben conservar identificadores internos anglosajones.
+- Las preferencias ligeras pueden guardarse en la cookie `coda_preferences`; cualquier valor nuevo debe añadirse de forma compatible con los existentes.
 - El orden de carga de módulos debe mantenerse en `js/bootstrap/script-manifest.js` y verificarse con `tests/architecture-tests.js`.
 - Si una mejora requiere servidor, cuentas de usuario, sincronización externa o almacenamiento persistente, debe tratarse como cambio de alcance.

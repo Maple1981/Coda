@@ -3,14 +3,20 @@
 (function (global) {
 	'use strict';
 
-	function readSelection($) {
+	function readSelection($, data) {
+		var preferFlats = $('#interface input:radio[name="formato"]:checked').val() === '1';
+		var scaleIndex = parseInt($('select#escala option:selected').val(), 10);
+		var tonicIndex = parseInt($('select#tonica option:selected').val(), 10);
+		var scaleDefinition = data && data.scales ? data.scales[scaleIndex] : null;
+		var tonicDefinition = data && data.notes ? data.notes[tonicIndex] : null;
+
 		return {
 			instrument: $('#interface input:radio[name="instrumento"]:checked').val(),
-			preferFlats: $('#interface input:radio[name="formato"]:checked').val() === '1',
-			scaleIndex: parseInt($('select#escala option:selected').val(), 10),
-			scaleName: $('select#escala option:selected').text(),
-			tonicIndex: parseInt($('select#tonica option:selected').val(), 10),
-			tonicName: $('select#tonica option:selected').text()
+			preferFlats: preferFlats,
+			scaleIndex: scaleIndex,
+			scaleName: scaleDefinition ? scaleDefinition.nombre : $('select#escala option:selected').text(),
+			tonicIndex: tonicIndex,
+			tonicName: tonicDefinition ? noteName(tonicDefinition, preferFlats) : $('select#tonica option:selected').text()
 		};
 	}
 
@@ -24,6 +30,9 @@
 
 		$('#notacion').empty().append(options.renderers.scaleSummary.renderTitle({
 			i18n: options.i18n,
+			notation: options.notation,
+			notationStyle: options.notationStyle,
+			scaleIndex: report.scaleIndex,
 			scaleName: report.scaleName,
 			tonicName: report.tonicName
 		}));
@@ -32,6 +41,8 @@
 			circleOfFifths: options.data.circleOfFifths,
 			i18n: options.i18n,
 			isDegreeSuppressed: report.isDegreeSuppressed,
+			notation: options.notation,
+			notationStyle: options.notationStyle,
 			scaleDefinition: report.scaleDefinition,
 			scaleNotes: report.scaleNotes,
 			selectedScaleIndex: report.scaleIndex,
@@ -44,6 +55,8 @@
 			$('#notacion').append(options.renderers.scaleChords.render({
 				mode: report.mode,
 				i18n: options.i18n,
+				notation: options.notation,
+				notationStyle: options.notationStyle,
 				parallelScaleChords: report.parallelScaleChords,
 				scaleChords: report.scaleChords,
 				scaleDefinition: report.scaleDefinition,
@@ -57,7 +70,12 @@
 			attachChordEvents(options);
 		}
 
-		$('#circuloQuintas').empty().append(options.renderers.circleOfFifths.render(report.circleOfFifths));
+		$('#circuloQuintas').empty().append(options.renderers.circleOfFifths.render({
+			notation: options.notation,
+			notationStyle: options.notationStyle,
+			orderedKeys: report.circleOfFifths ? report.circleOfFifths.orderedKeys : null,
+			selectedKey: report.circleOfFifths ? report.circleOfFifths.selectedKey : null
+		}));
 	}
 
 	function renderExtendedHarmony(options) {
@@ -69,7 +87,10 @@
 			domain: options.domain,
 			i18n: options.i18n,
 			mode: report.mode,
+			notation: options.notation,
+			notationStyle: options.notationStyle,
 			preferFlats: options.selection.preferFlats,
+			scaleIndex: report.scaleIndex,
 			scaleChords: report.scaleChords,
 			scaleName: report.scaleName,
 			scaleNotes: report.scaleNotes,
@@ -107,11 +128,15 @@
 			html = options.renderers.instruments.renderPiano({
 				i18n: options.i18n,
 				keyboard: options.instrumentView.keyboard,
+				notation: options.notation,
+				notationStyle: options.notationStyle,
 				scaleDefinition: options.report.scaleDefinition
 			});
 		} else {
 			html = options.renderers.instruments.renderGuitar({
 				i18n: options.i18n,
+				notation: options.notation,
+				notationStyle: options.notationStyle,
 				scaleDefinition: options.report.scaleDefinition,
 				strings: options.instrumentView.strings,
 				tuning: options.instrumentView.tuning,
@@ -185,9 +210,18 @@
 		container.style.setProperty('--dashboard-sidebar-max-height', panelHeight + 'px');
 	}
 
+	function noteName(noteDefinition, preferFlats) {
+		if (preferFlats && noteDefinition.enarmonica !== undefined) {
+			return noteDefinition.enarmonica;
+		}
+
+		return noteDefinition.nombre;
+	}
+
 	global.CodaUi = {
 		attachChordEvents: attachChordEvents,
 		hasRenderedResults: hasRenderedResults,
+		noteName: noteName,
 		readSelection: readSelection,
 		renderExtendedHarmony: renderExtendedHarmony,
 		renderInstrument: renderInstrument,

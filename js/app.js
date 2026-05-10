@@ -7,8 +7,10 @@
 $(document).ready(function () {
 	'use strict';
 
+	var preferences = CodaPreferences.create();
+	var storedPreferences = preferences.read();
 	var i18n = CodaI18n.create({
-		initialLanguage: $('#selectorIdioma').val(),
+		initialLanguage: storedPreferences.language || $('#selectorIdioma').val(),
 		translations: CodaTranslations
 	});
 
@@ -19,8 +21,11 @@ $(document).ready(function () {
 		data: CodaData,
 		domain: CodaDomain,
 		i18n: i18n,
+		initialNotation: storedPreferences.notation,
 		midi: MIDI,
+		notation: CodaNotation,
 		playbackFactory: CodaPlayback,
+		preferences: preferences,
 		renderers: CodaRenderers,
 		ui: CodaUi
 	});
