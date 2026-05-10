@@ -3,6 +3,10 @@
 (function (global) {
 	'use strict';
 
+	var pendingDashboardWorkspaceHeight = false;
+	var pendingInstrumentScale = false;
+	var pendingSidebarPanelViewport = false;
+
 	function readSelection($, data) {
 		var preferFlats = $('#interface input:radio[name="formato"]:checked').val() === '1';
 		var scaleIndex = parseInt($('select#escala option:selected').val(), 10);
@@ -66,8 +70,6 @@
 			if (report.extendedHarmonyEnabled) {
 				renderExtendedHarmony(options);
 			}
-
-			attachChordEvents(options);
 		}
 
 		$('#circuloQuintas').empty().append(options.renderers.circleOfFifths.render({
@@ -76,6 +78,8 @@
 			orderedKeys: report.circleOfFifths ? report.circleOfFifths.orderedKeys : null,
 			selectedKey: report.circleOfFifths ? report.circleOfFifths.selectedKey : null
 		}));
+
+		attachChordEvents(options);
 	}
 
 	function renderExtendedHarmony(options) {
@@ -98,7 +102,7 @@
 		}));
 
 		initializeMultiAccordion($, $('#acordeonArmoniaExtendida'));
-		syncDashboardWorkspaceHeight($);
+		scheduleDashboardWorkspaceHeight($);
 	}
 
 	function initializeMultiAccordion($, accordion) {
@@ -138,20 +142,22 @@
 
 		header.toggleClass('ui-accordion-header-active ui-state-active', willOpen);
 		panel.stop(true, true).slideToggle(120, function () {
-			syncDashboardWorkspaceHeight($);
+			scheduleDashboardWorkspaceHeight($);
 		});
 	}
 
 	function attachChordEvents(options) {
 		var $ = options.$;
+		var eventScope = $('#notacion, #armoniaExtendida');
 
-		$('.celdaAcorde').mouseover(function () {
+		eventScope.off('.codaChordEvents');
+		eventScope.on('mouseenter.codaChordEvents', '.celdaAcorde', function () {
 			options.onChordMouseOver(this);
 		});
-		$('.celdaAcorde').mouseout(function () {
+		eventScope.on('mouseleave.codaChordEvents', '.celdaAcorde', function () {
 			options.onChordMouseOut();
 		});
-		$('.celdaAcorde').click(function () {
+		eventScope.on('click.codaChordEvents', '.celdaAcorde', function () {
 			options.onChordClick(this);
 		});
 	}
@@ -190,9 +196,45 @@
 			return;
 		}
 
-		$('#instrumento td.celdaNota span[data-midi-note]').off('click.codaInstrumentPlayback');
-		$('#instrumento td.celdaNota span[data-midi-note]').on('click.codaInstrumentPlayback', function () {
+		$('#instrumento').off('click.codaInstrumentPlayback');
+		$('#instrumento').on('click.codaInstrumentPlayback', 'td.celdaNota span[data-midi-note]', function () {
 			options.onInstrumentNoteClick(this);
+		});
+	}
+
+	function scheduleInstrumentScale($) {
+		if (pendingInstrumentScale) {
+			return;
+		}
+
+		pendingInstrumentScale = true;
+		nextFrame(function () {
+			pendingInstrumentScale = false;
+			syncInstrumentScale($);
+		});
+	}
+
+	function scheduleDashboardWorkspaceHeight($) {
+		if (pendingDashboardWorkspaceHeight) {
+			return;
+		}
+
+		pendingDashboardWorkspaceHeight = true;
+		nextFrame(function () {
+			pendingDashboardWorkspaceHeight = false;
+			syncDashboardWorkspaceHeight($);
+		});
+	}
+
+	function scheduleSidebarPanelViewport($) {
+		if (pendingSidebarPanelViewport) {
+			return;
+		}
+
+		pendingSidebarPanelViewport = true;
+		nextFrame(function () {
+			pendingSidebarPanelViewport = false;
+			syncSidebarPanelViewport($);
 		});
 	}
 
@@ -259,6 +301,14 @@
 		container.style.setProperty('--dashboard-sidebar-max-height', panelHeight + 'px');
 	}
 
+	function nextFrame(callback) {
+		var scheduler = global.requestAnimationFrame || function (scheduledCallback) {
+			return global.setTimeout(scheduledCallback, 16);
+		};
+
+		scheduler(callback);
+	}
+
 	function noteName(noteDefinition, preferFlats) {
 		if (preferFlats && noteDefinition.enarmonica !== undefined) {
 			return noteDefinition.enarmonica;
@@ -277,6 +327,9 @@
 		renderExtendedHarmony: renderExtendedHarmony,
 		renderInstrument: renderInstrument,
 		renderScaleReport: renderScaleReport,
+		scheduleDashboardWorkspaceHeight: scheduleDashboardWorkspaceHeight,
+		scheduleInstrumentScale: scheduleInstrumentScale,
+		scheduleSidebarPanelViewport: scheduleSidebarPanelViewport,
 		syncDashboardWorkspaceHeight: syncDashboardWorkspaceHeight,
 		syncInstrumentScale: syncInstrumentScale,
 		syncSidebarPanelViewport: syncSidebarPanelViewport,

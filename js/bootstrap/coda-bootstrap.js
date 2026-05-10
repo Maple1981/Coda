@@ -37,8 +37,6 @@
 			ui: options.ui
 		});
 
-		playbackService.load();
-
 		return {
 			chordPlayback: chordPlayback,
 			controller: controller,

@@ -59,6 +59,7 @@ Flujos mínimos a comprobar tras cambios de arquitectura o UI:
 - Navegar por el círculo de quintas.
 - Hacer hover/click en un acorde para resaltar/preescuchar.
 - Hacer click en notas del piano y del diapasón; comprobar que suena la altura real de la nota seleccionada.
+- Al recargar, comprobar que la página aparece sin esperar a la carga de soundfonts; el primer click de preescucha debe inicializar el playback.
 - Cambiar el selector de idioma entre español e inglés y comprobar que se actualizan cabecera, formulario, área de progresiones, textos de ayuda, novedades, tablas e instrumento.
 - Cambiar el selector de notación entre anglosajona y latina; comprobar que tónica, escala generada, acordes, instrumento y círculo de quintas cambian la representación visible de las notas.
 - Recargar la página y comprobar que la cookie `coda_preferences` conserva idioma y notación.

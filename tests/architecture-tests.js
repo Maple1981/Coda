@@ -47,6 +47,9 @@ assert.ok(global.CodaRenderers.instruments);
 assert.ok(global.CodaRenderers.circleOfFifths);
 assert.ok(global.CodaUi.renderScaleReport);
 assert.ok(global.CodaUi.attachInstrumentEvents);
+assert.ok(global.CodaUi.scheduleDashboardWorkspaceHeight);
+assert.ok(global.CodaUi.scheduleInstrumentScale);
+assert.ok(global.CodaUi.scheduleSidebarPanelViewport);
 assert.ok(global.CodaScaleReportController.initialize);
 assert.ok(global.CodaPlayback.create);
 assert.ok(global.CodaBootstrap.start);
@@ -116,7 +119,7 @@ const startResult = global.CodaBootstrap.start({
 assert.equal(startResult.controller.initialized, true);
 assert.ok(startResult.chordPlayback.playChordFromCellId);
 assert.ok(startResult.instrumentPlayback.playMidiNote);
-assert.equal(loadCalled, true);
+assert.equal(loadCalled, false);
 assert.equal(playbackOptions.notes, global.CodaData.notes);
 assert.equal(playbackOptions.channel, global.CodaData.midi.channel);
 assert.equal(playbackOptions.instrument, 'acoustic_grand_piano');
@@ -130,6 +133,34 @@ assert.equal(controllerOptions.notation, global.CodaNotation);
 assert.equal(controllerOptions.preferences, preferences);
 assert.equal(controllerOptions.renderers, global.CodaRenderers);
 assert.equal(controllerOptions.ui, global.CodaUi);
+
+let midiLoadOptions = null;
+let playedChord = null;
+let stoppedChord = null;
+const lazyPlayback = global.CodaPlayback.create({
+	channel: 0,
+	initialMidiNote: 60,
+	midi: {
+		loadPlugin: function (options) {
+			midiLoadOptions = options;
+		},
+		setVolume: function () {},
+		chordOn: function (channel, chord) {
+			playedChord = chord;
+		},
+		chordOff: function (channel, chord) {
+			stoppedChord = chord;
+		}
+	},
+	notes: global.CodaData.notes
+});
+
+lazyPlayback.playChordFromNames(['C', 'E', 'G']);
+assert.ok(midiLoadOptions);
+assert.equal(playedChord, null);
+midiLoadOptions.onsuccess();
+assert.deepEqual(playedChord, [60, 64, 67]);
+assert.deepEqual(stoppedChord, [60, 64, 67]);
 
 global.CodaData.scales.forEach(function (scale, index) {
 	assert.ok(global.CodaTranslations.es['data.scales.' + index] != null);

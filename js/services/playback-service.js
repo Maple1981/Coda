@@ -14,18 +14,36 @@
 		var velocity = defaultValue(options.velocity, 127);
 		var delay = defaultValue(options.delay, 0);
 		var initialMidiNote = defaultValue(options.initialMidiNote, 60);
+		var loading = false;
+		var readyCallbacks = [];
 		var ready = false;
 
-		function load() {
-			if (!midi || typeof midi.loadPlugin !== 'function') {
-				return;
+		function load(callback) {
+			if (ready) {
+				runCallback(callback);
+				return true;
 			}
 
+			if (typeof callback === 'function') {
+				readyCallbacks.push(callback);
+			}
+
+			if (loading) {
+				return true;
+			}
+
+			if (!midi || typeof midi.loadPlugin !== 'function') {
+				readyCallbacks = [];
+				return false;
+			}
+
+			loading = true;
 			midi.loadPlugin({
 				soundfontUrl: options.soundfontUrl || './soundfont/',
 				instrument: options.instrument || 'acoustic_grand_piano',
 				onprogress: options.onprogress || function () {},
 				onsuccess: function () {
+					loading = false;
 					ready = true;
 					if (typeof midi.setVolume === 'function') {
 						midi.setVolume(channel, velocity);
@@ -34,8 +52,12 @@
 					if (typeof options.onsuccess === 'function') {
 						options.onsuccess();
 					}
+
+					flushReadyCallbacks();
 				}
 			});
+
+			return true;
 		}
 
 		function noteNameToMidi(noteName, offset) {
@@ -59,7 +81,18 @@
 		function playChordFromNames(noteNames, playbackOptions) {
 			playbackOptions = playbackOptions || {};
 
-			if (!ready || !midi || typeof midi.chordOn !== 'function' || typeof midi.chordOff !== 'function') {
+			if (!midi) {
+				return;
+			}
+
+			if (!ready) {
+				load(function () {
+					playChordFromNames(noteNames, playbackOptions);
+				});
+				return;
+			}
+
+			if (typeof midi.chordOn !== 'function' || typeof midi.chordOff !== 'function') {
 				return;
 			}
 
@@ -74,7 +107,18 @@
 		function playMidiNote(midiNote, playbackOptions) {
 			playbackOptions = playbackOptions || {};
 
-			if (!ready || !midi || typeof midi.noteOn !== 'function' || typeof midi.noteOff !== 'function') {
+			if (!midi) {
+				return;
+			}
+
+			if (!ready) {
+				load(function () {
+					playMidiNote(midiNote, playbackOptions);
+				});
+				return;
+			}
+
+			if (typeof midi.noteOn !== 'function' || typeof midi.noteOff !== 'function') {
 				return;
 			}
 
@@ -91,10 +135,28 @@
 			midi.noteOff(channel, noteNumber, startDelay + duration);
 		}
 
+		function flushReadyCallbacks() {
+			var callbacks = readyCallbacks.slice();
+			readyCallbacks = [];
+
+			for (var i = 0; i < callbacks.length; i++) {
+				runCallback(callbacks[i]);
+			}
+		}
+
+		function runCallback(callback) {
+			if (typeof callback === 'function') {
+				callback();
+			}
+		}
+
 		return {
 			load: load,
 			isReady: function () {
 				return ready;
+			},
+			isLoading: function () {
+				return loading;
 			},
 			noteNameToMidi: noteNameToMidi,
 			chordNamesToMidi: chordNamesToMidi,

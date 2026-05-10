@@ -21,15 +21,15 @@
 			i18n.applyStatic($);
 		}
 		initializeChangelogDialog($, i18n);
-		options.ui.syncDashboardWorkspaceHeight($);
+		options.ui.scheduleDashboardWorkspaceHeight($);
 
 		$(window).on('resize', function () {
-			options.ui.syncSidebarPanelViewport($);
-			options.ui.syncInstrumentScale($);
-			options.ui.syncDashboardWorkspaceHeight($);
+			options.ui.scheduleSidebarPanelViewport($);
+			options.ui.scheduleInstrumentScale($);
+			options.ui.scheduleDashboardWorkspaceHeight($);
 		});
 		$(window).on('scroll', function () {
-			options.ui.syncSidebarPanelViewport($);
+			options.ui.scheduleSidebarPanelViewport($);
 		});
 
 		$('#btnEscala').click(function () {
@@ -71,8 +71,8 @@
 				renderReport();
 			}
 
-			options.ui.syncInstrumentScale($);
-			options.ui.syncDashboardWorkspaceHeight($);
+			options.ui.scheduleInstrumentScale($);
+			options.ui.scheduleDashboardWorkspaceHeight($);
 		});
 
 		$('#selectorNotacion').change(function () {
@@ -93,8 +93,8 @@
 				renderReport();
 			}
 
-			options.ui.syncInstrumentScale($);
-			options.ui.syncDashboardWorkspaceHeight($);
+			options.ui.scheduleInstrumentScale($);
+			options.ui.scheduleDashboardWorkspaceHeight($);
 		});
 
 		$(document).on('click', '.revamp', function (event) {
@@ -178,8 +178,8 @@
 				renderers: options.renderers,
 				report: report
 			});
-			options.ui.syncInstrumentScale($);
-			options.ui.syncDashboardWorkspaceHeight($);
+			options.ui.scheduleInstrumentScale($);
+			options.ui.scheduleDashboardWorkspaceHeight($);
 		}
 
 		return {
@@ -305,28 +305,17 @@
 
 	function highlightChord($) {
 		return function (element) {
-			var instrumentNoteCells = $('td.celdaNota span');
 			var noteNames = element.id.split('-');
 
 			for (var i = 0; i < noteNames.length; i++) {
-				for (var j = 0; j < instrumentNoteCells.length; j++) {
-					if ($(instrumentNoteCells[j]).html() === noteNames[i]) {
-						$(instrumentNoteCells[j]).addClass('resaltada');
-					} else if ($(instrumentNoteCells[j]).attr('data-note-name') === noteNames[i]) {
-						$(instrumentNoteCells[j]).addClass('resaltada');
-					}
-				}
+				$('td.celdaNota span[data-note-name="' + noteNames[i] + '"]').addClass('resaltada');
 			}
 		};
 	}
 
 	function clearChordHighlight($) {
 		return function () {
-			var instrumentNoteCells = $('td.celdaNota span');
-
-			for (var i = 0; i < instrumentNoteCells.length; i++) {
-				$(instrumentNoteCells[i]).removeClass('resaltada');
-			}
+			$('td.celdaNota span.resaltada').removeClass('resaltada');
 		};
 	}
 
