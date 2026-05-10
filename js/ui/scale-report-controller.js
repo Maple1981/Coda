@@ -17,14 +17,20 @@
 			language: i18n && i18n.getLanguage ? i18n.getLanguage() : 'es'
 		});
 		uiState.setNotationStyle(notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon');
+		var initialForm = resolveInitialForm(options.data, options.initialForm);
 
-		$('#interface input:radio[name="formato"][value="0"]').prop('checked', true);
-		$('#interface input:radio[name="instrumento"][value="1"]').prop('checked', true);
+		$('#interface input:radio[name="formato"][value="' + initialForm.format + '"]').prop('checked', true);
 		$('#selectorNotacion').val(uiState.getNotationStyle());
-		fillSelectHashTable($, $('#tonica'), options.data.notes, false, null, 'notes', notation, uiState.getNotationStyle());
+		fillSelectHashTable($, $('#tonica'), options.data.notes, initialForm.format === '1', null, 'notes', notation, uiState.getNotationStyle());
+		$('#tonica').val(String(initialForm.tonicIndex));
 		fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
-		setPlaybackInstrument(options, $('#interface input:radio[name="instrumento"]:checked').val());
-		keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
+		$('#escala').val(String(initialForm.scaleIndex));
+		fillInstrumentSelect($, $('#instrumentoSonoro'), options.data.midiInstruments, i18n);
+		$('#instrumentoSonoro').val(initialForm.midiInstrument);
+		setPlaybackInstrument(options, $('#instrumentoSonoro').val());
+		if (!hasInitialFormValue(options.initialForm, 'format')) {
+			keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
+		}
 		if (staticText) {
 			staticText.apply($, i18n);
 		}
@@ -54,8 +60,9 @@
 			renderReport();
 		});
 
-		$('#interface select').change(function () {
+		$('#tonica, #escala').change(function () {
 			keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
+			saveFormPreferences(preferences, $);
 
 			if (options.ui.hasRenderedResults($)) {
 				renderReport();
@@ -65,14 +72,16 @@
 		$('#interface input:radio[name="formato"]').change(function () {
 			var preferFlats = $(this).val() === '1';
 			fillSelectHashTable($, $('#tonica'), options.data.notes, preferFlats, null, 'notes', notation, uiState.getNotationStyle());
+			saveFormPreferences(preferences, $);
 
 			if (options.ui.hasRenderedResults($)) {
 				renderReport();
 			}
 		});
 
-		$('#interface input:radio[name="instrumento"]').change(function () {
+		$('#instrumentoSonoro').change(function () {
 			setPlaybackInstrument(options, $(this).val());
+			saveFormPreferences(preferences, $);
 
 			if (options.ui.hasRenderedResults($)) {
 				renderInstrument(true);
@@ -85,6 +94,7 @@
 				uiState.setLanguage(i18n.getLanguage());
 				savePreference(preferences, 'language', i18n.getLanguage());
 				fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
+				fillInstrumentSelect($, $('#instrumentoSonoro'), options.data.midiInstruments, i18n);
 				if (staticText) {
 					staticText.apply($, i18n);
 				}
@@ -123,6 +133,7 @@
 		$(document).on('click', '.revamp', function (event) {
 			keyNavigation.navigateToLinkedKey($, options.data.notes, event.target.id, notation, uiState.getNotationStyle(), fillSelectHashTable);
 			keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
+			saveFormPreferences(preferences, $);
 			renderReport();
 		});
 
@@ -139,7 +150,7 @@
 			var report;
 			uiState.setSelection(selection);
 			uiState.setMusicalContext(musicalContext);
-			setPlaybackInstrument(options, musicalContext.instrument);
+			setPlaybackInstrument(options, musicalContext.midiInstrument);
 
 			if (musicalContext.isScaleSeparator) {
 				uiState.clearReport();
@@ -181,7 +192,7 @@
 			var report = uiState.getReport();
 			uiState.setSelection(selection);
 			uiState.setMusicalContext(musicalContext);
-			setPlaybackInstrument(options, musicalContext.instrument);
+			setPlaybackInstrument(options, musicalContext.midiInstrument);
 
 			if (!report) {
 				return;
@@ -254,6 +265,26 @@
 		select.empty().append(html);
 	}
 
+	function fillInstrumentSelect($, select, instruments, i18n) {
+		var selectedValue = select.val();
+		var html = '';
+
+		for (var i = 0; i < instruments.length; i++) {
+			var name = i18n ? i18n.dataLabel('midiInstruments', i, instruments[i].nombre) : instruments[i].nombre;
+			var selected = instruments[i].id === selectedValue ? ' selected ' : '';
+
+			html += '<option value="';
+			html += instruments[i].id + '"' + selected + '>';
+			html += name + '</option>';
+		}
+
+		select.empty().append(html);
+
+		if (!select.val() && instruments.length) {
+			select.val(instruments[0].id);
+		}
+	}
+
 	function highlightChord($) {
 		return function (element) {
 			var noteNames = element.id.split('-');
@@ -297,6 +328,54 @@
 		}
 	}
 
+	function saveFormPreferences(preferences, $) {
+		if (!preferences) {
+			return;
+		}
+
+		preferences.setValue('tonicIndex', $('#tonica').val());
+		preferences.setValue('scaleIndex', $('#escala').val());
+		preferences.setValue('format', $('#interface input:radio[name="formato"]:checked').val());
+		preferences.setValue('midiInstrument', $('#instrumentoSonoro').val());
+	}
+
+	function resolveInitialForm(data, initialForm) {
+		initialForm = initialForm || {};
+
+		return {
+			format: initialForm.format === '1' ? '1' : '0',
+			midiInstrument: resolveInitialMidiInstrument(data, initialForm.midiInstrument),
+			scaleIndex: clampIndex(initialForm.scaleIndex, data && data.scales ? data.scales.length : 0, 0),
+			tonicIndex: clampIndex(initialForm.tonicIndex, data && data.notes ? data.notes.length : 0, 0)
+		};
+	}
+
+	function resolveInitialMidiInstrument(data, midiInstrument) {
+		var instruments = data && data.midiInstruments ? data.midiInstruments : [];
+
+		for (var i = 0; i < instruments.length; i++) {
+			if (instruments[i].id === midiInstrument) {
+				return midiInstrument;
+			}
+		}
+
+		return instruments.length ? instruments[0].id : '';
+	}
+
+	function clampIndex(value, length, fallback) {
+		var numericValue = parseInt(value, 10);
+
+		if (isNaN(numericValue) || numericValue < 0 || numericValue >= length) {
+			return fallback;
+		}
+
+		return numericValue;
+	}
+
+	function hasInitialFormValue(initialForm, key) {
+		return initialForm && initialForm[key] !== undefined && initialForm[key] !== null && initialForm[key] !== '';
+	}
+
 	function setPlaybackInstrument(options, selectedInstrument) {
 		var playbackInstrument = resolvePlaybackInstrument(options.data, selectedInstrument);
 
@@ -309,8 +388,14 @@
 		var instruments = data && data.midiInstruments ? data.midiInstruments : [];
 
 		for (var i = 0; i < instruments.length; i++) {
-			if (instruments[i].viewInstrument === selectedInstrument) {
+			if (instruments[i].id === selectedInstrument) {
 				return instruments[i];
+			}
+		}
+
+		for (var j = 0; j < instruments.length; j++) {
+			if (instruments[j].viewInstrument === selectedInstrument) {
+				return instruments[j];
 			}
 		}
 
@@ -319,8 +404,10 @@
 
 	global.CodaScaleReportController = {
 		clearChordHighlight: clearChordHighlight,
+		fillInstrumentSelect: fillInstrumentSelect,
 		fillSelectHashTable: fillSelectHashTable,
 		highlightChord: highlightChord,
+		resolveInitialForm: resolveInitialForm,
 		initialize: initialize,
 		playChord: playChord,
 		playInstrumentNote: playInstrumentNote,

@@ -111,7 +111,7 @@ Flujos mínimos a comprobar tras cambios de arquitectura o UI:
 
 - Generar `C Mayor`.
 - Ver tabla de acordes y armonía extendida.
-- Alternar guitarra y piano.
+- Cambiar el selector de instrumento entre piano, guitarra, órgano y cuerdas.
 - Cambiar formato sostenidos/bemoles.
 - Cambiar afinación de guitarra.
 - Navegar por el círculo de quintas.
@@ -120,4 +120,4 @@ Flujos mínimos a comprobar tras cambios de arquitectura o UI:
 - Al recargar, comprobar que la página aparece sin esperar a la carga de soundfonts; el primer click de preescucha debe inicializar el playback.
 - Cambiar el selector de idioma entre español e inglés y comprobar que se actualizan cabecera, formulario, área de progresiones, textos de ayuda, novedades, tablas e instrumento.
 - Cambiar el selector de notación entre anglosajona y latina; comprobar que tónica, escala generada, acordes, instrumento y círculo de quintas cambian la representación visible de las notas.
-- Recargar la página y comprobar que la cookie `coda_preferences` conserva idioma, notación y volumen maestro.
+- Recargar la página y comprobar que la cookie `coda_preferences` conserva idioma, notación, volumen maestro, tónica, escala, formato e instrumento sonoro.

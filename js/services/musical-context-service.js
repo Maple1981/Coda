@@ -12,6 +12,7 @@
 
 			return {
 				instrument: selection.instrument,
+				midiInstrument: selection.midiInstrument,
 				mode: scaleDefinition ? scaleDefinition.tonal : null,
 				preferFlats: selection.preferFlats,
 				scaleDefinition: scaleDefinition,

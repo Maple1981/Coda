@@ -344,7 +344,7 @@ assert.ok(html.indexOf('class="celdaAcorde" id="D-F#-A-C"') > -1);
 const changelogHtml = changelogRenderer.render(context.window.CodaChangelogContent.es);
 assert.ok(changelogHtml.indexOf('<h3>Novedades de la versión actual beta 0.5</h3>') > -1);
 assert.ok(changelogHtml.indexOf('<dt>Interfaz más directa</dt>') > -1);
-assert.ok(changelogHtml.indexOf('<dd>El piano pasa a ser el instrumento seleccionado por defecto') > -1);
+assert.ok(changelogHtml.indexOf('<dd>El formulario incorpora un selector de instrumento') > -1);
 assert.ok(changelogHtml.indexOf('<script>') === -1);
 
 const englishChangelogHtml = changelogRenderer.render(context.window.CodaChangelogContent.en);
@@ -354,7 +354,7 @@ assert.ok(englishChangelogHtml.indexOf('<dt>More direct interface</dt>') > -1);
 const welcomeHtml = welcomeRenderer.render(context.window.CodaWelcomeContent.es);
 assert.ok(welcomeHtml.indexOf('<article id="principal" class="columnata">') > -1);
 assert.ok(welcomeHtml.indexOf('<h2>Fundamentos</h2>') > -1);
-assert.ok(welcomeHtml.indexOf('piano o guitarra') > -1);
+assert.ok(welcomeHtml.indexOf('piano, guitarra clásica, órgano y cuerdas') > -1);
 
 const progressionWorkbenchHtml = progressionWorkbenchRenderer.render();
 assert.ok(progressionWorkbenchHtml.indexOf('class="progressionControls"') > -1);

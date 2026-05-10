@@ -37,6 +37,7 @@
 			family: 'organ',
 			program: 16,
 			usage: ['progressions'],
+			viewInstrument: '1',
 			sustained: true
 		},
 		{
@@ -45,6 +46,7 @@
 			family: 'strings',
 			program: 48,
 			usage: ['progressions'],
+			viewInstrument: '1',
 			sustained: true
 		}
 	];

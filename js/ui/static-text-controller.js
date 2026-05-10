@@ -29,8 +29,6 @@
 		setText($, i18n, 'span[data-i18n="form.sharps"]', 'form.sharps');
 		setText($, i18n, 'span[data-i18n="form.flats"]', 'form.flats');
 		setText($, i18n, 'span[data-i18n="form.instrument"]', 'form.instrument');
-		setText($, i18n, 'span[data-i18n="form.piano"]', 'form.piano');
-		setText($, i18n, 'span[data-i18n="form.guitar"]', 'form.guitar');
 		setValue($, i18n, '#btnEscala', 'form.submit');
 
 		ensureProgressionWorkbench($);
@@ -112,8 +110,9 @@
 		setAttribute($, i18n, '#enlaceNovedades', 'title', 'footer.newsTitle');
 		setText($, i18n, 'footer a[href="https://github.com/Maple1981/Coda"]', 'footer.github');
 		setAttribute($, i18n, 'footer a[href="https://creativecommons.org/licenses/by-sa/4.0/"]', 'title', 'footer.licenseTitle');
-		setHtml($, i18n, 'footer p:eq(5)', 'footer.beta');
-		setHtml($, i18n, 'footer p:eq(6)', 'footer.contact');
+		setHtml($, i18n, '#creditosSoundfonts', 'footer.soundfonts');
+		setHtml($, i18n, '#estadoBeta', 'footer.beta');
+		setHtml($, i18n, '#contactoAutor', 'footer.contact');
 	}
 
 	global.CodaStaticText = {

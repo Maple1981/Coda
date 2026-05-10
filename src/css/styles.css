@@ -396,6 +396,10 @@ fieldset h3 {
   width: min(100%, 16.5em);
 }
 
+#interface select#instrumentoSonoro {
+  width: min(100%, 12.5em);
+}
+
 #interface input[type="radio"] {
   accent-color: #a622ae;
 }
@@ -417,6 +421,12 @@ span.opcion {
       -ms-flex-align: center;
           align-items: center;
   gap: .45em;
+}
+
+span.opcionInstrumento {
+  -ms-flex-wrap: nowrap;
+      flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 input[type="text"],

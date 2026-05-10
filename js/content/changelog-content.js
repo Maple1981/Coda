@@ -10,7 +10,7 @@
 					{
 						term: 'Interfaz más directa',
 						descriptions: [
-							'El piano pasa a ser el instrumento seleccionado por defecto y aparece antes que la guitarra en el formulario.'
+							'El formulario incorpora un selector de instrumento con piano, guitarra clásica, órgano y cuerdas; cada opción utiliza su propio sonido.'
 						]
 					},
 					{
@@ -156,7 +156,7 @@
 					{
 						term: 'More direct interface',
 						descriptions: [
-							'Piano is now the default instrument and appears before guitar in the form.'
+							'The form now includes an instrument selector with piano, classical guitar, organ and strings; each option uses its own sound.'
 						]
 					},
 					{

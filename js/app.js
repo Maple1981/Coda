@@ -23,6 +23,12 @@ $(document).ready(function () {
 		i18n: i18n,
 		changelogDialog: CodaChangelogDialog,
 		keyNavigation: CodaKeyNavigation,
+		initialForm: {
+			format: storedPreferences.format,
+			midiInstrument: storedPreferences.midiInstrument,
+			scaleIndex: storedPreferences.scaleIndex,
+			tonicIndex: storedPreferences.tonicIndex
+		},
 		initialNotation: storedPreferences.notation,
 		initialVolume: storedPreferences.volume,
 		musicalContextFactory: CodaMusicalContext,

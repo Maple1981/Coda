@@ -106,12 +106,16 @@ assert.equal(indexHtml.indexOf('Novedades de la versión actual beta 0.5'), -1);
 assert.ok(indexHtml.indexOf('<section id="controlVersiones" aria-live="polite"></section>') > -1);
 assert.ok(indexHtml.indexOf('<section id="constructorProgresiones" class="progression-workbench"></section>') > -1);
 assert.ok(indexHtml.indexOf('<section id="bienvenida"></section>') > -1);
+assert.ok(indexHtml.indexOf('<select id="instrumentoSonoro"></select>') > -1);
+assert.equal(indexHtml.indexOf('name="instrumento"'), -1);
 assert.equal(indexHtml.indexOf('<strong>estudiantes</strong>'), -1);
 assert.equal(indexHtml.indexOf('Imaj7'), -1);
 assert.equal(global.CodaTranslations.es['changelog.html'], undefined);
 assert.equal(global.CodaTranslations.en['changelog.html'], undefined);
 assert.equal(global.CodaTranslations.es['welcome.main1'], undefined);
 assert.equal(global.CodaTranslations.en['welcome.main1'], undefined);
+assert.ok(global.CodaTranslations.es['footer.soundfonts'].indexOf('MIDI.js Soundfonts') > -1);
+assert.ok(global.CodaTranslations.en['footer.soundfonts'].indexOf('Creative Commons Attribution 3.0') > -1);
 
 let controllerOptions;
 const i18n = global.CodaI18n.create({
@@ -138,6 +142,12 @@ const startResult = global.CodaBootstrap.start({
 	data: global.CodaData,
 	domain: global.CodaDomain,
 	i18n: i18n,
+	initialForm: {
+		format: '1',
+		midiInstrument: 'string_ensemble_1',
+		scaleIndex: '2',
+		tonicIndex: '5'
+	},
 	initialNotation: 'latin',
 	initialVolume: 73,
 	midi: { plugin: {} },
@@ -178,6 +188,12 @@ assert.equal(controllerOptions.changelogDialog.initialize != null, true);
 assert.equal(controllerOptions.chordPlayback, startResult.chordPlayback);
 assert.equal(controllerOptions.domain, global.CodaDomain);
 assert.equal(controllerOptions.i18n, i18n);
+assert.deepEqual(controllerOptions.initialForm, {
+	format: '1',
+	midiInstrument: 'string_ensemble_1',
+	scaleIndex: '2',
+	tonicIndex: '5'
+});
 assert.equal(controllerOptions.initialNotation, 'latin');
 assert.equal(controllerOptions.initialVolume, 73);
 assert.equal(controllerOptions.instrumentPlayback, startResult.instrumentPlayback);
@@ -260,6 +276,30 @@ assert.equal(playedChord, null);
 midiLoadOptions.onsuccess();
 assert.equal(selectedProgram, 24);
 assert.deepEqual(playedChord, [60, 64, 67]);
+assert.equal(global.CodaScaleReportController.resolvePlaybackInstrument(global.CodaData, 'string_ensemble_1').viewInstrument, '1');
+assert.equal(global.CodaScaleReportController.resolvePlaybackInstrument(global.CodaData, '0').id, 'acoustic_guitar_nylon');
+assert.deepEqual(global.CodaScaleReportController.resolveInitialForm(global.CodaData, {
+	format: '1',
+	midiInstrument: 'drawbar_organ',
+	scaleIndex: '3',
+	tonicIndex: '8'
+}), {
+	format: '1',
+	midiInstrument: 'drawbar_organ',
+	scaleIndex: 3,
+	tonicIndex: 8
+});
+assert.deepEqual(global.CodaScaleReportController.resolveInitialForm(global.CodaData, {
+	format: '9',
+	midiInstrument: 'missing',
+	scaleIndex: '999',
+	tonicIndex: '-1'
+}), {
+	format: '0',
+	midiInstrument: 'acoustic_grand_piano',
+	scaleIndex: 0,
+	tonicIndex: 0
+});
 
 let sliderValue = '100';
 let volumeInputHandler = null;
@@ -340,5 +380,11 @@ assert.equal(englishI18n.dataLabel('scales', 0, 'Mayor'), 'Major');
 assert.equal(englishI18n.dataLabel('tunings', 0, 'Estándar E'), 'Standard E');
 assert.equal(global.CodaNotation.formatChordName('F#m7', 'latin'), 'Fa♯m7');
 assert.equal(global.CodaNotation.formatNoteSequence('D-F#-A-C', 'latin'), 'Re-Fa♯-La-Do');
+
+global.CodaData.midiInstruments.forEach(function (instrument, index) {
+	assert.ok(global.CodaTranslations.es['data.midiInstruments.' + index] != null);
+	assert.ok(global.CodaTranslations.en['data.midiInstruments.' + index] != null);
+});
+assert.equal(englishI18n.dataLabel('midiInstruments', 1, 'Guitarra clásica'), 'Classical guitar');
 
 console.log('Architecture tests passed');

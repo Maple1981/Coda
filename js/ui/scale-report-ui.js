@@ -13,15 +13,30 @@
 		var tonicIndex = parseInt($('select#tonica option:selected').val(), 10);
 		var scaleDefinition = data && data.scales ? data.scales[scaleIndex] : null;
 		var tonicDefinition = data && data.notes ? data.notes[tonicIndex] : null;
+		var midiInstrument = $('#instrumentoSonoro').val();
+		var midiInstrumentDefinition = findMidiInstrument(data, midiInstrument);
 
 		return {
-			instrument: $('#interface input:radio[name="instrumento"]:checked').val(),
+			instrument: midiInstrumentDefinition ? midiInstrumentDefinition.viewInstrument : '1',
+			midiInstrument: midiInstrument,
 			preferFlats: preferFlats,
 			scaleIndex: scaleIndex,
 			scaleName: scaleDefinition ? scaleDefinition.nombre : $('select#escala option:selected').text(),
 			tonicIndex: tonicIndex,
 			tonicName: tonicDefinition ? noteName(tonicDefinition, preferFlats) : $('select#tonica option:selected').text()
 		};
+	}
+
+	function findMidiInstrument(data, instrumentId) {
+		var instruments = data && data.midiInstruments ? data.midiInstruments : [];
+
+		for (var i = 0; i < instruments.length; i++) {
+			if (instruments[i].id === instrumentId) {
+				return instruments[i];
+			}
+		}
+
+		return instruments.length ? instruments[0] : null;
 	}
 
 	function hasRenderedResults($) {

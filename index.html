@@ -182,25 +182,9 @@
                 ><span data-i18n="form.flats">♭</span>
                 <input name="formato" id="bemoles" value="1" type="radio"
               /></label>
-              <span class="opcion"
+              <span class="opcion opcionInstrumento"
                 ><span data-i18n="form.instrument">Instrumento</span>
-                <label
-                  ><span data-i18n="form.piano">Piano</span>
-                  <input
-                    name="instrumento"
-                    id="piano"
-                    value="1"
-                    checked="checked"
-                    type="radio"
-                /></label>
-                <label
-                  ><span data-i18n="form.guitar">Guitarra</span>
-                  <input
-                    name="instrumento"
-                    id="guitarra"
-                    value="0"
-                    type="radio"
-                /></label>
+                <select id="instrumentoSonoro"></select>
               </span>
             </p>
             <input
@@ -257,11 +241,29 @@
             Creative Commons by-sa 4.0 International
           </a>
         </p>
-        <p>
+        <p id="creditosSoundfonts">
+          Instrumentos de audio basados en
+          <a
+            href="https://github.com/gleitz/midi-js-soundfonts"
+            title="Ver proyecto MIDI.js Soundfonts en GitHub"
+            target="_blank"
+            rel="noopener noreferrer"
+            >MIDI.js Soundfonts</a
+          >,
+          banco FluidR3_GM con licencia
+          <a
+            href="https://creativecommons.org/licenses/by/3.0/"
+            title="Licencia Creative Commons Attribution 3.0"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Creative Commons Attribution 3.0</a
+          >.
+        </p>
+        <p id="estadoBeta">
           <strong>CODA está en fase beta</strong>. Puede contener errores. Por
           favor, todavía no te tomes la aplicación demasiado en serio.
         </p>
-        <p>
+        <p id="contactoAutor">
           Si tienes algún consejo, idea de mejora o crítica furibunda, puedes
           contactar conmigo a través de
           <a
