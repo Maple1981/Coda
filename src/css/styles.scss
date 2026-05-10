@@ -12,6 +12,7 @@ $elysium_blue: #c5f6ff;
 $coral_blue:rgba(0, 212, 255, 1);
 $ghast_black:rgba(0, 0, 0, 0.5);
 $squid_purple:#a622ae;
+$squid_bright_purple:#d85ee0;
 $tinticole_purple:#711477;
 $brujah_red: #ca4a4a;
 $rusty_orange: #c46f00;
@@ -25,6 +26,7 @@ $corporative_main_color: $gelatinouscube_green;
 $corporative_mainbright_color: $pasto_green;
 $corporative_secondary_color: $elysium_blue;
 $corporative_complementary_color: $squid_purple;
+$corporative_complementarybright_color: $squid_bright_purple;
 $corporative_complementarydark_color: $squid_purple;
 $corporative_tertiary_color: $rusty_orange;
 $link_color: $coral_blue;
@@ -414,6 +416,12 @@ section#notacion{
 
 	h3{
 		width:100%;
+		margin-top:.85em;
+	}
+
+	ul.notasEscala + h4{
+		margin-top:1.05em;
+		margin-bottom:.15em;
 	}
 
 	ul{
@@ -450,7 +458,7 @@ section#notacion{
 	}
 	
 	table.acordesEscala{
-		margin-top:34px;
+		margin-top:.15em;
 	}
 
 	div.leyendaAcordesModales{
@@ -513,7 +521,7 @@ span.secundaria, li.secundaria{
 
 section table tr td.celdaAcorde{
 	cursor:pointer; 
-	color:$corporative_complementary_color;
+	color:$corporative_complementarybright_color;
 }
 
 .cadencial{
@@ -699,7 +707,11 @@ div.circulo.actual {
 }
 
 section#armoniaExtendida table{
-	margin-bottom:20px;
+	margin-bottom:14px;
+}
+
+section#armoniaExtendida #acordeonArmoniaExtendida .ui-accordion-content{
+	padding:.7em .65em .9em .65em;
 }
 
 section#bienvenida{

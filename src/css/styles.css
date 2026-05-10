@@ -428,6 +428,12 @@ section#notacion {
 
 section#notacion h3 {
   width: 100%;
+  margin-top: .85em;
+}
+
+section#notacion ul.notasEscala + h4 {
+  margin-top: 1.05em;
+  margin-bottom: .15em;
 }
 
 section#notacion ul {
@@ -464,7 +470,7 @@ section#notacion table tr td span.cadencial {
 }
 
 section#notacion table.acordesEscala {
-  margin-top: 34px;
+  margin-top: .15em;
 }
 
 section#notacion div.leyendaAcordesModales {
@@ -528,7 +534,7 @@ span.secundaria, li.secundaria {
 
 section table tr td.celdaAcorde {
   cursor: pointer;
-  color: #a622ae;
+  color: #d85ee0;
 }
 
 .cadencial {
@@ -718,7 +724,11 @@ div.circulo.actual {
 }
 
 section#armoniaExtendida table {
-  margin-bottom: 20px;
+  margin-bottom: 14px;
+}
+
+section#armoniaExtendida #acordeonArmoniaExtendida .ui-accordion-content {
+  padding: .7em .65em .9em .65em;
 }
 
 section#bienvenida {
