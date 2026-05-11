@@ -126,20 +126,27 @@
 	function initializeMultiAccordion($, accordion) {
 		var headers = accordion.children('h3');
 
-		accordion.addClass('ui-accordion ui-widget ui-helper-reset');
+		accordion.addClass('codaAccordion');
 
 		headers.each(function (index) {
 			var header = $(this);
 			var panel = header.next('div');
 			var isOpen = index === 0;
+			var panelId = panel.attr('id') || 'acordeonArmoniaExtendidaPanel' + index;
 
 			header
-				.addClass('ui-accordion-header ui-corner-top ui-state-default')
-				.toggleClass('ui-accordion-header-active ui-state-active', isOpen)
-				.attr('tabindex', '0');
+				.addClass('codaAccordionHeader')
+				.toggleClass('codaAccordionHeaderActive', isOpen)
+				.attr('tabindex', '0')
+				.attr('role', 'button')
+				.attr('aria-controls', panelId)
+				.attr('aria-expanded', isOpen ? 'true' : 'false');
 
 			panel
-				.addClass('ui-accordion-content ui-corner-bottom ui-helper-reset ui-widget-content')
+				.attr('id', panelId)
+				.attr('role', 'region')
+				.attr('aria-hidden', isOpen ? 'false' : 'true')
+				.addClass('codaAccordionPanel')
 				.toggle(isOpen);
 		});
 
@@ -158,10 +165,11 @@
 		var panel = header.next('div');
 		var willOpen = !panel.is(':visible');
 
-		header.toggleClass('ui-accordion-header-active ui-state-active', willOpen);
-		panel.stop(true, true).slideToggle(120, function () {
-			scheduleDashboardWorkspaceHeight($);
-		});
+		header
+			.toggleClass('codaAccordionHeaderActive', willOpen)
+			.attr('aria-expanded', willOpen ? 'true' : 'false');
+		panel.attr('aria-hidden', willOpen ? 'false' : 'true');
+		panel.stop(true, true).slideToggle(120);
 	}
 
 	function attachChordEvents(options) {

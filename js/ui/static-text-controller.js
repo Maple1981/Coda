@@ -108,8 +108,8 @@
 			$('#controlVersiones').html(global.CodaRenderers.changelog.render(articles));
 		}
 
-		if (typeof $('#controlVersiones').dialog === 'function' && $('#controlVersiones').hasClass('ui-dialog-content')) {
-			$('#controlVersiones').dialog('option', 'title', i18n.t('changelog.dialogTitle'));
+		if (global.CodaChangelogDialog && typeof global.CodaChangelogDialog.updateTitle === 'function') {
+			global.CodaChangelogDialog.updateTitle($, i18n);
 		}
 	}
 

@@ -6,6 +6,7 @@
 	global.CodaTranslations = {
 		es: {
 			'app.subtitle': 'Generador matemático de escalas, acordes y progresiones',
+			'changelog.close': 'Cerrar novedades',
 			'changelog.dialogTitle': 'Novedades y mejoras',
 			'data.scales.0': 'Mayor',
 			'data.scales.1': 'Mayor artificial',
@@ -151,6 +152,7 @@
 		},
 		en: {
 			'app.subtitle': 'Mathematical scale, chord and progression generator',
+			'changelog.close': 'Close news and improvements',
 			'changelog.dialogTitle': 'News and improvements',
 			'data.scales.0': 'Major',
 			'data.scales.1': 'Artificial major',
