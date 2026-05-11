@@ -1,0 +1,57 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  pages: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare public site
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf .pages
+          mkdir -p .pages
+
+          cp index.html .pages/
+          cp favicon.ico .pages/
+          cp -R dist img js soundfont .pages/
+          touch .pages/.nojekyll
+
+          test ! -e .pages/Docs
+          test ! -e .pages/docs
+          test ! -e .pages/tests
+          test ! -e .pages/tools
+          test ! -e .pages/AGENTS.md
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .pages
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
