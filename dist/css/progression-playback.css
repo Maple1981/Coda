@@ -1,0 +1,24 @@
+.measure.isPlaying {
+  border-color: #d85ee0;
+  box-shadow: 0 0 0 2px rgba(216, 94, 224, 0.28), inset 0 0 18px rgba(166, 34, 174, 0.35);
+}
+
+.measure.isPlaying strong {
+  color: #d85ee0;
+}
+
+.transportButton.isPlaying {
+  background: #00ff95;
+  color: #111;
+  box-shadow: inset 0 0 15px 0 rgba(0, 0, 0, 0.5);
+  outline: none;
+}
+
+body[data-theme="day"] .measure.isPlaying {
+  border-color: #7d2785;
+  box-shadow: 0 0 0 2px rgba(125, 39, 133, 0.2), inset 0 0 18px rgba(125, 39, 133, 0.16);
+}
+
+body[data-theme="day"] .measure.isPlaying strong {
+  color: #7d2785;
+}

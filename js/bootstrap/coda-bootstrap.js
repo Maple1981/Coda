@@ -24,6 +24,9 @@
 		var instrumentPlayback = options.application.createInstrumentPlayback({
 			playbackService: playbackService
 		});
+		var progressionPlayback = options.application.createProgressionPlayback ? options.application.createProgressionPlayback({
+			playbackService: playbackService
+		}) : null;
 		var uiStateFactory = options.uiStateFactory || global.CodaUiState;
 		var musicalContextFactory = options.musicalContextFactory || global.CodaMusicalContext;
 		var uiState = uiStateFactory.create({
@@ -50,7 +53,9 @@
 			notation: options.notation,
 			preferences: options.preferences,
 			playbackService: playbackService,
+			progressionPlayback: progressionPlayback,
 			progressionState: options.progressionState || global.CodaProgressionState,
+			progressionTransport: options.progressionTransport || global.CodaProgressionTransport,
 			randomSelectControl: options.randomSelectControl || global.CodaRandomSelect,
 			renderers: options.renderers,
 			staticText: options.staticText || global.CodaStaticText,
@@ -65,6 +70,7 @@
 			controller: controller,
 			instrumentPlayback: instrumentPlayback,
 			playbackService: playbackService,
+			progressionPlayback: progressionPlayback,
 			uiState: uiState
 		};
 	}

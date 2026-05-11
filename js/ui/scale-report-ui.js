@@ -106,6 +106,16 @@
 		attachChordEvents(options);
 	}
 
+	function renderProgression(options) {
+		var timeline = query('.progressionTimeline');
+
+		if (!timeline || !options.renderers || !options.renderers.progressionWorkbench) {
+			return;
+		}
+
+		timeline.innerHTML = options.renderers.progressionWorkbench.renderTimelineMeasures(options.progression);
+	}
+
 	function renderExtendedHarmony(options) {
 		var report = options.report;
 
@@ -495,6 +505,7 @@
 		readSelection: readSelection,
 		renderExtendedHarmony: renderExtendedHarmony,
 		renderInstrument: renderInstrument,
+		renderProgression: renderProgression,
 		renderScaleReport: renderScaleReport,
 		scheduleDashboardWorkspaceHeight: scheduleDashboardWorkspaceHeight,
 		scheduleInstrumentScale: scheduleInstrumentScale,

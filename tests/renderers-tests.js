@@ -370,10 +370,25 @@ assert.ok(progressionWorkbenchHtml.indexOf('id="progressionVoices" type="number"
 assert.ok(progressionWorkbenchHtml.indexOf('data-random-control-target="#progressionCounterpoint"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-random-group="global"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.articulation.sustain"') > -1);
-assert.ok(progressionWorkbenchHtml.indexOf('class="transportButton transportButton--listen"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('class="transportButton transportButton--listen" aria-pressed="false"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('play_arrow') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('class="transportButton transportButton--export"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('ios_share') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<strong>Imaj7</strong>') > -1);
+
+const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
+	measures: [
+		{
+			bar: 1,
+			chordName: 'Cmaj7'
+		},
+		{
+			bar: 2,
+			chordName: 'Fmaj7'
+		}
+	]
+});
+assert.ok(renderedProgressionTimeline.indexOf('data-progression-bar="1"') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('<strong>Cmaj7</strong>') > -1);
 
 console.log('Renderer tests passed');

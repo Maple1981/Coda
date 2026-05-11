@@ -53,6 +53,7 @@ context.window.document = document;
 
 const rendered = {
 	instrument: 0,
+	progression: 0,
 	scaleReport: 0
 };
 const playbackInstruments = [];
@@ -97,6 +98,7 @@ const initialProgression = initialized.uiState.getProgression();
 
 assert.equal(rendered.scaleReport, 1);
 assert.equal(rendered.instrument, 1);
+assert.equal(rendered.progression, 1);
 assert.equal(playbackInstruments[playbackInstruments.length - 1], 'acoustic_grand_piano');
 assert.deepEqual(initialState, {
 	articulation: 'sustain',
@@ -141,6 +143,7 @@ assert.equal(changedProgression.bars, 4);
 assert.equal(changedProgression.meter, '3/4');
 assert.equal(changedProgression.totalBeats, 12);
 assert.equal(changedProgression.totalSeconds, 6);
+assert.equal(rendered.progression, 2);
 assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.degree; }), ['I', 'IVJ', 'VJ', 'I']);
 assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'Fmaj7', 'G7', 'Cmaj7']);
 assert.deepEqual(changedProgression.measures[1], {
@@ -195,6 +198,9 @@ function createFakeUi(fakeDocument, renderedCounter) {
 		},
 		renderInstrument: function () {
 			renderedCounter.instrument += 1;
+		},
+		renderProgression: function () {
+			renderedCounter.progression += 1;
 		},
 		renderScaleReport: function () {
 			renderedCounter.scaleReport += 1;

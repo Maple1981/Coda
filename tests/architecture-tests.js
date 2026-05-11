@@ -52,6 +52,8 @@ assert.ok(global.CodaApplication.playChordFromCellId);
 assert.ok(global.CodaApplication.playMidiNote);
 assert.ok(global.CodaApplication.buildProgressionFromDegrees);
 assert.ok(global.CodaApplication.buildProgressionFromState);
+assert.ok(global.CodaApplication.buildProgressionPlaybackSchedule);
+assert.ok(global.CodaApplication.createProgressionPlayback);
 assert.ok(global.CodaRenderers.scaleSummary);
 assert.ok(global.CodaRenderers.scaleChords);
 assert.ok(global.CodaRenderers.extendedHarmony);
@@ -67,9 +69,11 @@ assert.ok(global.CodaVolumeControl.initialize);
 assert.ok(global.CodaThemeControl.initialize);
 assert.ok(global.CodaRandomSelect.initialize);
 assert.ok(global.CodaRandomSelect.randomizeAllAssociatedControls);
+assert.ok(global.CodaProgressionTransport.initialize);
 assert.ok(global.CodaKeyNavigation.applyRecommendedNotation);
 assert.ok(global.CodaChangelogDialog.initialize);
 assert.ok(global.CodaUi.renderScaleReport);
+assert.ok(global.CodaUi.renderProgression);
 assert.ok(global.CodaUi.attachInstrumentEvents);
 assert.ok(global.CodaUi.scheduleDashboardWorkspaceHeight);
 assert.ok(global.CodaUi.scheduleInstrumentScale);
@@ -95,8 +99,10 @@ assert.ok(manifestScripts.indexOf('js/ui/theme-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/random-select-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/key-navigation-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/changelog-dialog-controller.js') > -1);
+assert.ok(manifestScripts.indexOf('js/ui/progression-transport-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/domain/progression-domain.js') > -1);
 assert.ok(manifestScripts.indexOf('js/application/progression-application.js') > -1);
+assert.ok(manifestScripts.indexOf('js/application/progression-playback-application.js') > -1);
 assert.ok(manifestScripts.indexOf('js/i18n/translations.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/data-index-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/i18n/i18n-service.js') > -1);
@@ -262,6 +268,7 @@ const startResult = global.CodaBootstrap.start({
 assert.equal(startResult.controller.initialized, true);
 assert.ok(startResult.chordPlayback.playChordFromCellId);
 assert.ok(startResult.instrumentPlayback.playMidiNote);
+assert.ok(startResult.progressionPlayback.play);
 assert.equal(loadCalled, false);
 assert.equal(playbackOptions.notes, global.CodaData.notes);
 assert.equal(global.CodaData.indexes.notes.indexByName['F#'], 6);
@@ -289,7 +296,9 @@ assert.equal(controllerOptions.keyNavigation, global.CodaKeyNavigation);
 assert.ok(controllerOptions.musicalContext.fromSelection);
 assert.equal(controllerOptions.notation, global.CodaNotation);
 assert.equal(controllerOptions.playbackService, startResult.playbackService);
+assert.equal(controllerOptions.progressionPlayback, startResult.progressionPlayback);
 assert.equal(controllerOptions.progressionState, global.CodaProgressionState);
+assert.equal(controllerOptions.progressionTransport, global.CodaProgressionTransport);
 assert.equal(controllerOptions.randomSelectControl, global.CodaRandomSelect);
 assert.equal(controllerOptions.preferences, preferences);
 assert.equal(controllerOptions.renderers, global.CodaRenderers);
@@ -316,6 +325,7 @@ let stoppedChord = null;
 let volumeVelocity = null;
 let chordVelocity = null;
 let selectedProgram = null;
+let stoppedAllNotes = false;
 const lazyPlayback = global.CodaPlayback.create({
 	channel: 0,
 	initialMidiNote: 60,
@@ -335,6 +345,9 @@ const lazyPlayback = global.CodaPlayback.create({
 		},
 		chordOff: function (channel, chord) {
 			stoppedChord = chord;
+		},
+		stopAllNotes: function () {
+			stoppedAllNotes = true;
 		}
 	},
 	instruments: global.CodaData.midiInstruments,
@@ -368,6 +381,8 @@ assert.equal(playedChord, null);
 midiLoadOptions.onsuccess();
 assert.equal(selectedProgram, 24);
 assert.deepEqual(playedChord, [60, 64, 67]);
+lazyPlayback.stopAllNotes();
+assert.equal(stoppedAllNotes, true);
 assert.equal(global.CodaScaleReportController.resolvePlaybackInstrument(global.CodaData, 'string_ensemble_1').viewInstrument, '1');
 assert.equal(global.CodaScaleReportController.resolvePlaybackInstrument(global.CodaData, '0').id, 'acoustic_guitar_nylon');
 assert.equal(global.CodaThemeControl.normalizeTheme('day'), 'day');

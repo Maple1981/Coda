@@ -10,6 +10,8 @@
 		});
 		var notation = options.notation;
 		var preferences = options.preferences;
+		var progressionTransport = options.progressionTransport || global.CodaProgressionTransport;
+		var progressionTransportController = null;
 		var progressionState = options.progressionState || global.CodaProgressionState;
 		var staticText = options.staticText || global.CodaStaticText;
 		var uiState = options.uiState || global.CodaUiState.create({
@@ -60,6 +62,7 @@
 		}
 		syncProgressionState();
 		bindProgressionState();
+		bindProgressionTransport();
 		updateCollapsiblePanelStates(i18n);
 		options.ui.scheduleDashboardWorkspaceHeight();
 
@@ -283,6 +286,18 @@
 			controls.addEventListener('change', syncProgressionState);
 		}
 
+		function bindProgressionTransport() {
+			if (progressionTransport && typeof progressionTransport.initialize === 'function') {
+				progressionTransportController = progressionTransport.initialize({
+					application: options.application,
+					data: options.data,
+					i18n: i18n,
+					progressionPlayback: options.progressionPlayback,
+					uiState: uiState
+				});
+			}
+		}
+
 		function syncProgressionState() {
 			if (progressionState && typeof progressionState.readFromControls === 'function') {
 				uiState.setProgressionState(progressionState.readFromControls(global.document));
@@ -302,6 +317,15 @@
 					progressionState: uiState.getProgressionState(),
 					report: uiState.getReport()
 				}));
+				if (progressionTransportController && typeof progressionTransportController.stop === 'function') {
+					progressionTransportController.stop();
+				}
+				if (options.ui && typeof options.ui.renderProgression === 'function') {
+					options.ui.renderProgression({
+						progression: uiState.getProgression(),
+						renderers: options.renderers
+					});
+				}
 			}
 		}
 

@@ -945,6 +945,15 @@ section#bienvenida .columnata article{
 	font-size:1.25em;
 }
 
+.measure.isPlaying{
+	border-color:$corporative_complementarybright_color;
+	box-shadow:0 0 0 2px rgba(216, 94, 224, .28), inset 0 0 18px rgba(166, 34, 174, .35);
+}
+
+.measure.isPlaying strong{
+	color:$corporative_complementarybright_color;
+}
+
 .transportControls{
 	display:flex;
 	flex-wrap:wrap;
@@ -967,7 +976,8 @@ section#bienvenida .columnata article{
 }
 
 .transportButton:hover,
-.transportButton:focus{
+.transportButton:focus,
+.transportButton.isPlaying{
 	background:$corporative_main_color;
 	color:$basic_fill_color;
 	box-shadow:inset 0px 0px 15px 0px $shadow_color2;

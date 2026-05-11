@@ -16,7 +16,7 @@
 		html += '</div>';
 		html += renderTimeline();
 		html += '<div class="transportControls">';
-		html += '<button type="button" class="transportButton transportButton--listen"><span class="material-icons" aria-hidden="true">play_arrow</span><span data-i18n="progression.listen"></span></button>';
+		html += '<button type="button" class="transportButton transportButton--listen" aria-pressed="false"><span class="material-icons" aria-hidden="true">play_arrow</span><span data-i18n="progression.listen"></span></button>';
 		html += '<button type="button" class="transportButton transportButton--export"><span class="material-icons" aria-hidden="true">ios_share</span><span data-i18n="progression.exportMidi"></span></button>';
 		html += '</div>';
 
@@ -68,17 +68,50 @@
 		return '<button class="randomSelectButton randomControlButton" type="button" data-random-control-target="' + targetSelector + '" data-random-group="global" data-random-i18n-key="randomSelect.label"><span class="material-icons" aria-hidden="true">casino</span></button>';
 	}
 
-	function renderTimeline() {
-		var measures = ['Imaj7', 'vi7', 'ii7', 'V7', 'Imaj7', 'IVmaj7', 'V7sus4', 'Imaj9'];
+	function renderTimeline(progression) {
 		var html = '<div class="progressionTimeline" aria-label="">';
 
-		for (var i = 0; i < measures.length; i++) {
-			html += '<div class="measure"><span>' + (i + 1) + '</span><strong>' + measures[i] + '</strong></div>';
-		}
-
+		html += renderTimelineMeasures(progression);
 		html += '</div>';
 
 		return html;
+	}
+
+	function renderTimelineMeasures(progression) {
+		var progressionMeasures = progression && progression.measures ? progression.measures : null;
+		var measures = progressionMeasures || fallbackMeasures();
+		var html = '';
+
+		for (var i = 0; i < measures.length; i++) {
+			html += renderMeasure(measures[i], i);
+		}
+
+		return html;
+	}
+
+	function renderMeasure(measure, index) {
+		var bar = measure.bar || index + 1;
+		var label = measure.chordName || measure.label || '';
+
+		return '<div class="measure" data-progression-bar="' + escapeHtml(bar) + '"><span>' + escapeHtml(bar) + '</span><strong>' + escapeHtml(label) + '</strong></div>';
+	}
+
+	function fallbackMeasures() {
+		return ['Imaj7', 'vi7', 'ii7', 'V7', 'Imaj7', 'IVmaj7', 'V7sus4', 'Imaj9'].map(function (label, index) {
+			return {
+				bar: index + 1,
+				label: label
+			};
+		});
+	}
+
+	function escapeHtml(value) {
+		return String(value)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};
@@ -87,6 +120,7 @@
 		renderColorPanel: renderColorPanel,
 		renderTimePanel: renderTimePanel,
 		renderTimeline: renderTimeline,
+		renderTimelineMeasures: renderTimelineMeasures,
 		renderWritingPanel: renderWritingPanel
 	};
 })(window);

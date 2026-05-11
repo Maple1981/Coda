@@ -192,6 +192,12 @@
 			midi.noteOff(channel, noteNumber, startDelay + duration);
 		}
 
+		function stopAllNotes() {
+			if (midi && typeof midi.stopAllNotes === 'function') {
+				midi.stopAllNotes();
+			}
+		}
+
 		function currentVelocity() {
 			return clamp(Math.round(baseVelocity * volumePercent / 100), 0, baseVelocity);
 		}
@@ -271,6 +277,7 @@
 			playMidiNote: playMidiNote,
 			setInstrument: setInstrument,
 			setVolume: setVolume,
+			stopAllNotes: stopAllNotes,
 			getVolume: function () {
 				return volumePercent;
 			}

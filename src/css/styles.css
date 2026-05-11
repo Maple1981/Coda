@@ -494,6 +494,16 @@ body[data-theme="day"] .measure strong {
   color: #006e58;
 }
 
+body[data-theme="day"] .measure.isPlaying {
+  border-color: #7d2785;
+  -webkit-box-shadow: 0 0 0 2px rgba(125, 39, 133, 0.2), inset 0 0 18px rgba(125, 39, 133, 0.16);
+          box-shadow: 0 0 0 2px rgba(125, 39, 133, 0.2), inset 0 0 18px rgba(125, 39, 133, 0.16);
+}
+
+body[data-theme="day"] .measure.isPlaying strong {
+  color: #7d2785;
+}
+
 body[data-theme="day"] section#armoniaExtendida #acordeonArmoniaExtendida .codaAccordionHeader {
   background-color: #dfe5e9;
   color: #1f2528;
@@ -1329,6 +1339,16 @@ section#bienvenida .columnata article {
   font-size: 1.25em;
 }
 
+.measure.isPlaying {
+  border-color: #d85ee0;
+  -webkit-box-shadow: 0 0 0 2px rgba(216, 94, 224, 0.28), inset 0 0 18px rgba(166, 34, 174, 0.35);
+          box-shadow: 0 0 0 2px rgba(216, 94, 224, 0.28), inset 0 0 18px rgba(166, 34, 174, 0.35);
+}
+
+.measure.isPlaying strong {
+  color: #d85ee0;
+}
+
 .transportControls {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -1360,7 +1380,8 @@ section#bienvenida .columnata article {
 }
 
 .transportButton:hover,
-.transportButton:focus {
+.transportButton:focus,
+.transportButton.isPlaying {
   background: #00ff95;
   color: #111;
   -webkit-box-shadow: inset 0px 0px 15px 0px rgba(0, 0, 0, 0.5);
