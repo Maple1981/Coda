@@ -63,6 +63,7 @@
 		syncProgressionState();
 		bindProgressionState();
 		bindProgressionTransport();
+		bindProgressionGeneration();
 		updateCollapsiblePanelStates(i18n);
 		options.ui.scheduleDashboardWorkspaceHeight();
 
@@ -292,10 +293,18 @@
 					application: options.application,
 					data: options.data,
 					i18n: i18n,
+					onProgressionChanged: setProgression,
 					progressionPlayback: options.progressionPlayback,
 					uiState: uiState
 				});
 			}
+		}
+
+		function bindProgressionGeneration() {
+			on(query('#generateProgression'), 'click', function () {
+				syncProgressionState();
+				generateProgressionPlan();
+			});
 		}
 
 		function syncProgressionState() {
@@ -312,20 +321,50 @@
 				uiState.getReport() &&
 				uiState.getProgressionState()
 			) {
-				uiState.setProgression(options.application.buildProgressionFromState({
+				setProgression(options.application.buildProgressionFromState({
 					domain: options.domain,
 					progressionState: uiState.getProgressionState(),
 					report: uiState.getReport()
 				}));
-				if (progressionTransportController && typeof progressionTransportController.stop === 'function') {
-					progressionTransportController.stop();
-				}
-				if (options.ui && typeof options.ui.renderProgression === 'function') {
-					options.ui.renderProgression({
-						progression: uiState.getProgression(),
-						renderers: options.renderers
-					});
-				}
+			}
+		}
+
+		function generateProgressionPlan() {
+			if (
+				options.application &&
+				typeof options.application.generateProgressionFromState === 'function' &&
+				uiState.getReport() &&
+				uiState.getProgressionState()
+			) {
+				setProgression(options.application.generateProgressionFromState({
+					data: options.data,
+					progressionState: uiState.getProgressionState(),
+					report: uiState.getReport()
+				}));
+			}
+		}
+
+		function setProgression(progression, renderOptions) {
+			renderOptions = renderOptions || {};
+			uiState.setProgression(progression);
+
+			if (progressionTransportController && typeof progressionTransportController.stop === 'function') {
+				progressionTransportController.stop();
+			}
+
+			if (options.ui && typeof options.ui.renderProgression === 'function') {
+				options.ui.renderProgression({
+					progression: uiState.getProgression(),
+					renderers: options.renderers
+				});
+			}
+
+			if (staticText && typeof staticText.applyProgressionLabels === 'function') {
+				staticText.applyProgressionLabels(i18n);
+			}
+
+			if (progressionTransportController && typeof progressionTransportController.setPlaybackHead === 'function') {
+				progressionTransportController.setPlaybackHead(renderOptions.playbackHeadIndex || 0);
 			}
 		}
 

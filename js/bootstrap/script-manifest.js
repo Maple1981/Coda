@@ -14,6 +14,7 @@
 			'js/data/guitar-tunings-data.js',
 			'js/data/circle-of-fifths-data.js',
 			'js/data/extended-harmony-data.js',
+			'js/data/progression-rules-data.js',
 			'js/content/changelog-content.js',
 			'js/content/welcome-content.js',
 			'js/data.js',

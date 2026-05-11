@@ -10,10 +10,14 @@
 		var activeRun = null;
 
 		function play(progression, callbacks) {
-			var schedule = buildProgressionPlaybackSchedule(progression);
-			var run;
-
 			callbacks = callbacks || {};
+
+			var startIndex = normalizeStartIndex(callbacks.startIndex, progression);
+			var schedule = buildProgressionPlaybackSchedule(progression, {
+				startIndex: startIndex
+			});
+			var scheduledMeasures = buildScheduledMeasures(progression, startIndex);
+			var run;
 
 			if (!schedule.length || !playbackService) {
 				return false;
@@ -25,16 +29,16 @@
 				timers: []
 			};
 			activeRun = run;
-			runCallback(callbacks.onStart, progression);
+			runCallback(callbacks.onStart, progression, startIndex);
 
 			if (shouldLoadBeforePlayback()) {
 				playbackService.load(function () {
-					startRunPlayback(run, progression, schedule);
+					startRunPlayback(run, progression, schedule, scheduledMeasures);
 				});
 				return true;
 			}
 
-			startRunPlayback(run, progression, schedule);
+			startRunPlayback(run, progression, schedule, scheduledMeasures);
 
 			return true;
 		}
@@ -68,16 +72,39 @@
 				!playbackService.isReady();
 		}
 
-		function startRunPlayback(run, progression, schedule) {
+		function startRunPlayback(run, progression, schedule, scheduledMeasures) {
 			if (activeRun !== run) {
 				return;
 			}
 
-			for (var i = 0; i < schedule.length; i++) {
-				playScheduledEvent(schedule[i]);
-			}
+			schedulePlaybackEvents(run, schedule);
+			scheduleMeasureCallbacks(run, progression, scheduledMeasures);
+		}
 
-			scheduleMeasureCallbacks(run, progression);
+		function schedulePlaybackEvents(run, schedule) {
+			for (var i = 0; i < schedule.length; i++) {
+				scheduleTimer(run, schedule[i].delay, createPlaybackCallback(run, schedule[i]));
+			}
+		}
+
+		function createPlaybackCallback(run, event) {
+			return function () {
+				if (activeRun === run) {
+					playScheduledEvent(asImmediateEvent(event));
+				}
+			};
+		}
+
+		function asImmediateEvent(event) {
+			return {
+				arpeggioStep: event.arpeggioStep,
+				bar: event.bar,
+				degree: event.degree,
+				delay: 0,
+				duration: event.duration,
+				mode: event.mode,
+				notes: event.notes
+			};
 		}
 
 		function playScheduledEvent(event) {
@@ -119,12 +146,11 @@
 			}
 		}
 
-		function scheduleMeasureCallbacks(run, progression) {
-			var measures = progression && progression.measures ? progression.measures : [];
-			var totalSeconds = progression ? progression.totalSeconds : 0;
+		function scheduleMeasureCallbacks(run, progression, scheduledMeasures) {
+			var totalSeconds = playbackTotalSeconds(progression, scheduledMeasures);
 
-			for (var i = 0; i < measures.length; i++) {
-				scheduleTimer(run, measures[i].startSeconds, createMeasureStartCallback(run, measures[i], i));
+			for (var i = 0; i < scheduledMeasures.length; i++) {
+				scheduleTimer(run, scheduledMeasures[i].delay, createMeasureStartCallback(run, scheduledMeasures[i].measure, scheduledMeasures[i].index));
 			}
 
 			scheduleTimer(run, totalSeconds, function () {
@@ -133,6 +159,15 @@
 				}
 
 				activeRun = null;
+
+				if (shouldLoop(run.callbacks)) {
+					runCallback(run.callbacks.onCycleComplete, progression);
+					play(progression, extendCallbacks(run.callbacks, {
+						startIndex: 0
+					}));
+					return;
+				}
+
 				runCallback(run.callbacks.onComplete, progression);
 			});
 		}
@@ -173,18 +208,38 @@
 		};
 	}
 
-	function buildProgressionPlaybackSchedule(progression) {
+	function buildProgressionPlaybackSchedule(progression, options) {
 		var measures = progression && progression.measures ? progression.measures : [];
+		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
+		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
 		var schedule = [];
 
-		for (var i = 0; i < measures.length; i++) {
-			schedule.push(buildMeasurePlaybackEvent(measures[i]));
+		for (var i = startIndex; i < measures.length; i++) {
+			schedule.push(buildMeasurePlaybackEvent(measures[i], i, startOffset));
 		}
 
 		return schedule;
 	}
 
-	function buildMeasurePlaybackEvent(measure) {
+	function buildScheduledMeasures(progression, startIndex) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		startIndex = normalizeStartIndex(startIndex, progression);
+
+		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
+		var scheduledMeasures = [];
+
+		for (var i = startIndex; i < measures.length; i++) {
+			scheduledMeasures.push({
+				delay: Math.max(0, (Number(measures[i].startSeconds) || 0) - startOffset),
+				index: i,
+				measure: measures[i]
+			});
+		}
+
+		return scheduledMeasures;
+	}
+
+	function buildMeasurePlaybackEvent(measure, index, startOffset) {
 		var duration = playbackDuration(measure);
 		var notes = notesForVoices(measure.notes, measure.voices);
 		var mode = measure.articulation === 'arpeggio' ? 'arpeggio' : 'chord';
@@ -193,15 +248,66 @@
 			arpeggioStep: arpeggioStepSeconds(measure),
 			bar: measure.bar,
 			degree: measure.degree,
-			delay: measure.startSeconds || 0,
+			delay: Math.max(0, (measure.startSeconds || 0) - (startOffset || 0)),
 			duration: duration,
+			index: index,
 			mode: mode,
 			notes: notes
 		};
 	}
 
+	function playbackTotalSeconds(progression, scheduledMeasures) {
+		var lastMeasure;
+
+		if (!scheduledMeasures.length) {
+			return 0;
+		}
+
+		lastMeasure = scheduledMeasures[scheduledMeasures.length - 1].measure;
+
+		return scheduledMeasures[scheduledMeasures.length - 1].delay + (Number(lastMeasure.durationSeconds) || 0);
+	}
+
+	function normalizeStartIndex(startIndex, progression) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var numericIndex = parseInt(startIndex, 10);
+
+		if (!measures.length || isNaN(numericIndex)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(measures.length - 1, numericIndex));
+	}
+
+	function shouldLoop(callbacks) {
+		if (callbacks && typeof callbacks.shouldLoop === 'function') {
+			return callbacks.shouldLoop();
+		}
+
+		return callbacks && callbacks.loop === true;
+	}
+
+	function extendCallbacks(callbacks, values) {
+		var result = {};
+		var key;
+
+		for (key in callbacks) {
+			if (Object.prototype.hasOwnProperty.call(callbacks, key)) {
+				result[key] = callbacks[key];
+			}
+		}
+
+		for (key in values) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
 	function notesForVoices(notes, voices) {
-		var voiceCount = Math.max(1, Math.min(Number(voices) || 4, 4));
+		var voiceCount = Math.max(1, Math.min(Number(voices) || 4, 6));
 
 		return (notes || []).slice(0, voiceCount);
 	}
@@ -244,6 +350,7 @@
 	global.CodaApplication = global.CodaApplication || {};
 	global.CodaApplication.articulationDurationFactor = articulationDurationFactor;
 	global.CodaApplication.buildProgressionPlaybackSchedule = buildProgressionPlaybackSchedule;
+	global.CodaApplication.buildScheduledProgressionMeasures = buildScheduledMeasures;
 	global.CodaApplication.createProgressionPlayback = createProgressionPlayback;
 	global.CodaApplication.notesForVoices = notesForVoices;
 })(window);

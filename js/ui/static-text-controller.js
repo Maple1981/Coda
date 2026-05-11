@@ -80,6 +80,15 @@
 		});
 	}
 
+	function setTitleAndLabel(i18n, selector, key) {
+		forEachElement(selector, function (element) {
+			var text = i18n.t(key);
+
+			element.setAttribute('title', text);
+			element.setAttribute('aria-label', text);
+		});
+	}
+
 	function applyProgressionLabels(i18n) {
 		ensureProgressionWorkbench();
 		setText(i18n, 'span[data-i18n="progression.time"]', 'progression.time');
@@ -96,8 +105,12 @@
 		setText(i18n, 'option[data-i18n="progression.articulation.legato"]', 'progression.articulation.legato');
 		setText(i18n, 'option[data-i18n="progression.articulation.staccato"]', 'progression.articulation.staccato');
 		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio"]', 'progression.articulation.arpeggio');
+		setText(i18n, '.transportButton--generate span[data-i18n="progression.generate"]', 'progression.generate');
+		setText(i18n, '.transportButton--goStart span[data-i18n="progression.goStart"]', 'progression.goStart');
 		setText(i18n, '.transportButton--listen span[data-i18n="progression.listen"]', 'progression.listen');
 		setText(i18n, '.transportButton--export span[data-i18n="progression.exportMidi"]', 'progression.exportMidi');
+		setText(i18n, '.loopControl span[data-i18n="progression.loop"]', 'progression.loop');
+		setTitleAndLabel(i18n, '.measureDragHandle[data-i18n-title="progression.dragMeasure"]', 'progression.dragMeasure');
 	}
 
 	function ensureProgressionWorkbench() {

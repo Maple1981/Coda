@@ -27,7 +27,7 @@ assert.deepEqual(progressionState.defaults, {
 	bars: 8,
 	beatsPerBar: 4,
 	beatUnit: 4,
-	bpm: 96,
+	bpm: 120,
 	counterpoint: 20,
 	meter: '4/4',
 	modalInterchange: 25,

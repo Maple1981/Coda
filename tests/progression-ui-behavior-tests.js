@@ -105,7 +105,7 @@ assert.deepEqual(initialState, {
 	bars: 8,
 	beatsPerBar: 4,
 	beatUnit: 4,
-	bpm: 96,
+	bpm: 120,
 	counterpoint: 20,
 	meter: '4/4',
 	modalInterchange: 25,
@@ -115,7 +115,7 @@ assert.deepEqual(initialState, {
 assert.equal(initialProgression.bars, 8);
 assert.equal(initialProgression.meter, '4/4');
 assert.equal(initialProgression.totalBeats, 32);
-assert.equal(initialProgression.totalSeconds, 20);
+assert.equal(initialProgression.totalSeconds, 16);
 assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.degree; }), ['I', 'VI', 'II', 'VJ', 'I', 'IVJ', 'VJ', 'I']);
 assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'Am7', 'Dm7', 'G7', 'Cmaj7', 'Fmaj7', 'G7', 'Cmaj7']);
 
@@ -153,11 +153,13 @@ assert.deepEqual(changedProgression.measures[1], {
 	chord: initialized.uiState.getReport().scaleChords[3],
 	chordName: 'Fmaj7',
 	degree: 'IVJ',
+	displayName: 'Fmaj7',
 	durationBeats: 3,
 	durationSeconds: 1.5,
 	endBeat: 6,
 	endSeconds: 3,
 	notes: ['F', 'A', 'C', 'E'],
+	source: 'diatonic',
 	startBeat: 3,
 	startSeconds: 1.5,
 	voices: 3
@@ -266,7 +268,7 @@ function createFakeDocument() {
 	addRadio('bemoles', '1', false);
 	addElement('progressionArticulation', 'sustain');
 	addElement('progressionBars', '8');
-	addElement('progressionBpm', '96');
+	addElement('progressionBpm', '120');
 	addElement('progressionCounterpoint', '20');
 	addElement('progressionMeter', '4/4');
 	addElement('progressionModalInterchange', '25');

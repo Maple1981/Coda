@@ -60,6 +60,7 @@ assert.deepEqual(schedule[0], {
 	degree: 'I',
 	delay: 0,
 	duration: 1.9,
+	index: 0,
 	mode: 'chord',
 	notes: ['C', 'E', 'G', 'B']
 });
@@ -69,14 +70,30 @@ assert.deepEqual(schedule[1], {
 	degree: 'IVJ',
 	delay: 2,
 	duration: 0.9,
+	index: 1,
 	mode: 'chord',
 	notes: ['F', 'A', 'C']
 });
 assert.equal(schedule[2].mode, 'arpeggio');
 assert.equal(schedule[2].duration, 1.8);
 assert.deepEqual(schedule[2].notes, ['G', 'B', 'D', 'F']);
+
+const partialSchedule = app.buildProgressionPlaybackSchedule(progression, { startIndex: 1 });
+assert.deepEqual(partialSchedule.map(function (event) { return event.bar; }), [2, 3]);
+assert.deepEqual(partialSchedule.map(function (event) { return event.delay; }), [0, 2]);
+assert.deepEqual(app.buildScheduledProgressionMeasures(progression, 1).map(function (item) {
+	return {
+		bar: item.measure.bar,
+		delay: item.delay,
+		index: item.index
+	};
+}), [
+	{ bar: 2, delay: 0, index: 1 },
+	{ bar: 3, delay: 2, index: 2 }
+]);
 assert.deepEqual(app.notesForVoices(['C', 'E', 'G', 'B'], 1), ['C']);
 assert.deepEqual(app.notesForVoices(['C', 'E', 'G', 'B'], 6), ['C', 'E', 'G', 'B']);
+assert.deepEqual(app.notesForVoices(['C', 'E', 'G', 'B', 'D', 'A'], 6), ['C', 'E', 'G', 'B', 'D', 'A']);
 assert.equal(app.articulationDurationFactor('legato'), 1);
 assert.equal(app.articulationDurationFactor('staccato'), 0.45);
 
@@ -144,26 +161,42 @@ const playResult = playback.play(progression, {
 assert.equal(playResult, true);
 assert.equal(playback.isPlaying(), true);
 assert.equal(started, true);
-assert.deepEqual(chordCalls.map(function (call) { return call.notes; }), [['C', 'E', 'G', 'B'], ['F', 'A', 'C']]);
-assert.deepEqual(chordCalls.map(function (call) { return call.options.delay; }), [0, 2]);
-assert.deepEqual(chordCalls.map(function (call) { return call.options.duration; }), [1.9, 0.9]);
-assert.deepEqual(noteCalls.map(function (call) { return call.note; }), [60, 61, 62, 63]);
-assert.deepEqual(noteCalls.map(function (call) { return call.options.delay; }), [4, 4.18, 4.36, 4.54]);
-assert.deepEqual(timers.map(function (timer) { return timer.milliseconds; }), [0, 2000, 4000, 6000]);
+assert.deepEqual(chordCalls, []);
+assert.deepEqual(noteCalls, []);
+assert.deepEqual(timers.map(function (timer) { return timer.milliseconds; }), [0, 2000, 4000, 0, 2000, 4000, 6000]);
 
-timers[0].callback();
-timers[1].callback();
+runTimersAt(0);
+assert.deepEqual(activeBars, [1]);
+assert.deepEqual(chordCalls.map(function (call) { return call.notes; }), [['C', 'E', 'G', 'B']]);
+assert.deepEqual(chordCalls.map(function (call) { return call.options.delay; }), [0]);
+assert.deepEqual(chordCalls.map(function (call) { return call.options.duration; }), [1.9]);
+
+runTimersAt(2000);
 assert.deepEqual(activeBars, [1, 2]);
+assert.deepEqual(chordCalls.map(function (call) { return call.notes; }), [['C', 'E', 'G', 'B'], ['F', 'A', 'C']]);
+assert.deepEqual(chordCalls.map(function (call) { return call.options.delay; }), [0, 0]);
+assert.deepEqual(chordCalls.map(function (call) { return call.options.duration; }), [1.9, 0.9]);
+
+runTimersAt(4000);
+assert.deepEqual(activeBars, [1, 2, 3]);
+assert.deepEqual(noteCalls.map(function (call) { return call.note; }), [60, 61, 62, 63]);
+assert.deepEqual(noteCalls.map(function (call) { return call.options.delay; }), [0, 0.18, 0.36, 0.54]);
+
 assert.equal(completed, false);
-timers[3].callback();
+runTimersAt(6000);
 assert.equal(completed, true);
 assert.equal(playback.isPlaying(), false);
 
 playback.play(progression);
+const chordCallsBeforeStop = chordCalls.length;
 assert.equal(playback.stop(), true);
 assert.equal(stopped, true);
 assert.ok(clearedTimers.length >= 4);
 assert.equal(playback.isPlaying(), false);
+runTimersAt(0);
+runTimersAt(2000);
+runTimersAt(4000);
+assert.equal(chordCalls.length, chordCallsBeforeStop);
 
 let loadCallback = null;
 let delayedChordCalls = 0;
@@ -191,4 +224,58 @@ assert.equal(delayedPlayback.stop(), true);
 loadCallback();
 assert.equal(delayedChordCalls, 0);
 
+let loopStarted = 0;
+let cycleCompleted = false;
+let loopCompleted = false;
+const loopTimers = [];
+const loopPlayback = app.createProgressionPlayback({
+	playbackService: {
+		playChordFromNames: function () {},
+		playMidiNote: function () {},
+		stopAllNotes: function () {}
+	},
+	timerApi: {
+		clearTimeout: function () {},
+		setTimeout: function (callback, milliseconds) {
+			loopTimers.push({
+				callback: callback,
+				milliseconds: milliseconds
+			});
+			return loopTimers.length;
+		}
+	}
+});
+
+loopPlayback.play(progression, {
+	onComplete: function () {
+		loopCompleted = true;
+	},
+	onCycleComplete: function () {
+		cycleCompleted = true;
+	},
+	onStart: function () {
+		loopStarted += 1;
+	},
+	shouldLoop: function () {
+		return cycleCompleted === false;
+	},
+	startIndex: 1
+});
+
+assert.deepEqual(loopTimers.map(function (timer) { return timer.milliseconds; }).slice(0, 5), [0, 2000, 0, 2000, 4000]);
+loopTimers.filter(function (timer) {
+	return timer.milliseconds === 4000;
+})[0].callback();
+assert.equal(cycleCompleted, true);
+assert.equal(loopCompleted, false);
+assert.equal(loopStarted, 2);
+
 console.log('Progression playback tests passed');
+
+function runTimersAt(milliseconds) {
+	timers.filter(function (timer) {
+		return timer.milliseconds === milliseconds;
+	}).forEach(function (timer) {
+		timer.callback();
+	});
+}

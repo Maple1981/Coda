@@ -14,8 +14,13 @@
 		html += renderWritingPanel();
 		html += renderColorPanel();
 		html += '</div>';
+		html += '<div class="progressionGenerateBar">';
+		html += '<button id="generateProgression" type="button" class="transportButton transportButton--generate"><span class="material-icons" aria-hidden="true">auto_awesome</span><span data-i18n="progression.generate"></span></button>';
+		html += '</div>';
 		html += renderTimeline();
 		html += '<div class="transportControls">';
+		html += '<button type="button" class="transportButton transportButton--goStart" title="" aria-label=""><span class="material-icons" aria-hidden="true">first_page</span><span data-i18n="progression.goStart"></span></button>';
+		html += '<label class="loopControl"><input id="progressionLoop" type="checkbox" /><span data-i18n="progression.loop"></span></label>';
 		html += '<button type="button" class="transportButton transportButton--listen" aria-pressed="false"><span class="material-icons" aria-hidden="true">play_arrow</span><span data-i18n="progression.listen"></span></button>';
 		html += '<button type="button" class="transportButton transportButton--export"><span class="material-icons" aria-hidden="true">ios_share</span><span data-i18n="progression.exportMidi"></span></button>';
 		html += '</div>';
@@ -29,7 +34,7 @@
 		html += '<legend><span data-i18n="progression.time"></span></legend>';
 		html += renderControl('progression.bars', '<select id="progressionBars"><option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="8" selected="selected">8</option><option value="12">12</option><option value="16">16</option><option value="32">32</option></select>', '#progressionBars');
 		html += renderControl('progression.meter', '<select id="progressionMeter"><option value="4/4">4/4</option><option value="3/4">3/4</option><option value="6/8">6/8</option></select>', '#progressionMeter');
-		html += renderControl(null, '<input id="progressionBpm" type="number" value="96" min="20" max="200" step="1" />', '#progressionBpm', 'BPM');
+		html += renderControl(null, '<input id="progressionBpm" type="number" value="120" min="20" max="200" step="1" />', '#progressionBpm', 'BPM');
 		html += '</fieldset>';
 
 		return html;
@@ -79,7 +84,7 @@
 
 	function renderTimelineMeasures(progression) {
 		var progressionMeasures = progression && progression.measures ? progression.measures : null;
-		var measures = progressionMeasures || fallbackMeasures();
+		var measures = hasRenderableMeasures(progressionMeasures) ? progressionMeasures : fallbackMeasures();
 		var html = '';
 
 		for (var i = 0; i < measures.length; i++) {
@@ -89,11 +94,31 @@
 		return html;
 	}
 
+	function hasRenderableMeasures(measures) {
+		if (!measures || !measures.length) {
+			return false;
+		}
+
+		for (var i = 0; i < measures.length; i++) {
+			if (measures[i].displayName || measures[i].chordName || measures[i].label) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	function renderMeasure(measure, index) {
 		var bar = measure.bar || index + 1;
-		var label = measure.chordName || measure.label || '';
+		var label = measure.displayName || measure.chordName || measure.label || '';
+		var degree = measure.degree || '';
 
-		return '<div class="measure" data-progression-bar="' + escapeHtml(bar) + '"><span>' + escapeHtml(bar) + '</span><strong>' + escapeHtml(label) + '</strong></div>';
+		return '<div class="measure" draggable="true" data-progression-bar="' + escapeHtml(bar) + '" data-progression-index="' + escapeHtml(index) + '" tabindex="0">' +
+			'<button type="button" class="measureDragHandle" draggable="true" aria-label="" title="" data-i18n-title="progression.dragMeasure"><span class="material-icons" aria-hidden="true">open_with</span></button>' +
+			'<span class="measureBar">' + escapeHtml(bar) + '</span>' +
+			'<strong>' + escapeHtml(label) + '</strong>' +
+			(degree ? '<em class="measureDegree">' + escapeHtml(degree) + '</em>' : '') +
+			'</div>';
 	}
 
 	function fallbackMeasures() {
@@ -120,6 +145,7 @@
 		renderColorPanel: renderColorPanel,
 		renderTimePanel: renderTimePanel,
 		renderTimeline: renderTimeline,
+		hasRenderableMeasures: hasRenderableMeasures,
 		renderTimelineMeasures: renderTimelineMeasures,
 		renderWritingPanel: renderWritingPanel
 	};

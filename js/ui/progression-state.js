@@ -8,7 +8,7 @@
 	var defaults = {
 		articulation: 'sustain',
 		bars: 8,
-		bpm: 96,
+		bpm: 120,
 		counterpoint: 20,
 		meter: '4/4',
 		modalInterchange: 25,

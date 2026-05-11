@@ -26,6 +26,7 @@ function runScript(relativePath) {
 	'js/data/guitar-tunings-data.js',
 	'js/data/circle-of-fifths-data.js',
 	'js/data/extended-harmony-data.js',
+	'js/data/progression-rules-data.js',
 	'js/data.js',
 	'js/services/data-index-service.js',
 	'js/services/midi-export-service.js',
@@ -137,11 +138,13 @@ assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	chord: cMajorReport.scaleChords[3],
 	chordName: 'Fmaj7',
 	degree: 'IVJ',
+	displayName: 'Fmaj7',
 	durationBeats: 3,
 	durationSeconds: 1.5,
 	endBeat: 6,
 	endSeconds: 3,
 	notes: ['F', 'A', 'C', 'E'],
+	source: 'diatonic',
 	startBeat: 3,
 	startSeconds: 1.5,
 	voices: 3
@@ -151,6 +154,40 @@ assert.deepEqual(cMajorProgressionPlan.harmonicColor, {
 	modalInterchange: 10,
 	tensions: 40
 });
+
+const generatedHighColorProgression = app.generateProgressionFromState({
+	data: data,
+	progressionState: {
+		articulation: 'arpeggio',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 96,
+		counterpoint: 80,
+		meter: '4/4',
+		modalInterchange: 90,
+		tensions: 80,
+		voices: 6
+	},
+	report: cMajorReport,
+	rng: function () {
+		return 0.54;
+	}
+});
+
+assert.equal(generatedHighColorProgression.bars, 4);
+assert.equal(generatedHighColorProgression.generation.cadence, 'mixed-plagal');
+assert.equal(generatedHighColorProgression.generation.patternId, 'I-iv-I');
+assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.source; }), ['diatonic', 'parallel', 'parallel', 'diatonic']);
+assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'Fm7', 'Fm7', 'Cmaj7']);
+assert.ok(generatedHighColorProgression.measures[0].displayName.indexOf('add9') > -1);
+assert.ok(generatedHighColorProgression.measures[0].notes.length > 4);
+
+const reorderedProgression = app.reorderProgressionMeasures(cMajorProgressionPlan, 1, 3);
+assert.deepEqual(reorderedProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'G7', 'Cmaj7', 'Fmaj7']);
+assert.deepEqual(reorderedProgression.measures.map(function (measure) { return measure.bar; }), [1, 2, 3, 4]);
+assert.deepEqual(reorderedProgression.measures.map(function (measure) { return measure.startSeconds; }), [0, 1.5, 3, 4.5]);
+assert.equal(reorderedProgression.totalSeconds, cMajorProgressionPlan.totalSeconds);
 
 const cMajorProgressionMidi = app.buildProgressionMidiFile({
 	data: data,

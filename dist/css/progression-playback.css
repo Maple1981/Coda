@@ -1,3 +1,66 @@
+.progressionGenerateBar {
+  display: flex;
+  justify-content: center;
+  margin: 1em 0 0.9em 0;
+}
+
+.transportButton--generate {
+  background: #d85ee0;
+  color: #111;
+}
+
+.progressionGenerateBar + .progressionTimeline {
+  margin-top: 0.5em;
+}
+
+.measure {
+  position: relative;
+  cursor: pointer;
+}
+
+.measure .measureBar {
+  color: #bbb;
+}
+
+.measureDegree {
+  color: #c5f6ff;
+  font-size: 0.88em;
+  font-style: normal;
+  font-weight: 600;
+  margin-top: 0.3em;
+}
+
+.measureDragHandle {
+  position: absolute;
+  top: 0.45em;
+  right: 0.45em;
+  width: 1.55em;
+  height: 1.55em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #bbb;
+  cursor: grab;
+  border-radius: 4px;
+}
+
+.measureDragHandle:hover,
+.measureDragHandle:focus {
+  color: #d85ee0;
+  outline: none;
+}
+
+.measureDragHandle .material-icons {
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+.measure.isPlaybackHead {
+  border-color: #a622ae;
+  box-shadow: 0 0 0 1px rgba(166, 34, 174, 0.35);
+}
+
 .measure.isPlaying {
   border-color: #d85ee0;
   box-shadow: 0 0 0 2px rgba(216, 94, 224, 0.28), inset 0 0 18px rgba(166, 34, 174, 0.35);
@@ -5,6 +68,27 @@
 
 .measure.isPlaying strong {
   color: #d85ee0;
+}
+
+.measure.isDragging {
+  opacity: 0.55;
+}
+
+.measure.isDropTarget {
+  border-style: dashed;
+  border-color: #c5f6ff;
+}
+
+.loopControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  color: #eee;
+  font-weight: 600;
+}
+
+.loopControl input {
+  accent-color: #d85ee0;
 }
 
 .transportButton.isPlaying {
@@ -17,6 +101,20 @@
 body[data-theme="day"] .measure.isPlaying {
   border-color: #7d2785;
   box-shadow: 0 0 0 2px rgba(125, 39, 133, 0.2), inset 0 0 18px rgba(125, 39, 133, 0.16);
+}
+
+body[data-theme="day"] .measure .measureBar,
+body[data-theme="day"] .measureDragHandle {
+  color: #59656b;
+}
+
+body[data-theme="day"] .measureDegree {
+  color: #7d2785;
+}
+
+body[data-theme="day"] .measure.isPlaybackHead {
+  border-color: #7d2785;
+  box-shadow: 0 0 0 1px rgba(125, 39, 133, 0.22);
 }
 
 body[data-theme="day"] .measure.isPlaying strong {

@@ -15,6 +15,7 @@
 		chords: catalogs.chords,
 		tunings: catalogs.tunings,
 		circleOfFifths: catalogs.circleOfFifths,
-		extendedHarmony: catalogs.extendedHarmony
+		extendedHarmony: catalogs.extendedHarmony,
+		progressionRules: catalogs.progressionRules
 	};
 })(window);

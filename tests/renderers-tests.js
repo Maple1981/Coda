@@ -365,13 +365,18 @@ const progressionWorkbenchHtml = progressionWorkbenchRenderer.render();
 assert.ok(progressionWorkbenchHtml.indexOf('class="progressionControls"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<select id="progressionBars"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<option value="32">32</option>') > -1);
-assert.ok(progressionWorkbenchHtml.indexOf('id="progressionBpm" type="number" value="96" min="20" max="200"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="progressionBpm" type="number" value="120" min="20" max="200"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="progressionVoices" type="number" value="4" min="1" max="6"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-random-control-target="#progressionCounterpoint"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-random-group="global"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.articulation.sustain"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="generateProgression"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.generate"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('auto_awesome') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('class="transportButton transportButton--listen" aria-pressed="false"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('play_arrow') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('class="transportButton transportButton--goStart"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="progressionLoop" type="checkbox"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('class="transportButton transportButton--export"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('ios_share') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<strong>Imaj7</strong>') > -1);
@@ -380,7 +385,9 @@ const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineM
 	measures: [
 		{
 			bar: 1,
-			chordName: 'Cmaj7'
+			chordName: 'Cmaj7',
+			degree: 'I',
+			displayName: 'Cmaj7 add9'
 		},
 		{
 			bar: 2,
@@ -389,6 +396,18 @@ const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineM
 	]
 });
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-bar="1"') > -1);
-assert.ok(renderedProgressionTimeline.indexOf('<strong>Cmaj7</strong>') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('data-progression-index="0"') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('measureDragHandle') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('<strong>Cmaj7 add9</strong>') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('<em class="measureDegree">I</em>') > -1);
+assert.equal(progressionWorkbenchRenderer.hasRenderableMeasures([{ chordName: '' }]), false);
+assert.ok(progressionWorkbenchRenderer.renderTimelineMeasures({
+	measures: [
+		{
+			bar: 1,
+			chordName: ''
+		}
+	]
+}).indexOf('<strong>Imaj7</strong>') > -1);
 
 console.log('Renderer tests passed');

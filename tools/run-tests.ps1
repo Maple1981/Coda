@@ -45,6 +45,10 @@ Write-Host "Ejecutando pruebas de playback de progresiones..."
 node tests\progression-playback-tests.js
 Assert-LastCommand "node tests\progression-playback-tests.js"
 
+Write-Host "Ejecutando pruebas del transporte de progresiones..."
+node tests\progression-transport-tests.js
+Assert-LastCommand "node tests\progression-transport-tests.js"
+
 Write-Host "Ejecutando pruebas de comportamiento UI de progresiones..."
 node tests\progression-ui-behavior-tests.js
 Assert-LastCommand "node tests\progression-ui-behavior-tests.js"
