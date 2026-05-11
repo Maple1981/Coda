@@ -838,10 +838,18 @@ section#bienvenida .columnata article{
 .workbenchHeader{
 	display:flex;
 	flex-wrap:wrap;
-	align-items:flex-end;
+	align-items:center;
 	justify-content:space-between;
 	gap:.8em;
 	margin-bottom:1em;
+}
+
+.workbenchTitleGroup{
+	display:flex;
+	flex-wrap:wrap;
+	align-items:center;
+	gap:.75em;
+	min-width:0;
 }
 
 .workbenchHeader h2{
@@ -851,11 +859,18 @@ section#bienvenida .columnata article{
 }
 
 .workbenchKicker{
-	width:100%;
 	margin-bottom:0;
 	font-size:.85em;
 	font-weight:600;
+	line-height:1;
 	color:$corporative_complementary_color;
+}
+
+.workbenchContext{
+	margin-bottom:0;
+	font-size:.85em;
+	font-weight:600;
+	text-align:right;
 }
 
 .progressionControls{
@@ -1046,6 +1061,10 @@ section#bienvenida .columnata article{
 	cursor:pointer;
 	padding:.48em .8em;
 	font-weight:600;
+}
+
+.transportButton[hidden]{
+	display:none;
 }
 
 .transportButton:hover,

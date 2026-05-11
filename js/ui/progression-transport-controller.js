@@ -311,6 +311,8 @@
 			measure.classList.add('isPlaybackHead');
 			measure.classList.toggle('isPlaying', playing === true);
 		}
+
+		updateGoStartVisibility(index);
 	}
 
 	function clearActiveMeasure() {
@@ -370,6 +372,14 @@
 		var checkbox = query('#progressionLoop');
 
 		return checkbox ? checkbox.checked === true : false;
+	}
+
+	function updateGoStartVisibility(index) {
+		var button = query('.transportButton--goStart');
+
+		if (button) {
+			button.hidden = Number(index) <= 0;
+		}
 	}
 
 	function translate(i18n, key) {

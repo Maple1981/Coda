@@ -355,6 +355,9 @@ assert.ok(englishChangelogHtml.indexOf('<dt>More direct interface</dt>') > -1);
 
 const welcomeHtml = welcomeRenderer.render(context.window.CodaWelcomeContent.es);
 assert.ok(welcomeHtml.indexOf('<article id="principal" class="columnata">') > -1);
+assert.ok(welcomeHtml.indexOf('Con unos sencillos pasos') > -1);
+assert.ok(welcomeHtml.indexOf('<strong>instrumento</strong>') > -1);
+assert.ok(welcomeHtml.indexOf('exportable en formato MIDI') > -1);
 assert.ok(welcomeHtml.indexOf('<h2>Fundamentos</h2>') > -1);
 assert.ok(welcomeHtml.indexOf('<span class="material-icons icono fundamentos">class</span>') > -1);
 assert.ok(welcomeHtml.indexOf('<span class="material-icons icono instrumentos">piano</span>') > -1);
@@ -362,6 +365,8 @@ assert.ok(welcomeHtml.indexOf('<span class="material-icons icono licencia">flaky
 assert.ok(welcomeHtml.indexOf('piano, guitarra clásica, órgano y cuerdas') > -1);
 
 const progressionWorkbenchHtml = progressionWorkbenchRenderer.render();
+assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchTitleGroup"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchContext" aria-live="polite"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('class="progressionControls"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<select id="progressionBars"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<option value="32">32</option>') > -1);
@@ -375,10 +380,12 @@ assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.generate"') >
 assert.ok(progressionWorkbenchHtml.indexOf('auto_awesome') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('class="transportButton transportButton--listen" aria-pressed="false"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('play_arrow') > -1);
-assert.ok(progressionWorkbenchHtml.indexOf('class="transportButton transportButton--goStart"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('class="transportButton transportButton--goStart" title="" aria-label="" hidden') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="progressionLoop" type="checkbox"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('class="transportButton transportButton--export"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('ios_share') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="progressionLoop"') < progressionWorkbenchHtml.indexOf('transportButton--goStart'));
+assert.ok(progressionWorkbenchHtml.indexOf('transportButton--goStart') < progressionWorkbenchHtml.indexOf('transportButton--listen'));
 assert.ok(progressionWorkbenchHtml.indexOf('<strong>Imaj7</strong>') > -1);
 
 const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({

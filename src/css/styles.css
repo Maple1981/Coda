@@ -1218,14 +1218,27 @@ section#bienvenida .columnata article {
   display: flex;
   -ms-flex-wrap: wrap;
       flex-wrap: wrap;
-  -webkit-box-align: end;
-      -ms-flex-align: end;
-          align-items: flex-end;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
   -webkit-box-pack: justify;
       -ms-flex-pack: justify;
           justify-content: space-between;
   gap: .8em;
   margin-bottom: 1em;
+}
+
+.workbenchTitleGroup {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  gap: .75em;
+  min-width: 0;
 }
 
 .workbenchHeader h2 {
@@ -1235,11 +1248,18 @@ section#bienvenida .columnata article {
 }
 
 .workbenchKicker {
-  width: 100%;
   margin-bottom: 0;
   font-size: .85em;
   font-weight: 600;
+  line-height: 1;
   color: #a622ae;
+}
+
+.workbenchContext {
+  margin-bottom: 0;
+  font-size: .85em;
+  font-weight: 600;
+  text-align: right;
 }
 
 .progressionControls {
@@ -1477,6 +1497,10 @@ section#bienvenida .columnata article {
   cursor: pointer;
   padding: .48em .8em;
   font-weight: 600;
+}
+
+.transportButton[hidden] {
+  display: none;
 }
 
 .transportButton:hover,

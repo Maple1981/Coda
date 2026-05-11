@@ -99,6 +99,7 @@ document.measures[2].dispatchDelegatedClick();
 assert.equal(lastStartIndex, 2);
 assert.equal(document.measures[2].classList.contains('isPlaybackHead'), true);
 assert.equal(document.measures[2].classList.contains('isPlaying'), true);
+assert.equal(document.goStart.hidden, false);
 
 controller.stop();
 assert.equal(stopped, 1);
@@ -107,6 +108,7 @@ assert.equal(document.measures[2].classList.contains('isPlaying'), false);
 
 document.goStart.dispatchEvent({ type: 'click', target: document.goStart });
 assert.equal(document.measures[0].classList.contains('isPlaybackHead'), true);
+assert.equal(document.goStart.hidden, true);
 
 document.dragStart(0);
 document.dropOn(2);

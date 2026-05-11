@@ -199,6 +199,7 @@
 			uiState.setSelection(selection);
 			uiState.setMusicalContext(musicalContext);
 			setPlaybackInstrument(options, musicalContext.midiInstrument);
+			updateWorkbenchContext(selection, musicalContext);
 
 			if (musicalContext.isScaleSeparator) {
 				uiState.clearReport();
@@ -242,6 +243,7 @@
 			uiState.setSelection(selection);
 			uiState.setMusicalContext(musicalContext);
 			setPlaybackInstrument(options, musicalContext.midiInstrument);
+			updateWorkbenchContext(selection, musicalContext);
 
 			if (!report) {
 				return;
@@ -366,6 +368,64 @@
 			if (progressionTransportController && typeof progressionTransportController.setPlaybackHead === 'function') {
 				progressionTransportController.setPlaybackHead(renderOptions.playbackHeadIndex || 0);
 			}
+		}
+
+		function updateWorkbenchContext(selection, musicalContext) {
+			var contextElement = query('.workbenchContext');
+			var instrumentName = selectedInstrumentName(selection);
+			var scaleName = selectedScaleName(selection);
+			var tonicName = musicalContext && musicalContext.tonicName ? musicalContext.tonicName : selection.tonicName;
+			var keyLabel = '';
+			var values = [];
+
+			if (!contextElement) {
+				return;
+			}
+
+			if (musicalContext && musicalContext.isScaleSeparator) {
+				contextElement.textContent = '';
+				return;
+			}
+
+			if (tonicName) {
+				keyLabel = notation ? notation.formatNoteName(tonicName, uiState.getNotationStyle()) : tonicName;
+			}
+
+			if (scaleName) {
+				keyLabel = keyLabel ? keyLabel + ' ' + scaleName : scaleName;
+			}
+
+			if (keyLabel) {
+				values.push(keyLabel);
+			}
+
+			if (instrumentName) {
+				values.push(instrumentName);
+			}
+
+			contextElement.textContent = values.join(' · ');
+		}
+
+		function selectedScaleName(selection) {
+			var scale = options.data.scales[selection.scaleIndex];
+
+			if (!scale || scale.separador) {
+				return '';
+			}
+
+			return i18n ? i18n.dataLabel('scales', selection.scaleIndex, scale.nombre) : scale.nombre;
+		}
+
+		function selectedInstrumentName(selection) {
+			var instruments = options.data.midiInstruments || [];
+
+			for (var i = 0; i < instruments.length; i++) {
+				if (instruments[i].id === selection.midiInstrument) {
+					return i18n ? i18n.dataLabel('midiInstruments', i, instruments[i].nombre) : instruments[i].nombre;
+				}
+			}
+
+			return '';
 		}
 
 		renderReport();

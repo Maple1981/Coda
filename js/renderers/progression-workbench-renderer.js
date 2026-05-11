@@ -6,8 +6,8 @@
 		var html = '';
 
 		html += '<div class="workbenchHeader">';
-		html += '<p class="workbenchKicker"></p>';
-		html += '<h2></h2>';
+		html += '<div class="workbenchTitleGroup"><h2></h2><p class="workbenchKicker"></p></div>';
+		html += '<p class="workbenchContext" aria-live="polite"></p>';
 		html += '</div>';
 		html += '<div class="progressionControls">';
 		html += renderTimePanel();
@@ -19,8 +19,8 @@
 		html += '</div>';
 		html += renderTimeline();
 		html += '<div class="transportControls">';
-		html += '<button type="button" class="transportButton transportButton--goStart" title="" aria-label=""><span class="material-icons" aria-hidden="true">first_page</span><span data-i18n="progression.goStart"></span></button>';
 		html += '<label class="loopControl"><input id="progressionLoop" type="checkbox" /><span data-i18n="progression.loop"></span></label>';
+		html += '<button type="button" class="transportButton transportButton--goStart" title="" aria-label="" hidden><span class="material-icons" aria-hidden="true">first_page</span><span data-i18n="progression.goStart"></span></button>';
 		html += '<button type="button" class="transportButton transportButton--listen" aria-pressed="false"><span class="material-icons" aria-hidden="true">play_arrow</span><span data-i18n="progression.listen"></span></button>';
 		html += '<button type="button" class="transportButton transportButton--export"><span class="material-icons" aria-hidden="true">ios_share</span><span data-i18n="progression.exportMidi"></span></button>';
 		html += '</div>';

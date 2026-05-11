@@ -5,8 +5,8 @@
 	global.CodaWelcomeContent = {
 		es: {
 			main: [
-				'<em>CODA</em> es una aplicación web para <strong>estudiantes</strong> de armonía, <strong>compositores</strong>, <strong>productores</strong> y <strong>músicos</strong> de todo tipo. Proporciona información básica sobre tonalidades, escalas, acordes y progresiones. Con un solo click, puede obtenerse ayuda rápida para componer una canción nueva, efectuar arreglos, armonizar una melodía, utilizar modos griegos o cambiar la tonalidad de una obra.',
-				'El sistema es muy sencillo: escoges una <strong>tónica</strong> y un <strong>tipo de escala</strong>, y pulsas el botón. Aparecerá toda la información disponible al respecto en forma de una vista de la escala elegida, un gestor de los acordes que pueden formarse sobre ella y una vista del instrumento seleccionado.'
+				'<em>CODA</em> es una aplicación web para <strong>estudiantes</strong> de armonía, <strong>compositores</strong>, <strong>productores</strong> y <strong>músicos</strong> de todo tipo. Proporciona información básica sobre tonalidades, escalas, acordes y progresiones. Con unos sencillos pasos, puede obtenerse ayuda rápida para componer una canción nueva, efectuar arreglos, armonizar una melodía, utilizar modos griegos o cambiar la tonalidad de una obra.',
+				'El sistema es muy sencillo: escoges una <strong>tónica</strong>, un <strong>tipo de escala</strong> y un <strong>instrumento</strong>. En la zona izquierda aparecerá una vista de la escala elegida, una tabla de los acordes que pueden formarse sobre ella, una vista del instrumento seleccionado, e información sobre cómo extender su armonía. En la zona derecha, aparecerá una progresión de acordes totalmente configurable, y exportable en formato MIDI, para que puedas traspasar el trabajo a tu programa preferido.'
 			],
 			sections: [
 				{
@@ -34,8 +34,8 @@
 		},
 		en: {
 			main: [
-				'<em>CODA</em> is a web application for harmony <strong>students</strong>, <strong>composers</strong>, <strong>producers</strong> and <strong>musicians</strong> of all kinds. It provides basic information about keys, scales, chords and progressions. With one click, it can quickly help compose a new song, create arrangements, harmonize a melody, use Greek modes or change the key of a piece.',
-				'The system is very simple: choose a <strong>tonic</strong> and a <strong>scale type</strong>, then press the button. The available information will appear as a scale view, a manager for the chords that can be built from it, and a view of the selected instrument.'
+				'<em>CODA</em> is a web application for harmony <strong>students</strong>, <strong>composers</strong>, <strong>producers</strong> and <strong>musicians</strong> of all kinds. It provides basic information about keys, scales, chords and progressions. In a few simple steps, it can quickly help compose a new song, create arrangements, harmonize a melody, use Greek modes or change the key of a piece.',
+				'The system is very simple: choose a <strong>tonic</strong>, a <strong>scale type</strong> and an <strong>instrument</strong>. The left area will show a view of the selected scale, a table of the chords that can be formed on it, a view of the selected instrument, and information on how to extend its harmony. The right area will show a fully configurable chord progression, exportable as MIDI, so you can transfer the work to your preferred program.'
 			],
 			sections: [
 				{

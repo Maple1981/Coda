@@ -114,7 +114,7 @@
 			'progression.goStart': 'Inicio',
 			'progression.harmonicColor': 'Color armónico',
 			'progression.listen': 'Preescuchar',
-			'progression.loop': 'Loop',
+			'progression.loop': 'Bucle',
 			'progression.meter': 'Compás',
 			'progression.modalInterchange': 'Intercambio',
 			'progression.subtitle': 'Constructor de progresiones',
