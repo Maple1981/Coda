@@ -3,32 +3,37 @@
 	'use strict';
 
 	function initialize(options) {
-		var $ = options.$;
 		var playbackService = options.playbackService;
 		var preferences = options.preferences;
-		var slider = $('#selectorVolumen');
-		var output = $('#valorVolumen');
+		var doc = global.document;
+		var slider = doc ? doc.getElementById('selectorVolumen') : null;
+		var output = doc ? doc.getElementById('valorVolumen') : null;
 		var initialVolume = resolveInitialVolume(options);
 
-		if (!slider.length || !playbackService || typeof playbackService.setVolume !== 'function') {
+		if (!slider || !playbackService || typeof playbackService.setVolume !== 'function') {
 			return;
 		}
 
-		slider.val(initialVolume);
+		slider.value = initialVolume;
 
 		function updateVolume(savePreference) {
-			var volume = playbackService.setVolume(slider.val());
+			var volume = playbackService.setVolume(slider.value);
 			var label = Math.round(volume) + '%';
 
-			output.text(label);
-			slider.attr('aria-valuetext', label);
+			if (output) {
+				output.textContent = label;
+			}
+			slider.setAttribute('aria-valuetext', label);
 
 			if (savePreference && preferences && typeof preferences.setValue === 'function') {
 				preferences.setValue('volume', Math.round(volume));
 			}
 		}
 
-		slider.on('input change', function () {
+		slider.addEventListener('input', function () {
+			updateVolume(true);
+		});
+		slider.addEventListener('change', function () {
 			updateVolume(true);
 		});
 		updateVolume(false);

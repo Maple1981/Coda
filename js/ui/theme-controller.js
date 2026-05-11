@@ -3,24 +3,24 @@
 	'use strict';
 
 	function initialize(options) {
-		var $ = options.$;
 		var preferences = options.preferences;
 		var i18n = options.i18n;
-		var button = $('#themeToggleButton');
+		var doc = global.document;
+		var button = doc ? doc.getElementById('themeToggleButton') : null;
 		var theme = normalizeTheme(options.initialTheme);
 
-		applyTheme($, theme);
+		applyTheme(null, theme);
 
-		if (!button.length) {
+		if (!button) {
 			return;
 		}
 
-		updateButton($, i18n, theme);
+		updateButton(null, i18n, theme);
 
-		button.on('click', function () {
+		button.addEventListener('click', function () {
 			theme = theme === 'day' ? 'night' : 'day';
-			applyTheme($, theme);
-			updateButton($, i18n, theme);
+			applyTheme(null, theme);
+			updateButton(null, i18n, theme);
 
 			if (preferences && typeof preferences.setValue === 'function') {
 				preferences.setValue('theme', theme);
@@ -29,18 +29,30 @@
 	}
 
 	function applyTheme($, theme) {
-		$('body').attr('data-theme', normalizeTheme(theme));
+		if (global.document && global.document.body) {
+			global.document.body.setAttribute('data-theme', normalizeTheme(theme));
+		}
 	}
 
 	function updateButton($, i18n, theme) {
-		var button = $('#themeToggleButton');
-		var icon = button.find('.material-icons');
+		var doc = global.document;
+		var button = doc ? doc.getElementById('themeToggleButton') : null;
+		var icon;
 		var labelKey = theme === 'day' ? 'theme.switchToNight' : 'theme.switchToDay';
 
-		icon.text(theme === 'day' ? 'dark_mode' : 'light_mode');
-		button.attr('title', translate(i18n, labelKey));
-		button.attr('aria-label', translate(i18n, labelKey));
-		button.attr('aria-pressed', theme === 'day' ? 'true' : 'false');
+		if (!button) {
+			return;
+		}
+
+		icon = button.querySelector('.material-icons');
+
+		if (icon) {
+			icon.textContent = theme === 'day' ? 'dark_mode' : 'light_mode';
+		}
+
+		button.setAttribute('title', translate(i18n, labelKey));
+		button.setAttribute('aria-label', translate(i18n, labelKey));
+		button.setAttribute('aria-pressed', theme === 'day' ? 'true' : 'false');
 	}
 
 	function normalizeTheme(theme) {

@@ -3,22 +3,35 @@
 	'use strict';
 
 	function initialize(options) {
-		var $ = options.$;
 		var root = options.root || global.document;
 		var selector = options.selector || '.randomSelectButton';
 		var masterSelector = options.masterSelector || '.randomMasterButton';
 		var random = options.random || Math.random;
 
-		updateLabels($, options.i18n, selector);
-		updateLabels($, options.i18n, masterSelector);
+		if (!root || typeof root.addEventListener !== 'function') {
+			return;
+		}
 
-		$(root).on('click', selector, function () {
-			randomizeAssociatedControl($, $(this), random);
+		updateLabels(null, options.i18n, selector);
+		updateLabels(null, options.i18n, masterSelector);
+
+		root.addEventListener('click', function (event) {
+			var button = findDelegatedButton(root, event.target, selector);
+
+			if (button) {
+				randomizeAssociatedControl(null, button, random);
+			}
 		});
 
-		$(root).on('click', masterSelector, function () {
-			randomizeAllAssociatedControls($, root, random, {
-				groups: $(this).attr('data-random-master-groups'),
+		root.addEventListener('click', function (event) {
+			var button = findDelegatedButton(root, event.target, masterSelector);
+
+			if (!button) {
+				return;
+			}
+
+			randomizeAllAssociatedControls(null, root, random, {
+				groups: button.getAttribute('data-random-master-groups'),
 				selector: selector
 			});
 		});
@@ -27,24 +40,27 @@
 	function updateLabels($, i18n, selector) {
 		selector = selector || '.randomSelectButton, .randomMasterButton';
 
-		$(selector).each(function () {
-			var button = $(this);
-			var key = button.attr('data-random-i18n-key') || 'randomSelect.label';
+		forEachElement(global.document, selector, function (button) {
+			var key = button.getAttribute('data-random-i18n-key') || 'randomSelect.label';
 			var label = translate(i18n, key);
 
-			button.attr('title', label);
-			button.attr('aria-label', label);
+			button.setAttribute('title', label);
+			button.setAttribute('aria-label', label);
 		});
 	}
 
 	function randomizeAssociatedControl($, button, random) {
-		var targetSelector = button.attr('data-random-control-target') || button.attr('data-random-select-target');
+		var buttonElement = asElement(button);
+		var targetSelector = buttonElement ? buttonElement.getAttribute('data-random-control-target') || buttonElement.getAttribute('data-random-select-target') : null;
+		var target;
 
 		if (!targetSelector) {
 			return null;
 		}
 
-		return randomizeControl($, $(targetSelector), random);
+		target = global.document ? global.document.querySelector(targetSelector) : null;
+
+		return randomizeControl(null, target, random);
 	}
 
 	function randomizeAssociatedSelect($, button, random) {
@@ -58,9 +74,8 @@
 		var randomizedTargets = {};
 		var randomizedValues = [];
 
-		$(root).find(selector).each(function () {
-			var button = $(this);
-			var targetSelector = button.attr('data-random-control-target') || button.attr('data-random-select-target');
+		forEachElement(root, selector, function (button) {
+			var targetSelector = button.getAttribute('data-random-control-target') || button.getAttribute('data-random-select-target');
 			var value;
 
 			if (!targetSelector || randomizedTargets[targetSelector] || !isButtonInMasterGroups(button, masterGroups)) {
@@ -82,38 +97,37 @@
 	}
 
 	function randomizeControl($, control, random) {
-		var element;
+		var element = asElement(control);
 
-		if (!control || !control.length) {
+		if (!element) {
 			return null;
 		}
 
-		element = control[0];
-
 		if (String(element.tagName).toLowerCase() === 'select') {
-			return randomizeSelect($, control, random);
+			return randomizeSelect(null, element, random);
 		}
 
 		if (String(element.tagName).toLowerCase() === 'input') {
-			return randomizeInput($, control, random);
+			return randomizeInput(null, element, random);
 		}
 
 		return null;
 	}
 
 	function randomizeSelect($, select, random) {
+		var selectElement = asElement(select);
 		var selectableOptions = [];
 		var selectedOption;
 
-		if (!select || !select.length) {
+		if (!selectElement) {
 			return null;
 		}
 
-		select.find('option').each(function () {
+		Array.prototype.forEach.call(selectElement.options || [], function (optionElement) {
 			var option = {
-				disabled: this.disabled,
-				text: $(this).text(),
-				value: $(this).val()
+				disabled: optionElement.disabled,
+				text: optionElement.textContent,
+				value: optionElement.value
 			};
 
 			if (isSelectableOption(option)) {
@@ -127,21 +141,21 @@
 			return null;
 		}
 
-		select.val(selectedOption.value).trigger('change');
+		selectElement.value = selectedOption.value;
+		dispatchFormEvent(selectElement, 'change');
 
 		return selectedOption.value;
 	}
 
 	function randomizeInput($, input, random) {
-		var element;
+		var element = asElement(input);
 		var type;
 		var value;
 
-		if (!input || !input.length) {
+		if (!element) {
 			return null;
 		}
 
-		element = input[0];
 		type = String(element.type || '').toLowerCase();
 
 		if (type !== 'number' && type !== 'range') {
@@ -155,7 +169,9 @@
 			type: type
 		}, random);
 
-		input.val(value).trigger('input').trigger('change');
+		element.value = value;
+		dispatchFormEvent(element, 'input');
+		dispatchFormEvent(element, 'change');
 
 		return value;
 	}
@@ -245,7 +261,8 @@
 	}
 
 	function isButtonInMasterGroups(button, masterGroups) {
-		var buttonGroups = parseGroups(button.attr('data-random-group'));
+		var buttonElement = asElement(button);
+		var buttonGroups = parseGroups(buttonElement ? buttonElement.getAttribute('data-random-group') : null);
 
 		if (masterGroups.indexOf('*') > -1) {
 			return true;
@@ -275,6 +292,42 @@
 
 	function translate(i18n, key) {
 		return i18n && typeof i18n.t === 'function' ? i18n.t(key) : key;
+	}
+
+	function asElement(value) {
+		if (!value) {
+			return null;
+		}
+
+		if (value.nodeType === 1 || value.nodeType === 9) {
+			return value;
+		}
+
+		return value[0] || null;
+	}
+
+	function dispatchFormEvent(element, eventName) {
+		var event = new Event(eventName, { bubbles: true });
+
+		element.dispatchEvent(event);
+	}
+
+	function findDelegatedButton(root, target, selector) {
+		var button = target && target.closest ? target.closest(selector) : null;
+
+		if (!button) {
+			return null;
+		}
+
+		return root === global.document || root.contains(button) ? button : null;
+	}
+
+	function forEachElement(root, selector, callback) {
+		if (!root || typeof root.querySelectorAll !== 'function') {
+			return;
+		}
+
+		Array.prototype.forEach.call(root.querySelectorAll(selector), callback);
 	}
 
 	global.CodaRandomSelect = {

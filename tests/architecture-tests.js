@@ -397,38 +397,44 @@ let savedVolume = null;
 let appliedVolume = null;
 function fakeVolumeElement() {
 	return {
-		length: 1,
-		attr: function (name, value) {
+		setAttribute: function (name, value) {
 			if (name === 'aria-valuetext') {
 				volumeAriaText = value;
 			}
-			return this;
 		},
-		on: function (events, handler) {
-			if (events === 'input change') {
+		addEventListener: function (eventName, handler) {
+			if (eventName === 'input') {
 				volumeInputHandler = handler;
 			}
-			return this;
 		},
-		text: function (value) {
+		get textContent() {
+			return volumeOutputText;
+		},
+		set textContent(value) {
 			volumeOutputText = value;
-			return this;
 		},
-		val: function (value) {
-			if (value !== undefined) {
-				sliderValue = String(value);
-				return this;
-			}
+		get value() {
 			return sliderValue;
+		},
+		set value(value) {
+			sliderValue = String(value);
 		}
 	};
 }
 const fakeSlider = fakeVolumeElement();
 const fakeOutput = fakeVolumeElement();
+global.document = {
+	getElementById: function (id) {
+		if (id === 'selectorVolumen') {
+			return fakeSlider;
+		}
+		if (id === 'valorVolumen') {
+			return fakeOutput;
+		}
+		return null;
+	}
+};
 global.CodaVolumeControl.initialize({
-	$: function (selector) {
-		return selector === '#selectorVolumen' ? fakeSlider : fakeOutput;
-	},
 	initialVolume: 42,
 	playbackService: {
 		getVolume: function () {

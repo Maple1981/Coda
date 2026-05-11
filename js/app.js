@@ -4,13 +4,14 @@
 //https://creativecommons.org/licenses/by-sa/4.0/
 //****************************
 
-$(document).ready(function () {
+document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
 	var preferences = CodaPreferences.create();
 	var storedPreferences = preferences.read();
+	var languageSelector = document.getElementById('selectorIdioma');
 	var i18n = CodaI18n.create({
-		initialLanguage: storedPreferences.language || $('#selectorIdioma').val(),
+		initialLanguage: storedPreferences.language || (languageSelector ? languageSelector.value : 'es'),
 		translations: CodaTranslations
 	});
 

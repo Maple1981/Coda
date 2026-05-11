@@ -5,37 +5,44 @@
 	var previousFocus = null;
 
 	function initialize($, i18n) {
-		if ($('#controlVersiones').length === 0 || $('#enlaceNovedades').length === 0) {
+		var doc = global.document;
+		var content = doc ? doc.getElementById('controlVersiones') : null;
+		var link = doc ? doc.getElementById('enlaceNovedades') : null;
+		var dialog;
+		var closeButton;
+
+		if (!content || !link) {
 			return;
 		}
 
-		ensureDialogStructure($, i18n);
-		updateTitle($, i18n);
+		ensureDialogStructure(i18n);
+		updateTitle(null, i18n);
+		dialog = doc.getElementById('controlVersionesDialog');
+		closeButton = doc.getElementById('controlVersionesDialogClose');
 
-		$('#enlaceNovedades').off('click.codaChangelogDialog').on('click.codaChangelogDialog', function (event) {
+		if (dialog.getAttribute('data-coda-dialog-initialized') === 'true') {
+			return;
+		}
+		dialog.setAttribute('data-coda-dialog-initialized', 'true');
+
+		link.addEventListener('click', function (event) {
 			event.preventDefault();
-			openDialog($);
+			openDialog();
 		});
 
-		$('#controlVersionesDialog').off('mousedown.codaChangelogDialog').on('mousedown.codaChangelogDialog', function (event) {
-			if (event.target === this) {
-				closeDialog($);
+		dialog.addEventListener('mousedown', function (event) {
+			if (event.target === dialog) {
+				closeDialog();
 			}
 		});
 
-		$('#controlVersionesDialogClose').off('click.codaChangelogDialog').on('click.codaChangelogDialog', function () {
-			closeDialog($);
-		});
-
-		$(document).off('keydown.codaChangelogDialog').on('keydown.codaChangelogDialog', function (event) {
-			if (event.key === 'Escape' && isOpen($)) {
-				closeDialog($);
-			}
-		});
+		closeButton.addEventListener('click', closeDialog);
+		doc.addEventListener('keydown', handleDocumentKeydown);
 	}
 
-	function ensureDialogStructure($, i18n) {
-		var content = $('#controlVersiones');
+	function ensureDialogStructure(i18n) {
+		var doc = global.document;
+		var content = doc.getElementById('controlVersiones');
 		var dialog;
 		var surface;
 		var titlebar;
@@ -43,37 +50,54 @@
 		var closeButton;
 		var contentShell;
 
-		if ($('#controlVersionesDialog').length > 0) {
+		if (doc.getElementById('controlVersionesDialog')) {
 			return;
 		}
 
-		dialog = $('<div id="controlVersionesDialog" class="dialogoNovedades" role="dialog" aria-modal="true" aria-labelledby="controlVersionesDialogTitle" hidden></div>');
-		surface = $('<div class="dialogoNovedades__surface"></div>');
-		titlebar = $('<div class="dialogoNovedades__titlebar"></div>');
-		title = $('<h2 id="controlVersionesDialogTitle" class="dialogoNovedades__title"></h2>');
-		closeButton = $('<button id="controlVersionesDialogClose" class="dialogoNovedades__close" type="button"><span class="material-icons" aria-hidden="true">close</span></button>');
-		contentShell = $('<div class="dialogoNovedades__content"></div>');
+		dialog = createElement('div', {
+			'class': 'dialogoNovedades',
+			'aria-labelledby': 'controlVersionesDialogTitle',
+			'aria-modal': 'true',
+			'hidden': '',
+			'id': 'controlVersionesDialog',
+			'role': 'dialog'
+		});
+		surface = createElement('div', { 'class': 'dialogoNovedades__surface' });
+		titlebar = createElement('div', { 'class': 'dialogoNovedades__titlebar' });
+		title = createElement('h2', { 'class': 'dialogoNovedades__title', 'id': 'controlVersionesDialogTitle' });
+		closeButton = createElement('button', { 'class': 'dialogoNovedades__close', 'id': 'controlVersionesDialogClose', 'type': 'button' });
+		closeButton.innerHTML = '<span class="material-icons" aria-hidden="true">close</span>';
+		contentShell = createElement('div', { 'class': 'dialogoNovedades__content' });
 
-		content.before(dialog);
-		contentShell.append(content);
-		titlebar.append(title, closeButton);
-		surface.append(titlebar, contentShell);
-		dialog.append(surface);
-		updateTitle($, i18n);
+		content.parentNode.insertBefore(dialog, content);
+		contentShell.appendChild(content);
+		titlebar.appendChild(title);
+		titlebar.appendChild(closeButton);
+		surface.appendChild(titlebar);
+		surface.appendChild(contentShell);
+		dialog.appendChild(surface);
+		updateTitle(null, i18n);
 	}
 
-	function openDialog($) {
-		var dialog = $('#controlVersionesDialog');
+	function openDialog() {
+		var doc = global.document;
+		var dialog = doc.getElementById('controlVersionesDialog');
+		var closeButton = doc.getElementById('controlVersionesDialogClose');
 
-		previousFocus = document.activeElement;
-		dialog.removeAttr('hidden').addClass('isOpen');
-		$('body').addClass('hasOpenDialog');
-		$('#controlVersionesDialogClose').trigger('focus');
+		previousFocus = doc.activeElement;
+		dialog.removeAttribute('hidden');
+		dialog.classList.add('isOpen');
+		doc.body.classList.add('hasOpenDialog');
+		closeButton.focus();
 	}
 
-	function closeDialog($) {
-		$('#controlVersionesDialog').attr('hidden', 'hidden').removeClass('isOpen');
-		$('body').removeClass('hasOpenDialog');
+	function closeDialog() {
+		var doc = global.document;
+		var dialog = doc.getElementById('controlVersionesDialog');
+
+		dialog.setAttribute('hidden', 'hidden');
+		dialog.classList.remove('isOpen');
+		doc.body.classList.remove('hasOpenDialog');
 
 		if (previousFocus && typeof previousFocus.focus === 'function') {
 			previousFocus.focus();
@@ -81,16 +105,44 @@
 		previousFocus = null;
 	}
 
-	function isOpen($) {
-		return $('#controlVersionesDialog').hasClass('isOpen');
+	function isOpen() {
+		var doc = global.document;
+		var dialog = doc ? doc.getElementById('controlVersionesDialog') : null;
+
+		return Boolean(dialog && dialog.classList.contains('isOpen'));
 	}
 
 	function updateTitle($, i18n) {
+		var doc = global.document;
+		var titleElement = doc ? doc.getElementById('controlVersionesDialogTitle') : null;
+		var closeButton = doc ? doc.getElementById('controlVersionesDialogClose') : null;
 		var title = i18n ? i18n.t('changelog.dialogTitle') : 'Novedades y mejoras';
 		var closeLabel = i18n ? i18n.t('changelog.close') : 'Cerrar novedades';
 
-		$('#controlVersionesDialogTitle').text(title);
-		$('#controlVersionesDialogClose').attr('aria-label', closeLabel).attr('title', closeLabel);
+		if (titleElement) {
+			titleElement.textContent = title;
+		}
+
+		if (closeButton) {
+			closeButton.setAttribute('aria-label', closeLabel);
+			closeButton.setAttribute('title', closeLabel);
+		}
+	}
+
+	function handleDocumentKeydown(event) {
+		if (event.key === 'Escape' && isOpen()) {
+			closeDialog();
+		}
+	}
+
+	function createElement(tagName, attributes) {
+		var element = global.document.createElement(tagName);
+
+		Object.keys(attributes).forEach(function (attribute) {
+			element.setAttribute(attribute, attributes[attribute]);
+		});
+
+		return element;
 	}
 
 	global.CodaChangelogDialog = {
