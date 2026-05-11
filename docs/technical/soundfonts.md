@@ -6,6 +6,8 @@ CODA usa el formato clásico de MIDI.js: archivos JavaScript con muestras embebi
 
 Los nuevos instrumentos descargados proceden del banco `FluidR3_GM` del proyecto [`gleitz/midi-js-soundfonts`](https://github.com/gleitz/midi-js-soundfonts), una colección de soundfonts General MIDI prerenderizados para usarse directamente con MIDI.js. Ese banco declara licencia [Creative Commons Attribution 3.0](https://creativecommons.org/licenses/by/3.0/).
 
+La atribución documental de estos archivos se mantiene en [`docs/ATTRIBUTIONS.md`](../ATTRIBUTIONS.md). La aplicación también incluye una referencia visible en el pie, porque los soundfonts se distribuyen con la versión pública.
+
 ## Instrumentos locales
 
 - `acoustic_grand_piano`: piano acústico. Es el sonido por defecto y corresponde a la vista de piano.
