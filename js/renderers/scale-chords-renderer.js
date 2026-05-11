@@ -151,13 +151,19 @@
 			transformedDegree = cleanDegree.toUpperCase();
 		}
 
-		transformedDegree += chordName.replace('b', '').replace('#', '').substring(1, chordName.length);
+		transformedDegree += chordQualitySuffix(chordName);
 
 		if (transformedDegree.indexOf('m7') >= 0 && transformedDegree.indexOf('dim7') === -1) {
 			transformedDegree = transformedDegree.replace('m', '');
 		}
 
 		return transformedDegree;
+	}
+
+	function chordQualitySuffix(chordName) {
+		return String(chordName || '')
+			.replace(/^[A-G](#|b|♭)?/, '')
+			.replace(/b5/g, '♭5');
 	}
 
 	function t(options, key) {

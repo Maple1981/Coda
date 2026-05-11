@@ -116,8 +116,9 @@ assert.equal(initialProgression.bars, 8);
 assert.equal(initialProgression.meter, '4/4');
 assert.equal(initialProgression.totalBeats, 32);
 assert.equal(initialProgression.totalSeconds, 16);
-assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.degree; }), ['I', 'VI', 'II', 'VJ', 'I', 'IVJ', 'VJ', 'I']);
+assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.degree; }), ['Imaj7', 'vi7', 'ii7', 'V7', 'Imaj7', 'IVmaj7', 'V7', 'Imaj7']);
 assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'Am7', 'Dm7', 'G7', 'Cmaj7', 'Fmaj7', 'G7', 'Cmaj7']);
+assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'T', 'SD', 'D', 'T', 'SD', 'D', 'T']);
 
 document.getElementById('progressionBars').value = '4';
 document.getElementById('progressionMeter').value = '3/4';
@@ -144,15 +145,16 @@ assert.equal(changedProgression.meter, '3/4');
 assert.equal(changedProgression.totalBeats, 12);
 assert.equal(changedProgression.totalSeconds, 6);
 assert.equal(rendered.progression, 2);
-assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.degree; }), ['I', 'IVJ', 'VJ', 'I']);
+assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.degree; }), ['Imaj7', 'IVmaj7', 'V7', 'Imaj7']);
 assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'Fmaj7', 'G7', 'Cmaj7']);
+assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'SD', 'D', 'T']);
 assert.deepEqual(changedProgression.measures[1], {
 	articulation: 'staccato',
 	bar: 2,
 	beatUnit: 4,
 	chord: initialized.uiState.getReport().scaleChords[3],
 	chordName: 'Fmaj7',
-	degree: 'IVJ',
+	degree: 'IVmaj7',
 	displayName: 'Fmaj7',
 	durationBeats: 3,
 	durationSeconds: 1.5,
@@ -162,6 +164,7 @@ assert.deepEqual(changedProgression.measures[1], {
 	source: 'diatonic',
 	startBeat: 3,
 	startSeconds: 1.5,
+	tonalFunction: 'SD',
 	voices: 3
 });
 assert.deepEqual(changedProgression.harmonicColor, {

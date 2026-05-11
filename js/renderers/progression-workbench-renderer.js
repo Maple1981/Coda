@@ -112,12 +112,14 @@
 		var bar = measure.bar || index + 1;
 		var label = measure.displayName || measure.chordName || measure.label || '';
 		var degree = measure.degree || '';
+		var tonalFunction = measure.tonalFunction || '';
 
 		return '<div class="measure" draggable="true" data-progression-bar="' + escapeHtml(bar) + '" data-progression-index="' + escapeHtml(index) + '" tabindex="0">' +
 			'<button type="button" class="measureDragHandle" draggable="true" aria-label="" title="" data-i18n-title="progression.dragMeasure"><span class="material-icons" aria-hidden="true">open_with</span></button>' +
 			'<span class="measureBar">' + escapeHtml(bar) + '</span>' +
 			'<strong>' + escapeHtml(label) + '</strong>' +
 			(degree ? '<em class="measureDegree">' + escapeHtml(degree) + '</em>' : '') +
+			(tonalFunction ? '<span class="measureFunction">' + escapeHtml(tonalFunction) + '</span>' : '') +
 			'</div>';
 	}
 

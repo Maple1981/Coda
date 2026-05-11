@@ -43,12 +43,24 @@
 
 		root.addEventListener('click', function (event) {
 			var measure = closest(event.target, '.measure');
+			var clickedIndex;
 
 			if (!measure || closest(event.target, '.measureDragHandle')) {
 				return;
 			}
 
-			playbackHeadIndex = measureIndex(measure);
+			clickedIndex = measureIndex(measure);
+			if (
+				options.progressionPlayback &&
+				typeof options.progressionPlayback.isPlaying === 'function' &&
+				options.progressionPlayback.isPlaying() &&
+				clickedIndex === playbackHeadIndex
+			) {
+				stopPreview(options, listenButton, playbackHeadIndex);
+				return;
+			}
+
+			playbackHeadIndex = clickedIndex;
 			setPlaybackHead(playbackHeadIndex, false);
 			playPreview(options, listenButton, playbackHeadIndex, function (index) {
 				playbackHeadIndex = index;

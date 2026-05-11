@@ -499,6 +499,10 @@ body[data-theme="day"] .measureDegree {
   color: #7d2785;
 }
 
+body[data-theme="day"] .measureFunction {
+  color: #7d2785;
+}
+
 body[data-theme="day"] .measure.isPlaybackHead {
   border-color: #7d2785;
   -webkit-box-shadow: 0 0 0 1px rgba(125, 39, 133, 0.22);
@@ -1208,7 +1212,7 @@ section#bienvenida .columnata article {
 
 .progression-workbench {
   min-height: 42vh;
-  padding: 1em 0 1.4em 0;
+  padding: 0 0 1.4em 0;
   border-bottom: 1px solid #444;
 }
 
@@ -1393,6 +1397,15 @@ section#bienvenida .columnata article {
   font-style: normal;
   font-weight: 600;
   margin-top: .3em;
+}
+
+.measureFunction {
+  -ms-flex-item-align: start;
+      align-self: flex-start;
+  color: #d85ee0;
+  font-size: .78em;
+  font-weight: 700;
+  margin-top: .15em;
 }
 
 .measureDragHandle {

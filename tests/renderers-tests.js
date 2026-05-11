@@ -266,6 +266,7 @@ assert.ok(scaleChordsHtml.indexOf('<table class="acordesEscala">') > -1);
 assert.ok(scaleChordsHtml.indexOf('Cmaj7') > -1);
 assert.ok(scaleChordsHtml.indexOf('class="celdaAcorde" id="G-B-D-F"') > -1);
 assert.ok(scaleChordsHtml.indexOf('<td>V7</td>') > -1);
+assert.ok(scaleChordsHtml.indexOf('<td>vii7♭5</td>') > -1);
 assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Función</td>') > -1);
 
 const latinScaleChordsHtml = scaleChordsRenderer.render({
@@ -393,8 +394,9 @@ const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineM
 		{
 			bar: 1,
 			chordName: 'Cmaj7',
-			degree: 'I',
-			displayName: 'Cmaj7 add9'
+			degree: 'Imaj7',
+			displayName: 'Cmaj7 add9',
+			tonalFunction: 'T'
 		},
 		{
 			bar: 2,
@@ -406,7 +408,8 @@ assert.ok(renderedProgressionTimeline.indexOf('data-progression-bar="1"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-index="0"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('measureDragHandle') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<strong>Cmaj7 add9</strong>') > -1);
-assert.ok(renderedProgressionTimeline.indexOf('<em class="measureDegree">I</em>') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('<em class="measureDegree">Imaj7</em>') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('<span class="measureFunction">T</span>') > -1);
 assert.equal(progressionWorkbenchRenderer.hasRenderableMeasures([{ chordName: '' }]), false);
 assert.ok(progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [

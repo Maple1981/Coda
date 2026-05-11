@@ -831,7 +831,7 @@ section#bienvenida .columnata article{
 
 .progression-workbench{
 	min-height:42vh;
-	padding:1em 0 1.4em 0;
+	padding:0 0 1.4em 0;
 	border-bottom:1px solid $basic_fillbrightgrad_color;
 }
 
@@ -979,6 +979,14 @@ section#bienvenida .columnata article{
 	font-style:normal;
 	font-weight:600;
 	margin-top:.3em;
+}
+
+.measureFunction{
+	align-self:flex-start;
+	color:$corporative_complementarybright_color;
+	font-size:.78em;
+	font-weight:700;
+	margin-top:.15em;
 }
 
 .measureDragHandle{
@@ -1235,6 +1243,10 @@ body[data-theme="day"] section#armoniaExtendida #acordeonArmoniaExtendida .codaA
 body[data-theme="day"] section#armoniaExtendida #acordeonArmoniaExtendida .codaAccordionHeaderActive{
 	background-color:#00764f;
 	color:#ffffff;
+}
+
+body[data-theme="day"] .measureFunction{
+	color:#7d2785;
 }
 
 footer{

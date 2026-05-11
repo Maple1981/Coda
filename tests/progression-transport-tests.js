@@ -38,9 +38,11 @@ context.window.URL = {
 let lastPlayCallbacks = null;
 let lastStartIndex = null;
 let stopped = 0;
+let playing = false;
 let reorderedRequest = null;
 let changedProgression = null;
 let changedOptions = null;
+let playCalls = 0;
 
 const controller = context.window.CodaProgressionTransport.initialize({
 	application: {
@@ -66,9 +68,11 @@ const controller = context.window.CodaProgressionTransport.initialize({
 	},
 	progressionPlayback: {
 		isPlaying: function () {
-			return false;
+			return playing;
 		},
 		play: function (sourceProgression, callbacks) {
+			playCalls += 1;
+			playing = true;
 			lastPlayCallbacks = callbacks;
 			lastStartIndex = callbacks.startIndex;
 			callbacks.onStart();
@@ -77,6 +81,7 @@ const controller = context.window.CodaProgressionTransport.initialize({
 		},
 		stop: function () {
 			stopped += 1;
+			playing = false;
 			if (lastPlayCallbacks && lastPlayCallbacks.onStop) {
 				lastPlayCallbacks.onStop();
 			}
@@ -101,8 +106,18 @@ assert.equal(document.measures[2].classList.contains('isPlaybackHead'), true);
 assert.equal(document.measures[2].classList.contains('isPlaying'), true);
 assert.equal(document.goStart.hidden, false);
 
-controller.stop();
+document.measures[2].dispatchDelegatedClick();
 assert.equal(stopped, 1);
+assert.equal(playCalls, 1);
+assert.equal(document.measures[2].classList.contains('isPlaybackHead'), true);
+assert.equal(document.measures[2].classList.contains('isPlaying'), false);
+
+document.measures[2].dispatchDelegatedClick();
+assert.equal(playCalls, 2);
+assert.equal(document.measures[2].classList.contains('isPlaying'), true);
+
+controller.stop();
+assert.equal(stopped, 2);
 assert.equal(document.measures[2].classList.contains('isPlaybackHead'), true);
 assert.equal(document.measures[2].classList.contains('isPlaying'), false);
 

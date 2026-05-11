@@ -7,6 +7,149 @@
 	var catalogs = global.CodaDataCatalogs = global.CodaDataCatalogs || {};
 
 	catalogs.progressionRules = {
+		phraseBlocks: [
+			{
+				cadence: 'half',
+				counterpoint: 76,
+				degrees: [0, 1, 3, 4],
+				id: 'I-ii-IV-V',
+				modes: ['major', 'minor'],
+				modalColor: 18,
+				tensionAffinity: 55,
+				weight: 16
+			},
+			{
+				cadence: 'half',
+				counterpoint: 82,
+				degrees: [0, 5, 1, 4],
+				id: 'I-vi-ii-V',
+				modes: ['major', 'minor'],
+				modalColor: 16,
+				tensionAffinity: 64,
+				weight: 15
+			},
+			{
+				cadence: 'half',
+				counterpoint: 70,
+				degrees: [0, 3, 1, 4],
+				id: 'I-IV-ii-V',
+				modes: ['major', 'minor'],
+				modalColor: 20,
+				tensionAffinity: 58,
+				weight: 12
+			},
+			{
+				cadence: 'half',
+				counterpoint: 62,
+				degrees: [0, 6, 5, 4],
+				id: 'i-bVII-bVI-V',
+				modes: ['minor'],
+				modalColor: 58,
+				tensionAffinity: 48,
+				weight: 14
+			},
+			{
+				cadence: 'plagal',
+				counterpoint: 74,
+				degrees: [0, 4, 3, 0],
+				id: 'I-V-IV-I',
+				modes: ['major', 'minor'],
+				modalColor: 24,
+				tensionAffinity: 38,
+				weight: 13
+			},
+			{
+				cadence: 'plagal',
+				counterpoint: 72,
+				degrees: [0, 5, 3, 0],
+				id: 'I-vi-IV-I',
+				modes: ['major', 'minor'],
+				modalColor: 22,
+				tensionAffinity: 44,
+				weight: 12
+			},
+			{
+				borrowed: [2],
+				cadence: 'plagal',
+				counterpoint: 74,
+				degrees: [0, 5, 3, 0],
+				id: 'I-vi-iv-I',
+				modes: ['major'],
+				modalColor: 88,
+				tensionAffinity: 35,
+				weight: 10
+			},
+			{
+				cadence: 'plagal',
+				counterpoint: 68,
+				degrees: [0, 5, 6, 0],
+				id: 'i-bVI-bVII-i',
+				modes: ['minor'],
+				modalColor: 52,
+				tensionAffinity: 50,
+				weight: 11
+			},
+			{
+				cadence: 'deceptive',
+				counterpoint: 66,
+				degrees: [0, 3, 4, 5],
+				id: 'I-IV-V-vi',
+				modes: ['major', 'minor'],
+				modalColor: 18,
+				tensionAffinity: 66,
+				weight: 13
+			},
+			{
+				cadence: 'deceptive',
+				counterpoint: 74,
+				degrees: [0, 1, 4, 5],
+				id: 'I-ii-V-vi',
+				modes: ['major', 'minor'],
+				modalColor: 15,
+				tensionAffinity: 70,
+				weight: 12
+			},
+			{
+				cadence: 'deceptive',
+				counterpoint: 70,
+				degrees: [0, 4, 2, 5],
+				id: 'I-V-iii-vi',
+				modes: ['major'],
+				modalColor: 16,
+				tensionAffinity: 62,
+				weight: 10
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 84,
+				degrees: [0, 1, 4, 0],
+				id: 'I-ii-V-I',
+				modes: ['major', 'minor'],
+				modalColor: 8,
+				tensionAffinity: 55,
+				weight: 18
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 86,
+				degrees: [5, 1, 4, 0],
+				id: 'vi-ii-V-I',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				tensionAffinity: 62,
+				weight: 17
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 72,
+				degrees: [5, 3, 4, 0],
+				id: 'bVI-iv-V-i',
+				modes: ['minor'],
+				modalColor: 42,
+				tensionAffinity: 45,
+				weight: 16
+			}
+		],
 		patterns: [
 			{
 				cadence: 'authentic',

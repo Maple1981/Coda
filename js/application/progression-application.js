@@ -3,11 +3,13 @@
 	'use strict';
 
 	function buildProgressionFromDegrees(options) {
-		return options.domain.resolveProgressionDegrees({
+		var resolvedDegrees = options.domain.resolveProgressionDegrees({
 			degrees: options.degrees,
 			scaleChords: options.report.scaleChords,
 			scaleNotes: options.report.scaleNotes
 		});
+
+		return attachDegreeIndexes(resolvedDegrees, options.report.scaleNotes);
 	}
 
 	function buildProgressionFromState(options) {
@@ -34,7 +36,9 @@
 				modalInterchange: progressionState.modalInterchange,
 				tensions: progressionState.tensions
 			},
-			measures: buildMeasures(resolvedDegrees, progressionState, secondsPerBeat),
+			measures: buildMeasures(resolvedDegrees, progressionState, secondsPerBeat, {
+				scaleDefinition: options.report.scaleDefinition
+			}),
 			meter: progressionState.meter,
 			secondsPerBeat: secondsPerBeat,
 			totalBeats: progressionState.bars * progressionState.beatsPerBar,
@@ -75,6 +79,7 @@
 			},
 			measures: buildMeasures(resolvedDegrees, progressionState, secondsPerBeat, {
 				includeTensions: true,
+				scaleDefinition: options.report.scaleDefinition,
 				scaleNotes: options.report.scaleNotes
 			}),
 			meter: progressionState.meter,
@@ -216,7 +221,7 @@
 				beatUnit: progressionState.beatUnit,
 				chord: resolvedDegrees[i].chord,
 				chordName: resolvedDegrees[i].chord ? resolvedDegrees[i].chord.nombre : '',
-				degree: resolvedDegrees[i].degree,
+				degree: formatDegreeForChord(resolvedDegrees[i].degree, resolvedDegrees[i].chord ? resolvedDegrees[i].chord.nombre : ''),
 				displayName: displayName(resolvedDegrees[i].chord, tensionLabel),
 				durationBeats: durationBeats,
 				durationSeconds: durationBeats * secondsPerBeat,
@@ -226,11 +231,55 @@
 				source: resolvedDegrees[i].source || 'diatonic',
 				startBeat: startBeat,
 				startSeconds: startBeat * secondsPerBeat,
+				tonalFunction: tonalFunctionForDegree(options.scaleDefinition, resolvedDegrees[i].degreeIndex),
 				voices: progressionState.voices
 			});
 		}
 
 		return measures;
+	}
+
+	function attachDegreeIndexes(resolvedDegrees, scaleNotes) {
+		var result = [];
+
+		for (var i = 0; i < resolvedDegrees.length; i++) {
+			result.push(extendProgression(resolvedDegrees[i], {
+				degreeIndex: resolvedDegrees[i].degreeIndex != null ? resolvedDegrees[i].degreeIndex : degreeIndexForDegree(scaleNotes, resolvedDegrees[i].degree)
+			}));
+		}
+
+		return result;
+	}
+
+	function degreeIndexForDegree(scaleNotes, degree) {
+		var normalizedDegree = normalizeDegreeName(degree);
+
+		scaleNotes = scaleNotes || [];
+		for (var i = 0; i < scaleNotes.length; i++) {
+			if (normalizeDegreeName(scaleNotes[i].grado) === normalizedDegree) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	function normalizeDegreeName(degree) {
+		return String(degree || '').replace('J', '').replace('M', '').replace('m', '').toUpperCase();
+	}
+
+	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
+		var functions;
+		var tonalFunction;
+
+		if (!scaleDefinition || scaleDefinition.tonal !== 'true' || !scaleDefinition.funciones || degreeIndex < 0) {
+			return '';
+		}
+
+		functions = scaleDefinition.funciones.split('-');
+		tonalFunction = functions[degreeIndex] || '';
+
+		return tonalFunction === '—' ? '' : tonalFunction;
 	}
 
 	function chordNotes(chord) {
@@ -244,13 +293,22 @@
 	function createGenerationPlan(options) {
 		var progressionState = options.progressionState;
 		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var mode = progressionMode(options.report);
 		var pattern = choosePattern({
-			mode: progressionMode(options.report),
+			mode: mode,
 			progressionState: progressionState,
 			rng: rng,
 			rules: options.rules
 		});
-		var degrees = fitDegreesToBars(pattern, progressionState.bars);
+		var degrees = progressionState.bars >= 8 ?
+			composePhraseBlocks({
+				mode: mode,
+				pattern: pattern,
+				progressionState: progressionState,
+				rng: rng,
+				rules: options.rules
+			}) :
+			fitDegreesToBars(pattern, progressionState.bars);
 
 		return {
 			degrees: degrees,
@@ -352,6 +410,146 @@
 		return fitted;
 	}
 
+	function composePhraseBlocks(options) {
+		var bars = numberOrDefault(options.progressionState.bars, 8);
+		var blockCount = Math.ceil(bars / 4);
+		var degrees = [];
+		var previousBlockId = '';
+
+		for (var blockIndex = 0; blockIndex < blockCount; blockIndex++) {
+			var remainingBars = bars - degrees.length;
+			var blockLength = Math.min(4, remainingBars);
+			var isFinalBlock = blockIndex === blockCount - 1;
+			var cadence = isFinalBlock ? finalCadenceForPattern(options.pattern) : chooseIntermediateCadence(options.rng);
+			var block = choosePhraseBlock({
+				cadence: cadence,
+				mode: options.mode,
+				previousBlockId: previousBlockId,
+				progressionState: options.progressionState,
+				rng: options.rng,
+				rules: options.rules
+			});
+
+			previousBlockId = block.id;
+			degrees = degrees.concat(fitBlockToBars(block, blockLength));
+		}
+
+		return degrees.slice(0, bars);
+	}
+
+	function finalCadenceForPattern(pattern) {
+		if (pattern && (pattern.cadence === 'plagal' || pattern.cadence === 'mixed-plagal' || pattern.cadence === 'deceptive')) {
+			return pattern.cadence;
+		}
+
+		return 'authentic';
+	}
+
+	function chooseIntermediateCadence(rng) {
+		var value = rng();
+
+		if (value < 0.42) {
+			return 'half';
+		}
+
+		if (value < 0.72) {
+			return 'plagal';
+		}
+
+		return 'deceptive';
+	}
+
+	function choosePhraseBlock(options) {
+		var blocks = options.rules && options.rules.phraseBlocks ? options.rules.phraseBlocks : fallbackPhraseBlocks();
+		var candidates = [];
+		var totalWeight = 0;
+		var selectedValue;
+
+		for (var i = 0; i < blocks.length; i++) {
+			if (!matchesMode(blocks[i], options.mode) || !matchesCadence(blocks[i], options.cadence)) {
+				continue;
+			}
+
+			candidates.push({
+				block: blocks[i],
+				weight: adjustedBlockWeight(blocks[i], options.progressionState, options.previousBlockId)
+			});
+			totalWeight += candidates[candidates.length - 1].weight;
+		}
+
+		if (candidates.length > 1) {
+			candidates = candidates.filter(function (candidate) {
+				return candidate.block.id !== options.previousBlockId;
+			});
+			totalWeight = sumCandidateWeights(candidates);
+		}
+
+		if (!candidates.length) {
+			return fallbackPhraseBlocks()[0];
+		}
+
+		selectedValue = options.rng() * totalWeight;
+
+		for (var j = 0; j < candidates.length; j++) {
+			selectedValue -= candidates[j].weight;
+			if (selectedValue <= 0) {
+				return candidates[j].block;
+			}
+		}
+
+		return candidates[candidates.length - 1].block;
+	}
+
+	function sumCandidateWeights(candidates) {
+		var totalWeight = 0;
+
+		for (var i = 0; i < candidates.length; i++) {
+			totalWeight += candidates[i].weight;
+		}
+
+		return totalWeight;
+	}
+
+	function adjustedBlockWeight(block, progressionState, previousBlockId) {
+		var weight = block.weight || 1;
+
+		weight += affinityScore(progressionState.counterpoint, block.counterpoint);
+		weight += affinityScore(progressionState.modalInterchange, block.modalColor);
+		weight += affinityScore(progressionState.tensions, block.tensionAffinity);
+
+		if (block.id === previousBlockId) {
+			weight = Math.max(1, weight * 0.12);
+		}
+
+		return Math.max(1, weight);
+	}
+
+	function matchesCadence(block, cadence) {
+		return block.cadence === cadence || (cadence === 'mixed-plagal' && block.cadence === 'plagal');
+	}
+
+	function fitBlockToBars(block, bars) {
+		var degrees = [];
+		var sourceDegrees = block.degrees || [0, 3, 4, 0];
+		var borrowedIndexes = block.borrowed || [];
+
+		for (var i = 0; i < bars; i++) {
+			degrees.push({
+				index: sourceDegrees[i % sourceDegrees.length],
+				source: borrowedIndexes.indexOf(i % sourceDegrees.length) > -1 ? 'parallel' : 'diatonic'
+			});
+		}
+
+		return degrees;
+	}
+
+	function fallbackPhraseBlocks() {
+		return [
+			{ cadence: 'half', degrees: [0, 1, 3, 4], id: 'fallback-half', modes: ['major', 'minor'], weight: 1 },
+			{ cadence: 'authentic', degrees: [0, 3, 4, 0], id: 'fallback-authentic', modes: ['major', 'minor'], weight: 1 }
+		];
+	}
+
 	function forceCadentialEnding(degrees, pattern) {
 		if (degrees.length < 2) {
 			return;
@@ -425,6 +623,40 @@
 		return tensionLabel ? name + ' ' + tensionLabel : name;
 	}
 
+	function formatDegreeForChord(degree, chordName) {
+		var transformedDegree = '';
+		var cleanDegree = String(degree || '').replace('J', '').replace('M', '').replace('m', '');
+		var chordQuality = chordQualitySuffix(chordName);
+
+		if (!cleanDegree) {
+			return '';
+		}
+
+		if (chordName.indexOf('mmaj7') >= 0) {
+			transformedDegree = cleanDegree.toLowerCase();
+		} else if (chordName.indexOf('maj7') >= 0) {
+			transformedDegree = cleanDegree.toUpperCase();
+		} else if (chordName.indexOf('m') >= 0) {
+			transformedDegree = cleanDegree.toLowerCase();
+		} else {
+			transformedDegree = cleanDegree.toUpperCase();
+		}
+
+		transformedDegree += chordQuality;
+
+		if (transformedDegree.indexOf('m7') >= 0 && transformedDegree.indexOf('dim7') === -1) {
+			transformedDegree = transformedDegree.replace('m', '');
+		}
+
+		return transformedDegree;
+	}
+
+	function chordQualitySuffix(chordName) {
+		return String(chordName || '')
+			.replace(/^[A-G](#|b|♭)?/, '')
+			.replace(/b5/g, '♭5');
+	}
+
 	function voiceLeadingProfile(progressionState) {
 		if (progressionState.counterpoint >= 70) {
 			return 'contrary-stepwise';
@@ -484,6 +716,7 @@
 	global.CodaApplication.buildProgressionFromDegrees = buildProgressionFromDegrees;
 	global.CodaApplication.buildProgressionFromState = buildProgressionFromState;
 	global.CodaApplication.generateProgressionFromState = generateProgressionFromState;
+	global.CodaApplication.formatProgressionDegreeForChord = formatDegreeForChord;
 	global.CodaApplication.rebuildProgressionTimeline = rebuildProgressionTimeline;
 	global.CodaApplication.reorderProgressionMeasures = reorderProgressionMeasures;
 })(window);

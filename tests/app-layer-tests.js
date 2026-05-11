@@ -129,15 +129,16 @@ assert.equal(cMajorProgressionPlan.bars, 4);
 assert.equal(cMajorProgressionPlan.meter, '3/4');
 assert.equal(cMajorProgressionPlan.totalBeats, 12);
 assert.equal(cMajorProgressionPlan.totalSeconds, 6);
-assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.degree; }), ['I', 'IVJ', 'VJ', 'I']);
+assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.degree; }), ['Imaj7', 'IVmaj7', 'V7', 'Imaj7']);
 assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'Fmaj7', 'G7', 'Cmaj7']);
+assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'SD', 'D', 'T']);
 assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	articulation: 'legato',
 	bar: 2,
 	beatUnit: 4,
 	chord: cMajorReport.scaleChords[3],
 	chordName: 'Fmaj7',
-	degree: 'IVJ',
+	degree: 'IVmaj7',
 	displayName: 'Fmaj7',
 	durationBeats: 3,
 	durationSeconds: 1.5,
@@ -147,6 +148,7 @@ assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	source: 'diatonic',
 	startBeat: 3,
 	startSeconds: 1.5,
+	tonalFunction: 'SD',
 	voices: 3
 });
 assert.deepEqual(cMajorProgressionPlan.harmonicColor, {
@@ -182,6 +184,35 @@ assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) {
 assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'Fm7', 'Fm7', 'Cmaj7']);
 assert.ok(generatedHighColorProgression.measures[0].displayName.indexOf('add9') > -1);
 assert.ok(generatedHighColorProgression.measures[0].notes.length > 4);
+assert.equal(app.formatProgressionDegreeForChord('IVJ', 'Fm7'), 'iv7');
+assert.equal(app.formatProgressionDegreeForChord('VII', 'Bm7♭5'), 'vii7♭5');
+assert.equal(app.formatProgressionDegreeForChord('II', 'Db7♭5'), 'II7♭5');
+assert.equal(app.formatProgressionDegreeForChord('II', 'Db7b5'), 'II7♭5');
+
+const generatedEightBarProgression = app.generateProgressionFromState({
+	data: data,
+	progressionState: {
+		articulation: 'legato',
+		bars: 8,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 70,
+		meter: '4/4',
+		modalInterchange: 25,
+		tensions: 55,
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0.1, 0.2, 0.2, 0.1, 0.7])
+});
+
+assert.notDeepEqual(
+	generatedEightBarProgression.measures.slice(0, 4).map(function (measure) { return measure.chordName; }),
+	generatedEightBarProgression.measures.slice(4, 8).map(function (measure) { return measure.chordName; })
+);
+assert.notEqual(generatedEightBarProgression.measures[3].chordName, 'Cmaj7');
+assert.equal(generatedEightBarProgression.measures[7].chordName, 'Cmaj7');
 
 const reorderedProgression = app.reorderProgressionMeasures(cMajorProgressionPlan, 1, 3);
 assert.deepEqual(reorderedProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'G7', 'Cmaj7', 'Fmaj7']);
@@ -286,3 +317,13 @@ assert.equal(modalReport.parallelScaleChords.length, 0);
 assert.equal(modalReport.circleOfFifths, null);
 
 console.log('Application layer tests passed');
+
+function sequenceRng(values) {
+	var index = 0;
+
+	return function () {
+		var value = values[index % values.length];
+		index += 1;
+		return value;
+	};
+}

@@ -56,6 +56,7 @@ assert.ok(global.CodaApplication.generateProgressionFromState);
 assert.ok(global.CodaApplication.buildProgressionPlaybackSchedule);
 assert.ok(global.CodaApplication.buildScheduledProgressionMeasures);
 assert.ok(global.CodaApplication.createProgressionPlayback);
+assert.ok(global.CodaApplication.formatProgressionDegreeForChord);
 assert.ok(global.CodaApplication.reorderProgressionMeasures);
 assert.ok(global.CodaRenderers.scaleSummary);
 assert.ok(global.CodaRenderers.scaleChords);
