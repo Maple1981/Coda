@@ -5,6 +5,7 @@
 	var allowedArticulations = ['sustain', 'legato', 'staccato', 'arpeggio'];
 	var allowedBars = [2, 4, 6, 8, 12, 16, 32];
 	var allowedMeters = ['4/4', '3/4', '6/8'];
+	var allowedStyles = ['modern', 'classic'];
 	var defaults = {
 		articulation: 'sustain',
 		bars: 8,
@@ -12,6 +13,7 @@
 		counterpoint: 20,
 		meter: '4/4',
 		modalInterchange: 25,
+		style: 'modern',
 		tensions: 35,
 		voices: 4
 	};
@@ -43,6 +45,7 @@
 			counterpoint: valueOf(root, 'progressionCounterpoint'),
 			meter: valueOf(root, 'progressionMeter'),
 			modalInterchange: valueOf(root, 'progressionModalInterchange'),
+			style: valueOf(root, 'progressionStyle'),
 			tensions: valueOf(root, 'progressionTensions'),
 			voices: valueOf(root, 'progressionVoices')
 		});
@@ -61,6 +64,7 @@
 			counterpoint: clampInteger(values.counterpoint, 0, 100, fallback.counterpoint),
 			meter: pick(values.meter, allowedMeters, fallback.meter),
 			modalInterchange: clampInteger(values.modalInterchange, 0, 100, fallback.modalInterchange),
+			style: pick(values.style, allowedStyles, fallback.style),
 			tensions: clampInteger(values.tensions, 0, 100, fallback.tensions),
 			voices: clampInteger(values.voices, 1, 6, fallback.voices)
 		};
@@ -110,6 +114,7 @@
 			counterpoint: value.counterpoint,
 			meter: value.meter,
 			modalInterchange: value.modalInterchange,
+			style: value.style,
 			tensions: value.tensions,
 			voices: value.voices
 		};
@@ -119,6 +124,7 @@
 		allowedArticulations: allowedArticulations.slice(),
 		allowedBars: allowedBars.slice(),
 		allowedMeters: allowedMeters.slice(),
+		allowedStyles: allowedStyles.slice(),
 		create: create,
 		defaults: clone(normalize(defaults)),
 		normalize: normalize,

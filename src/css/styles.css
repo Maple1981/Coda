@@ -312,6 +312,100 @@ header {
   font-size: 22px;
 }
 
+.circleToggleButton[hidden],
+.workbenchCircleToggle[hidden] {
+  display: none;
+}
+
+.circleToggleButton {
+  color: #a3ffd9;
+}
+
+.circlePopover {
+  position: fixed;
+  top: 58px;
+  right: 1.2em;
+  z-index: 40;
+  width: min(300px, calc(100vw - 2.4em));
+}
+
+.circlePopover[hidden] {
+  display: none;
+}
+
+.circlePopover__surface {
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background: #151515;
+  color: #eee;
+  -webkit-box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+}
+
+.circlePopover__titlebar {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  gap: .75em;
+  padding: .5em .65em;
+  border-bottom: 1px solid #444;
+  cursor: move;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+}
+
+.circlePopover__titlebar h2 {
+  margin: 0;
+  color: #eee;
+  font-size: .9em;
+  font-weight: 600;
+}
+
+.circlePopover__close {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #111;
+  color: #eee;
+  cursor: pointer;
+}
+
+.circlePopover.isDragging .circlePopover__surface {
+  -webkit-box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+}
+
+.circlePopover__close:hover,
+.circlePopover__close:focus {
+  border-color: #a622ae;
+  color: #a3ffd9;
+  outline: none;
+}
+
+.circlePopover__close .material-icons {
+  font-size: 18px;
+}
+
 body[data-theme="day"] {
   background-color: #d8dde1;
   color: #1f2528;
@@ -371,6 +465,28 @@ body[data-theme="day"] .iconHeaderButton {
 
 body[data-theme="day"] .randomMasterButton {
   color: #a622ae;
+}
+
+body[data-theme="day"] .circlePopover__surface {
+  background: #edf1f4;
+  color: #1f2528;
+  border-color: #b7c3ca;
+  -webkit-box-shadow: 0 14px 32px rgba(25, 36, 42, 0.24);
+          box-shadow: 0 14px 32px rgba(25, 36, 42, 0.24);
+}
+
+body[data-theme="day"] .circlePopover__titlebar {
+  border-bottom-color: #b7c3ca;
+}
+
+body[data-theme="day"] .circlePopover__titlebar h2 {
+  color: #1f2528;
+}
+
+body[data-theme="day"] .circlePopover__close {
+  background: #ffffff;
+  color: #1f2528;
+  border-color: #b7c3ca;
 }
 
 body[data-theme="day"] .collapseToggleButton {
@@ -737,6 +853,13 @@ fieldset h3 {
   width: 100%;
 }
 
+.collapsiblePanelHeader--iconOnly {
+  -webkit-box-pack: end;
+      -ms-flex-pack: end;
+          justify-content: flex-end;
+  margin-bottom: .15em;
+}
+
 .collapsiblePanelHeader span,
 .scaleTitleHeader span {
   min-width: 0;
@@ -1099,7 +1222,7 @@ section#circuloQuintas {
   -webkit-box-pack: center;
       -ms-flex-pack: center;
           justify-content: center;
-  margin: 0 0 2.1em 0;
+  margin: 0;
 }
 
 div#circuloDesplegado {
@@ -1264,6 +1387,54 @@ section#bienvenida .columnata article {
   font-size: .85em;
   font-weight: 600;
   text-align: right;
+}
+
+.workbenchContextGroup {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: end;
+      -ms-flex-pack: end;
+          justify-content: flex-end;
+  gap: .25em;
+  min-width: 0;
+  margin-left: auto;
+}
+
+.workbenchCircleToggle {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-flex: 0;
+      -ms-flex: 0 0 auto;
+          flex: 0 0 auto;
+  width: 1.45em;
+  height: 1.45em;
+  border: 0;
+  background: transparent;
+  color: #d85ee0;
+  cursor: pointer;
+  padding: 0;
+}
+
+.workbenchCircleToggle:hover,
+.workbenchCircleToggle:focus {
+  color: #a3ffd9;
+  outline: none;
+}
+
+.workbenchCircleToggle .material-icons {
+  font-size: 1.25em;
+  line-height: 1;
 }
 
 .progressionControls {

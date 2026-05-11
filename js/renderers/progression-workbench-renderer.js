@@ -7,7 +7,7 @@
 
 		html += '<div class="workbenchHeader">';
 		html += '<div class="workbenchTitleGroup"><h2></h2><p class="workbenchKicker"></p></div>';
-		html += '<p class="workbenchContext" aria-live="polite"></p>';
+		html += '<div class="workbenchContextGroup"><button id="toggleCircleOfFifthsFromContext" class="workbenchCircleToggle" type="button" title="" aria-label="" aria-controls="circleOfFifthsPopover" aria-expanded="false" hidden><span class="material-icons" aria-hidden="true">expand_more</span></button><p class="workbenchContext" aria-live="polite"></p></div>';
 		html += '</div>';
 		html += '<div class="progressionControls">';
 		html += renderTimePanel();
@@ -46,6 +46,7 @@
 		html += '<legend><span data-i18n="progression.writing"></span></legend>';
 		html += renderControl('progression.voices', '<input id="progressionVoices" type="number" value="4" min="1" max="6" step="1" />', '#progressionVoices');
 		html += renderControl('progression.articulation', '<select id="progressionArticulation"><option value="sustain" data-i18n="progression.articulation.sustain"></option><option value="legato" data-i18n="progression.articulation.legato"></option><option value="staccato" data-i18n="progression.articulation.staccato"></option><option value="arpeggio" data-i18n="progression.articulation.arpeggio"></option></select>', '#progressionArticulation');
+		html += renderControl('progression.style', '<select id="progressionStyle"><option value="modern" selected="selected" data-i18n="progression.style.modern"></option><option value="classic" data-i18n="progression.style.classic"></option></select>', '#progressionStyle');
 		html += '</fieldset>';
 
 		return html;

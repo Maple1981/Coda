@@ -123,6 +123,18 @@
           >
             <span class="material-icons" aria-hidden="true">casino</span>
           </button>
+          <button
+            id="toggleCircleOfFifths"
+            class="iconHeaderButton circleToggleButton"
+            type="button"
+            title="Abrir círculo de quintas"
+            aria-label="Abrir círculo de quintas"
+            aria-controls="circleOfFifthsPopover"
+            aria-expanded="false"
+            hidden
+          >
+            <span class="material-icons" aria-hidden="true">donut_large</span>
+          </button>
           <label
             ><span data-i18n="ui.language">Idioma</span>
             <select id="selectorIdioma">
@@ -180,11 +192,34 @@
         </div>
       </header>
 
+      <div id="circleOfFifthsPopover" class="circlePopover" hidden>
+        <div
+          class="circlePopover__surface"
+          role="dialog"
+          aria-labelledby="circlePopoverTitle"
+        >
+          <div class="circlePopover__titlebar">
+            <h2 id="circlePopoverTitle" data-i18n="circle.title">
+              Círculo de quintas
+            </h2>
+            <button
+              id="closeCircleOfFifths"
+              class="circlePopover__close"
+              type="button"
+              title="Cerrar círculo de quintas"
+              aria-label="Cerrar círculo de quintas"
+            >
+              <span class="material-icons" aria-hidden="true">close</span>
+            </button>
+          </div>
+          <section id="circuloQuintas"></section>
+        </div>
+      </div>
+
       <aside id="panelTeorico" class="dashboard__sidebar">
         <div class="dashboard__sidebarPanel">
           <fieldset id="interface">
-            <h3 class="collapsiblePanelHeader">
-              <span data-i18n="form.title">Elige tu escala</span>
+            <h3 class="collapsiblePanelHeader collapsiblePanelHeader--iconOnly">
               <button
                 id="toggleTheoryControls"
                 class="collapseToggleButton"
@@ -263,8 +298,6 @@
             <section id="notacion"></section>
 
             <section id="instrumento"></section>
-
-            <section id="circuloQuintas"></section>
 
             <section id="armoniaExtendida"></section>
           </div>

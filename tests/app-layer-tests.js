@@ -127,6 +127,7 @@ const cMajorProgressionPlan = app.buildProgressionFromState({
 
 assert.equal(cMajorProgressionPlan.bars, 4);
 assert.equal(cMajorProgressionPlan.meter, '3/4');
+assert.equal(cMajorProgressionPlan.style, 'modern');
 assert.equal(cMajorProgressionPlan.totalBeats, 12);
 assert.equal(cMajorProgressionPlan.totalSeconds, 6);
 assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.degree; }), ['Imaj7', 'IVmaj7', 'V7', 'Imaj7']);
@@ -180,6 +181,7 @@ const generatedHighColorProgression = app.generateProgressionFromState({
 assert.equal(generatedHighColorProgression.bars, 4);
 assert.equal(generatedHighColorProgression.generation.cadence, 'mixed-plagal');
 assert.equal(generatedHighColorProgression.generation.patternId, 'I-iv-I');
+assert.equal(generatedHighColorProgression.generation.style, 'modern');
 assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.source; }), ['diatonic', 'parallel', 'parallel', 'diatonic']);
 assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'Fm7', 'Fm7', 'Cmaj7']);
 assert.ok(generatedHighColorProgression.measures[0].displayName.indexOf('add9') > -1);
@@ -212,7 +214,62 @@ assert.notDeepEqual(
 	generatedEightBarProgression.measures.slice(4, 8).map(function (measure) { return measure.chordName; })
 );
 assert.notEqual(generatedEightBarProgression.measures[3].chordName, 'Cmaj7');
-assert.equal(generatedEightBarProgression.measures[7].chordName, 'Cmaj7');
+assert.notDeepEqual(generatedEightBarProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['V7', 'Imaj7']);
+
+const forcedCadenceRules = {
+	patterns: [
+		{
+			cadence: 'authentic',
+			counterpoint: 70,
+			degrees: [0, 3, 4, 0],
+			form: 'forced-authentic',
+			id: 'forced-authentic',
+			modes: ['major'],
+			modalColor: 10,
+			tensionAffinity: 30,
+			weight: 100
+		},
+		{
+			cadence: 'half',
+			counterpoint: 70,
+			degrees: [0, 3, 1, 4],
+			form: 'forced-half',
+			id: 'forced-half',
+			modes: ['major'],
+			modalColor: 10,
+			tensionAffinity: 30,
+			weight: 1
+		}
+	]
+};
+const modernCadenceProgression = app.generateProgressionFromState({
+	progressionState: {
+		bars: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		meter: '4/4',
+		style: 'modern'
+	},
+	report: cMajorReport,
+	rng: function () { return 0; },
+	rules: forcedCadenceRules
+});
+const classicCadenceProgression = app.generateProgressionFromState({
+	progressionState: {
+		bars: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		meter: '4/4',
+		style: 'classic'
+	},
+	report: cMajorReport,
+	rng: function () { return 0.99; },
+	rules: forcedCadenceRules
+});
+assert.equal(modernCadenceProgression.generation.cadence, 'half');
+assert.deepEqual(modernCadenceProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['ii7', 'V7']);
+assert.equal(classicCadenceProgression.generation.cadence, 'authentic');
+assert.deepEqual(classicCadenceProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['V7', 'Imaj7']);
 
 const reorderedProgression = app.reorderProgressionMeasures(cMajorProgressionPlan, 1, 3);
 assert.deepEqual(reorderedProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'G7', 'Cmaj7', 'Fmaj7']);

@@ -52,6 +52,7 @@ La documentación técnica vive en `docs/technical/` para no mezclarla con la ba
 
 - `docs/technical/architecture.md`: capas, módulos relevantes, manifest de scripts y reglas de evolución.
 - `docs/technical/development-workflow.md`: flujo recomendado con Live Server, comandos de prueba y smoke tests.
+- `docs/technical/progression-generation.md`: reglas técnicas del generador de progresiones, estilos de escritura y sesgos armónicos.
 - `docs/technical/security.md`: CSP, permisos del navegador, validación de preferencias y uso de HTML confiable.
 - `docs/technical/soundfonts.md`: origen, licencia, carga diferida e integridad local de los soundfonts.
 

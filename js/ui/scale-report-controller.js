@@ -64,6 +64,7 @@
 		bindProgressionState();
 		bindProgressionTransport();
 		bindProgressionGeneration();
+		bindCircleOfFifthsPopover();
 		updateCollapsiblePanelStates(i18n);
 		options.ui.scheduleDashboardWorkspaceHeight();
 
@@ -203,6 +204,7 @@
 
 			if (musicalContext.isScaleSeparator) {
 				uiState.clearReport();
+				updateCircleOfFifthsAccess(null);
 				return;
 			}
 
@@ -232,6 +234,7 @@
 				selection: selection
 			});
 			updateCollapsiblePanelStates(i18n);
+			updateCircleOfFifthsAccess(report);
 
 			renderInstrument(true);
 		}
@@ -307,6 +310,173 @@
 				syncProgressionState();
 				generateProgressionPlan();
 			});
+		}
+
+		function bindCircleOfFifthsPopover() {
+			bindCircleOfFifthsDrag();
+
+			on(global.document, 'click', function (event) {
+				if (closest(event.target, '#toggleCircleOfFifths') || closest(event.target, '#toggleCircleOfFifthsFromContext')) {
+					toggleCircleOfFifthsPopover();
+					return;
+				}
+
+				if (closest(event.target, '#closeCircleOfFifths')) {
+					closeCircleOfFifthsPopover();
+					return;
+				}
+
+				if (isCircleOfFifthsPopoverOpen() && !closest(event.target, '.circlePopover__surface')) {
+					closeCircleOfFifthsPopover();
+				}
+			});
+
+			on(global.document, 'keydown', function (event) {
+				if (event.key === 'Escape') {
+					closeCircleOfFifthsPopover();
+				}
+			});
+		}
+
+		function bindCircleOfFifthsDrag() {
+			var popover = query('#circleOfFifthsPopover');
+			var titlebar = query('.circlePopover__titlebar');
+			var dragState = null;
+
+			if (!popover || !titlebar || titlebar.getAttribute('data-coda-draggable') === 'true') {
+				return;
+			}
+
+			titlebar.setAttribute('data-coda-draggable', 'true');
+
+			titlebar.addEventListener('mousedown', function (event) {
+				var bounds;
+
+				if (closest(event.target, 'button')) {
+					return;
+				}
+
+				bounds = popover.getBoundingClientRect();
+				dragState = {
+					offsetX: event.clientX - bounds.left,
+					offsetY: event.clientY - bounds.top
+				};
+				popover.classList.add('isDragging');
+				event.preventDefault();
+			});
+
+			global.document.addEventListener('mousemove', function (event) {
+				if (!dragState) {
+					return;
+				}
+
+				moveCircleOfFifthsPopover(popover, {
+					x: event.clientX - dragState.offsetX,
+					y: event.clientY - dragState.offsetY
+				});
+			});
+
+			global.document.addEventListener('mouseup', function () {
+				if (!dragState) {
+					return;
+				}
+
+				dragState = null;
+				popover.classList.remove('isDragging');
+			});
+		}
+
+		function moveCircleOfFifthsPopover(popover, position) {
+			var width = popover.offsetWidth;
+			var height = popover.offsetHeight;
+			var maxLeft = Math.max(0, global.innerWidth - width);
+			var maxTop = Math.max(0, global.innerHeight - height);
+			var left = Math.max(0, Math.min(maxLeft, position.x));
+			var top = Math.max(0, Math.min(maxTop, position.y));
+
+			popover.style.left = left + 'px';
+			popover.style.top = top + 'px';
+			popover.style.right = 'auto';
+		}
+
+		function updateCircleOfFifthsAccess(report) {
+			var available = !!(report && report.circleOfFifths);
+
+			updateCircleToggleButton(query('#toggleCircleOfFifths'), available);
+			updateCircleToggleButton(query('#toggleCircleOfFifthsFromContext'), available);
+
+			if (!available) {
+				closeCircleOfFifthsPopover();
+			}
+		}
+
+		function updateCircleToggleButton(button, available) {
+			if (!button) {
+				return;
+			}
+
+			button.hidden = !available;
+			button.setAttribute('aria-hidden', available ? 'false' : 'true');
+
+			if (!available) {
+				button.setAttribute('aria-expanded', 'false');
+			}
+		}
+
+		function toggleCircleOfFifthsPopover() {
+			if (isCircleOfFifthsPopoverOpen()) {
+				closeCircleOfFifthsPopover();
+				return;
+			}
+
+			openCircleOfFifthsPopover();
+		}
+
+		function openCircleOfFifthsPopover() {
+			var popover = query('#circleOfFifthsPopover');
+
+			if (!popover || !uiState.getReport() || !uiState.getReport().circleOfFifths) {
+				return;
+			}
+
+			popover.hidden = false;
+			setCircleToggleExpanded(true);
+		}
+
+		function closeCircleOfFifthsPopover() {
+			var popover = query('#circleOfFifthsPopover');
+
+			if (popover) {
+				popover.hidden = true;
+			}
+
+			setCircleToggleExpanded(false);
+		}
+
+		function isCircleOfFifthsPopoverOpen() {
+			var popover = query('#circleOfFifthsPopover');
+
+			return !!(popover && !popover.hidden);
+		}
+
+		function setCircleToggleExpanded(expanded) {
+			updateCircleToggleExpanded(query('#toggleCircleOfFifths'), expanded);
+			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromContext'), expanded);
+		}
+
+		function updateCircleToggleExpanded(button, expanded) {
+			var icon;
+
+			if (!button) {
+				return;
+			}
+
+			button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+			icon = button.querySelector('.material-icons');
+
+			if (icon && button.id === 'toggleCircleOfFifthsFromContext') {
+				icon.textContent = expanded ? 'expand_less' : 'expand_more';
+			}
 		}
 
 		function syncProgressionState() {

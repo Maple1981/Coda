@@ -41,6 +41,7 @@
 			}),
 			meter: progressionState.meter,
 			secondsPerBeat: secondsPerBeat,
+			style: progressionState.style,
 			totalBeats: progressionState.bars * progressionState.beatsPerBar,
 			totalSeconds: progressionState.bars * progressionState.beatsPerBar * secondsPerBeat,
 			voices: progressionState.voices
@@ -70,6 +71,7 @@
 				cadence: generationPlan.pattern.cadence,
 				form: generationPlan.pattern.form,
 				patternId: generationPlan.pattern.id,
+				style: progressionState.style,
 				voiceLeading: generationPlan.voiceLeading
 			},
 			harmonicColor: {
@@ -84,6 +86,7 @@
 			}),
 			meter: progressionState.meter,
 			secondsPerBeat: secondsPerBeat,
+			style: progressionState.style,
 			totalBeats: progressionState.bars * progressionState.beatsPerBar,
 			totalSeconds: progressionState.bars * progressionState.beatsPerBar * secondsPerBeat,
 			voices: progressionState.voices
@@ -324,26 +327,26 @@
 		var selectedValue;
 
 		for (var i = 0; i < patterns.length; i++) {
+			var weight;
+
 			if (!matchesMode(patterns[i], options.mode)) {
+				continue;
+			}
+
+			weight = adjustedPatternWeight(patterns[i], options.progressionState, options.mode);
+			if (weight <= 0) {
 				continue;
 			}
 
 			candidates.push({
 				pattern: patterns[i],
-				weight: adjustedPatternWeight(patterns[i], options.progressionState)
+				weight: weight
 			});
 			totalWeight += candidates[candidates.length - 1].weight;
 		}
 
 		if (!candidates.length) {
-			return {
-				cadence: 'authentic',
-				counterpoint: 70,
-				degrees: [0, 3, 4, 0],
-				form: 'fallback',
-				id: 'fallback-authentic',
-				weight: 1
-			};
+			return fallbackPatternForStyle(options.progressionState);
 		}
 
 		selectedValue = options.rng() * totalWeight;
@@ -358,12 +361,21 @@
 		return candidates[candidates.length - 1].pattern;
 	}
 
-	function adjustedPatternWeight(pattern, progressionState) {
+	function adjustedPatternWeight(pattern, progressionState, mode) {
 		var weight = pattern.weight || 1;
+
+		if (isModernStyle(progressionState) && isAuthenticCadence(pattern.cadence)) {
+			return 0;
+		}
+
+		if (isClassicStyle(progressionState) && !isAuthenticCadence(pattern.cadence)) {
+			return 0;
+		}
 
 		weight += affinityScore(progressionState.counterpoint, pattern.counterpoint);
 		weight += affinityScore(progressionState.modalInterchange, pattern.modalColor);
 		weight += affinityScore(progressionState.tensions, pattern.tensionAffinity);
+		weight *= sensitiveDegreeFactor(pattern.degrees, mode, progressionState);
 
 		if (progressionState.articulation === 'arpeggio' && pattern.form === 'circle-of-fifths') {
 			weight += 8;
@@ -378,6 +390,28 @@
 		}
 
 		return Math.max(1, weight);
+	}
+
+	function fallbackPatternForStyle(progressionState) {
+		if (isModernStyle(progressionState)) {
+			return {
+				cadence: 'half',
+				counterpoint: 70,
+				degrees: [0, 3, 1, 4],
+				form: 'fallback-modern',
+				id: 'fallback-modern-half',
+				weight: 1
+			};
+		}
+
+		return {
+			cadence: 'authentic',
+			counterpoint: 70,
+			degrees: [0, 3, 4, 0],
+			form: 'fallback-classic',
+			id: 'fallback-classic-authentic',
+			weight: 1
+		};
 	}
 
 	function affinityScore(value, target) {
@@ -420,7 +454,7 @@
 			var remainingBars = bars - degrees.length;
 			var blockLength = Math.min(4, remainingBars);
 			var isFinalBlock = blockIndex === blockCount - 1;
-			var cadence = isFinalBlock ? finalCadenceForPattern(options.pattern) : chooseIntermediateCadence(options.rng);
+			var cadence = isFinalBlock ? finalCadenceForPattern(options.pattern, options.progressionState, options.rng) : chooseIntermediateCadence(options.rng);
 			var block = choosePhraseBlock({
 				cadence: cadence,
 				mode: options.mode,
@@ -437,12 +471,36 @@
 		return degrees.slice(0, bars);
 	}
 
-	function finalCadenceForPattern(pattern) {
+	function finalCadenceForPattern(pattern, progressionState, rng) {
+		if (isModernStyle(progressionState)) {
+			return modernFinalCadence(pattern, rng);
+		}
+
 		if (pattern && (pattern.cadence === 'plagal' || pattern.cadence === 'mixed-plagal' || pattern.cadence === 'deceptive')) {
 			return pattern.cadence;
 		}
 
 		return 'authentic';
+	}
+
+	function modernFinalCadence(pattern, rng) {
+		var value;
+
+		if (pattern && !isAuthenticCadence(pattern.cadence)) {
+			return pattern.cadence === 'mixed-plagal' ? 'plagal' : pattern.cadence;
+		}
+
+		value = typeof rng === 'function' ? rng() : Math.random();
+
+		if (value < 0.34) {
+			return 'half';
+		}
+
+		if (value < 0.68) {
+			return 'plagal';
+		}
+
+		return 'deceptive';
 	}
 
 	function chooseIntermediateCadence(rng) {
@@ -472,7 +530,7 @@
 
 			candidates.push({
 				block: blocks[i],
-				weight: adjustedBlockWeight(blocks[i], options.progressionState, options.previousBlockId)
+				weight: adjustedBlockWeight(blocks[i], options.progressionState, options.previousBlockId, options.mode)
 			});
 			totalWeight += candidates[candidates.length - 1].weight;
 		}
@@ -510,18 +568,48 @@
 		return totalWeight;
 	}
 
-	function adjustedBlockWeight(block, progressionState, previousBlockId) {
+	function adjustedBlockWeight(block, progressionState, previousBlockId, mode) {
 		var weight = block.weight || 1;
 
 		weight += affinityScore(progressionState.counterpoint, block.counterpoint);
 		weight += affinityScore(progressionState.modalInterchange, block.modalColor);
 		weight += affinityScore(progressionState.tensions, block.tensionAffinity);
+		weight *= sensitiveDegreeFactor(block.degrees, mode, progressionState);
 
 		if (block.id === previousBlockId) {
 			weight = Math.max(1, weight * 0.12);
 		}
 
 		return Math.max(1, weight);
+	}
+
+	function sensitiveDegreeFactor(degrees, mode, progressionState) {
+		var sensitiveDegree = mode === 'major' ? 6 : 1;
+		var factor = 1;
+
+		if (!isModernStyle(progressionState) || !degrees) {
+			return factor;
+		}
+
+		for (var i = 0; i < degrees.length; i++) {
+			if (degrees[i] === sensitiveDegree) {
+				factor *= 0.32;
+			}
+		}
+
+		return factor;
+	}
+
+	function isModernStyle(progressionState) {
+		return progressionState && progressionState.style === 'modern';
+	}
+
+	function isClassicStyle(progressionState) {
+		return progressionState && progressionState.style === 'classic';
+	}
+
+	function isAuthenticCadence(cadence) {
+		return cadence === 'authentic';
 	}
 
 	function matchesCadence(block, cadence) {
@@ -681,6 +769,7 @@
 			counterpoint: numberOrDefault(progressionState.counterpoint, 20),
 			meter: progressionState.meter || '4/4',
 			modalInterchange: numberOrDefault(progressionState.modalInterchange, 25),
+			style: progressionState.style === 'classic' ? 'classic' : 'modern',
 			tensions: numberOrDefault(progressionState.tensions, 35),
 			voices: numberOrDefault(progressionState.voices, 4)
 		};

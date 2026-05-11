@@ -368,6 +368,8 @@ assert.ok(welcomeHtml.indexOf('piano, guitarra clásica, órgano y cuerdas') > -
 const progressionWorkbenchHtml = progressionWorkbenchRenderer.render();
 assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchTitleGroup"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchContext" aria-live="polite"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="toggleCircleOfFifthsFromContext"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('aria-controls="circleOfFifthsPopover"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('class="progressionControls"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<select id="progressionBars"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<option value="32">32</option>') > -1);
@@ -376,6 +378,8 @@ assert.ok(progressionWorkbenchHtml.indexOf('id="progressionVoices" type="number"
 assert.ok(progressionWorkbenchHtml.indexOf('data-random-control-target="#progressionCounterpoint"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-random-group="global"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.articulation.sustain"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="progressionStyle"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.style.modern"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="generateProgression"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.generate"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('auto_awesome') > -1);

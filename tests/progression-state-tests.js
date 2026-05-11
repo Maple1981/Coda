@@ -31,6 +31,7 @@ assert.deepEqual(progressionState.defaults, {
 	counterpoint: 20,
 	meter: '4/4',
 	modalInterchange: 25,
+	style: 'modern',
 	tensions: 35,
 	voices: 4
 });
@@ -42,6 +43,7 @@ assert.deepEqual(progressionState.normalize({
 	counterpoint: '90',
 	meter: '6/8',
 	modalInterchange: '45',
+	style: 'classic',
 	tensions: '70',
 	voices: '6'
 }), {
@@ -53,6 +55,7 @@ assert.deepEqual(progressionState.normalize({
 	counterpoint: 90,
 	meter: '6/8',
 	modalInterchange: 45,
+	style: 'classic',
 	tensions: 70,
 	voices: 6
 });
@@ -64,6 +67,7 @@ assert.deepEqual(progressionState.normalize({
 	counterpoint: '-4',
 	meter: '5/4',
 	modalInterchange: 'bad',
+	style: 'missing',
 	tensions: '240',
 	voices: '0'
 }), {
@@ -75,6 +79,7 @@ assert.deepEqual(progressionState.normalize({
 	counterpoint: 0,
 	meter: '4/4',
 	modalInterchange: 25,
+	style: 'modern',
 	tensions: 100,
 	voices: 1
 });
@@ -94,6 +99,7 @@ assert.deepEqual(state.get(), {
 	counterpoint: 20,
 	meter: '3/4',
 	modalInterchange: 25,
+	style: 'modern',
 	tensions: 35,
 	voices: 4
 });
@@ -117,6 +123,7 @@ const fakeDocument = {
 		progressionCounterpoint: '33',
 		progressionMeter: '6/8',
 		progressionModalInterchange: '10',
+		progressionStyle: 'classic',
 		progressionTensions: '65',
 		progressionVoices: '5'
 	},
@@ -134,6 +141,7 @@ assert.deepEqual(progressionState.readFromControls(fakeDocument), {
 	counterpoint: 33,
 	meter: '6/8',
 	modalInterchange: 10,
+	style: 'classic',
 	tensions: 65,
 	voices: 5
 });

@@ -109,6 +109,7 @@ assert.deepEqual(initialState, {
 	counterpoint: 20,
 	meter: '4/4',
 	modalInterchange: 25,
+	style: 'modern',
 	tensions: 35,
 	voices: 4
 });
@@ -125,6 +126,7 @@ document.getElementById('progressionMeter').value = '3/4';
 document.getElementById('progressionBpm').value = '120';
 document.getElementById('progressionVoices').value = '3';
 document.getElementById('progressionArticulation').value = 'staccato';
+document.getElementById('progressionStyle').value = 'classic';
 document.getElementById('progressionTensions').value = '60';
 document.getElementById('constructorProgresiones').dispatchEvent({
 	target: document.getElementById('progressionBars'),
@@ -139,6 +141,7 @@ assert.equal(changedState.meter, '3/4');
 assert.equal(changedState.bpm, 120);
 assert.equal(changedState.voices, 3);
 assert.equal(changedState.articulation, 'staccato');
+assert.equal(changedState.style, 'classic');
 assert.equal(changedState.tensions, 60);
 assert.equal(changedProgression.bars, 4);
 assert.equal(changedProgression.meter, '3/4');
@@ -275,6 +278,7 @@ function createFakeDocument() {
 	addElement('progressionCounterpoint', '20');
 	addElement('progressionMeter', '4/4');
 	addElement('progressionModalInterchange', '25');
+	addElement('progressionStyle', 'modern');
 	addElement('progressionTensions', '35');
 	addElement('progressionVoices', '4');
 

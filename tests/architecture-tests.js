@@ -134,6 +134,9 @@ assert.ok(indexHtml.indexOf('<section id="constructorProgresiones" class="progre
 assert.ok(indexHtml.indexOf('<section id="bienvenida"></section>') > -1);
 assert.ok(indexHtml.indexOf('id="randomizeAll"') > -1);
 assert.ok(indexHtml.indexOf('data-random-master-groups="global"') > -1);
+assert.ok(indexHtml.indexOf('id="toggleCircleOfFifths"') > -1);
+assert.ok(indexHtml.indexOf('id="circleOfFifthsPopover"') > -1);
+assert.ok(indexHtml.indexOf('<section id="circuloQuintas"></section>') > -1);
 assert.ok(indexHtml.indexOf('id="toggleTheoryControls"') > -1);
 assert.ok(indexHtml.indexOf('aria-controls="theoryControlsBody"') > -1);
 assert.ok(indexHtml.indexOf('<label id="formatoLabel" class="opcion opcionFormato" for="sostenidos"') > -1);

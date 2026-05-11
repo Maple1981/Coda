@@ -28,12 +28,18 @@
 		setAttribute(i18n, '#selectorVolumen', 'title', 'ui.volumeTitle');
 		setAttribute(i18n, '#randomizeAll', 'title', 'randomSelect.master');
 		setAttribute(i18n, '#randomizeAll', 'aria-label', 'randomSelect.master');
+		setText(i18n, '#circlePopoverTitle', 'circle.title');
+		setAttribute(i18n, '#toggleCircleOfFifths', 'title', 'circle.open');
+		setAttribute(i18n, '#toggleCircleOfFifths', 'aria-label', 'circle.open');
+		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
+		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'aria-label', 'circle.open');
+		setAttribute(i18n, '#closeCircleOfFifths', 'title', 'circle.close');
+		setAttribute(i18n, '#closeCircleOfFifths', 'aria-label', 'circle.close');
 		setAttribute(i18n, '#themeToggleButton', 'title', 'theme.switchToDay');
 		setAttribute(i18n, '#themeToggleButton', 'aria-label', 'theme.switchToDay');
 		setAttribute(i18n, '#settingsButton', 'title', 'settings.label');
 		setAttribute(i18n, '#settingsButton', 'aria-label', 'settings.label');
 
-		setText(i18n, '#interface h3 span[data-i18n="form.title"]', 'form.title');
 		setText(i18n, 'span[data-i18n="form.tonic"]', 'form.tonic');
 		setText(i18n, 'span[data-i18n="form.scale"]', 'form.scale');
 		setText(i18n, 'span[data-i18n="form.format"]', 'form.format');
@@ -97,6 +103,7 @@
 		setText(i18n, 'span[data-i18n="progression.voices"]', 'progression.voices');
 		setText(i18n, 'span[data-i18n="progression.writing"]', 'progression.writing');
 		setText(i18n, 'span[data-i18n="progression.articulation"]', 'progression.articulation');
+		setText(i18n, 'span[data-i18n="progression.style"]', 'progression.style');
 		setText(i18n, 'span[data-i18n="progression.harmonicColor"]', 'progression.harmonicColor');
 		setText(i18n, 'span[data-i18n="progression.modalInterchange"]', 'progression.modalInterchange');
 		setText(i18n, 'span[data-i18n="progression.tensions"]', 'progression.tensions');
@@ -105,6 +112,10 @@
 		setText(i18n, 'option[data-i18n="progression.articulation.legato"]', 'progression.articulation.legato');
 		setText(i18n, 'option[data-i18n="progression.articulation.staccato"]', 'progression.articulation.staccato');
 		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio"]', 'progression.articulation.arpeggio');
+		setText(i18n, 'option[data-i18n="progression.style.modern"]', 'progression.style.modern');
+		setText(i18n, 'option[data-i18n="progression.style.classic"]', 'progression.style.classic');
+		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
+		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'aria-label', 'circle.open');
 		setText(i18n, '.transportButton--generate span[data-i18n="progression.generate"]', 'progression.generate');
 		setText(i18n, '.transportButton--goStart span[data-i18n="progression.goStart"]', 'progression.goStart');
 		setText(i18n, '.transportButton--listen span[data-i18n="progression.listen"]', 'progression.listen');

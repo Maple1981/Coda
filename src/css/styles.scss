@@ -254,6 +254,82 @@ header{
 	font-size:22px;
 }
 
+.circleToggleButton[hidden],
+.workbenchCircleToggle[hidden]{
+	display:none;
+}
+
+.circleToggleButton{
+	color:$corporative_mainbright_color;
+}
+
+.circlePopover{
+	position:fixed;
+	top:58px;
+	right:1.2em;
+	z-index:40;
+	width:min(300px, calc(100vw - 2.4em));
+}
+
+.circlePopover[hidden]{
+	display:none;
+}
+
+.circlePopover__surface{
+	box-sizing:border-box;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:6px;
+	background:$basic_filldarkgrad_color;
+	color:$basic_front_color;
+	box-shadow:0 14px 40px $shadow_color;
+}
+
+.circlePopover__titlebar{
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	gap:.75em;
+	padding:.5em .65em;
+	border-bottom:1px solid $basic_fillbrightgrad_color;
+	cursor:move;
+	user-select:none;
+}
+
+.circlePopover__titlebar h2{
+	margin:0;
+	color:$basic_front_color;
+	font-size:.9em;
+	font-weight:600;
+}
+
+.circlePopover__close{
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	width:24px;
+	height:24px;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:4px;
+	background:$basic_fill_color;
+	color:$basic_front_color;
+	cursor:pointer;
+}
+
+.circlePopover.isDragging .circlePopover__surface{
+	box-shadow:0 18px 48px $shadow_color;
+}
+
+.circlePopover__close:hover,
+.circlePopover__close:focus{
+	border-color:$corporative_complementary_color;
+	color:$corporative_mainbright_color;
+	outline:none;
+}
+
+.circlePopover__close .material-icons{
+	font-size:18px;
+}
+
 .dashboard__sidebar{
 	grid-area:sidebar;
 	min-width:0;
@@ -370,6 +446,11 @@ fieldset{
 	justify-content:space-between;
 	gap:.65em;
 	width:100%;
+}
+
+.collapsiblePanelHeader--iconOnly{
+	justify-content:flex-end;
+	margin-bottom:.15em;
 }
 
 .collapsiblePanelHeader span,
@@ -722,7 +803,7 @@ section#circuloQuintas {
 	height:auto;
 	display:flex;
 	justify-content:center;
-	margin:0 0 2.1em 0;
+	margin:0;
 }
 
 div#circuloDesplegado {
@@ -871,6 +952,40 @@ section#bienvenida .columnata article{
 	font-size:.85em;
 	font-weight:600;
 	text-align:right;
+}
+
+.workbenchContextGroup{
+	display:flex;
+	align-items:center;
+	justify-content:flex-end;
+	gap:.25em;
+	min-width:0;
+	margin-left:auto;
+}
+
+.workbenchCircleToggle{
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	flex:0 0 auto;
+	width:1.45em;
+	height:1.45em;
+	border:0;
+	background:transparent;
+	color:$corporative_complementarybright_color;
+	cursor:pointer;
+	padding:0;
+}
+
+.workbenchCircleToggle:hover,
+.workbenchCircleToggle:focus{
+	color:$corporative_mainbright_color;
+	outline:none;
+}
+
+.workbenchCircleToggle .material-icons{
+	font-size:1.25em;
+	line-height:1;
 }
 
 .progressionControls{
