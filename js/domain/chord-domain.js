@@ -1,4 +1,4 @@
-// Chord construction rules. This module has no DOM, jQuery, MIDI, or rendering dependencies.
+// Chord construction rules. This module has no DOM, MIDI, or rendering dependencies.
 (function (global) {
 	'use strict';
 

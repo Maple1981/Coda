@@ -16,8 +16,6 @@ Evitar `file://` para las pruebas funcionales completas. Al abrir `index.html` d
 
 Las dependencias actuales están vendorizadas localmente:
 
-- jQuery 4.0.0 en `js/jquery-4.0.0.min.js`.
-- jQuery 4.0.0 vendorizado en `js/jquery-4.0.0.min.js`, pendiente de retirada progresiva.
 - Utilidades MIDI/Web Audio en `js/midi/`, `js/inc/` y `js/util/`.
 - Soundfonts en `soundfont/`.
 
@@ -77,7 +75,7 @@ Después del prefijo se añaden de dos a cinco palabras descriptivas en inglés.
 Add publish workflow tools
 Upd instrument playback docs
 Fix fifths circle layout
-Del obsolete jquery files
+Del obsolete dependency files
 ```
 
 Opciones útiles:

@@ -12,14 +12,14 @@
 			return;
 		}
 
-		updateLabels(null, options.i18n, selector);
-		updateLabels(null, options.i18n, masterSelector);
+		updateLabels(options.i18n, selector);
+		updateLabels(options.i18n, masterSelector);
 
 		root.addEventListener('click', function (event) {
 			var button = findDelegatedButton(root, event.target, selector);
 
 			if (button) {
-				randomizeAssociatedControl(null, button, random);
+				randomizeAssociatedControl(button, random);
 			}
 		});
 
@@ -30,14 +30,14 @@
 				return;
 			}
 
-			randomizeAllAssociatedControls(null, root, random, {
+			randomizeAllAssociatedControls(root, random, {
 				groups: button.getAttribute('data-random-master-groups'),
 				selector: selector
 			});
 		});
 	}
 
-	function updateLabels($, i18n, selector) {
+	function updateLabels(i18n, selector) {
 		selector = selector || '.randomSelectButton, .randomMasterButton';
 
 		forEachElement(global.document, selector, function (button) {
@@ -49,7 +49,7 @@
 		});
 	}
 
-	function randomizeAssociatedControl($, button, random) {
+	function randomizeAssociatedControl(button, random) {
 		var buttonElement = asElement(button);
 		var targetSelector = buttonElement ? buttonElement.getAttribute('data-random-control-target') || buttonElement.getAttribute('data-random-select-target') : null;
 		var target;
@@ -60,14 +60,14 @@
 
 		target = global.document ? global.document.querySelector(targetSelector) : null;
 
-		return randomizeControl(null, target, random);
+		return randomizeControl(target, random);
 	}
 
-	function randomizeAssociatedSelect($, button, random) {
-		return randomizeAssociatedControl($, button, random);
+	function randomizeAssociatedSelect(button, random) {
+		return randomizeAssociatedControl(button, random);
 	}
 
-	function randomizeAllAssociatedControls($, root, random, options) {
+	function randomizeAllAssociatedControls(root, random, options) {
 		var settings = options || {};
 		var selector = settings.selector || '.randomSelectButton';
 		var masterGroups = parseGroups(settings.groups);
@@ -82,7 +82,7 @@
 				return;
 			}
 
-			value = randomizeAssociatedControl($, button, random);
+			value = randomizeAssociatedControl(button, random);
 
 			if (value !== null) {
 				randomizedTargets[targetSelector] = true;
@@ -96,7 +96,7 @@
 		return randomizedValues;
 	}
 
-	function randomizeControl($, control, random) {
+	function randomizeControl(control, random) {
 		var element = asElement(control);
 
 		if (!element) {
@@ -104,17 +104,17 @@
 		}
 
 		if (String(element.tagName).toLowerCase() === 'select') {
-			return randomizeSelect(null, element, random);
+			return randomizeSelect(element, random);
 		}
 
 		if (String(element.tagName).toLowerCase() === 'input') {
-			return randomizeInput(null, element, random);
+			return randomizeInput(element, random);
 		}
 
 		return null;
 	}
 
-	function randomizeSelect($, select, random) {
+	function randomizeSelect(select, random) {
 		var selectElement = asElement(select);
 		var selectableOptions = [];
 		var selectedOption;
@@ -147,7 +147,7 @@
 		return selectedOption.value;
 	}
 
-	function randomizeInput($, input, random) {
+	function randomizeInput(input, random) {
 		var element = asElement(input);
 		var type;
 		var value;

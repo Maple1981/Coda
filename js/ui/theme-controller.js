@@ -9,18 +9,18 @@
 		var button = doc ? doc.getElementById('themeToggleButton') : null;
 		var theme = normalizeTheme(options.initialTheme);
 
-		applyTheme(null, theme);
+		applyTheme(theme);
 
 		if (!button) {
 			return;
 		}
 
-		updateButton(null, i18n, theme);
+		updateButton(i18n, theme);
 
 		button.addEventListener('click', function () {
 			theme = theme === 'day' ? 'night' : 'day';
-			applyTheme(null, theme);
-			updateButton(null, i18n, theme);
+			applyTheme(theme);
+			updateButton(i18n, theme);
 
 			if (preferences && typeof preferences.setValue === 'function') {
 				preferences.setValue('theme', theme);
@@ -28,13 +28,13 @@
 		});
 	}
 
-	function applyTheme($, theme) {
+	function applyTheme(theme) {
 		if (global.document && global.document.body) {
 			global.document.body.setAttribute('data-theme', normalizeTheme(theme));
 		}
 	}
 
-	function updateButton($, i18n, theme) {
+	function updateButton(i18n, theme) {
 		var doc = global.document;
 		var button = doc ? doc.getElementById('themeToggleButton') : null;
 		var icon;

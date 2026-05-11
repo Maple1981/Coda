@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
 
 	CodaBootstrap.start({
-		$: $,
 		application: CodaApplication,
 		controller: CodaScaleReportController,
 		data: CodaData,

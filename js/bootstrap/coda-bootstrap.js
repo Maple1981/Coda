@@ -32,7 +32,6 @@
 		});
 
 		var controller = options.controller.initialize({
-			$: options.$,
 			application: options.application,
 			chordPlayback: chordPlayback,
 			data: data,

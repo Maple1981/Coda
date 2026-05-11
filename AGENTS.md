@@ -31,9 +31,8 @@ La base técnica actual usa:
 
 - HTML5.
 - CSS3 / Sass.
-- JavaScript en navegador.
+- JavaScript en navegador sin jQuery.
 - Web Audio / Web MIDI y soundfonts para reproducción.
-- jQuery 4.0.0 vendorizado localmente, pendiente de retirada progresiva.
 
 ## Principios de desarrollo
 

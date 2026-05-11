@@ -3,7 +3,6 @@
 	'use strict';
 
 	function initialize(options) {
-		var $ = options.$;
 		var i18n = options.i18n;
 		var keyNavigation = options.keyNavigation || global.CodaKeyNavigation;
 		var musicalContextService = options.musicalContext || global.CodaMusicalContext.create({
@@ -19,26 +18,25 @@
 		uiState.setNotationStyle(notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon');
 		var initialForm = resolveInitialForm(options.data, options.initialForm);
 
-		$('#interface input:radio[name="formato"][value="' + initialForm.format + '"]').prop('checked', true);
-		updateFormatLabelTarget($);
-		$('#selectorNotacion').val(uiState.getNotationStyle());
-		fillSelectHashTable($, $('#tonica'), options.data.notes, initialForm.format === '1', null, 'notes', notation, uiState.getNotationStyle());
-		$('#tonica').val(String(initialForm.tonicIndex));
-		fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
-		$('#escala').val(String(initialForm.scaleIndex));
-		fillInstrumentSelect($, $('#instrumentoSonoro'), options.data.midiInstruments, i18n);
-		$('#instrumentoSonoro').val(initialForm.midiInstrument);
-		setPlaybackInstrument(options, $('#instrumentoSonoro').val());
+		checkFormat(initialForm.format);
+		updateFormatLabelTarget();
+		setValue(query('#selectorNotacion'), uiState.getNotationStyle());
+		fillSelectHashTable(query('#tonica'), options.data.notes, initialForm.format === '1', null, 'notes', notation, uiState.getNotationStyle());
+		setValue(query('#tonica'), String(initialForm.tonicIndex));
+		fillSelectHashTable(query('#escala'), options.data.scales, false, i18n, 'scales');
+		setValue(query('#escala'), String(initialForm.scaleIndex));
+		fillInstrumentSelect(query('#instrumentoSonoro'), options.data.midiInstruments, i18n);
+		setValue(query('#instrumentoSonoro'), initialForm.midiInstrument);
+		setPlaybackInstrument(options, valueOf(query('#instrumentoSonoro')));
 		if (!hasInitialFormValue(options.initialForm, 'format')) {
-			keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
-			updateFormatLabelTarget($);
+			keyNavigation.applyRecommendedNotation(options, fillSelectHashTable);
+			updateFormatLabelTarget();
 		}
 		if (staticText) {
-			staticText.apply($, i18n);
+			staticText.apply(i18n);
 		}
 		if (options.themeControl) {
 			options.themeControl.initialize({
-				$: $,
 				i18n: i18n,
 				initialTheme: options.initialTheme,
 				preferences: preferences
@@ -46,134 +44,149 @@
 		}
 		if (options.volumeControl) {
 			options.volumeControl.initialize({
-				$: $,
 				initialVolume: options.initialVolume,
 				playbackService: options.playbackService,
 				preferences: preferences
 			});
 		}
 		if (options.changelogDialog) {
-			options.changelogDialog.initialize($, i18n);
+			options.changelogDialog.initialize(i18n);
 		}
 		if (options.randomSelectControl) {
 			options.randomSelectControl.initialize({
-				$: $,
 				i18n: i18n
 			});
 		}
-		updateCollapsiblePanelStates($, i18n);
-		options.ui.scheduleDashboardWorkspaceHeight($);
+		updateCollapsiblePanelStates(i18n);
+		options.ui.scheduleDashboardWorkspaceHeight();
 
-		$(window).on('resize', function () {
-			options.ui.scheduleSidebarPanelViewport($);
-			options.ui.scheduleInstrumentScale($);
-			options.ui.scheduleDashboardWorkspaceHeight($);
+		global.addEventListener('resize', function () {
+			options.ui.scheduleSidebarPanelViewport();
+			options.ui.scheduleInstrumentScale();
+			options.ui.scheduleDashboardWorkspaceHeight();
 		});
-		$(window).on('scroll', function () {
-			options.ui.scheduleSidebarPanelViewport($);
-		});
-
-		$('#toggleTheoryControls').click(function () {
-			$('#interface').toggleClass('isCollapsed');
-			updateCollapsiblePanelStates($, i18n);
-			options.ui.scheduleSidebarPanelViewport($);
-			options.ui.scheduleDashboardWorkspaceHeight($);
+		global.addEventListener('scroll', function () {
+			options.ui.scheduleSidebarPanelViewport();
 		});
 
-		$(document).on('click', '#toggleScaleTheoryDetails', function () {
-			$('#herramientasTeoricas').toggleClass('scaleDetailsCollapsed');
-			updateCollapsiblePanelStates($, i18n);
-			options.ui.scheduleInstrumentScale($);
-			options.ui.scheduleSidebarPanelViewport($);
-			options.ui.scheduleDashboardWorkspaceHeight($);
+		on(query('#toggleTheoryControls'), 'click', function () {
+			query('#interface').classList.toggle('isCollapsed');
+			updateCollapsiblePanelStates(i18n);
+			options.ui.scheduleSidebarPanelViewport();
+			options.ui.scheduleDashboardWorkspaceHeight();
 		});
 
-		$('#tonica, #escala').change(function () {
-			keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
-			updateFormatLabelTarget($);
-			saveFormPreferences(preferences, $);
+		on(global.document, 'click', function (event) {
+			if (!closest(event.target, '#toggleScaleTheoryDetails')) {
+				return;
+			}
+
+			query('#herramientasTeoricas').classList.toggle('scaleDetailsCollapsed');
+			updateCollapsiblePanelStates(i18n);
+			options.ui.scheduleInstrumentScale();
+			options.ui.scheduleSidebarPanelViewport();
+			options.ui.scheduleDashboardWorkspaceHeight();
+		});
+
+		forEachElement('#tonica, #escala', function (control) {
+			control.addEventListener('change', function () {
+				keyNavigation.applyRecommendedNotation(options, fillSelectHashTable);
+				updateFormatLabelTarget();
+				saveFormPreferences(preferences);
+				renderReport();
+			});
+		});
+
+		forEachElement('#interface input[type="radio"][name="formato"]', function (input) {
+			input.addEventListener('change', function () {
+				var preferFlats = input.value === '1';
+				fillSelectHashTable(query('#tonica'), options.data.notes, preferFlats, null, 'notes', notation, uiState.getNotationStyle());
+				updateFormatLabelTarget();
+				saveFormPreferences(preferences);
+				renderReport();
+			});
+		});
+
+		on(query('#instrumentoSonoro'), 'change', function (event) {
+			setPlaybackInstrument(options, event.currentTarget.value);
+			saveFormPreferences(preferences);
 			renderReport();
 		});
 
-		$('#interface input:radio[name="formato"]').change(function () {
-			var preferFlats = $(this).val() === '1';
-			fillSelectHashTable($, $('#tonica'), options.data.notes, preferFlats, null, 'notes', notation, uiState.getNotationStyle());
-			updateFormatLabelTarget($);
-			saveFormPreferences(preferences, $);
-			renderReport();
-		});
-
-		$('#instrumentoSonoro').change(function () {
-			setPlaybackInstrument(options, $(this).val());
-			saveFormPreferences(preferences, $);
-			renderReport();
-		});
-
-		$('#selectorIdioma').change(function () {
+		on(query('#selectorIdioma'), 'change', function (event) {
 			if (i18n) {
-				i18n.setLanguage($(this).val());
+				i18n.setLanguage(event.currentTarget.value);
 				uiState.setLanguage(i18n.getLanguage());
 				savePreference(preferences, 'language', i18n.getLanguage());
-				fillSelectHashTable($, $('#escala'), options.data.scales, false, i18n, 'scales');
-				fillInstrumentSelect($, $('#instrumentoSonoro'), options.data.midiInstruments, i18n);
+				fillSelectHashTable(query('#escala'), options.data.scales, false, i18n, 'scales');
+				fillInstrumentSelect(query('#instrumentoSonoro'), options.data.midiInstruments, i18n);
 				if (staticText) {
-					staticText.apply($, i18n);
+					staticText.apply(i18n);
 				}
-				updateCollapsiblePanelStates($, i18n);
+				updateCollapsiblePanelStates(i18n);
 				if (options.themeControl) {
-					options.themeControl.updateButton($, i18n, $('body').attr('data-theme'));
+					options.themeControl.updateButton(i18n, global.document.body.getAttribute('data-theme'));
 				}
 				if (options.randomSelectControl) {
-					options.randomSelectControl.updateLabels($, i18n);
+					options.randomSelectControl.updateLabels(i18n);
 				}
 			}
 
-			if (options.ui.hasRenderedResults($)) {
+			if (options.ui.hasRenderedResults()) {
 				renderReport();
 			}
 
-			options.ui.scheduleInstrumentScale($);
-			options.ui.scheduleDashboardWorkspaceHeight($);
+			options.ui.scheduleInstrumentScale();
+			options.ui.scheduleDashboardWorkspaceHeight();
 		});
 
-		$('#selectorNotacion').change(function () {
-			uiState.setNotationStyle(notation ? notation.normalizeStyle($(this).val()) : 'anglosaxon');
+		on(query('#selectorNotacion'), 'change', function (event) {
+			uiState.setNotationStyle(notation ? notation.normalizeStyle(event.currentTarget.value) : 'anglosaxon');
 			savePreference(preferences, 'notation', uiState.getNotationStyle());
 			fillSelectHashTable(
-				$,
-				$('#tonica'),
+				query('#tonica'),
 				options.data.notes,
-				$('#interface input:radio[name="formato"]:checked').val() === '1',
+				valueOf(query('#interface input[type="radio"][name="formato"]:checked')) === '1',
 				null,
 				'notes',
 				notation,
 				uiState.getNotationStyle()
 			);
 
-			if (options.ui.hasRenderedResults($)) {
+			if (options.ui.hasRenderedResults()) {
 				renderReport();
 			}
 
-			options.ui.scheduleInstrumentScale($);
-			options.ui.scheduleDashboardWorkspaceHeight($);
+			options.ui.scheduleInstrumentScale();
+			options.ui.scheduleDashboardWorkspaceHeight();
 		});
 
-		$(document).on('click', '.revamp', function (event) {
-			keyNavigation.navigateToLinkedKey($, options.data.notes, event.target.id, notation, uiState.getNotationStyle(), fillSelectHashTable);
-			keyNavigation.applyRecommendedNotation($, options, fillSelectHashTable);
-			saveFormPreferences(preferences, $);
+		on(global.document, 'click', function (event) {
+			var link = closest(event.target, '.revamp');
+
+			if (!link) {
+				return;
+			}
+
+			keyNavigation.navigateToLinkedKey(options.data.notes, link.id, notation, uiState.getNotationStyle(), fillSelectHashTable);
+			keyNavigation.applyRecommendedNotation(options, fillSelectHashTable);
+			saveFormPreferences(preferences);
 			renderReport();
 		});
 
-		$(document).on('change', '#selectorAfinaciones', function () {
-			uiState.setSelectedTuningIndex(Number($(this).val()));
+		on(global.document, 'change', function (event) {
+			if (!event.target || event.target.id !== 'selectorAfinaciones') {
+				return;
+			}
+
+			uiState.setSelectedTuningIndex(Number(event.target.value));
 			if (uiState.getSelectedTuningIndex() >= 0) {
 				renderInstrument(false);
 			}
 		});
 
 		function renderReport() {
-			var selection = options.ui.readSelection($, options.data);
+			var selection = options.ui.readSelection(options.data);
 			var musicalContext = musicalContextService.fromSelection(selection);
 			var report;
 			uiState.setSelection(selection);
@@ -197,12 +210,11 @@
 			uiState.setReport(report);
 
 			options.ui.renderScaleReport({
-				$: $,
 				data: options.data,
 				domain: options.domain,
 				onChordClick: playChord(options.chordPlayback),
-				onChordMouseOut: clearChordHighlight($),
-				onChordMouseOver: highlightChord($),
+				onChordMouseOut: clearChordHighlight(),
+				onChordMouseOver: highlightChord(),
 				i18n: i18n,
 				notation: notation,
 				notationStyle: uiState.getNotationStyle(),
@@ -210,13 +222,13 @@
 				report: report,
 				selection: selection
 			});
-			updateCollapsiblePanelStates($, i18n);
+			updateCollapsiblePanelStates(i18n);
 
 			renderInstrument(true);
 		}
 
 		function renderInstrument(resetTuning) {
-			var selection = options.ui.readSelection($, options.data);
+			var selection = options.ui.readSelection(options.data);
 			var musicalContext = musicalContextService.fromSelection(selection);
 			var report = uiState.getReport();
 			uiState.setSelection(selection);
@@ -242,7 +254,6 @@
 			});
 
 			options.ui.renderInstrument({
-				$: $,
 				data: options.data,
 				i18n: i18n,
 				instrumentView: instrumentView,
@@ -252,8 +263,8 @@
 				renderers: options.renderers,
 				report: report
 			});
-			options.ui.scheduleInstrumentScale($);
-			options.ui.scheduleDashboardWorkspaceHeight($);
+			options.ui.scheduleInstrumentScale();
+			options.ui.scheduleDashboardWorkspaceHeight();
 		}
 
 		renderReport();
@@ -265,14 +276,16 @@
 		};
 	}
 
-	function fillSelectHashTable($, select, values, preferFlats, i18n, collectionName, notation, notationStyle) {
+	function fillSelectHashTable(select, values, preferFlats, i18n, collectionName, notation, notationStyle) {
+		var selectElement = asElement(select);
+		var selectedValue = valueOf(selectElement);
 		var html = '';
 
 		for (var i = 0; i < values.length; i++) {
 			var name = values[i].nombre;
 			var selected = '';
 
-			if (i == $('select#' + select.attr('id') + ' option:selected').val()) {
+			if (i == selectedValue) {
 				selected = ' selected ';
 			}
 
@@ -293,11 +306,14 @@
 			html += name + '</option>';
 		}
 
-		select.empty().append(html);
+		if (selectElement) {
+			selectElement.innerHTML = html;
+		}
 	}
 
-	function fillInstrumentSelect($, select, instruments, i18n) {
-		var selectedValue = select.val();
+	function fillInstrumentSelect(select, instruments, i18n) {
+		var selectElement = asElement(select);
+		var selectedValue = valueOf(selectElement);
 		var html = '';
 
 		for (var i = 0; i < instruments.length; i++) {
@@ -309,26 +325,32 @@
 			html += name + '</option>';
 		}
 
-		select.empty().append(html);
+		if (selectElement) {
+			selectElement.innerHTML = html;
 
-		if (!select.val() && instruments.length) {
-			select.val(instruments[0].id);
+			if (!selectElement.value && instruments.length) {
+				selectElement.value = instruments[0].id;
+			}
 		}
 	}
 
-	function highlightChord($) {
+	function highlightChord() {
 		return function (element) {
 			var noteNames = element.id.split('-');
 
 			for (var i = 0; i < noteNames.length; i++) {
-				$('td.celdaNota span[data-note-name="' + noteNames[i] + '"]').addClass('resaltada');
+				forEachElement('td.celdaNota span[data-note-name="' + noteNames[i] + '"]', function (note) {
+					note.classList.add('resaltada');
+				});
 			}
 		};
 	}
 
-	function clearChordHighlight($) {
+	function clearChordHighlight() {
 		return function () {
-			$('td.celdaNota span.resaltada').removeClass('resaltada');
+			forEachElement('td.celdaNota span.resaltada', function (note) {
+				note.classList.remove('resaltada');
+			});
 		};
 	}
 
@@ -359,15 +381,15 @@
 		}
 	}
 
-	function saveFormPreferences(preferences, $) {
+	function saveFormPreferences(preferences) {
 		if (!preferences) {
 			return;
 		}
 
-		preferences.setValue('tonicIndex', $('#tonica').val());
-		preferences.setValue('scaleIndex', $('#escala').val());
-		preferences.setValue('format', $('#interface input:radio[name="formato"]:checked').val());
-		preferences.setValue('midiInstrument', $('#instrumentoSonoro').val());
+		preferences.setValue('tonicIndex', valueOf(query('#tonica')));
+		preferences.setValue('scaleIndex', valueOf(query('#escala')));
+		preferences.setValue('format', valueOf(query('#interface input[type="radio"][name="formato"]:checked')));
+		preferences.setValue('midiInstrument', valueOf(query('#instrumentoSonoro')));
 	}
 
 	function resolveInitialForm(data, initialForm) {
@@ -415,41 +437,106 @@
 		}
 	}
 
-	function updateFormatLabelTarget($) {
-		var checkedFormat = $('#interface input:radio[name="formato"]:checked');
+	function updateFormatLabelTarget() {
+		var checkedFormat = query('#interface input[type="radio"][name="formato"]:checked');
+		var label = query('#formatoLabel');
 
-		if (checkedFormat.length) {
-			$('#formatoLabel').attr('for', checkedFormat.attr('id'));
+		if (checkedFormat && label) {
+			label.setAttribute('for', checkedFormat.id);
 		}
 	}
 
-	function updateCollapsiblePanelStates($, i18n) {
-		var controlsExpanded = !$('#interface').hasClass('isCollapsed');
-		var scaleDetailsExpanded = !$('#herramientasTeoricas').hasClass('scaleDetailsCollapsed');
+	function updateCollapsiblePanelStates(i18n) {
+		var interfacePanel = query('#interface');
+		var theoryPanel = query('#herramientasTeoricas');
+		var controlsExpanded = interfacePanel ? !interfacePanel.classList.contains('isCollapsed') : true;
+		var scaleDetailsExpanded = theoryPanel ? !theoryPanel.classList.contains('scaleDetailsCollapsed') : true;
 
-		updateCollapseToggleButton($, $('#toggleTheoryControls'), controlsExpanded, {
+		updateCollapseToggleButton(query('#toggleTheoryControls'), controlsExpanded, {
 			collapse: translate(i18n, 'panel.controls.collapse'),
 			expand: translate(i18n, 'panel.controls.expand')
 		});
-		updateCollapseToggleButton($, $('#toggleScaleTheoryDetails'), scaleDetailsExpanded, {
+		updateCollapseToggleButton(query('#toggleScaleTheoryDetails'), scaleDetailsExpanded, {
 			collapse: translate(i18n, 'scaleSummary.collapseDetails'),
 			expand: translate(i18n, 'scaleSummary.expandDetails')
 		});
 	}
 
-	function updateCollapseToggleButton($, button, expanded, labels) {
-		if (!button || !button.length) {
+	function updateCollapseToggleButton(button, expanded, labels) {
+		var icon;
+
+		if (!button) {
 			return;
 		}
 
-		button.attr('aria-expanded', expanded ? 'true' : 'false');
-		button.attr('title', expanded ? labels.collapse : labels.expand);
-		button.attr('aria-label', expanded ? labels.collapse : labels.expand);
-		button.find('.material-icons').text(expanded ? 'expand_less' : 'expand_more');
+		button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+		button.setAttribute('title', expanded ? labels.collapse : labels.expand);
+		button.setAttribute('aria-label', expanded ? labels.collapse : labels.expand);
+		icon = button.querySelector('.material-icons');
+
+		if (icon) {
+			icon.textContent = expanded ? 'expand_less' : 'expand_more';
+		}
 	}
 
 	function translate(i18n, key) {
 		return i18n && typeof i18n.t === 'function' ? i18n.t(key) : key;
+	}
+
+	function asElement(value) {
+		if (!value) {
+			return null;
+		}
+
+		if (value.nodeType === 1 || value === global.document) {
+			return value;
+		}
+
+		return value[0] || null;
+	}
+
+	function checkFormat(value) {
+		var input = query('#bemoles');
+
+		if (value !== '1') {
+			input = query('#sostenidos');
+		}
+
+		if (input) {
+			input.checked = true;
+		}
+	}
+
+	function closest(target, selector) {
+		return target && target.closest ? target.closest(selector) : null;
+	}
+
+	function forEachElement(selector, callback) {
+		if (!global.document) {
+			return;
+		}
+
+		Array.prototype.forEach.call(global.document.querySelectorAll(selector), callback);
+	}
+
+	function on(element, eventName, handler) {
+		if (element && element.addEventListener) {
+			element.addEventListener(eventName, handler);
+		}
+	}
+
+	function query(selector) {
+		return global.document ? global.document.querySelector(selector) : null;
+	}
+
+	function setValue(element, value) {
+		if (element && value !== undefined && value !== null) {
+			element.value = value;
+		}
+	}
+
+	function valueOf(element) {
+		return element ? element.value : '';
 	}
 
 	function resolvePlaybackInstrument(data, selectedInstrument) {

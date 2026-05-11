@@ -73,7 +73,7 @@ assert.ok(global.CodaScaleReportController.initialize);
 assert.ok(global.CodaPlayback.create);
 assert.ok(global.CodaBootstrap.start);
 assert.ok(scaleReportControllerSource.indexOf('renderReport();\n\n\t\treturn {') > -1);
-assert.ok(scaleReportControllerSource.indexOf("$('#tonica, #escala').change(function ()") > -1);
+assert.ok(scaleReportControllerSource.indexOf("forEachElement('#tonica, #escala'") > -1);
 assert.ok(manifestScripts.indexOf('js/data/constants-data.js') > -1);
 assert.ok(manifestScripts.indexOf('js/data/midi-data.js') > -1);
 assert.ok(manifestScripts.indexOf('js/data/scales-data.js') > -1);
@@ -210,7 +210,6 @@ let playbackOptions;
 let loadCalled = false;
 
 const startResult = global.CodaBootstrap.start({
-	$: function () {},
 	application: global.CodaApplication,
 	controller: {
 		initialize: function (options) {

@@ -4,7 +4,7 @@
 
 	var previousFocus = null;
 
-	function initialize($, i18n) {
+	function initialize(i18n) {
 		var doc = global.document;
 		var content = doc ? doc.getElementById('controlVersiones') : null;
 		var link = doc ? doc.getElementById('enlaceNovedades') : null;
@@ -16,7 +16,7 @@
 		}
 
 		ensureDialogStructure(i18n);
-		updateTitle(null, i18n);
+		updateTitle(i18n);
 		dialog = doc.getElementById('controlVersionesDialog');
 		closeButton = doc.getElementById('controlVersionesDialogClose');
 
@@ -76,7 +76,7 @@
 		surface.appendChild(titlebar);
 		surface.appendChild(contentShell);
 		dialog.appendChild(surface);
-		updateTitle(null, i18n);
+		updateTitle(i18n);
 	}
 
 	function openDialog() {
@@ -112,7 +112,7 @@
 		return Boolean(dialog && dialog.classList.contains('isOpen'));
 	}
 
-	function updateTitle($, i18n) {
+	function updateTitle(i18n) {
 		var doc = global.document;
 		var titleElement = doc ? doc.getElementById('controlVersionesDialogTitle') : null;
 		var closeButton = doc ? doc.getElementById('controlVersionesDialogClose') : null;

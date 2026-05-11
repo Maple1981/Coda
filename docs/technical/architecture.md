@@ -12,10 +12,10 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/content/*.js`: contenido largo de interfaz que no pertenece al dominio musical, como bienvenida, novedades y mejoras.
 - `js/data.js`: fachada estable que ensambla esos catálogos y expone `CodaData`. El código nuevo debe consumir `CodaData`, no leer directamente variables internas de los catálogos.
 - `js/services/data-index-service.js`: índices derivados de los catálogos de `CodaData` para búsquedas rápidas por nombre, patrón o semitonos sin modificar el contrato público de arrays.
-- `js/domain/`: reglas musicales puras sin DOM, jQuery, MIDI ni renderizado.
+- `js/domain/`: reglas musicales puras sin DOM, MIDI ni renderizado.
 - `js/application/`: casos de uso. Orquesta dominio y servicios sin generar HTML ni leer directamente del DOM.
 - `js/renderers/`: renderizado HTML. Recibe datos explícitos y no calcula reglas musicales.
-- `js/ui/`: coordinación de interfaz legacy con jQuery. Lee selección del DOM, monta vistas y conecta eventos de pantalla.
+- `js/ui/`: coordinación de interfaz con DOM nativo. Lee selección del DOM, monta vistas y conecta eventos de pantalla.
 - `js/ui/ui-state.js`: estado explícito de pantalla. Conserva selección actual, informe renderizado, instrumento, afinación, idioma y notación sin dispersarlos en closures del controlador.
 - `js/i18n/`: traducciones de interfaz y servicio ligero de internacionalización.
 - `js/services/`: infraestructura de navegador, como playback y futura exportación MIDI.
@@ -70,7 +70,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - La lógica musical nueva debe entrar primero en `js/domain/`.
 - La orquestación de casos de uso debe vivir en `js/application/`.
 - El HTML debe concentrarse en `js/renderers/`.
-- La interacción con jQuery y el DOM debe quedarse en `js/ui/`.
+- La interacción con el DOM debe quedarse en `js/ui/`.
 - El estado mutable de pantalla debe vivir en `CodaUiState`; el controlador puede orquestar eventos, pero no debe acumular nuevos valores de sesión como variables sueltas en closures.
 - La selección de tónica, escala, formato e instrumento sonoro debe transformarse en un contexto musical explícito mediante `CodaMusicalContext` antes de alimentar casos de uso de aplicación. El instrumento sonoro se conserva como identificador General MIDI y la vista gráfica se resuelve mediante `viewInstrument`.
 - Las búsquedas repetidas en catálogos deben usar `CodaData.indexes` o los índices no enumerables generados por `js/services/data-index-service.js`; conservar siempre fallback lineal si una función acepta colecciones externas.

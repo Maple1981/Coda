@@ -1,4 +1,4 @@
-// UI orchestration for the legacy jQuery screen. It reads DOM selections and
+// UI orchestration for the legacy screen. It reads DOM selections and
 // mounts renderer output, but delegates musical work to the application layer.
 (function (global) {
 	'use strict';
@@ -7,13 +7,17 @@
 	var pendingInstrumentScale = false;
 	var pendingSidebarPanelViewport = false;
 
-	function readSelection($, data) {
-		var preferFlats = $('#interface input:radio[name="formato"]:checked').val() === '1';
-		var scaleIndex = parseInt($('select#escala option:selected').val(), 10);
-		var tonicIndex = parseInt($('select#tonica option:selected').val(), 10);
+	function readSelection(data) {
+		var formatInput = query('#interface input[type="radio"][name="formato"]:checked');
+		var scaleSelect = query('select#escala');
+		var tonicSelect = query('select#tonica');
+		var instrumentSelect = query('#instrumentoSonoro');
+		var preferFlats = valueOf(formatInput) === '1';
+		var scaleIndex = parseInt(valueOf(scaleSelect), 10);
+		var tonicIndex = parseInt(valueOf(tonicSelect), 10);
 		var scaleDefinition = data && data.scales ? data.scales[scaleIndex] : null;
 		var tonicDefinition = data && data.notes ? data.notes[tonicIndex] : null;
-		var midiInstrument = $('#instrumentoSonoro').val();
+		var midiInstrument = valueOf(instrumentSelect);
 		var midiInstrumentDefinition = findMidiInstrument(data, midiInstrument);
 
 		return {
@@ -21,9 +25,9 @@
 			midiInstrument: midiInstrument,
 			preferFlats: preferFlats,
 			scaleIndex: scaleIndex,
-			scaleName: scaleDefinition ? scaleDefinition.nombre : $('select#escala option:selected').text(),
+			scaleName: scaleDefinition ? scaleDefinition.nombre : selectedText(scaleSelect),
 			tonicIndex: tonicIndex,
-			tonicName: tonicDefinition ? noteName(tonicDefinition, preferFlats) : $('select#tonica option:selected').text()
+			tonicName: tonicDefinition ? noteName(tonicDefinition, preferFlats) : selectedText(tonicSelect)
 		};
 	}
 
@@ -39,16 +43,18 @@
 		return instruments.length ? instruments[0] : null;
 	}
 
-	function hasRenderedResults($) {
-		return $('#notacion').children().length > 0 && $('#instrumento').children().length > 0;
+	function hasRenderedResults() {
+		return childCount('notacion') > 0 && childCount('instrumento') > 0;
 	}
 
 	function renderScaleReport(options) {
-		var $ = options.$;
 		var report = options.report;
-		var scaleDetails = $('<div id="scaleTheoryDetails" class="scaleTheoryDetails"></div>');
+		var scaleDetails = createElement('div', {
+			'class': 'scaleTheoryDetails',
+			'id': 'scaleTheoryDetails'
+		});
 
-		$('#notacion').empty().append(options.renderers.scaleSummary.renderTitle({
+		setHtmlById('notacion', options.renderers.scaleSummary.renderTitle({
 			i18n: options.i18n,
 			notation: options.notation,
 			notationStyle: options.notationStyle,
@@ -57,7 +63,7 @@
 			tonicName: report.tonicName
 		}));
 
-		scaleDetails.append(options.renderers.scaleSummary.renderList({
+		appendHtml(scaleDetails, options.renderers.scaleSummary.renderList({
 			circleOfFifths: options.data.circleOfFifths,
 			i18n: options.i18n,
 			isDegreeSuppressed: report.isDegreeSuppressed,
@@ -69,10 +75,10 @@
 			tonicName: report.tonicName
 		}));
 
-		$('#armoniaExtendida').empty();
+		setHtmlById('armoniaExtendida', '');
 
 		if (report.scaleNotes.length === 7) {
-			scaleDetails.append(options.renderers.scaleChords.render({
+			appendHtml(scaleDetails, options.renderers.scaleChords.render({
 				mode: report.mode,
 				i18n: options.i18n,
 				notation: options.notation,
@@ -88,9 +94,9 @@
 			}
 		}
 
-		$('#notacion').append(scaleDetails);
+		appendElementById('notacion', scaleDetails);
 
-		$('#circuloQuintas').empty().append(options.renderers.circleOfFifths.render({
+		setHtmlById('circuloQuintas', options.renderers.circleOfFifths.render({
 			notation: options.notation,
 			notationStyle: options.notationStyle,
 			orderedKeys: report.circleOfFifths ? report.circleOfFifths.orderedKeys : null,
@@ -101,10 +107,9 @@
 	}
 
 	function renderExtendedHarmony(options) {
-		var $ = options.$;
 		var report = options.report;
 
-		$('#armoniaExtendida').empty().append(options.renderers.extendedHarmony.render({
+		setHtmlById('armoniaExtendida', options.renderers.extendedHarmony.render({
 			data: options.data,
 			domain: options.domain,
 			i18n: options.i18n,
@@ -119,72 +124,118 @@
 			tonicName: report.tonicName
 		}));
 
-		initializeMultiAccordion($, $('#acordeonArmoniaExtendida'));
-		scheduleDashboardWorkspaceHeight($);
+		initializeMultiAccordion(query('#acordeonArmoniaExtendida'));
+		scheduleDashboardWorkspaceHeight();
 	}
 
-	function initializeMultiAccordion($, accordion) {
-		var headers = accordion.children('h3');
+	function initializeMultiAccordion(accordion) {
+		var accordionElement = asElement(accordion);
+		var headers;
 
-		accordion.addClass('codaAccordion');
+		if (!accordionElement) {
+			return;
+		}
 
-		headers.each(function (index) {
-			var header = $(this);
-			var panel = header.next('div');
+		headers = childrenMatching(accordionElement, 'h3');
+		accordionElement.classList.add('codaAccordion');
+
+		headers.forEach(function (header, index) {
+			var panel = nextElementMatching(header, 'div');
 			var isOpen = index === 0;
-			var panelId = panel.attr('id') || 'acordeonArmoniaExtendidaPanel' + index;
+			var panelId;
 
-			header
-				.addClass('codaAccordionHeader')
-				.toggleClass('codaAccordionHeaderActive', isOpen)
-				.attr('tabindex', '0')
-				.attr('role', 'button')
-				.attr('aria-controls', panelId)
-				.attr('aria-expanded', isOpen ? 'true' : 'false');
-
-			panel
-				.attr('id', panelId)
-				.attr('role', 'region')
-				.attr('aria-hidden', isOpen ? 'false' : 'true')
-				.addClass('codaAccordionPanel')
-				.toggle(isOpen);
-		});
-
-		headers.off('click.codaMultiAccordion keydown.codaMultiAccordion');
-		headers.on('click.codaMultiAccordion keydown.codaMultiAccordion', function (event) {
-			if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') {
+			if (!panel) {
 				return;
 			}
 
-			event.preventDefault();
-			toggleAccordionSection($, $(this));
+			panelId = panel.getAttribute('id') || 'acordeonArmoniaExtendidaPanel' + index;
+
+			header.classList.add('codaAccordionHeader');
+			header.classList.toggle('codaAccordionHeaderActive', isOpen);
+			header.setAttribute('tabindex', '0');
+			header.setAttribute('role', 'button');
+			header.setAttribute('aria-controls', panelId);
+			header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+			panel.setAttribute('id', panelId);
+			panel.setAttribute('role', 'region');
+			panel.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+			panel.classList.add('codaAccordionPanel');
+			panel.style.display = isOpen ? '' : 'none';
+		});
+
+		headers.forEach(function (header) {
+			if (header.getAttribute('data-coda-accordion-initialized') === 'true') {
+				return;
+			}
+			header.setAttribute('data-coda-accordion-initialized', 'true');
+			header.addEventListener('click', handleAccordionEvent);
+			header.addEventListener('keydown', handleAccordionEvent);
 		});
 	}
 
-	function toggleAccordionSection($, header) {
-		var panel = header.next('div');
-		var willOpen = !panel.is(':visible');
+	function handleAccordionEvent(event) {
+		if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') {
+			return;
+		}
 
-		header
-			.toggleClass('codaAccordionHeaderActive', willOpen)
-			.attr('aria-expanded', willOpen ? 'true' : 'false');
-		panel.attr('aria-hidden', willOpen ? 'false' : 'true');
-		panel.stop(true, true).slideToggle(120);
+		event.preventDefault();
+		toggleAccordionSection(event.currentTarget);
+	}
+
+	function toggleAccordionSection(header) {
+		var headerElement = asElement(header);
+		var panel = headerElement ? nextElementMatching(headerElement, 'div') : null;
+		var willOpen = panel ? panel.style.display === 'none' || panel.hidden : false;
+
+		if (!headerElement || !panel) {
+			return;
+		}
+
+		headerElement.classList.toggle('codaAccordionHeaderActive', willOpen);
+		headerElement.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+		panel.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+		panel.style.display = willOpen ? '' : 'none';
 	}
 
 	function attachChordEvents(options) {
-		var $ = options.$;
-		var eventScope = $('#notacion, #armoniaExtendida');
+		var eventScopes = [query('#notacion'), query('#armoniaExtendida')];
 
-		eventScope.off('.codaChordEvents');
-		eventScope.on('mouseenter.codaChordEvents', '.celdaAcorde', function () {
-			options.onChordMouseOver(this);
-		});
-		eventScope.on('mouseleave.codaChordEvents', '.celdaAcorde', function () {
-			options.onChordMouseOut();
-		});
-		eventScope.on('click.codaChordEvents', '.celdaAcorde', function () {
-			options.onChordClick(this);
+		eventScopes.forEach(function (scope) {
+			if (!scope || scope.getAttribute('data-coda-chord-events') === 'true') {
+				return;
+			}
+
+			scope.setAttribute('data-coda-chord-events', 'true');
+			scope.addEventListener('mouseover', function (event) {
+				var chord = closestWithin(event.target, '.celdaAcorde', scope);
+
+				if (chord && event.relatedTarget && chord.contains(event.relatedTarget)) {
+					return;
+				}
+
+				if (chord) {
+					options.onChordMouseOver(chord);
+				}
+			});
+			scope.addEventListener('mouseout', function (event) {
+				var chord = closestWithin(event.target, '.celdaAcorde', scope);
+
+				if (chord && event.relatedTarget && chord.contains(event.relatedTarget)) {
+					return;
+				}
+
+				if (chord) {
+					options.onChordMouseOut();
+				}
+			});
+			scope.addEventListener('click', function (event) {
+				var chord = closestWithin(event.target, '.celdaAcorde', scope);
+
+				if (chord) {
+					options.onChordClick(chord);
+				}
+			});
 		});
 	}
 
@@ -211,24 +262,28 @@
 			});
 		}
 
-		options.$('#instrumento').empty().append(html);
+		setHtmlById('instrumento', html);
 		attachInstrumentEvents(options);
 	}
 
 	function attachInstrumentEvents(options) {
-		var $ = options.$;
+		var instrument = query('#instrumento');
 
-		if (typeof options.onInstrumentNoteClick !== 'function') {
+		if (typeof options.onInstrumentNoteClick !== 'function' || !instrument || instrument.getAttribute('data-coda-instrument-events') === 'true') {
 			return;
 		}
 
-		$('#instrumento').off('click.codaInstrumentPlayback');
-		$('#instrumento').on('click.codaInstrumentPlayback', 'td.celdaNota span[data-midi-note]', function () {
-			options.onInstrumentNoteClick(this);
+		instrument.setAttribute('data-coda-instrument-events', 'true');
+		instrument.addEventListener('click', function (event) {
+			var note = closestWithin(event.target, 'td.celdaNota span[data-midi-note]', instrument);
+
+			if (note) {
+				options.onInstrumentNoteClick(note);
+			}
 		});
 	}
 
-	function scheduleInstrumentScale($) {
+	function scheduleInstrumentScale() {
 		if (pendingInstrumentScale) {
 			return;
 		}
@@ -236,11 +291,11 @@
 		pendingInstrumentScale = true;
 		nextFrame(function () {
 			pendingInstrumentScale = false;
-			syncInstrumentScale($);
+			syncInstrumentScale();
 		});
 	}
 
-	function scheduleDashboardWorkspaceHeight($) {
+	function scheduleDashboardWorkspaceHeight() {
 		if (pendingDashboardWorkspaceHeight) {
 			return;
 		}
@@ -248,11 +303,11 @@
 		pendingDashboardWorkspaceHeight = true;
 		nextFrame(function () {
 			pendingDashboardWorkspaceHeight = false;
-			syncDashboardWorkspaceHeight($);
+			syncDashboardWorkspaceHeight();
 		});
 	}
 
-	function scheduleSidebarPanelViewport($) {
+	function scheduleSidebarPanelViewport() {
 		if (pendingSidebarPanelViewport) {
 			return;
 		}
@@ -260,13 +315,13 @@
 		pendingSidebarPanelViewport = true;
 		nextFrame(function () {
 			pendingSidebarPanelViewport = false;
-			syncSidebarPanelViewport($);
+			syncSidebarPanelViewport();
 		});
 	}
 
-	function syncInstrumentScale($) {
-		var viewport = $('#instrumento .instrumentScaleViewport')[0];
-		var canvas = $('#instrumento .instrumentScaleCanvas')[0];
+	function syncInstrumentScale() {
+		var viewport = query('#instrumento .instrumentScaleViewport');
+		var canvas = query('#instrumento .instrumentScaleCanvas');
 
 		if (!viewport || !canvas) {
 			return;
@@ -293,36 +348,36 @@
 		viewport.style.height = Math.ceil(baseHeight * scale) + 'px';
 	}
 
-	function syncDashboardWorkspaceHeight($) {
-		var sidebar = $('#panelTeorico')[0];
-		var sidebarPanel = $('.dashboard__sidebarPanel')[0];
-		var main = $('#areaTrabajo')[0];
-		var container = $('#container')[0];
+	function syncDashboardWorkspaceHeight() {
+		var sidebar = query('#panelTeorico');
+		var sidebarPanel = query('.dashboard__sidebarPanel');
+		var main = query('#areaTrabajo');
+		var container = query('#container');
 
 		if (!sidebar || !sidebarPanel || !main || !container) {
 			return;
 		}
 
-		var viewportHeight = Math.max(0, window.innerHeight - 32);
+		var viewportHeight = Math.max(0, global.innerHeight - 32);
 		var sidebarHeight = sidebarPanel.scrollHeight;
 		var mainHeight = main.scrollHeight;
 		var workspaceHeight = Math.max(viewportHeight, sidebarHeight, mainHeight);
 
 		container.style.setProperty('--dashboard-workspace-height', workspaceHeight + 'px');
 		container.style.setProperty('--dashboard-sidebar-content-height', sidebarHeight + 'px');
-		syncSidebarPanelViewport($);
+		syncSidebarPanelViewport();
 	}
 
-	function syncSidebarPanelViewport($) {
-		var sidebarPanel = $('.dashboard__sidebarPanel')[0];
-		var container = $('#container')[0];
+	function syncSidebarPanelViewport() {
+		var sidebarPanel = query('.dashboard__sidebarPanel');
+		var container = query('#container');
 
 		if (!sidebarPanel || !container) {
 			return;
 		}
 
 		var panelTop = Math.max(sidebarPanel.getBoundingClientRect().top, 19);
-		var panelHeight = Math.max(280, window.innerHeight - panelTop - 16);
+		var panelHeight = Math.max(280, global.innerHeight - panelTop - 16);
 
 		container.style.setProperty('--dashboard-sidebar-max-height', panelHeight + 'px');
 	}
@@ -341,6 +396,94 @@
 		}
 
 		return noteDefinition.nombre;
+	}
+
+	function appendElementById(id, element) {
+		var container = global.document ? global.document.getElementById(id) : null;
+
+		if (container && element) {
+			container.appendChild(element);
+		}
+	}
+
+	function appendHtml(element, html) {
+		if (element) {
+			element.insertAdjacentHTML('beforeend', html);
+		}
+	}
+
+	function asElement(value) {
+		if (!value) {
+			return null;
+		}
+
+		if (value.nodeType === 1) {
+			return value;
+		}
+
+		return value[0] || null;
+	}
+
+	function childCount(id) {
+		var element = global.document ? global.document.getElementById(id) : null;
+
+		return element ? element.children.length : 0;
+	}
+
+	function childrenMatching(element, selector) {
+		return Array.prototype.filter.call(element.children, function (child) {
+			return child.matches(selector);
+		});
+	}
+
+	function closestWithin(target, selector, scope) {
+		var element = target && target.closest ? target.closest(selector) : null;
+
+		if (!element || !scope.contains(element)) {
+			return null;
+		}
+
+		return element;
+	}
+
+	function createElement(tagName, attributes) {
+		var element = global.document.createElement(tagName);
+
+		Object.keys(attributes).forEach(function (attribute) {
+			element.setAttribute(attribute, attributes[attribute]);
+		});
+
+		return element;
+	}
+
+	function nextElementMatching(element, selector) {
+		var sibling = element ? element.nextElementSibling : null;
+
+		return sibling && sibling.matches(selector) ? sibling : null;
+	}
+
+	function query(selector) {
+		return global.document ? global.document.querySelector(selector) : null;
+	}
+
+	function selectedText(select) {
+		if (!select || select.selectedIndex < 0 || !select.options[select.selectedIndex]) {
+			return '';
+		}
+
+		return select.options[select.selectedIndex].textContent;
+	}
+
+	function setHtmlById(id, html) {
+		var element = global.document ? global.document.getElementById(id) : null;
+
+		if (element) {
+			element.innerHTML = html;
+		}
+	}
+
+	function valueOf(element) {
+		return element ? element.value : '';
 	}
 
 	global.CodaUi = {

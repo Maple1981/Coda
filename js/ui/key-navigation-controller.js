@@ -2,26 +2,28 @@
 (function (global) {
 	'use strict';
 
-	function navigateToLinkedKey($, notes, targetId, notation, notationStyle, fillSelect) {
+	function navigateToLinkedKey(notes, targetId, notation, notationStyle, fillSelect) {
 		var selectedOption = targetId.split('_');
 		var noteValue = findNoteValue(notes, selectedOption[0]);
+		var scaleSelect = getElement('escala');
+		var tonicSelect = getElement('tonica');
 
 		if (selectedOption[1].indexOf('m') > -1) {
-			$('select#escala').val('2');
+			setValue(scaleSelect, '2');
 		} else {
-			$('select#escala').val('0');
+			setValue(scaleSelect, '0');
 		}
 
 		if (selectedOption[0].indexOf('#') > 0) {
-			fillSelect($, $('#tonica'), notes, false, null, 'notes', notation, notationStyle);
+			fillSelect(tonicSelect, notes, false, null, 'notes', notation, notationStyle);
 		}
 
 		if (selectedOption[0].indexOf('b') > 0) {
-			fillSelect($, $('#tonica'), notes, true, null, 'notes', notation, notationStyle);
+			fillSelect(tonicSelect, notes, true, null, 'notes', notation, notationStyle);
 		}
 
 		if (noteValue > -1) {
-			$('select#tonica').val(String(noteValue));
+			setValue(tonicSelect, String(noteValue));
 		}
 	}
 
@@ -39,10 +41,13 @@
 		return -1;
 	}
 
-	function applyRecommendedNotation($, options, fillSelect) {
-		var scaleIndex = parseInt($('select#escala option:selected').val(), 10);
+	function applyRecommendedNotation(options, fillSelect) {
+		var scaleSelect = getElement('escala');
+		var tonicSelect = getElement('tonica');
+		var formatInput = getCheckedFormatInput();
+		var scaleIndex = parseInt(getValue(scaleSelect), 10);
 		var scaleDefinition = options.data.scales[scaleIndex];
-		var tonicIndex = parseInt($('select#tonica option:selected').val(), 10);
+		var tonicIndex = parseInt(getValue(tonicSelect), 10);
 		var tonicDefinition = options.data.notes[tonicIndex];
 
 		if (!tonicDefinition) {
@@ -53,23 +58,49 @@
 			notes: options.data.notes,
 			scaleDefinition: scaleDefinition,
 			selectedScaleIndex: scaleIndex,
-			tonicName: options.ui.noteName(tonicDefinition, $('#interface input:radio[name="formato"]:checked').val() === '1')
+			tonicName: options.ui.noteName(tonicDefinition, getValue(formatInput) === '1')
 		});
 
 		if (preferFlats == null) {
 			return;
 		}
 
-		$('#interface input:radio[name="formato"][value="' + (preferFlats ? '1' : '0') + '"]').prop('checked', true);
-		fillSelect($, $('#tonica'), options.data.notes, preferFlats, null, 'notes', options.notation, resolveNotationStyle(options, $));
+		checkFormat(preferFlats ? '1' : '0');
+		fillSelect(tonicSelect, options.data.notes, preferFlats, null, 'notes', options.notation, resolveNotationStyle(options));
 	}
 
-	function resolveNotationStyle(options, $) {
+	function resolveNotationStyle(options) {
 		if (options.uiState) {
 			return options.uiState.getNotationStyle();
 		}
 
-		return options.notation ? options.notation.normalizeStyle(options.initialNotation || $('#selectorNotacion').val()) : 'anglosaxon';
+		return options.notation ? options.notation.normalizeStyle(options.initialNotation || getValue(getElement('selectorNotacion'))) : 'anglosaxon';
+	}
+
+	function getElement(id) {
+		return global.document ? global.document.getElementById(id) : null;
+	}
+
+	function getCheckedFormatInput() {
+		return global.document ? global.document.querySelector('#interface input[type="radio"][name="formato"]:checked') : null;
+	}
+
+	function checkFormat(value) {
+		var input = global.document ? global.document.querySelector('#interface input[type="radio"][name="formato"][value="' + value + '"]') : null;
+
+		if (input) {
+			input.checked = true;
+		}
+	}
+
+	function getValue(element) {
+		return element ? element.value : '';
+	}
+
+	function setValue(element, value) {
+		if (element) {
+			element.value = value;
+		}
 	}
 
 	global.CodaKeyNavigation = {

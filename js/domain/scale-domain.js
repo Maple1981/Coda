@@ -1,4 +1,4 @@
-// Scale construction rules. This module has no DOM, jQuery, MIDI, or rendering dependencies.
+// Scale construction rules. This module has no DOM, MIDI, or rendering dependencies.
 (function (global) {
 	'use strict';
 

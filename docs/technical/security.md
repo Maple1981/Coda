@@ -4,7 +4,7 @@ CODA no tiene backend, base de datos ni autenticación, pero sigue siendo una ap
 
 ## Política de contenido
 
-`index.html` declara una política CSP mediante `<meta http-equiv="Content-Security-Policy">`. La política permite scripts, imágenes, audio y conexiones solo desde el propio origen. La excepción externa queda limitada a hojas de estilo de Google Fonts y archivos de fuente de Google Fonts, usados para Open Sans y Material Icons. Se mantiene `'unsafe-inline'` únicamente en `style-src` porque jQuery UI aplica estilos dinámicos sobre diálogos y componentes; `script-src` no permite scripts inline ni scripts externos.
+`index.html` declara una política CSP mediante `<meta http-equiv="Content-Security-Policy">`. La política permite scripts, imágenes, audio y conexiones solo desde el propio origen. La excepción externa queda limitada a hojas de estilo de Google Fonts y archivos de fuente de Google Fonts, usados para Open Sans y Material Icons. Se mantiene `'unsafe-inline'` únicamente en `style-src` por compatibilidad con estilos dinámicos de la interfaz heredada y de utilidades MIDI antiguas; `script-src` no permite scripts inline ni scripts externos.
 
 La política recomendada para un servidor estático que permita cabeceras HTTP equivalentes es:
 
