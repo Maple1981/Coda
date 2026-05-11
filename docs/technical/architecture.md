@@ -17,8 +17,9 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/renderers/`: renderizado HTML. Recibe datos explícitos y no calcula reglas musicales.
 - `js/ui/`: coordinación de interfaz con DOM nativo. Lee selección del DOM, monta vistas y conecta eventos de pantalla.
 - `js/ui/ui-state.js`: estado explícito de pantalla. Conserva selección actual, informe renderizado, instrumento, afinación, idioma y notación sin dispersarlos en closures del controlador.
+- `js/ui/progression-state.js`: estado normalizado del constructor de progresiones: compases, compás, BPM, voces, articulación, intercambio modal, tensiones y contrapunto.
 - `js/i18n/`: traducciones de interfaz y servicio ligero de internacionalización.
-- `js/services/`: infraestructura de navegador, como playback y futura exportación MIDI.
+- `js/services/`: infraestructura de navegador y servicios técnicos puros, como playback y exportación MIDI.
 - `js/bootstrap/`: composition root y manifest de carga de scripts.
 - `js/app.js`: bootstrap mínimo; llama a `CodaBootstrap.start(...)`.
 
@@ -36,16 +37,17 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/services/data-index-service.js`: creación de `CodaData.indexes` y de índices no enumerables en las colecciones principales.
 - `js/services/musical-context-service.js`: construcción del contexto musical actual a partir de la selección de pantalla.
 - `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma, notación, tema visual, volumen maestro, tónica, escala, formato e instrumento sonoro.
+- `js/services/midi-export-service.js`: conversión de progresiones a eventos MIDI y bytes de archivo Standard MIDI File sin depender del DOM.
 - `js/application/scale-report-application.js`: construye informes de escala e instrumentos.
 - `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI y alturas MIDI de instrumentos a eventos de playback.
-- `js/application/progression-application.js`: casos de uso iniciales para progresiones armónicas.
+- `js/application/progression-application.js`: casos de uso iniciales para progresiones armónicas. Convierte el estado normalizado de progresiones en un plan diatónico con compases, duración en beats/segundos y acordes resueltos.
 - `js/domain/music-utils.js`: patrones, nombres de nota, índices circulares e intervalos compartidos.
 - `js/domain/scale-domain.js`: construcción de escalas y notas características modales.
 - `js/domain/chord-domain.js`: acordes diatónicos, acordes desde fundamental y etiquetas modales.
 - `js/domain/extended-harmony-domain.js`: dominantes secundarios, subdominantes secundarios, sustitutos tritonales e ii relativos.
 - `js/domain/circle-of-fifths-domain.js`: normalización de tonalidad y ordenación del círculo de quintas.
 - `js/domain/instrument-domain.js`: modelos puros de diapasón de guitarra y teclado de piano, incluyendo la altura MIDI de cada nota visible.
-- `js/domain/progression-domain.js`: resolución pura de grados de progresión contra acordes de escala.
+- `js/domain/progression-domain.js`: planificación diatónica inicial y resolución pura de grados de progresión contra acordes de escala.
 - `js/domain/music-domain.js`: fachada de compatibilidad `CodaDomain`.
 - `js/renderers/scale-summary-renderer.js`: título/lista de escala y relaciones relativa/paralela.
 - `js/renderers/scale-chords-renderer.js`: tabla de acordes diatónicos.
@@ -56,6 +58,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/renderers/welcome-renderer.js`: renderizado del contenido de bienvenida.
 - `js/renderers/progression-workbench-renderer.js`: renderizado inicial del área de progresiones.
 - `js/ui/ui-state.js`: factoría `CodaUiState.create(...)` para el estado mutable de pantalla.
+- `js/ui/progression-state.js`: factoría y normalizador `CodaProgressionState` para leer los controles actuales de progresiones y producir un objeto estable.
 - `js/ui/static-text-controller.js`: aplicación de textos estáticos y contenido largo traducido sobre el DOM.
 - `js/ui/volume-controller.js`: fader de volumen maestro de la cabecera. Ajusta el porcentaje global de preescucha sin cambiar las reglas musicales ni la exportación MIDI.
 - `js/ui/theme-controller.js`: conmutador de tema visual día/noche. Aplica `data-theme` sobre `body` y guarda la preferencia en cookie.
@@ -72,6 +75,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - El HTML debe concentrarse en `js/renderers/`.
 - La interacción con el DOM debe quedarse en `js/ui/`.
 - El estado mutable de pantalla debe vivir en `CodaUiState`; el controlador puede orquestar eventos, pero no debe acumular nuevos valores de sesión como variables sueltas en closures.
+- El estado de progresiones debe leerse desde `CodaProgressionState` y guardarse en `CodaUiState`; los casos de uso posteriores deben recibir ese objeto normalizado, no leer directamente controles de formulario.
 - La selección de tónica, escala, formato e instrumento sonoro debe transformarse en un contexto musical explícito mediante `CodaMusicalContext` antes de alimentar casos de uso de aplicación. El instrumento sonoro se conserva como identificador General MIDI y la vista gráfica se resuelve mediante `viewInstrument`.
 - Las búsquedas repetidas en catálogos deben usar `CodaData.indexes` o los índices no enumerables generados por `js/services/data-index-service.js`; conservar siempre fallback lineal si una función acepta colecciones externas.
 - Los textos visibles nuevos deben pasar por `js/i18n/` cuando formen parte de la interfaz.
@@ -82,6 +86,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - La notación de notas es una preferencia de presentación. Los cálculos, ids de acordes, navegación tonal y playback deben conservar identificadores internos anglosajones.
 - La vista de instrumento usa alturas MIDI explícitas en notación científica estándar: C4 es el C central y equivale a la nota MIDI 60. El teclado actual comienza en C3, y la guitarra estándar parte de 6ª E2, 5ª A2, 4ª D3, 3ª G3, 2ª B3 y 1ª E4.
 - El playback debe cargarse de forma diferida: el soundfont y el motor MIDI se inicializan con la primera acción de preescucha, no durante el arranque de la aplicación.
+- La exportación MIDI debe pasar por `js/services/midi-export-service.js`: la aplicación entrega una progresión normalizada y recibe eventos MIDI/bytes de archivo; la UI no debe construir mensajes MIDI manualmente.
 - El volumen maestro de la interfaz debe aplicarse desde `js/services/playback-service.js`, escalando la velocidad MIDI base. El 100% equivale al volumen histórico de la aplicación y el valor elegido por el usuario se conserva en `coda_preferences`.
 - Los instrumentos MIDI/soundfont deben declararse en `js/data/midi-data.js`; el bootstrap no debe depender de literales de instrumento salvo como fallback defensivo.
 - La fuente, licencia y reglas de carga de los soundfonts locales se documentan en `docs/technical/soundfonts.md`.

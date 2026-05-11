@@ -279,6 +279,11 @@ assert.equal(cMajorPiano.whiteKeys[7].midiNote, 60);
 assert.equal(cMajorPiano.whiteKeys[0].perteneceEscala, true);
 
 const cMajorChords = buildScaleChords(cMajor, 'Mayor');
+assert.deepEqual(domain.createDiatonicDegreePlan({
+	bars: 8,
+	scaleNotes: cMajor
+}), ['I', 'VI', 'II', 'VJ', 'I', 'IVJ', 'VJ', 'I']);
+
 const cMajorCadence = domain.resolveProgressionDegrees({
 	degrees: ['I', 'IV', 'V', 'I'],
 	scaleChords: cMajorChords,

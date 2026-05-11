@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		notation: CodaNotation,
 		playbackFactory: CodaPlayback,
 		preferences: preferences,
+		progressionState: CodaProgressionState,
 		renderers: CodaRenderers,
 		staticText: CodaStaticText,
 		themeControl: CodaThemeControl,

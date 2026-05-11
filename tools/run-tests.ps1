@@ -33,6 +33,14 @@ Write-Host "Ejecutando pruebas de renderizado..."
 node tests\renderers-tests.js
 Assert-LastCommand "node tests\renderers-tests.js"
 
+Write-Host "Ejecutando pruebas de estado de progresiones..."
+node tests\progression-state-tests.js
+Assert-LastCommand "node tests\progression-state-tests.js"
+
+Write-Host "Ejecutando pruebas de exportación MIDI de progresiones..."
+node tests\progression-midi-tests.js
+Assert-LastCommand "node tests\progression-midi-tests.js"
+
 Write-Host "Ejecutando pruebas de arquitectura..."
 node tests\architecture-tests.js
 Assert-LastCommand "node tests\architecture-tests.js"

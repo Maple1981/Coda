@@ -10,6 +10,7 @@
 		buildScale: global.CodaScaleDomain.buildScale,
 		buildScaleChords: global.CodaChordDomain.buildScaleChords,
 		cleanDegreeForExtendedHarmony: global.CodaExtendedHarmonyDomain.cleanDegreeForExtendedHarmony,
+		createDiatonicDegreePlan: global.CodaProgressionDomain.createDiatonicDegreePlan,
 		findChordByDegree: global.CodaProgressionDomain.findChordByDegree,
 		findExtendedHarmonyRule: global.CodaExtendedHarmonyDomain.findExtendedHarmonyRule,
 		noteName: global.CodaMusicUtils.noteName,

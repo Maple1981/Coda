@@ -9,6 +9,8 @@
 			language: options.language || 'es',
 			musicalContext: null,
 			notationStyle: options.initialNotation || 'anglosaxon',
+			progression: null,
+			progressionState: options.progressionState || null,
 			report: null,
 			selectedTuningIndex: 0,
 			selection: null
@@ -29,6 +31,12 @@
 			},
 			getMusicalContext: function () {
 				return state.musicalContext;
+			},
+			getProgressionState: function () {
+				return state.progressionState;
+			},
+			getProgression: function () {
+				return state.progression;
 			},
 			getReport: function () {
 				return state.report;
@@ -51,6 +59,12 @@
 			setNotationStyle: function (notationStyle) {
 				state.notationStyle = notationStyle || state.notationStyle;
 			},
+			setProgressionState: function (progressionState) {
+				state.progressionState = progressionState || null;
+			},
+			setProgression: function (progression) {
+				state.progression = progression || null;
+			},
 			setReport: function (report) {
 				state.report = report || null;
 			},
@@ -65,6 +79,8 @@
 					language: state.language,
 					musicalContext: state.musicalContext,
 					notationStyle: state.notationStyle,
+					progression: state.progression,
+					progressionState: state.progressionState,
 					report: state.report,
 					selectedTuningIndex: state.selectedTuningIndex,
 					selection: state.selection

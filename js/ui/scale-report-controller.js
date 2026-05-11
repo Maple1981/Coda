@@ -10,6 +10,7 @@
 		});
 		var notation = options.notation;
 		var preferences = options.preferences;
+		var progressionState = options.progressionState || global.CodaProgressionState;
 		var staticText = options.staticText || global.CodaStaticText;
 		var uiState = options.uiState || global.CodaUiState.create({
 			initialNotation: notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon',
@@ -57,6 +58,8 @@
 				i18n: i18n
 			});
 		}
+		syncProgressionState();
+		bindProgressionState();
 		updateCollapsiblePanelStates(i18n);
 		options.ui.scheduleDashboardWorkspaceHeight();
 
@@ -208,6 +211,7 @@
 				tonicName: musicalContext.tonicName
 			});
 			uiState.setReport(report);
+			syncProgressionPlan();
 
 			options.ui.renderScaleReport({
 				data: options.data,
@@ -265,6 +269,40 @@
 			});
 			options.ui.scheduleInstrumentScale();
 			options.ui.scheduleDashboardWorkspaceHeight();
+		}
+
+		function bindProgressionState() {
+			var controls = query('#constructorProgresiones');
+
+			if (!controls || controls.getAttribute('data-coda-progression-state') === 'true') {
+				return;
+			}
+
+			controls.setAttribute('data-coda-progression-state', 'true');
+			controls.addEventListener('input', syncProgressionState);
+			controls.addEventListener('change', syncProgressionState);
+		}
+
+		function syncProgressionState() {
+			if (progressionState && typeof progressionState.readFromControls === 'function') {
+				uiState.setProgressionState(progressionState.readFromControls(global.document));
+				syncProgressionPlan();
+			}
+		}
+
+		function syncProgressionPlan() {
+			if (
+				options.application &&
+				typeof options.application.buildProgressionFromState === 'function' &&
+				uiState.getReport() &&
+				uiState.getProgressionState()
+			) {
+				uiState.setProgression(options.application.buildProgressionFromState({
+					domain: options.domain,
+					progressionState: uiState.getProgressionState(),
+					report: uiState.getReport()
+				}));
+			}
 		}
 
 		renderReport();

@@ -28,6 +28,8 @@ Comandos de verificación:
 ```powershell
 node tests\domain-tests.js
 node tests\app-layer-tests.js
+node tests\progression-state-tests.js
+node tests\progression-midi-tests.js
 node tests\architecture-tests.js
 node tests\renderers-tests.js
 ```
@@ -36,6 +38,8 @@ Cobertura actual:
 
 - `tests/domain-tests.js`: reglas musicales puras.
 - `tests/app-layer-tests.js`: casos de uso de aplicación, informes e instrumentos.
+- `tests/progression-state-tests.js`: estado normalizado del constructor de progresiones.
+- `tests/progression-midi-tests.js`: conversión de progresiones a eventos MIDI y archivo `.mid`.
 - `tests/architecture-tests.js`: carga de módulos, manifest de scripts y bootstrap.
 - `tests/renderers-tests.js`: renderizado HTML desacoplado de la interfaz real.
 

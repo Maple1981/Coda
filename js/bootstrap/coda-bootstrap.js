@@ -50,6 +50,7 @@
 			notation: options.notation,
 			preferences: options.preferences,
 			playbackService: playbackService,
+			progressionState: options.progressionState || global.CodaProgressionState,
 			randomSelectControl: options.randomSelectControl || global.CodaRandomSelect,
 			renderers: options.renderers,
 			staticText: options.staticText || global.CodaStaticText,

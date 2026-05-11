@@ -28,6 +28,7 @@ function runScript(relativePath) {
 	'js/data/extended-harmony-data.js',
 	'js/data.js',
 	'js/services/data-index-service.js',
+	'js/services/midi-export-service.js',
 	'js/domain/music-utils.js',
 	'js/domain/scale-domain.js',
 	'js/domain/chord-domain.js',
@@ -105,6 +106,67 @@ const cMajorProgression = app.buildProgressionFromDegrees({
 
 assert.deepEqual(cMajorProgression.map(function (step) { return step.degree; }), ['I', 'IV', 'V', 'I']);
 assert.deepEqual(cMajorProgression.map(function (step) { return step.chord.nombre; }), ['Cmaj7', 'Fmaj7', 'G7', 'Cmaj7']);
+
+const cMajorProgressionPlan = app.buildProgressionFromState({
+	domain: domain,
+	progressionState: {
+		articulation: 'legato',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '3/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 3
+	},
+	report: cMajorReport
+});
+
+assert.equal(cMajorProgressionPlan.bars, 4);
+assert.equal(cMajorProgressionPlan.meter, '3/4');
+assert.equal(cMajorProgressionPlan.totalBeats, 12);
+assert.equal(cMajorProgressionPlan.totalSeconds, 6);
+assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.degree; }), ['I', 'IVJ', 'VJ', 'I']);
+assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'Fmaj7', 'G7', 'Cmaj7']);
+assert.deepEqual(cMajorProgressionPlan.measures[1], {
+	articulation: 'legato',
+	bar: 2,
+	beatUnit: 4,
+	chord: cMajorReport.scaleChords[3],
+	chordName: 'Fmaj7',
+	degree: 'IVJ',
+	durationBeats: 3,
+	durationSeconds: 1.5,
+	endBeat: 6,
+	endSeconds: 3,
+	notes: ['F', 'A', 'C', 'E'],
+	startBeat: 3,
+	startSeconds: 1.5,
+	voices: 3
+});
+assert.deepEqual(cMajorProgressionPlan.harmonicColor, {
+	counterpoint: 30,
+	modalInterchange: 10,
+	tensions: 40
+});
+
+const cMajorProgressionMidi = app.buildProgressionMidiFile({
+	data: data,
+	midiInstrument: 'string_ensemble_1',
+	progression: cMajorProgressionPlan
+});
+
+assert.equal(cMajorProgressionMidi.events.find(function (event) {
+	return event.type === 'programChange';
+}).program, 48);
+assert.deepEqual(cMajorProgressionMidi.events.filter(function (event) {
+	return event.type === 'noteOn';
+}).slice(0, 4).map(function (event) {
+	return event.note;
+}), [60, 64, 67, 71]);
+assert.ok(cMajorProgressionMidi.bytes.length > 60);
 
 const cMajorGuitar = app.buildInstrumentView({
 	data: data,

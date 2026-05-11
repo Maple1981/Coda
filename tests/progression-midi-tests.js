@@ -1,0 +1,156 @@
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+const root = path.resolve(__dirname, '..');
+const context = {
+	console,
+	window: {}
+};
+context.window.window = context.window;
+vm.createContext(context);
+
+function runScript(relativePath) {
+	const source = fs.readFileSync(path.join(root, relativePath), 'utf8');
+	vm.runInContext(source, context, { filename: relativePath });
+}
+
+[
+	'js/data/constants-data.js',
+	'js/data/midi-data.js',
+	'js/data/notes-data.js',
+	'js/data/intervals-data.js',
+	'js/data/scales-data.js',
+	'js/data/chords-data.js',
+	'js/data/guitar-tunings-data.js',
+	'js/data/circle-of-fifths-data.js',
+	'js/data/extended-harmony-data.js',
+	'js/data.js',
+	'js/services/data-index-service.js',
+	'js/services/midi-export-service.js',
+	'js/ui/progression-state.js',
+	'js/domain/music-utils.js',
+	'js/domain/scale-domain.js',
+	'js/domain/chord-domain.js',
+	'js/domain/extended-harmony-domain.js',
+	'js/domain/circle-of-fifths-domain.js',
+	'js/domain/instrument-domain.js',
+	'js/domain/progression-domain.js',
+	'js/domain/music-domain.js',
+	'js/application/scale-report-application.js',
+	'js/application/chord-playback-application.js',
+	'js/application/progression-application.js'
+].forEach(runScript);
+
+const app = context.window.CodaApplication;
+const data = context.window.CodaData;
+const domain = context.window.CodaDomain;
+const midiExport = context.window.CodaMidiExport;
+const progressionState = context.window.CodaProgressionState;
+
+function noteIndex(name) {
+	return data.notes.findIndex(function (note) {
+		return note.nombre === name || note.enarmonica === name;
+	});
+}
+
+const cMajorReport = app.buildScaleReport({
+	data: data,
+	domain: domain,
+	preferFlats: false,
+	scaleIndex: 0,
+	scaleName: 'Mayor',
+	tonicIndex: noteIndex('C'),
+	tonicName: 'C'
+});
+
+const state = progressionState.normalize({
+	articulation: 'sustain',
+	bars: 4,
+	bpm: 120,
+	meter: '3/4',
+	voices: 4
+});
+
+const progression = app.buildProgressionFromState({
+	domain: domain,
+	progressionState: state,
+	report: cMajorReport
+});
+
+const midiFile = app.buildProgressionMidiFile({
+	data: data,
+	midiInstrument: 'drawbar_organ',
+	progression: progression
+});
+
+assert.equal(midiFile.mimeType, 'audio/midi');
+assert.equal(midiFile.fileName, 'coda-progression.mid');
+assert.equal(Object.prototype.toString.call(midiFile.bytes), '[object Uint8Array]');
+assert.deepEqual(Array.prototype.slice.call(midiFile.bytes, 0, 4).map(function (value) {
+	return String.fromCharCode(value);
+}).join(''), 'MThd');
+assert.deepEqual(Array.prototype.slice.call(midiFile.bytes, 14, 18).map(function (value) {
+	return String.fromCharCode(value);
+}).join(''), 'MTrk');
+
+assert.deepEqual(midiExport.chordNotesToMidi(['C', 'E', 'G', 'B'], 60), [60, 64, 67, 71]);
+assert.deepEqual(midiExport.chordNotesToMidi(['F', 'A', 'C', 'E'], 60), [65, 69, 72, 76]);
+assert.deepEqual(midiExport.variableLengthQuantity(480), [0x83, 0x60]);
+
+const tempoEvent = midiFile.events.find(function (event) {
+	return event.type === 'setTempo';
+});
+const timeSignatureEvent = midiFile.events.find(function (event) {
+	return event.type === 'timeSignature';
+});
+const programEvent = midiFile.events.find(function (event) {
+	return event.type === 'programChange';
+});
+const noteOnEvents = midiFile.events.filter(function (event) {
+	return event.type === 'noteOn';
+});
+const noteOffEvents = midiFile.events.filter(function (event) {
+	return event.type === 'noteOff';
+});
+
+assert.equal(tempoEvent.microsecondsPerBeat, 500000);
+assert.deepEqual(timeSignatureEvent, {
+	denominator: 4,
+	numerator: 3,
+	tick: 0,
+	type: 'timeSignature'
+});
+assert.deepEqual(programEvent, {
+	channel: 0,
+	program: 16,
+	tick: 0,
+	type: 'programChange'
+});
+assert.deepEqual(noteOnEvents.slice(0, 4).map(function (event) { return event.note; }), [60, 64, 67, 71]);
+assert.deepEqual(noteOnEvents.slice(4, 8).map(function (event) { return event.note; }), [65, 69, 72, 76]);
+assert.deepEqual(noteOnEvents.slice(4, 8).map(function (event) { return event.tick; }), [1440, 1440, 1440, 1440]);
+assert.equal(noteOffEvents[0].tick, 1440);
+assert.equal(noteOnEvents.length, 16);
+assert.equal(noteOffEvents.length, 16);
+
+const staccatoEvents = midiExport.createProgressionMidiEvents({
+	initialMidiNote: 60,
+	progression: app.buildProgressionFromState({
+		domain: domain,
+		progressionState: progressionState.normalize({
+			articulation: 'staccato',
+			bars: 2,
+			bpm: 120,
+			meter: '4/4'
+		}),
+		report: cMajorReport
+	})
+});
+const firstStaccatoOff = staccatoEvents.filter(function (event) {
+	return event.type === 'noteOff';
+})[0];
+assert.equal(firstStaccatoOff.tick, 864);
+
+console.log('Progression MIDI tests passed');
