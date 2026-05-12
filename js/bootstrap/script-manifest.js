@@ -1,5 +1,5 @@
-// Canonical browser script order for Coda application modules. Keep this list
-// aligned with index.html until a bundler or module loader replaces script tags.
+// Canonical browser script order for Coda application modules. The production
+// bundle in dist/js/coda.bundle.js is generated from this list.
 (function (global) {
 	'use strict';
 

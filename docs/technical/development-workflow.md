@@ -21,6 +21,16 @@ Las dependencias actuales están vendorizadas localmente:
 
 No añadir dependencias de build, backend o servidor salvo decisión explícita.
 
+## Bundle JavaScript
+
+La versión servida por `index.html` carga los módulos de aplicación desde `dist/js/coda.bundle.js` para reducir el número de peticiones en GitHub Pages. El bundle se genera sin dependencias externas a partir de `js/bootstrap/script-manifest.js`:
+
+```powershell
+.\tools\build-js-bundle.ps1
+```
+
+Cada vez que se añada, quite o reordene un script de aplicación, actualizar `js/bootstrap/script-manifest.js` y regenerar el bundle. El runner común `.\tools\run-tests.ps1` también lo regenera antes de ejecutar las pruebas.
+
 ## Pruebas
 
 Comandos de verificación:

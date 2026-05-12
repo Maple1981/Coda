@@ -21,6 +21,9 @@ function Assert-LastCommand {
     }
 }
 
+Write-Host "Generando bundle JavaScript..."
+& "$PSScriptRoot\build-js-bundle.ps1"
+
 Write-Host "Ejecutando pruebas de dominio..."
 node tests\domain-tests.js
 Assert-LastCommand "node tests\domain-tests.js"

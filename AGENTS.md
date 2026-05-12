@@ -58,6 +58,8 @@ La documentación técnica vive en `docs/technical/` para no mezclarla con la ba
 
 Las herramientas locales de apoyo viven en `tools/`. El flujo recomendado para publicar cambios es `tools/publish.ps1`, que ejecuta pruebas, prepara cambios, crea el commit y hace push de forma controlada. Si se quiere reforzar la comprobación antes de publicar, `tools/install-pre-push-hook.ps1` instala un hook local que ejecuta las pruebas antes de cada `git push`.
 
+El bundle de JavaScript publicado en `dist/js/coda.bundle.js` se genera con `tools/build-js-bundle.ps1` a partir de `js/bootstrap/script-manifest.js`. Cuando se añadan, retiren o reordenen scripts de aplicación, actualizar el manifest y regenerar el bundle antes de publicar.
+
 Cuando el usuario pida publicar los cambios sin indicar mensaje, revisar el diff y escoger un mensaje de commit en inglés con esta convención: prefijo `Add`, `Upd`, `Del` o `Fix`, seguido de dos a cinco palabras descriptivas. Usar `Add` para funcionalidad nueva, `Upd` para mejoras o cambios evolutivos, `Del` para retiradas de código/contenido y `Fix` para correcciones de errores.
 
 La modernización debe hacerse de forma progresiva, evitando una reescritura total. Los nuevos módulos deben poder probarse de forma aislada siempre que sea razonable.

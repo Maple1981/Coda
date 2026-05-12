@@ -16,8 +16,10 @@
     <link rel="stylesheet" href="dist/css/styles.min.css" />
     <link rel="stylesheet" href="dist/css/progression-playback.css" />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css?family=Open+Sans:800,600,300,300italic"
+      href="https://fonts.googleapis.com/css?family=Open+Sans:800,600,300,300italic&display=swap"
       rel="stylesheet"
       type="text/css"
     />
@@ -31,77 +33,36 @@
     <!-- WEB MIDI - WEB AUDIO -->
 
     <!-- polyfill -->
-    <script src="js/inc/shim/Base64.js" type="text/javascript"></script>
-    <script src="js/inc/shim/Base64binary.js" type="text/javascript"></script>
-    <script src="js/inc/shim/WebAudioAPI.js" type="text/javascript"></script>
+    <script defer src="js/inc/shim/Base64.js" type="text/javascript"></script>
+    <script
+      defer
+      src="js/inc/shim/Base64binary.js"
+      type="text/javascript"
+    ></script>
+    <script defer src="js/inc/shim/WebAudioAPI.js" type="text/javascript"></script>
     <!-- midi.js package -->
-    <script src="js/midi/audioDetect.js" type="text/javascript"></script>
-    <script src="js/midi/gm.js" type="text/javascript"></script>
-    <script src="js/midi/loader.js" type="text/javascript"></script>
-    <script src="js/midi/plugin.audiotag.js" type="text/javascript"></script>
-    <script src="js/midi/plugin.webaudio.js" type="text/javascript"></script>
-    <script src="js/midi/plugin.webmidi.js" type="text/javascript"></script>
+    <script defer src="js/midi/audioDetect.js" type="text/javascript"></script>
+    <script defer src="js/midi/gm.js" type="text/javascript"></script>
+    <script defer src="js/midi/loader.js" type="text/javascript"></script>
+    <script
+      defer
+      src="js/midi/plugin.audiotag.js"
+      type="text/javascript"
+    ></script>
+    <script defer src="js/midi/plugin.webaudio.js" type="text/javascript"></script>
+    <script defer src="js/midi/plugin.webmidi.js" type="text/javascript"></script>
     <!-- utils -->
-    <script src="js/util/dom_request_xhr.js" type="text/javascript"></script>
-    <script src="js/util/dom_request_script.js" type="text/javascript"></script>
+    <script defer src="js/util/dom_request_xhr.js" type="text/javascript"></script>
+    <script
+      defer
+      src="js/util/dom_request_script.js"
+      type="text/javascript"
+    ></script>
 
     <!-- FIN WEB MIDI - WEB AUDIO -->
 
-    <script src="js/bootstrap/script-manifest.js"></script>
-    <script src="js/data/constants-data.js"></script>
-    <script src="js/data/midi-data.js"></script>
-    <script src="js/data/notes-data.js"></script>
-    <script src="js/data/intervals-data.js"></script>
-    <script src="js/data/scales-data.js"></script>
-    <script src="js/data/chords-data.js"></script>
-    <script src="js/data/guitar-tunings-data.js"></script>
-    <script src="js/data/circle-of-fifths-data.js"></script>
-    <script src="js/data/extended-harmony-data.js"></script>
-    <script src="js/data/progression-rules-data.js"></script>
-    <script src="js/content/changelog-content.js"></script>
-    <script src="js/content/welcome-content.js"></script>
-    <script src="js/data.js"></script>
-    <script src="js/services/data-index-service.js"></script>
-    <script src="js/i18n/translations.js"></script>
-    <script src="js/i18n/i18n-service.js"></script>
-    <script src="js/services/musical-context-service.js"></script>
-    <script src="js/services/notation-service.js"></script>
-    <script src="js/services/preferences-service.js"></script>
-    <script src="js/services/midi-export-service.js"></script>
-    <script src="js/domain/music-utils.js"></script>
-    <script src="js/domain/scale-domain.js"></script>
-    <script src="js/domain/chord-domain.js"></script>
-    <script src="js/domain/extended-harmony-domain.js"></script>
-    <script src="js/domain/circle-of-fifths-domain.js"></script>
-    <script src="js/domain/instrument-domain.js"></script>
-    <script src="js/domain/progression-domain.js"></script>
-    <script src="js/domain/music-domain.js"></script>
-    <script src="js/application/scale-report-application.js"></script>
-    <script src="js/application/chord-playback-application.js"></script>
-    <script src="js/application/progression-application.js"></script>
-    <script src="js/application/progression-playback-application.js"></script>
-    <script src="js/renderers/scale-summary-renderer.js"></script>
-    <script src="js/renderers/scale-chords-renderer.js"></script>
-    <script src="js/renderers/extended-harmony-renderer.js"></script>
-    <script src="js/renderers/instrument-renderer.js"></script>
-    <script src="js/renderers/circle-of-fifths-renderer.js"></script>
-    <script src="js/renderers/changelog-renderer.js"></script>
-    <script src="js/renderers/welcome-renderer.js"></script>
-    <script src="js/renderers/progression-workbench-renderer.js"></script>
-    <script src="js/ui/ui-state.js"></script>
-    <script src="js/ui/progression-state.js"></script>
-    <script src="js/ui/static-text-controller.js"></script>
-    <script src="js/ui/volume-controller.js"></script>
-    <script src="js/ui/theme-controller.js"></script>
-    <script src="js/ui/random-select-controller.js"></script>
-    <script src="js/ui/key-navigation-controller.js"></script>
-    <script src="js/ui/changelog-dialog-controller.js"></script>
-    <script src="js/ui/progression-transport-controller.js"></script>
-    <script src="js/ui/scale-report-ui.js"></script>
-    <script src="js/ui/scale-report-controller.js"></script>
-    <script src="js/services/playback-service.js"></script>
-    <script src="js/bootstrap/coda-bootstrap.js"></script>
-    <script src="js/app.js"></script>
+    <script defer src="js/bootstrap/script-manifest.js"></script>
+    <script defer src="dist/js/coda.bundle.js"></script>
   </head>
 
   <body>
