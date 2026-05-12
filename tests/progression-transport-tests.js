@@ -43,6 +43,7 @@ let reorderedRequest = null;
 let changedProgression = null;
 let changedOptions = null;
 let playCalls = 0;
+let splitRequest = null;
 
 const controller = context.window.CodaProgressionTransport.initialize({
 	application: {
@@ -55,8 +56,28 @@ const controller = context.window.CodaProgressionTransport.initialize({
 			return {
 				measures: sourceProgression.measures.slice().reverse()
 			};
+		},
+		addProgressionMeasureChord: function (sourceProgression, measureIndex, options) {
+			splitRequest = {
+				measureIndex: measureIndex,
+				options: options,
+				sourceProgression: sourceProgression
+			};
+			return {
+				measures: sourceProgression.measures.slice()
+			};
+		},
+		removeProgressionMeasureChord: function (sourceProgression, measureIndex) {
+			splitRequest = {
+				measureIndex: measureIndex,
+				sourceProgression: sourceProgression
+			};
+			return {
+				measures: sourceProgression.measures.slice(0, 2)
+			};
 		}
 	},
+	data: { midi: { initialMidiNote: 60 } },
 	i18n: {
 		t: function (key) {
 			return key;
@@ -92,6 +113,12 @@ const controller = context.window.CodaProgressionTransport.initialize({
 		getProgression: function () {
 			return progression;
 		},
+		getProgressionState: function () {
+			return { bars: 3 };
+		},
+		getReport: function () {
+			return { scaleChords: [] };
+		},
 		getSelection: function () {
 			return {};
 		}
@@ -124,6 +151,22 @@ assert.equal(document.measures[2].classList.contains('isPlaying'), false);
 document.goStart.dispatchEvent({ type: 'click', target: document.goStart });
 assert.equal(document.measures[0].classList.contains('isPlaybackHead'), true);
 assert.equal(document.goStart.hidden, true);
+
+document.measures[1].dispatchSplitClick('add');
+assert.equal(splitRequest.measureIndex, 1);
+assert.deepEqual(splitRequest.options.progressionState, { bars: 3 });
+assert.deepEqual(changedOptions, {
+	playbackHeadIndex: 1
+});
+
+document.measures[1].dispatchSplitClick('remove');
+assert.equal(splitRequest.measureIndex, 1);
+assert.deepEqual(changedProgression, {
+	measures: [
+		{ bar: 1 },
+		{ bar: 2 }
+	]
+});
 
 document.dragStart(0);
 document.dropOn(2);
@@ -243,6 +286,7 @@ function createFakeDocument(measureCount) {
 
 function createFakeMeasure(index, rootElement) {
 	const element = createFakeElement('measure-' + index);
+	const splitButton = createFakeElement('split-' + index);
 
 	element.getAttribute = function (name) {
 		if (name === 'data-progression-index') {
@@ -262,6 +306,28 @@ function createFakeMeasure(index, rootElement) {
 	element.dispatchDelegatedClick = function () {
 		rootElement.dispatchEvent({
 			target: element,
+			type: 'click'
+		});
+	};
+	element.dispatchSplitClick = function (action) {
+		splitButton.getAttribute = function (name) {
+			if (name === 'data-progression-split-action') {
+				return action;
+			}
+			return null;
+		};
+		splitButton.closest = function (selector) {
+			if (selector === '.measureSplitButton') {
+				return splitButton;
+			}
+			if (selector === '.measure') {
+				return element;
+			}
+			return null;
+		};
+		rootElement.dispatchEvent({
+			preventDefault: function () {},
+			target: splitButton,
 			type: 'click'
 		});
 	};

@@ -80,6 +80,14 @@
 	}
 
 	function appendMeasureEvents(events, measure, options) {
+		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
+
+		for (var chordIndex = 0; chordIndex < chords.length; chordIndex++) {
+			appendChordEvents(events, chords[chordIndex], options);
+		}
+	}
+
+	function appendChordEvents(events, measure, options) {
 		var notes = measure.midiNotes && measure.midiNotes.length ? measure.midiNotes.slice() : chordNotesToMidi(measure.notes || [], options.initialMidiNote);
 		var startTick = Math.round(measure.startBeat * options.ticksPerBeat);
 		var durationTicks = Math.max(1, Math.round(measure.durationBeats * options.ticksPerBeat * articulationFactor(measure.articulation)));

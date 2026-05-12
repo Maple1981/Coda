@@ -105,6 +105,10 @@
 			if (measures[i].displayName || measures[i].chordName || measures[i].label) {
 				return true;
 			}
+
+			if (measures[i].chords && hasRenderableMeasures(measures[i].chords)) {
+				return true;
+			}
 		}
 
 		return false;
@@ -112,14 +116,40 @@
 
 	function renderMeasure(measure, index) {
 		var bar = measure.bar || index + 1;
-		var label = measure.displayName || measure.chordName || measure.label || '';
-		var degree = measure.degree || '';
-		var tonalFunction = measure.tonalFunction || '';
+		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
+		var splitClass = chords.length > 1 ? ' measure--split' : '';
+		var html = '';
 
-		return '<div class="measure" draggable="true" data-progression-bar="' + escapeHtml(bar) + '" data-progression-index="' + escapeHtml(index) + '" tabindex="0">' +
-			'<button type="button" class="measureDragHandle" draggable="true" aria-label="" title="" data-i18n-title="progression.dragMeasure"><span class="material-icons" aria-hidden="true">open_with</span></button>' +
-			'<span class="measureBar">' + escapeHtml(bar) + '</span>' +
-			'<strong>' + escapeHtml(label) + '</strong>' +
+		html += '<div class="measure' + splitClass + '" draggable="true" data-progression-bar="' + escapeHtml(bar) + '" data-progression-index="' + escapeHtml(index) + '" tabindex="0">';
+		html += '<button type="button" class="measureDragHandle" draggable="true" aria-label="" title="" data-i18n-title="progression.dragMeasure"><span class="material-icons" aria-hidden="true">open_with</span></button>';
+		html += '<span class="measureBar">' + escapeHtml(bar) + '</span>';
+		html += '<div class="measureChordList">';
+
+		for (var i = 0; i < chords.length; i++) {
+			html += renderMeasureChord(chords[i], i, chords.length);
+		}
+
+		html += '</div>';
+		html += '</div>';
+
+		return html;
+	}
+
+	function renderMeasureChord(chord, chordIndex, chordCount) {
+		var label = chord.displayName || chord.chordName || chord.label || '';
+		var degree = chord.degree || '';
+		var tonalFunction = chord.tonalFunction || '';
+		var button = '';
+
+		if (chordCount < 2 && chordIndex === 0) {
+			button = '<button type="button" class="measureSplitButton" data-progression-split-action="add" aria-label="" title="" data-i18n-title="progression.addMeasureChord">+</button>';
+		} else if (chordCount > 1 && chordIndex === 1) {
+			button = '<button type="button" class="measureSplitButton" data-progression-split-action="remove" aria-label="" title="" data-i18n-title="progression.removeMeasureChord">-</button>';
+		}
+
+		return '<div class="measureChord" data-measure-chord-index="' + escapeHtml(chordIndex) + '">' +
+			button +
+			'<span class="measureChordName"><strong>' + escapeHtml(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
 			(degree ? '<em class="measureDegree">' + escapeHtml(degree) + '</em>' : '') +
 			(tonalFunction ? '<span class="measureFunction">' + escapeHtml(tonalFunction) + '</span>' : '') +
 			'</div>';

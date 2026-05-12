@@ -311,7 +311,7 @@
 		var schedule = [];
 
 		for (var i = startIndex; i < measures.length; i++) {
-			schedule.push(buildMeasurePlaybackEvent(measures[i], i, startOffset, options));
+			schedule = schedule.concat(buildMeasurePlaybackEvents(measures[i], i, startOffset, options));
 		}
 
 		return schedule;
@@ -366,7 +366,18 @@
 		return scheduledMeasures;
 	}
 
-	function buildMeasurePlaybackEvent(measure, index, startOffset, options) {
+	function buildMeasurePlaybackEvents(measure, index, startOffset, options) {
+		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
+		var events = [];
+
+		for (var i = 0; i < chords.length; i++) {
+			events.push(buildMeasurePlaybackEvent(chords[i], index, startOffset, options, i));
+		}
+
+		return events;
+	}
+
+	function buildMeasurePlaybackEvent(measure, index, startOffset, options, chordIndex) {
 		var duration = playbackDuration(measure);
 		var notes = notesForVoices(measure.notes, measure.voices);
 		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
@@ -383,6 +394,10 @@
 			mode: mode,
 			notes: notes
 		};
+
+		if (chordIndex) {
+			event.chordIndex = chordIndex;
+		}
 
 		if (midiNotes.length) {
 			event.midiNotes = midiNotes;

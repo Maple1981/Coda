@@ -1083,6 +1083,154 @@ section#bienvenida .columnata article{
 	font-size:.8em;
 }
 
+.measureChordList{
+	display:flex;
+	flex-direction:column;
+	gap:.45em;
+	min-height:0;
+}
+
+.measureChord{
+	position:relative;
+	display:flex;
+	flex-direction:column;
+	align-items:flex-start;
+	gap:.12em;
+	min-height:0;
+	padding-right:1.85em;
+}
+
+.measureChordName{
+	display:inline-flex;
+	align-items:center;
+	gap:.25em;
+	max-width:100%;
+}
+
+.measureChordMenuButton{
+	width:1.45em;
+	height:1.45em;
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	background:transparent;
+	color:$neutral_color;
+	cursor:pointer;
+	border-radius:4px;
+	flex:0 0 auto;
+}
+
+.measureChordMenuButton:hover,
+.measureChordMenuButton:focus{
+	color:$corporative_complementarybright_color;
+	outline:none;
+}
+
+.measureChordMenuButton .material-icons{
+	font-size:1em;
+	line-height:1;
+}
+
+.measure--split .measureChord{
+	min-height:3.1em;
+	padding:.45em 1.85em .45em .55em;
+	border:1px solid rgba(197, 246, 255, .18);
+	border-radius:5px;
+	background:rgba(197, 246, 255, .04);
+}
+
+.measureSplitButton{
+	position:absolute;
+	right:0;
+	bottom:0;
+	width:1.45em;
+	height:1.45em;
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:4px;
+	background:$basic_filldarkgrad_color;
+	color:$corporative_complementarybright_color;
+	cursor:pointer;
+	font-weight:800;
+	line-height:1;
+}
+
+.measureSplitButton:hover,
+.measureSplitButton:focus{
+	border-color:$corporative_complementary_color;
+	color:$corporative_mainbright_color;
+	outline:none;
+}
+
+.progressionChordMenu{
+	position:fixed;
+	z-index:70;
+	width:min(280px, calc(100vw - 16px));
+	max-height:min(520px, calc(100vh - 24px));
+	overflow:auto;
+	padding:.55em;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:6px;
+	background:$basic_filldarkgrad_color;
+	color:$basic_front_color;
+	box-shadow:0 14px 40px rgba(0, 0, 0, .5);
+	scrollbar-color:$corporative_complementary_color $basic_fill_color;
+	scrollbar-width:thin;
+}
+
+.progressionChordMenu h3{
+	margin:.25em 0 .4em 0;
+	border-bottom:none;
+	color:$corporative_mainbright_color;
+	font-size:.82em;
+	font-weight:700;
+}
+
+.progressionChordMenu__group + .progressionChordMenu__group{
+	margin-top:.65em;
+	padding-top:.55em;
+	border-top:1px solid $basic_fillbrightgrad_color;
+}
+
+.progressionChordMenu__chord{
+	margin:.25em 0;
+}
+
+.progressionChordMenu__chord summary{
+	cursor:pointer;
+	color:$corporative_secondary_color;
+	font-size:.9em;
+	font-weight:700;
+	list-style-position:inside;
+}
+
+.progressionChordMenu__options{
+	display:flex;
+	flex-direction:column;
+	gap:.25em;
+	padding:.35em 0 .2em .65em;
+}
+
+.measureChordMenuItem{
+	text-align:left;
+	padding:.35em .45em;
+	border:1px solid transparent;
+	border-radius:4px;
+	background:$basic_fill_color;
+	color:$basic_front_color;
+	cursor:pointer;
+	font-size:.86em;
+}
+
+.measureChordMenuItem:hover,
+.measureChordMenuItem:focus{
+	border-color:$corporative_complementary_color;
+	color:$corporative_mainbright_color;
+	outline:none;
+}
+
 .measure strong{
 	color:$corporative_mainbright_color;
 	font-size:1.25em;
@@ -1362,6 +1510,63 @@ body[data-theme="day"] section#armoniaExtendida #acordeonArmoniaExtendida .codaA
 
 body[data-theme="day"] .measureFunction{
 	color:#7d2785;
+}
+
+body[data-theme="day"] .measure--split .measureChord{
+	border-color:rgba(125, 39, 133, .18);
+	background:rgba(125, 39, 133, .05);
+}
+
+body[data-theme="day"] .measureSplitButton{
+	background:#ffffff;
+	border-color:#b7c3ca;
+	color:#7d2785;
+}
+
+body[data-theme="day"] .measureSplitButton:hover,
+body[data-theme="day"] .measureSplitButton:focus{
+	border-color:#7d2785;
+	color:#006e58;
+}
+
+body[data-theme="day"] .measureChordMenuButton{
+	color:#59656b;
+}
+
+body[data-theme="day"] .measureChordMenuButton:hover,
+body[data-theme="day"] .measureChordMenuButton:focus{
+	color:#7d2785;
+}
+
+body[data-theme="day"] .progressionChordMenu{
+	background:#ffffff;
+	color:#1f2528;
+	border-color:#b7c3ca;
+	box-shadow:0 14px 32px rgba(25, 36, 42, .24);
+	scrollbar-color:#7d2785 #dfe5e9;
+}
+
+body[data-theme="day"] .progressionChordMenu h3{
+	color:#006e58;
+}
+
+body[data-theme="day"] .progressionChordMenu__group + .progressionChordMenu__group{
+	border-top-color:#b7c3ca;
+}
+
+body[data-theme="day"] .progressionChordMenu__chord summary{
+	color:#7d2785;
+}
+
+body[data-theme="day"] .measureChordMenuItem{
+	background:#f3f6f8;
+	color:#1f2528;
+}
+
+body[data-theme="day"] .measureChordMenuItem:hover,
+body[data-theme="day"] .measureChordMenuItem:focus{
+	border-color:#7d2785;
+	color:#006e58;
 }
 
 footer{

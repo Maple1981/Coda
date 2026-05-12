@@ -176,6 +176,85 @@ assert.deepEqual(cMajorProgressionPlan.harmonicColor, {
 	tensions: 40
 });
 
+const splitProgression = app.addProgressionMeasureChord(cMajorProgressionPlan, 0, {
+	data: data,
+	progressionState: {
+		articulation: 'legato',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '3/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 3
+	},
+	report: cMajorReport,
+	rng: function () { return 0; }
+});
+assert.equal(splitProgression.measures[0].chords.length, 2);
+assert.equal(splitProgression.measures[0].chords[0].chordName, 'C');
+assert.ok(/^Am/.test(splitProgression.measures[0].chords[1].chordName));
+assert.equal(splitProgression.measures[0].chords[1].tonalFunction, 'T');
+assert.deepEqual(splitProgression.measures[0].chords.map(function (chord) { return chord.durationBeats; }), [1.5, 1.5]);
+assert.equal(splitProgression.measures[0].chords[1].startBeat, 1.5);
+assert.equal(app.addProgressionMeasureChord(splitProgression, 0, { report: cMajorReport }).measures[0].chords.length, 2);
+assert.equal(app.removeProgressionMeasureChord(splitProgression, 0).measures[0].chords, undefined);
+
+const chordMenu = app.buildProgressionChordMenu({
+	currentSegment: cMajorProgressionPlan.measures[0],
+	report: cMajorReport
+});
+assert.equal(chordMenu[0].id, 'sameFunction');
+assert.deepEqual(chordMenu[0].items.map(function (item) { return item.chordName; }), ['Cmaj7', 'Em7', 'Am7']);
+assert.ok(chordMenu[0].items[0].options.some(function (item) {
+	return item.kind === 'triad' && item.displayName === 'C 6/4';
+}));
+assert.ok(chordMenu[0].items[0].options.some(function (item) {
+	return item.kind === 'seventh' && item.displayName === 'Cmaj7 4/2';
+}));
+
+const replacedSeventhProgression = app.replaceProgressionMeasureChord(cMajorProgressionPlan, 0, 0, {
+	degreeIndex: 4,
+	inversionIndex: 0,
+	kind: 'seventh'
+}, {
+	data: data,
+	progressionState: {
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		meter: '3/4',
+		voices: 3
+	},
+	report: cMajorReport
+});
+assert.equal(replacedSeventhProgression.measures[0].displayName, 'G7');
+assert.deepEqual(replacedSeventhProgression.measures[0].notes, ['G', 'B', 'F']);
+assert.deepEqual(replacedSeventhProgression.measures[0].voiceNotes.map(function (voice) { return voice.role; }), ['root', 'third', 'seventh']);
+
+const replacedHalfDiminishedProgression = app.replaceProgressionMeasureChord(cMajorProgressionPlan, 0, 0, {
+	degreeIndex: 6,
+	inversionIndex: 0,
+	kind: 'seventh'
+}, {
+	data: data,
+	progressionState: {
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		meter: '3/4',
+		voices: 3
+	},
+	report: cMajorReport
+});
+assert.equal(replacedHalfDiminishedProgression.measures[0].displayName, 'Bm7♭5');
+assert.deepEqual(replacedHalfDiminishedProgression.measures[0].notes, ['B', 'D', 'F']);
+assert.deepEqual(replacedHalfDiminishedProgression.measures[0].voiceNotes.map(function (voice) { return voice.role; }), ['root', 'third', 'fifth']);
+
 const generatedHighColorProgression = app.generateProgressionFromState({
 	data: data,
 	progressionState: {

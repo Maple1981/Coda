@@ -413,9 +413,23 @@ const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineM
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-bar="1"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-index="0"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('measureDragHandle') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('data-progression-split-action="add"') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('measureChordMenuButton') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('data-i18n-title="progression.changeMeasureChord"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<strong>Cmaj7 add9</strong>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<em class="measureDegree">Imaj7</em>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<span class="measureFunction">T</span>') > -1);
+assert.ok(progressionWorkbenchRenderer.renderTimelineMeasures({
+	measures: [
+		{
+			bar: 1,
+			chords: [
+				{ displayName: 'C', degree: 'I', tonalFunction: 'T' },
+				{ displayName: 'Am', degree: 'vi', tonalFunction: 'T' }
+			]
+		}
+	]
+}).indexOf('data-progression-split-action="remove"') > -1);
 assert.equal(progressionWorkbenchRenderer.hasRenderableMeasures([{ chordName: '' }]), false);
 assert.ok(progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [

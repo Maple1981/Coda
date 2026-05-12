@@ -122,7 +122,10 @@
 		setText(i18n, '.transportButton--export span[data-i18n="progression.exportMidi"]', 'progression.exportMidi');
 		setText(i18n, '.metronomeControl span[data-i18n="progression.metronome"]', 'progression.metronome');
 		setText(i18n, '.loopControl span[data-i18n="progression.loop"]', 'progression.loop');
+		setTitleAndLabel(i18n, '.measureChordMenuButton[data-i18n-title="progression.changeMeasureChord"]', 'progression.changeMeasureChord');
 		setTitleAndLabel(i18n, '.measureDragHandle[data-i18n-title="progression.dragMeasure"]', 'progression.dragMeasure');
+		setTitleAndLabel(i18n, '.measureSplitButton[data-i18n-title="progression.addMeasureChord"]', 'progression.addMeasureChord');
+		setTitleAndLabel(i18n, '.measureSplitButton[data-i18n-title="progression.removeMeasureChord"]', 'progression.removeMeasureChord');
 	}
 
 	function ensureProgressionWorkbench() {

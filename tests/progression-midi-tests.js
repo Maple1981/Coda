@@ -135,6 +135,23 @@ assert.equal(noteOffEvents[0].tick, 1440);
 assert.equal(noteOnEvents.length, 16);
 assert.equal(noteOffEvents.length, 16);
 
+const splitProgression = app.addProgressionMeasureChord(progression, 0, {
+	data: data,
+	progressionState: state,
+	report: cMajorReport,
+	rng: function () { return 0; }
+});
+const splitEvents = midiExport.createProgressionMidiEvents({
+	initialMidiNote: 60,
+	progression: splitProgression
+});
+const splitNoteOns = splitEvents.filter(function (event) {
+	return event.type === 'noteOn';
+});
+assert.deepEqual(splitNoteOns.slice(0, 4).map(function (event) { return event.tick; }), [0, 0, 0, 0]);
+assert.deepEqual(splitNoteOns.slice(4, 8).map(function (event) { return event.tick; }), [720, 720, 720, 720]);
+assert.equal(splitNoteOns[4].degree.indexOf('vi'), 0);
+
 const pluckedPedalEvents = midiExport.createProgressionMidiEvents({
 	initialMidiNote: 60,
 	instrument: {

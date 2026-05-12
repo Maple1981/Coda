@@ -78,6 +78,48 @@ assert.equal(schedule[2].mode, 'arpeggio');
 assert.equal(schedule[2].duration, 1.8);
 assert.deepEqual(schedule[2].notes, ['G', 'B', 'D', 'F']);
 
+const splitSchedule = app.buildProgressionPlaybackSchedule({
+	measures: [
+		{
+			bar: 1,
+			chords: [
+				{
+					articulation: 'sustain',
+					bar: 1,
+					degree: 'I',
+					durationSeconds: 1,
+					notes: ['C', 'E', 'G'],
+					startSeconds: 0,
+					voices: 3
+				},
+				{
+					articulation: 'sustain',
+					bar: 1,
+					degree: 'vi',
+					durationSeconds: 1,
+					notes: ['A', 'C', 'E'],
+					startSeconds: 1,
+					voices: 3
+				}
+			],
+			durationSeconds: 2,
+			startSeconds: 0
+		}
+	]
+});
+assert.deepEqual(splitSchedule.map(function (event) {
+	return {
+		chordIndex: event.chordIndex || 0,
+		degree: event.degree,
+		delay: event.delay,
+		duration: event.duration,
+		notes: event.notes
+	};
+}), [
+	{ chordIndex: 0, degree: 'I', delay: 0, duration: 0.95, notes: ['C', 'E', 'G'] },
+	{ chordIndex: 1, degree: 'vi', delay: 1, duration: 0.95, notes: ['A', 'C', 'E'] }
+]);
+
 const metronomeSchedule = app.buildProgressionMetronomeSchedule({
 	beatsPerBar: 4,
 	bpm: 120,

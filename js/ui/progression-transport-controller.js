@@ -3,6 +3,7 @@
 	'use strict';
 
 	var draggedMeasureIndex = null;
+	var activeChordMenuButton = null;
 
 	function initialize(options) {
 		options = options || {};
@@ -42,6 +43,9 @@
 		}
 
 		root.addEventListener('click', function (event) {
+			var chordMenuButton = closest(event.target, '.measureChordMenuButton');
+			var chordElement = closest(event.target, '.measureChord');
+			var splitButton = closest(event.target, '.measureSplitButton');
 			var measure = closest(event.target, '.measure');
 			var clickedIndex;
 
@@ -50,6 +54,25 @@
 			}
 
 			clickedIndex = measureIndex(measure);
+			if (chordMenuButton) {
+				event.preventDefault();
+				if (typeof event.stopPropagation === 'function') {
+					event.stopPropagation();
+				}
+				openChordMenu(options, chordMenuButton, clickedIndex, chordIndex(chordElement));
+				return;
+			}
+
+			if (splitButton) {
+				event.preventDefault();
+				stopPreview(options, listenButton, playbackHeadIndex);
+				closeChordMenu();
+				updateMeasureSplit(options, splitButton.getAttribute('data-progression-split-action'), clickedIndex);
+				playbackHeadIndex = clickedIndex;
+				setPlaybackHead(playbackHeadIndex, false);
+				return;
+			}
+
 			if (
 				options.progressionPlayback &&
 				typeof options.progressionPlayback.isPlaying === 'function' &&
@@ -70,7 +93,7 @@
 		root.addEventListener('dragstart', function (event) {
 			var measure = closest(event.target, '.measure');
 
-			if (!measure) {
+			if (!measure || closest(event.target, '.measureSplitButton') || closest(event.target, '.measureChordMenuButton')) {
 				return;
 			}
 
@@ -125,6 +148,30 @@
 		});
 
 		root.addEventListener('dragend', clearDragState);
+
+		if (global.document && typeof global.document.addEventListener === 'function') {
+			global.document.addEventListener('click', function (event) {
+				var menuItem = closest(event.target, '.measureChordMenuItem');
+				var menu = closest(event.target, '.progressionChordMenu');
+
+				if (menuItem) {
+					var replacement = replacementFromMenuItem(menuItem);
+					var menuMeasureIndex = parseInt(menuItem.getAttribute('data-progression-index'), 10);
+					var menuChordIndex = parseInt(menuItem.getAttribute('data-measure-chord-index'), 10);
+
+					stopPreview(options, listenButton, playbackHeadIndex);
+					updateMeasureChordReplacement(options, menuMeasureIndex, menuChordIndex, replacement);
+					closeChordMenu();
+					playbackHeadIndex = menuMeasureIndex;
+					setPlaybackHead(playbackHeadIndex, false);
+					return;
+				}
+
+				if (!menu && !closest(event.target, '.measureChordMenuButton')) {
+					closeChordMenu();
+				}
+			});
+		}
 
 		return {
 			exportMidi: function () {
@@ -239,6 +286,217 @@
 				playbackHeadIndex: toIndex
 			});
 		}
+	}
+
+	function updateMeasureSplit(options, action, measureIndex) {
+		var progression = options.uiState ? options.uiState.getProgression() : null;
+		var nextProgression = null;
+
+		if (!progression || !options.application) {
+			return;
+		}
+
+		if (action === 'remove' && typeof options.application.removeProgressionMeasureChord === 'function') {
+			nextProgression = options.application.removeProgressionMeasureChord(progression, measureIndex);
+		} else if (action === 'add' && typeof options.application.addProgressionMeasureChord === 'function') {
+			nextProgression = options.application.addProgressionMeasureChord(progression, measureIndex, {
+				data: options.data,
+				progressionState: options.uiState && options.uiState.getProgressionState ? options.uiState.getProgressionState() : null,
+				report: options.uiState && options.uiState.getReport ? options.uiState.getReport() : null
+			});
+		}
+
+		if (options.onProgressionChanged && nextProgression) {
+			options.onProgressionChanged(nextProgression, {
+				playbackHeadIndex: measureIndex
+			});
+		}
+	}
+
+	function updateMeasureChordReplacement(options, measureIndex, chordIndex, replacement) {
+		var progression = options.uiState ? options.uiState.getProgression() : null;
+		var nextProgression = null;
+
+		if (
+			!progression ||
+			!options.application ||
+			typeof options.application.replaceProgressionMeasureChord !== 'function'
+		) {
+			return;
+		}
+
+		nextProgression = options.application.replaceProgressionMeasureChord(progression, measureIndex, chordIndex, replacement, {
+			data: options.data,
+			progressionState: options.uiState && options.uiState.getProgressionState ? options.uiState.getProgressionState() : null,
+			report: options.uiState && options.uiState.getReport ? options.uiState.getReport() : null
+		});
+
+		if (options.onProgressionChanged && nextProgression) {
+			options.onProgressionChanged(nextProgression, {
+				playbackHeadIndex: measureIndex
+			});
+		}
+	}
+
+	function openChordMenu(options, button, measureIndex, chordIndex) {
+		var progression = options.uiState ? options.uiState.getProgression() : null;
+		var report = options.uiState && options.uiState.getReport ? options.uiState.getReport() : null;
+		var measure = progression && progression.measures ? progression.measures[measureIndex] : null;
+		var currentSegment = currentChordSegment(measure, chordIndex);
+		var menuData;
+		var menu;
+
+		if (!button || !measure || !options.application || typeof options.application.buildProgressionChordMenu !== 'function') {
+			return;
+		}
+
+		closeChordMenu();
+		menuData = options.application.buildProgressionChordMenu({
+			currentSegment: currentSegment,
+			report: report
+		});
+		menu = renderChordMenu(menuData, {
+			chordIndex: chordIndex,
+			i18n: options.i18n,
+			measureIndex: measureIndex
+		});
+
+		if (!menu) {
+			return;
+		}
+
+		global.document.body.appendChild(menu);
+		positionChordMenu(menu, button);
+		activeChordMenuButton = button;
+		button.setAttribute('aria-expanded', 'true');
+	}
+
+	function renderChordMenu(menuData, options) {
+		var doc = global.document;
+		var menu;
+		var hasItems = false;
+
+		if (!doc || typeof doc.createElement !== 'function') {
+			return null;
+		}
+
+		menu = doc.createElement('div');
+		menu.className = 'progressionChordMenu';
+		menu.setAttribute('role', 'menu');
+
+		for (var i = 0; i < (menuData || []).length; i++) {
+			if (!menuData[i].items.length) {
+				continue;
+			}
+
+			hasItems = true;
+			menu.appendChild(renderChordMenuGroup(menuData[i], options));
+		}
+
+		return hasItems ? menu : null;
+	}
+
+	function renderChordMenuGroup(group, options) {
+		var doc = global.document;
+		var section = doc.createElement('section');
+		var title = doc.createElement('h3');
+
+		section.className = 'progressionChordMenu__group';
+		title.textContent = translate(options.i18n, 'progression.chordMenu.' + group.id);
+		section.appendChild(title);
+
+		for (var i = 0; i < group.items.length; i++) {
+			section.appendChild(renderChordMenuChord(group.items[i], options));
+		}
+
+		return section;
+	}
+
+	function renderChordMenuChord(item, options) {
+		var doc = global.document;
+		var details = doc.createElement('details');
+		var summary = doc.createElement('summary');
+		var optionsContainer = doc.createElement('div');
+
+		details.className = 'progressionChordMenu__chord';
+		summary.textContent = item.chordName + (item.degree ? ' · ' + item.degree : '');
+		optionsContainer.className = 'progressionChordMenu__options';
+		details.appendChild(summary);
+		details.appendChild(optionsContainer);
+
+		for (var i = 0; i < item.options.length; i++) {
+			optionsContainer.appendChild(renderChordMenuOption(item.options[i], options));
+		}
+
+		return details;
+	}
+
+	function renderChordMenuOption(item, options) {
+		var doc = global.document;
+		var button = doc.createElement('button');
+		var kindLabel = item.kind === 'seventh' ? translate(options.i18n, 'progression.chordMenu.seventh') : translate(options.i18n, 'progression.chordMenu.triad');
+
+		button.type = 'button';
+		button.className = 'measureChordMenuItem';
+		button.setAttribute('data-progression-index', options.measureIndex);
+		button.setAttribute('data-measure-chord-index', options.chordIndex);
+		button.setAttribute('data-degree-index', item.degreeIndex);
+		button.setAttribute('data-chord-kind', item.kind);
+		button.setAttribute('data-inversion-index', item.inversionIndex);
+		button.textContent = kindLabel + ': ' + item.displayName + (item.degree ? ' · ' + item.degree : '');
+
+		return button;
+	}
+
+	function closeChordMenu() {
+		var menu = query('.progressionChordMenu');
+
+		if (menu && menu.parentNode) {
+			menu.parentNode.removeChild(menu);
+		}
+
+		if (activeChordMenuButton) {
+			activeChordMenuButton.setAttribute('aria-expanded', 'false');
+			activeChordMenuButton = null;
+		}
+	}
+
+	function positionChordMenu(menu, button) {
+		var bounds;
+		var menuWidth = 280;
+		var left;
+		var top;
+
+		if (!menu || !button || typeof button.getBoundingClientRect !== 'function') {
+			return;
+		}
+
+		bounds = button.getBoundingClientRect();
+		left = Math.max(8, Math.min(global.innerWidth - menuWidth - 8, bounds.left));
+		top = Math.max(8, bounds.bottom + 6);
+
+		menu.style.left = left + 'px';
+		menu.style.top = top + 'px';
+	}
+
+	function currentChordSegment(measure, chordIndex) {
+		if (!measure) {
+			return null;
+		}
+
+		if (measure.chords && measure.chords.length) {
+			return measure.chords[Math.min(chordIndex, measure.chords.length - 1)];
+		}
+
+		return measure;
+	}
+
+	function replacementFromMenuItem(item) {
+		return {
+			degreeIndex: parseInt(item.getAttribute('data-degree-index'), 10),
+			inversionIndex: parseInt(item.getAttribute('data-inversion-index'), 10),
+			kind: item.getAttribute('data-chord-kind')
+		};
 	}
 
 	function exportMidi(options) {
@@ -368,6 +626,12 @@
 
 	function measureIndex(measure) {
 		var index = parseInt(measure.getAttribute('data-progression-index'), 10);
+
+		return isNaN(index) ? 0 : index;
+	}
+
+	function chordIndex(chordElement) {
+		var index = chordElement ? parseInt(chordElement.getAttribute('data-measure-chord-index'), 10) : 0;
 
 		return isNaN(index) ? 0 : index;
 	}
