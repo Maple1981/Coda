@@ -67,7 +67,7 @@
 				event.preventDefault();
 				stopPreview(options, listenButton, playbackHeadIndex);
 				closeChordMenu();
-				updateMeasureSplit(options, splitButton.getAttribute('data-progression-split-action'), clickedIndex);
+				updateMeasureSplit(options, splitButton.getAttribute('data-progression-split-action'), clickedIndex, chordIndex(chordElement));
 				playbackHeadIndex = clickedIndex;
 				setPlaybackHead(playbackHeadIndex, false);
 				return;
@@ -288,7 +288,7 @@
 		}
 	}
 
-	function updateMeasureSplit(options, action, measureIndex) {
+	function updateMeasureSplit(options, action, measureIndex, chordIndex) {
 		var progression = options.uiState ? options.uiState.getProgression() : null;
 		var nextProgression = null;
 
@@ -297,9 +297,10 @@
 		}
 
 		if (action === 'remove' && typeof options.application.removeProgressionMeasureChord === 'function') {
-			nextProgression = options.application.removeProgressionMeasureChord(progression, measureIndex);
+			nextProgression = options.application.removeProgressionMeasureChord(progression, measureIndex, chordIndex);
 		} else if (action === 'add' && typeof options.application.addProgressionMeasureChord === 'function') {
 			nextProgression = options.application.addProgressionMeasureChord(progression, measureIndex, {
+				chordIndex: chordIndex,
 				data: options.data,
 				progressionState: options.uiState && options.uiState.getProgressionState ? options.uiState.getProgressionState() : null,
 				report: options.uiState && options.uiState.getReport ? options.uiState.getReport() : null

@@ -1139,10 +1139,15 @@ section#bienvenida .columnata article{
 	background:rgba(197, 246, 255, .04);
 }
 
-.measureSplitButton{
+.measureSplitActions{
 	position:absolute;
 	right:0;
 	bottom:0;
+	display:inline-flex;
+	gap:.25em;
+}
+
+.measureSplitButton{
 	width:1.45em;
 	height:1.45em;
 	display:inline-flex;

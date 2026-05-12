@@ -67,8 +67,9 @@ const controller = context.window.CodaProgressionTransport.initialize({
 				measures: sourceProgression.measures.slice()
 			};
 		},
-		removeProgressionMeasureChord: function (sourceProgression, measureIndex) {
+		removeProgressionMeasureChord: function (sourceProgression, measureIndex, chordIndex) {
 			splitRequest = {
+				chordIndex: chordIndex,
 				measureIndex: measureIndex,
 				sourceProgression: sourceProgression
 			};
@@ -154,13 +155,15 @@ assert.equal(document.goStart.hidden, true);
 
 document.measures[1].dispatchSplitClick('add');
 assert.equal(splitRequest.measureIndex, 1);
+assert.equal(splitRequest.options.chordIndex, 0);
 assert.deepEqual(splitRequest.options.progressionState, { bars: 3 });
 assert.deepEqual(changedOptions, {
 	playbackHeadIndex: 1
 });
 
-document.measures[1].dispatchSplitClick('remove');
+document.measures[1].dispatchSplitClick('remove', 1);
 assert.equal(splitRequest.measureIndex, 1);
+assert.equal(splitRequest.chordIndex, 1);
 assert.deepEqual(changedProgression, {
 	measures: [
 		{ bar: 1 },
@@ -287,6 +290,7 @@ function createFakeDocument(measureCount) {
 function createFakeMeasure(index, rootElement) {
 	const element = createFakeElement('measure-' + index);
 	const splitButton = createFakeElement('split-' + index);
+	const chordElement = createFakeElement('chord-' + index);
 
 	element.getAttribute = function (name) {
 		if (name === 'data-progression-index') {
@@ -309,7 +313,23 @@ function createFakeMeasure(index, rootElement) {
 			type: 'click'
 		});
 	};
-	element.dispatchSplitClick = function (action) {
+	chordElement.getAttribute = function (name) {
+		if (name === 'data-measure-chord-index') {
+			return chordElement.chordIndex || '0';
+		}
+		return null;
+	};
+	chordElement.closest = function (selector) {
+		if (selector === '.measureChord') {
+			return chordElement;
+		}
+		if (selector === '.measure') {
+			return element;
+		}
+		return null;
+	};
+	element.dispatchSplitClick = function (action, chordIndex) {
+		chordElement.chordIndex = String(chordIndex || 0);
 		splitButton.getAttribute = function (name) {
 			if (name === 'data-progression-split-action') {
 				return action;
@@ -322,6 +342,9 @@ function createFakeMeasure(index, rootElement) {
 			}
 			if (selector === '.measure') {
 				return element;
+			}
+			if (selector === '.measureChord') {
+				return chordElement;
 			}
 			return null;
 		};

@@ -36,11 +36,11 @@ La puntuación de conducción penaliza quintas y octavas paralelas. La penalizac
 
 ## Compases divididos
 
-Cada compás de la progresión puede dividirse en dos acordes. El primer acorde conserva la función original del compás y el segundo se calcula como una extensión armónica ponderada, no como una elección totalmente aleatoria.
+Cada compás de la progresión puede dividirse en hasta cuatro acordes. El primer acorde conserva la función original del compás y los acordes añadidos se calculan como extensiones armónicas ponderadas, no como elecciones totalmente aleatorias.
 
 La selección del acorde añadido prioriza tres criterios: notas comunes con el acorde inicial del compás, notas comunes con el acorde siguiente y coincidencia de función tonal. Esta regla favorece movimientos parsimoniosos y extensiones funcionales, especialmente extensiones de tónica. Por ejemplo, en `C` mayor, entre `C` y `F` puede aparecer `Am`, porque comparte `C` y `E` con `C`, y `A` y `C` con `F`.
 
-De momento, un compás admite como máximo dos acordes. Al añadir el segundo acorde desaparece el botón de añadir del primero y aparece un botón de retirada en el acorde añadido. La preescucha y la exportación MIDI tratan ambos acordes como eventos reales de medio compás, de modo que la división visual coincide con el resultado audible y exportado.
+El acorde inicial no puede retirarse. Los acordes añadidos pueden retirarse y, mientras no se haya alcanzado el máximo de cuatro acordes por compás, también pueden servir como punto de inserción para nuevos acordes. La preescucha y la exportación MIDI tratan todos los acordes del compás como eventos reales de duración proporcional, de modo que la división visual coincide con el resultado audible y exportado.
 
 ## Sustitución manual de acordes
 

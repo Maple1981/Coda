@@ -78,10 +78,15 @@
   background: rgba(197, 246, 255, 0.04);
 }
 
-.measureSplitButton {
+.measureSplitActions {
   position: absolute;
   right: 0;
   bottom: 0;
+  display: inline-flex;
+  gap: 0.25em;
+}
+
+.measureSplitButton {
   width: 1.45em;
   height: 1.45em;
   display: inline-flex;

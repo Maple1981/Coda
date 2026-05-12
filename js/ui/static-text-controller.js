@@ -33,6 +33,8 @@
 		setAttribute(i18n, '#toggleCircleOfFifths', 'aria-label', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'aria-label', 'circle.open');
+		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'title', 'circle.open');
+		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'aria-label', 'circle.open');
 		setAttribute(i18n, '#closeCircleOfFifths', 'title', 'circle.close');
 		setAttribute(i18n, '#closeCircleOfFifths', 'aria-label', 'circle.close');
 		setAttribute(i18n, '#themeToggleButton', 'title', 'theme.switchToDay');
@@ -116,6 +118,8 @@
 		setText(i18n, 'option[data-i18n="progression.style.classic"]', 'progression.style.classic');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'aria-label', 'circle.open');
+		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'title', 'circle.open');
+		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'aria-label', 'circle.open');
 		setText(i18n, '.transportButton--generate span[data-i18n="progression.generate"]', 'progression.generate');
 		setText(i18n, '.transportButton--goStart span[data-i18n="progression.goStart"]', 'progression.goStart');
 		setText(i18n, '.transportButton--listen span[data-i18n="progression.listen"]', 'progression.listen');

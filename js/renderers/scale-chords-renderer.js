@@ -21,11 +21,11 @@
 		html += '<tr><td class="cabecera">Sus4</td>' + rows.sus4 + '</tr>';
 
 		if (rows.functions !== '' && options.mode !== '') {
-			if (rows.parallelSeventhChords !== '') {
-				html += '<tr><td class="cabecera">' + t(options, 'scaleChords.parallel') + '</td>' + rows.parallelSeventhChords + '</tr>';
+			if (rows.parallelTriads !== '') {
+				html += '<tr><td class="cabecera">' + t(options, 'scaleChords.parallel') + '</td>' + rows.parallelTriads + '</tr>';
 			}
 			if (rows.parallelSeventhChords !== '') {
-				html += '<tr><td class="cabecera">' + t(options, 'scaleChords.parallel') + '</td>' + rows.parallelTriads + '</tr>';
+				html += '<tr><td class="cabecera">' + t(options, 'scaleChords.parallelSeventh') + '</td>' + rows.parallelSeventhChords + '</tr>';
 			}
 			html += '<tr><td class="cabecera">' + t(options, 'scaleChords.functionRow') + '</td>' + rows.functions + '</tr>';
 		}
@@ -180,6 +180,7 @@
 			'scaleChords.functionRow': 'Función',
 			'scaleChords.notes': 'Notas',
 			'scaleChords.parallel': 'Paralela',
+			'scaleChords.parallelSeventh': 'Paralela 7',
 			'scaleChords.seventh': 'Cuatriada',
 			'scaleChords.triad': 'Triada'
 		};

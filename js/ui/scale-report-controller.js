@@ -18,6 +18,8 @@
 			initialNotation: notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon',
 			language: i18n && i18n.getLanguage ? i18n.getLanguage() : 'es'
 		});
+		var circleOfFifthsAnchorId = '';
+		var circleOfFifthsDragged = false;
 		uiState.setNotationStyle(notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon');
 		var initialForm = resolveInitialForm(options.data, options.initialForm);
 
@@ -281,7 +283,7 @@
 		}
 
 		function bindProgressionState() {
-			var controls = query('#constructorProgresiones');
+			var controls = query('.progressionControls');
 
 			if (!controls || controls.getAttribute('data-coda-progression-state') === 'true') {
 				return;
@@ -316,8 +318,12 @@
 			bindCircleOfFifthsDrag();
 
 			on(global.document, 'click', function (event) {
-				if (closest(event.target, '#toggleCircleOfFifths') || closest(event.target, '#toggleCircleOfFifthsFromContext')) {
-					toggleCircleOfFifthsPopover();
+				var trigger = closest(event.target, '#toggleCircleOfFifths') ||
+					closest(event.target, '#toggleCircleOfFifthsFromContext') ||
+					closest(event.target, '#toggleCircleOfFifthsFromForm');
+
+				if (trigger) {
+					toggleCircleOfFifthsPopover(trigger);
 					return;
 				}
 
@@ -374,6 +380,7 @@
 					x: event.clientX - dragState.offsetX,
 					y: event.clientY - dragState.offsetY
 				});
+				circleOfFifthsDragged = true;
 			});
 
 			global.document.addEventListener('mouseup', function () {
@@ -399,11 +406,44 @@
 			popover.style.right = 'auto';
 		}
 
+		function positionCircleOfFifthsPopoverNearTrigger(popover, trigger) {
+			var triggerBounds;
+			var margin = 10;
+			var width;
+			var height;
+			var maxLeft;
+			var maxTop;
+			var left;
+			var top;
+
+			if (!popover || !trigger || typeof trigger.getBoundingClientRect !== 'function') {
+				return;
+			}
+
+			triggerBounds = trigger.getBoundingClientRect();
+			width = popover.offsetWidth || 300;
+			height = popover.offsetHeight || 260;
+			maxLeft = Math.max(margin, global.innerWidth - width - margin);
+			maxTop = Math.max(margin, global.innerHeight - height - margin);
+			left = Math.min(maxLeft, Math.max(margin, triggerBounds.left));
+			top = triggerBounds.bottom + margin;
+
+			if (top + height > global.innerHeight - margin) {
+				top = triggerBounds.top - height - margin;
+			}
+
+			top = Math.min(maxTop, Math.max(margin, top));
+			popover.style.left = left + 'px';
+			popover.style.top = top + 'px';
+			popover.style.right = 'auto';
+		}
+
 		function updateCircleOfFifthsAccess(report) {
 			var available = !!(report && report.circleOfFifths);
 
 			updateCircleToggleButton(query('#toggleCircleOfFifths'), available);
 			updateCircleToggleButton(query('#toggleCircleOfFifthsFromContext'), available);
+			updateCircleToggleButton(query('#toggleCircleOfFifthsFromForm'), available);
 
 			if (!available) {
 				closeCircleOfFifthsPopover();
@@ -423,24 +463,39 @@
 			}
 		}
 
-		function toggleCircleOfFifthsPopover() {
-			if (isCircleOfFifthsPopoverOpen()) {
+		function toggleCircleOfFifthsPopover(trigger) {
+			var triggerId = getCircleOfFifthsTriggerId(trigger);
+
+			if (isCircleOfFifthsPopoverOpen() && triggerId === circleOfFifthsAnchorId) {
 				closeCircleOfFifthsPopover();
 				return;
 			}
 
-			openCircleOfFifthsPopover();
+			openCircleOfFifthsPopover(trigger);
 		}
 
-		function openCircleOfFifthsPopover() {
+		function openCircleOfFifthsPopover(trigger) {
 			var popover = query('#circleOfFifthsPopover');
+			var triggerId = getCircleOfFifthsTriggerId(trigger);
+			var shouldResetPosition = !!trigger && (triggerId !== circleOfFifthsAnchorId || !circleOfFifthsDragged);
 
 			if (!popover || !uiState.getReport() || !uiState.getReport().circleOfFifths) {
 				return;
 			}
 
 			popover.hidden = false;
+
+			if (shouldResetPosition) {
+				positionCircleOfFifthsPopoverNearTrigger(popover, trigger);
+				circleOfFifthsDragged = false;
+			}
+
+			circleOfFifthsAnchorId = triggerId;
 			setCircleToggleExpanded(true);
+		}
+
+		function getCircleOfFifthsTriggerId(trigger) {
+			return trigger && trigger.id ? trigger.id : '';
 		}
 
 		function closeCircleOfFifthsPopover() {
@@ -462,6 +517,7 @@
 		function setCircleToggleExpanded(expanded) {
 			updateCircleToggleExpanded(query('#toggleCircleOfFifths'), expanded);
 			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromContext'), expanded);
+			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromForm'), expanded);
 		}
 
 		function updateCircleToggleExpanded(button, expanded) {

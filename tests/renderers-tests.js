@@ -269,6 +269,10 @@ assert.ok(scaleChordsHtml.indexOf('<td>V7</td>') > -1);
 assert.ok(scaleChordsHtml.indexOf('<td>vii7♭5</td>') > -1);
 assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Función</td>') > -1);
 
+assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Paralela</td>') > -1);
+assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Paralela 7</td>') > -1);
+assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Paralela</td>') < scaleChordsHtml.indexOf('<td class="cabecera">Paralela 7</td>'));
+
 const latinScaleChordsHtml = scaleChordsRenderer.render({
 	mode: 'M',
 	notation: notation,
@@ -430,6 +434,21 @@ assert.ok(progressionWorkbenchRenderer.renderTimelineMeasures({
 		}
 	]
 }).indexOf('data-progression-split-action="remove"') > -1);
+const fourChordMeasureHtml = progressionWorkbenchRenderer.renderTimelineMeasures({
+	measures: [
+		{
+			bar: 1,
+			chords: [
+				{ displayName: 'C', degree: 'I', tonalFunction: 'T' },
+				{ displayName: 'Am', degree: 'vi', tonalFunction: 'T' },
+				{ displayName: 'Em', degree: 'iii', tonalFunction: 'T' },
+				{ displayName: 'G', degree: 'V', tonalFunction: 'D' }
+			]
+		}
+	]
+});
+assert.equal((fourChordMeasureHtml.match(/data-progression-split-action="add"/g) || []).length, 0);
+assert.equal((fourChordMeasureHtml.match(/data-progression-split-action="remove"/g) || []).length, 3);
 assert.equal(progressionWorkbenchRenderer.hasRenderableMeasures([{ chordName: '' }]), false);
 assert.ok(progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [

@@ -128,7 +128,7 @@ document.getElementById('progressionVoices').value = '3';
 document.getElementById('progressionArticulation').value = 'staccato';
 document.getElementById('progressionStyle').value = 'classic';
 document.getElementById('progressionTensions').value = '60';
-document.getElementById('constructorProgresiones').dispatchEvent({
+document.querySelector('.progressionControls').dispatchEvent({
 	target: document.getElementById('progressionBars'),
 	type: 'change'
 });
@@ -151,6 +151,13 @@ assert.equal(rendered.progression, 2);
 assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.degree; }), ['I', 'IV 6/4', 'V 6', 'I']);
 assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'F', 'G', 'C']);
 assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'SD', 'D', 'T']);
+document.getElementById('progressionLoop').checked = true;
+document.getElementById('progressionLoop').dispatchEvent({
+	target: document.getElementById('progressionLoop'),
+	type: 'change'
+});
+assert.equal(rendered.progression, 2);
+assert.strictEqual(initialized.uiState.getProgression(), changedProgression);
 assert.deepEqual(changedProgression.measures[1], {
 	articulation: 'staccato',
 	bar: 2,
@@ -257,6 +264,10 @@ function createFakeDocument() {
 			return elements.sostenidos.checked ? elements.sostenidos : elements.bemoles;
 		}
 
+		if (selector === '.progressionControls') {
+			return elements.progressionControls;
+		}
+
 		if (selector.charAt(0) === '#' && selector.indexOf(' ') === -1) {
 			return elements[selector.slice(1)] || null;
 		}
@@ -280,6 +291,7 @@ function createFakeDocument() {
 	addElement('interface');
 	addElement('herramientasTeoricas');
 	addElement('constructorProgresiones');
+	addElement('progressionControls');
 	addElement('toggleTheoryControls');
 	addElement('toggleScaleTheoryDetails');
 	addElement('formatoLabel');
@@ -299,6 +311,8 @@ function createFakeDocument() {
 	addElement('progressionStyle', 'modern');
 	addElement('progressionTensions', '35');
 	addElement('progressionVoices', '4');
+	addElement('progressionLoop');
+	addElement('progressionMetronome');
 
 	return fakeDocument;
 

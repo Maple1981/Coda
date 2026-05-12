@@ -139,16 +139,23 @@
 		var label = chord.displayName || chord.chordName || chord.label || '';
 		var degree = chord.degree || '';
 		var tonalFunction = chord.tonalFunction || '';
-		var button = '';
+		var buttons = '';
 
-		if (chordCount < 2 && chordIndex === 0) {
-			button = '<button type="button" class="measureSplitButton" data-progression-split-action="add" aria-label="" title="" data-i18n-title="progression.addMeasureChord">+</button>';
-		} else if (chordCount > 1 && chordIndex === 1) {
-			button = '<button type="button" class="measureSplitButton" data-progression-split-action="remove" aria-label="" title="" data-i18n-title="progression.removeMeasureChord">-</button>';
+		if (chordCount === 1 && chordIndex === 0) {
+			buttons += '<button type="button" class="measureSplitButton" data-progression-split-action="add" aria-label="" title="" data-i18n-title="progression.addMeasureChord">+</button>';
+		} else if (chordCount > 1 && chordIndex > 0) {
+			if (chordCount < 4) {
+				buttons += '<button type="button" class="measureSplitButton" data-progression-split-action="add" aria-label="" title="" data-i18n-title="progression.addMeasureChord">+</button>';
+			}
+			buttons += '<button type="button" class="measureSplitButton" data-progression-split-action="remove" aria-label="" title="" data-i18n-title="progression.removeMeasureChord">-</button>';
+		}
+
+		if (buttons) {
+			buttons = '<span class="measureSplitActions">' + buttons + '</span>';
 		}
 
 		return '<div class="measureChord" data-measure-chord-index="' + escapeHtml(chordIndex) + '">' +
-			button +
+			buttons +
 			'<span class="measureChordName"><strong>' + escapeHtml(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
 			(degree ? '<em class="measureDegree">' + escapeHtml(degree) + '</em>' : '') +
 			(tonalFunction ? '<span class="measureFunction">' + escapeHtml(tonalFunction) + '</span>' : '') +

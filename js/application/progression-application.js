@@ -135,17 +135,26 @@
 		var measures = progression && progression.measures ? progression.measures.slice() : [];
 		var index = clampMeasureIndex(measureIndex, measures.length);
 		var measure = measures[index];
+		var segments;
+		var insertAfterIndex;
 		var additionalChord;
+		var additionalSegment;
 
 		options = options || {};
-		if (!progression || !measure || (measure.chords && measure.chords.length >= 2)) {
+		if (!progression || !measure) {
 			return progression;
 		}
 
+		segments = measureSegments(measure);
+		if (segments.length >= 4) {
+			return progression;
+		}
+
+		insertAfterIndex = clampChordIndex(options.chordIndex, segments.length);
 		additionalChord = chooseAdditionalChordForMeasure({
 			data: options.data,
-			measure: measure,
-			nextMeasure: measures[index + 1] || null,
+			measure: segments[insertAfterIndex],
+			nextMeasure: segments[insertAfterIndex + 1] || measures[index + 1] || null,
 			progression: progression,
 			progressionState: normalizeProgressionState(options.progressionState || progression),
 			report: options.report,
@@ -156,26 +165,40 @@
 			return progression;
 		}
 
-		measures[index] = splitMeasureWithAdditionalChord(measure, additionalChord, progression);
+		additionalSegment = segmentFromPlan(segments[insertAfterIndex], additionalChord, {
+			chordIndex: insertAfterIndex + 1,
+			durationBeats: Number(segments[insertAfterIndex].durationBeats) || Number(measure.durationBeats) || Number(progression.beatsPerBar) || 4,
+			durationSeconds: Number(segments[insertAfterIndex].durationSeconds) || Number(measure.durationSeconds) || 0,
+			startBeat: Number(segments[insertAfterIndex].endBeat) || Number(segments[insertAfterIndex].startBeat) || Number(measure.startBeat) || 0,
+			startSeconds: Number(segments[insertAfterIndex].endSeconds) || Number(segments[insertAfterIndex].startSeconds) || Number(measure.startSeconds) || 0
+		});
+		segments.splice(insertAfterIndex + 1, 0, additionalSegment);
+		measures[index] = measureWithSegments(measure, segments, progression);
 
 		return extendProgression(progression, {
 			measures: measures
 		});
 	}
 
-	function removeProgressionMeasureChord(progression, measureIndex) {
+	function removeProgressionMeasureChord(progression, measureIndex, chordIndex) {
 		var measures = progression && progression.measures ? progression.measures.slice() : [];
 		var index = clampMeasureIndex(measureIndex, measures.length);
 		var measure = measures[index];
-		var restoredMeasure;
+		var segments;
+		var normalizedChordIndex;
 
 		if (!progression || !measure || !measure.chords || measure.chords.length < 2) {
 			return progression;
 		}
 
-		restoredMeasure = cloneMeasure(measure);
-		delete restoredMeasure.chords;
-		measures[index] = restoredMeasure;
+		segments = measureSegments(measure);
+		normalizedChordIndex = clampChordIndex(chordIndex, segments.length);
+		if (normalizedChordIndex === 0) {
+			return progression;
+		}
+
+		segments.splice(normalizedChordIndex, 1);
+		measures[index] = measureWithSegments(measure, segments, progression);
 
 		return extendProgression(progression, {
 			measures: measures
@@ -360,8 +383,9 @@
 		];
 		var usedIndexes = {};
 
-		function pushToGroup(groupIndex, degreeIndex) {
+		function pushToGroup(groupIndex, degreeIndex, metadata) {
 			var chord = scaleChords[degreeIndex];
+			var rawDegree = scaleNotes[degreeIndex] ? scaleNotes[degreeIndex].grado : '';
 
 			if (!chord || usedIndexes[degreeIndex]) {
 				return;
@@ -369,7 +393,8 @@
 
 			groups[groupIndex].items.push({
 				chordName: chord.nombre,
-				degree: scaleNotes[degreeIndex] ? scaleNotes[degreeIndex].grado : '',
+				commonToneCount: metadata && metadata.commonToneCount ? metadata.commonToneCount : 0,
+				degree: formatDegreeForChord(rawDegree, chord.nombre),
 				degreeIndex: degreeIndex,
 				options: chordReplacementOptions(chord, scaleNotes[degreeIndex], degreeIndex)
 			});
@@ -383,10 +408,22 @@
 		}
 
 		for (var j = 0; j < scaleChords.length; j++) {
-			if (currentSegment && commonPitchNames(currentSegment, { notes: chordNotes(scaleChords[j]) }).length > 0) {
-				pushToGroup(1, j);
+			var commonToneCount = currentSegment ? commonPitchNames(currentSegment, { notes: chordNotes(scaleChords[j]) }).length : 0;
+
+			if (commonToneCount > 0) {
+				pushToGroup(1, j, {
+					commonToneCount: commonToneCount
+				});
 			}
 		}
+
+		groups[1].items.sort(function (a, b) {
+			if (a.commonToneCount !== b.commonToneCount) {
+				return b.commonToneCount - a.commonToneCount;
+			}
+
+			return a.degreeIndex - b.degreeIndex;
+		});
 
 		for (var k = 0; k < scaleChords.length; k++) {
 			pushToGroup(2, k);
@@ -496,6 +533,39 @@
 		splitMeasure.chords = [primaryChord, extraChord];
 
 		return splitMeasure;
+	}
+
+	function measureSegments(measure) {
+		if (measure && measure.chords && measure.chords.length) {
+			return measure.chords.map(cloneMeasure);
+		}
+
+		return measure ? [segmentFromMeasure(measure, {
+			chordIndex: 0,
+			durationBeats: Number(measure.durationBeats) || 4,
+			durationSeconds: Number(measure.durationSeconds) || 0,
+			startBeat: Number(measure.startBeat) || 0,
+			startSeconds: Number(measure.startSeconds) || 0
+		})] : [];
+	}
+
+	function measureWithSegments(measure, segments, progression) {
+		var rebuiltMeasure = cloneMeasure(measure);
+		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
+
+		if (!segments.length) {
+			return rebuiltMeasure;
+		}
+
+		rebuiltMeasure = copySegmentToMeasure(rebuiltMeasure, segments[0]);
+		if (segments.length === 1) {
+			delete rebuiltMeasure.chords;
+			return rebuiltMeasure;
+		}
+
+		rebuiltMeasure.chords = retimeMeasureChordList(rebuiltMeasure, segments, secondsPerBeat);
+
+		return rebuiltMeasure;
 	}
 
 	function buildReplacementSegment(options) {
@@ -667,6 +737,11 @@
 
 	function retimeMeasureChords(measure, secondsPerBeat) {
 		var chords = measure.chords || [];
+
+		return retimeMeasureChordList(measure, chords, secondsPerBeat);
+	}
+
+	function retimeMeasureChordList(measure, chords, secondsPerBeat) {
 		var durationBeats = (Number(measure.durationBeats) || 4) / Math.max(1, chords.length);
 		var result = [];
 
@@ -758,6 +833,16 @@
 		}
 
 		return Math.max(0, Math.min(length - 1, numericIndex));
+	}
+
+	function clampChordIndex(index, length) {
+		var numericIndex = parseInt(index, 10);
+
+		if (isNaN(numericIndex)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(Math.max(0, length - 1), numericIndex));
 	}
 
 	function buildMeasures(resolvedDegrees, progressionState, secondsPerBeat, options) {

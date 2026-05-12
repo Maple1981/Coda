@@ -1376,6 +1376,7 @@
 			'scaleChords.functionRow': 'Función',
 			'scaleChords.notes': 'Notas',
 			'scaleChords.parallel': 'Paralela',
+			'scaleChords.parallelSeventh': 'Paralela 7',
 			'scaleChords.seventh': 'Cuatríada',
 			'scaleChords.triad': 'Tríada',
 			'scaleSummary.collapseDetails': 'Contraer detalles de escala',
@@ -1541,6 +1542,7 @@
 			'scaleChords.functionRow': 'Function',
 			'scaleChords.notes': 'Notes',
 			'scaleChords.parallel': 'Parallel',
+			'scaleChords.parallelSeventh': 'Parallel 7',
 			'scaleChords.seventh': 'Seventh',
 			'scaleChords.triad': 'Triad',
 			'scaleSummary.collapseDetails': 'Collapse scale details',
@@ -3627,17 +3629,26 @@
 		var measures = progression && progression.measures ? progression.measures.slice() : [];
 		var index = clampMeasureIndex(measureIndex, measures.length);
 		var measure = measures[index];
+		var segments;
+		var insertAfterIndex;
 		var additionalChord;
+		var additionalSegment;
 
 		options = options || {};
-		if (!progression || !measure || (measure.chords && measure.chords.length >= 2)) {
+		if (!progression || !measure) {
 			return progression;
 		}
 
+		segments = measureSegments(measure);
+		if (segments.length >= 4) {
+			return progression;
+		}
+
+		insertAfterIndex = clampChordIndex(options.chordIndex, segments.length);
 		additionalChord = chooseAdditionalChordForMeasure({
 			data: options.data,
-			measure: measure,
-			nextMeasure: measures[index + 1] || null,
+			measure: segments[insertAfterIndex],
+			nextMeasure: segments[insertAfterIndex + 1] || measures[index + 1] || null,
 			progression: progression,
 			progressionState: normalizeProgressionState(options.progressionState || progression),
 			report: options.report,
@@ -3648,26 +3659,40 @@
 			return progression;
 		}
 
-		measures[index] = splitMeasureWithAdditionalChord(measure, additionalChord, progression);
+		additionalSegment = segmentFromPlan(segments[insertAfterIndex], additionalChord, {
+			chordIndex: insertAfterIndex + 1,
+			durationBeats: Number(segments[insertAfterIndex].durationBeats) || Number(measure.durationBeats) || Number(progression.beatsPerBar) || 4,
+			durationSeconds: Number(segments[insertAfterIndex].durationSeconds) || Number(measure.durationSeconds) || 0,
+			startBeat: Number(segments[insertAfterIndex].endBeat) || Number(segments[insertAfterIndex].startBeat) || Number(measure.startBeat) || 0,
+			startSeconds: Number(segments[insertAfterIndex].endSeconds) || Number(segments[insertAfterIndex].startSeconds) || Number(measure.startSeconds) || 0
+		});
+		segments.splice(insertAfterIndex + 1, 0, additionalSegment);
+		measures[index] = measureWithSegments(measure, segments, progression);
 
 		return extendProgression(progression, {
 			measures: measures
 		});
 	}
 
-	function removeProgressionMeasureChord(progression, measureIndex) {
+	function removeProgressionMeasureChord(progression, measureIndex, chordIndex) {
 		var measures = progression && progression.measures ? progression.measures.slice() : [];
 		var index = clampMeasureIndex(measureIndex, measures.length);
 		var measure = measures[index];
-		var restoredMeasure;
+		var segments;
+		var normalizedChordIndex;
 
 		if (!progression || !measure || !measure.chords || measure.chords.length < 2) {
 			return progression;
 		}
 
-		restoredMeasure = cloneMeasure(measure);
-		delete restoredMeasure.chords;
-		measures[index] = restoredMeasure;
+		segments = measureSegments(measure);
+		normalizedChordIndex = clampChordIndex(chordIndex, segments.length);
+		if (normalizedChordIndex === 0) {
+			return progression;
+		}
+
+		segments.splice(normalizedChordIndex, 1);
+		measures[index] = measureWithSegments(measure, segments, progression);
 
 		return extendProgression(progression, {
 			measures: measures
@@ -3852,8 +3877,9 @@
 		];
 		var usedIndexes = {};
 
-		function pushToGroup(groupIndex, degreeIndex) {
+		function pushToGroup(groupIndex, degreeIndex, metadata) {
 			var chord = scaleChords[degreeIndex];
+			var rawDegree = scaleNotes[degreeIndex] ? scaleNotes[degreeIndex].grado : '';
 
 			if (!chord || usedIndexes[degreeIndex]) {
 				return;
@@ -3861,7 +3887,8 @@
 
 			groups[groupIndex].items.push({
 				chordName: chord.nombre,
-				degree: scaleNotes[degreeIndex] ? scaleNotes[degreeIndex].grado : '',
+				commonToneCount: metadata && metadata.commonToneCount ? metadata.commonToneCount : 0,
+				degree: formatDegreeForChord(rawDegree, chord.nombre),
 				degreeIndex: degreeIndex,
 				options: chordReplacementOptions(chord, scaleNotes[degreeIndex], degreeIndex)
 			});
@@ -3875,10 +3902,22 @@
 		}
 
 		for (var j = 0; j < scaleChords.length; j++) {
-			if (currentSegment && commonPitchNames(currentSegment, { notes: chordNotes(scaleChords[j]) }).length > 0) {
-				pushToGroup(1, j);
+			var commonToneCount = currentSegment ? commonPitchNames(currentSegment, { notes: chordNotes(scaleChords[j]) }).length : 0;
+
+			if (commonToneCount > 0) {
+				pushToGroup(1, j, {
+					commonToneCount: commonToneCount
+				});
 			}
 		}
+
+		groups[1].items.sort(function (a, b) {
+			if (a.commonToneCount !== b.commonToneCount) {
+				return b.commonToneCount - a.commonToneCount;
+			}
+
+			return a.degreeIndex - b.degreeIndex;
+		});
 
 		for (var k = 0; k < scaleChords.length; k++) {
 			pushToGroup(2, k);
@@ -3988,6 +4027,39 @@
 		splitMeasure.chords = [primaryChord, extraChord];
 
 		return splitMeasure;
+	}
+
+	function measureSegments(measure) {
+		if (measure && measure.chords && measure.chords.length) {
+			return measure.chords.map(cloneMeasure);
+		}
+
+		return measure ? [segmentFromMeasure(measure, {
+			chordIndex: 0,
+			durationBeats: Number(measure.durationBeats) || 4,
+			durationSeconds: Number(measure.durationSeconds) || 0,
+			startBeat: Number(measure.startBeat) || 0,
+			startSeconds: Number(measure.startSeconds) || 0
+		})] : [];
+	}
+
+	function measureWithSegments(measure, segments, progression) {
+		var rebuiltMeasure = cloneMeasure(measure);
+		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
+
+		if (!segments.length) {
+			return rebuiltMeasure;
+		}
+
+		rebuiltMeasure = copySegmentToMeasure(rebuiltMeasure, segments[0]);
+		if (segments.length === 1) {
+			delete rebuiltMeasure.chords;
+			return rebuiltMeasure;
+		}
+
+		rebuiltMeasure.chords = retimeMeasureChordList(rebuiltMeasure, segments, secondsPerBeat);
+
+		return rebuiltMeasure;
 	}
 
 	function buildReplacementSegment(options) {
@@ -4159,6 +4231,11 @@
 
 	function retimeMeasureChords(measure, secondsPerBeat) {
 		var chords = measure.chords || [];
+
+		return retimeMeasureChordList(measure, chords, secondsPerBeat);
+	}
+
+	function retimeMeasureChordList(measure, chords, secondsPerBeat) {
 		var durationBeats = (Number(measure.durationBeats) || 4) / Math.max(1, chords.length);
 		var result = [];
 
@@ -4250,6 +4327,16 @@
 		}
 
 		return Math.max(0, Math.min(length - 1, numericIndex));
+	}
+
+	function clampChordIndex(index, length) {
+		var numericIndex = parseInt(index, 10);
+
+		if (isNaN(numericIndex)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(Math.max(0, length - 1), numericIndex));
 	}
 
 	function buildMeasures(resolvedDegrees, progressionState, secondsPerBeat, options) {
@@ -6480,11 +6567,11 @@
 		html += '<tr><td class="cabecera">Sus4</td>' + rows.sus4 + '</tr>';
 
 		if (rows.functions !== '' && options.mode !== '') {
-			if (rows.parallelSeventhChords !== '') {
-				html += '<tr><td class="cabecera">' + t(options, 'scaleChords.parallel') + '</td>' + rows.parallelSeventhChords + '</tr>';
+			if (rows.parallelTriads !== '') {
+				html += '<tr><td class="cabecera">' + t(options, 'scaleChords.parallel') + '</td>' + rows.parallelTriads + '</tr>';
 			}
 			if (rows.parallelSeventhChords !== '') {
-				html += '<tr><td class="cabecera">' + t(options, 'scaleChords.parallel') + '</td>' + rows.parallelTriads + '</tr>';
+				html += '<tr><td class="cabecera">' + t(options, 'scaleChords.parallelSeventh') + '</td>' + rows.parallelSeventhChords + '</tr>';
 			}
 			html += '<tr><td class="cabecera">' + t(options, 'scaleChords.functionRow') + '</td>' + rows.functions + '</tr>';
 		}
@@ -6639,6 +6726,7 @@
 			'scaleChords.functionRow': 'Función',
 			'scaleChords.notes': 'Notas',
 			'scaleChords.parallel': 'Paralela',
+			'scaleChords.parallelSeventh': 'Paralela 7',
 			'scaleChords.seventh': 'Cuatriada',
 			'scaleChords.triad': 'Triada'
 		};
@@ -7388,16 +7476,23 @@
 		var label = chord.displayName || chord.chordName || chord.label || '';
 		var degree = chord.degree || '';
 		var tonalFunction = chord.tonalFunction || '';
-		var button = '';
+		var buttons = '';
 
-		if (chordCount < 2 && chordIndex === 0) {
-			button = '<button type="button" class="measureSplitButton" data-progression-split-action="add" aria-label="" title="" data-i18n-title="progression.addMeasureChord">+</button>';
-		} else if (chordCount > 1 && chordIndex === 1) {
-			button = '<button type="button" class="measureSplitButton" data-progression-split-action="remove" aria-label="" title="" data-i18n-title="progression.removeMeasureChord">-</button>';
+		if (chordCount === 1 && chordIndex === 0) {
+			buttons += '<button type="button" class="measureSplitButton" data-progression-split-action="add" aria-label="" title="" data-i18n-title="progression.addMeasureChord">+</button>';
+		} else if (chordCount > 1 && chordIndex > 0) {
+			if (chordCount < 4) {
+				buttons += '<button type="button" class="measureSplitButton" data-progression-split-action="add" aria-label="" title="" data-i18n-title="progression.addMeasureChord">+</button>';
+			}
+			buttons += '<button type="button" class="measureSplitButton" data-progression-split-action="remove" aria-label="" title="" data-i18n-title="progression.removeMeasureChord">-</button>';
+		}
+
+		if (buttons) {
+			buttons = '<span class="measureSplitActions">' + buttons + '</span>';
 		}
 
 		return '<div class="measureChord" data-measure-chord-index="' + escapeHtml(chordIndex) + '">' +
-			button +
+			buttons +
 			'<span class="measureChordName"><strong>' + escapeHtml(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
 			(degree ? '<em class="measureDegree">' + escapeHtml(degree) + '</em>' : '') +
 			(tonalFunction ? '<span class="measureFunction">' + escapeHtml(tonalFunction) + '</span>' : '') +
@@ -7708,6 +7803,8 @@
 		setAttribute(i18n, '#toggleCircleOfFifths', 'aria-label', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'aria-label', 'circle.open');
+		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'title', 'circle.open');
+		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'aria-label', 'circle.open');
 		setAttribute(i18n, '#closeCircleOfFifths', 'title', 'circle.close');
 		setAttribute(i18n, '#closeCircleOfFifths', 'aria-label', 'circle.close');
 		setAttribute(i18n, '#themeToggleButton', 'title', 'theme.switchToDay');
@@ -7791,6 +7888,8 @@
 		setText(i18n, 'option[data-i18n="progression.style.classic"]', 'progression.style.classic');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'aria-label', 'circle.open');
+		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'title', 'circle.open');
+		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'aria-label', 'circle.open');
 		setText(i18n, '.transportButton--generate span[data-i18n="progression.generate"]', 'progression.generate');
 		setText(i18n, '.transportButton--goStart span[data-i18n="progression.goStart"]', 'progression.goStart');
 		setText(i18n, '.transportButton--listen span[data-i18n="progression.listen"]', 'progression.listen');
@@ -8719,7 +8818,7 @@
 				event.preventDefault();
 				stopPreview(options, listenButton, playbackHeadIndex);
 				closeChordMenu();
-				updateMeasureSplit(options, splitButton.getAttribute('data-progression-split-action'), clickedIndex);
+				updateMeasureSplit(options, splitButton.getAttribute('data-progression-split-action'), clickedIndex, chordIndex(chordElement));
 				playbackHeadIndex = clickedIndex;
 				setPlaybackHead(playbackHeadIndex, false);
 				return;
@@ -8940,7 +9039,7 @@
 		}
 	}
 
-	function updateMeasureSplit(options, action, measureIndex) {
+	function updateMeasureSplit(options, action, measureIndex, chordIndex) {
 		var progression = options.uiState ? options.uiState.getProgression() : null;
 		var nextProgression = null;
 
@@ -8949,9 +9048,10 @@
 		}
 
 		if (action === 'remove' && typeof options.application.removeProgressionMeasureChord === 'function') {
-			nextProgression = options.application.removeProgressionMeasureChord(progression, measureIndex);
+			nextProgression = options.application.removeProgressionMeasureChord(progression, measureIndex, chordIndex);
 		} else if (action === 'add' && typeof options.application.addProgressionMeasureChord === 'function') {
 			nextProgression = options.application.addProgressionMeasureChord(progression, measureIndex, {
+				chordIndex: chordIndex,
 				data: options.data,
 				progressionState: options.uiState && options.uiState.getProgressionState ? options.uiState.getProgressionState() : null,
 				report: options.uiState && options.uiState.getReport ? options.uiState.getReport() : null
@@ -9887,6 +9987,8 @@
 			initialNotation: notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon',
 			language: i18n && i18n.getLanguage ? i18n.getLanguage() : 'es'
 		});
+		var circleOfFifthsAnchorId = '';
+		var circleOfFifthsDragged = false;
 		uiState.setNotationStyle(notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon');
 		var initialForm = resolveInitialForm(options.data, options.initialForm);
 
@@ -10150,7 +10252,7 @@
 		}
 
 		function bindProgressionState() {
-			var controls = query('#constructorProgresiones');
+			var controls = query('.progressionControls');
 
 			if (!controls || controls.getAttribute('data-coda-progression-state') === 'true') {
 				return;
@@ -10185,8 +10287,12 @@
 			bindCircleOfFifthsDrag();
 
 			on(global.document, 'click', function (event) {
-				if (closest(event.target, '#toggleCircleOfFifths') || closest(event.target, '#toggleCircleOfFifthsFromContext')) {
-					toggleCircleOfFifthsPopover();
+				var trigger = closest(event.target, '#toggleCircleOfFifths') ||
+					closest(event.target, '#toggleCircleOfFifthsFromContext') ||
+					closest(event.target, '#toggleCircleOfFifthsFromForm');
+
+				if (trigger) {
+					toggleCircleOfFifthsPopover(trigger);
 					return;
 				}
 
@@ -10243,6 +10349,7 @@
 					x: event.clientX - dragState.offsetX,
 					y: event.clientY - dragState.offsetY
 				});
+				circleOfFifthsDragged = true;
 			});
 
 			global.document.addEventListener('mouseup', function () {
@@ -10268,11 +10375,44 @@
 			popover.style.right = 'auto';
 		}
 
+		function positionCircleOfFifthsPopoverNearTrigger(popover, trigger) {
+			var triggerBounds;
+			var margin = 10;
+			var width;
+			var height;
+			var maxLeft;
+			var maxTop;
+			var left;
+			var top;
+
+			if (!popover || !trigger || typeof trigger.getBoundingClientRect !== 'function') {
+				return;
+			}
+
+			triggerBounds = trigger.getBoundingClientRect();
+			width = popover.offsetWidth || 300;
+			height = popover.offsetHeight || 260;
+			maxLeft = Math.max(margin, global.innerWidth - width - margin);
+			maxTop = Math.max(margin, global.innerHeight - height - margin);
+			left = Math.min(maxLeft, Math.max(margin, triggerBounds.left));
+			top = triggerBounds.bottom + margin;
+
+			if (top + height > global.innerHeight - margin) {
+				top = triggerBounds.top - height - margin;
+			}
+
+			top = Math.min(maxTop, Math.max(margin, top));
+			popover.style.left = left + 'px';
+			popover.style.top = top + 'px';
+			popover.style.right = 'auto';
+		}
+
 		function updateCircleOfFifthsAccess(report) {
 			var available = !!(report && report.circleOfFifths);
 
 			updateCircleToggleButton(query('#toggleCircleOfFifths'), available);
 			updateCircleToggleButton(query('#toggleCircleOfFifthsFromContext'), available);
+			updateCircleToggleButton(query('#toggleCircleOfFifthsFromForm'), available);
 
 			if (!available) {
 				closeCircleOfFifthsPopover();
@@ -10292,24 +10432,39 @@
 			}
 		}
 
-		function toggleCircleOfFifthsPopover() {
-			if (isCircleOfFifthsPopoverOpen()) {
+		function toggleCircleOfFifthsPopover(trigger) {
+			var triggerId = getCircleOfFifthsTriggerId(trigger);
+
+			if (isCircleOfFifthsPopoverOpen() && triggerId === circleOfFifthsAnchorId) {
 				closeCircleOfFifthsPopover();
 				return;
 			}
 
-			openCircleOfFifthsPopover();
+			openCircleOfFifthsPopover(trigger);
 		}
 
-		function openCircleOfFifthsPopover() {
+		function openCircleOfFifthsPopover(trigger) {
 			var popover = query('#circleOfFifthsPopover');
+			var triggerId = getCircleOfFifthsTriggerId(trigger);
+			var shouldResetPosition = !!trigger && (triggerId !== circleOfFifthsAnchorId || !circleOfFifthsDragged);
 
 			if (!popover || !uiState.getReport() || !uiState.getReport().circleOfFifths) {
 				return;
 			}
 
 			popover.hidden = false;
+
+			if (shouldResetPosition) {
+				positionCircleOfFifthsPopoverNearTrigger(popover, trigger);
+				circleOfFifthsDragged = false;
+			}
+
+			circleOfFifthsAnchorId = triggerId;
 			setCircleToggleExpanded(true);
+		}
+
+		function getCircleOfFifthsTriggerId(trigger) {
+			return trigger && trigger.id ? trigger.id : '';
 		}
 
 		function closeCircleOfFifthsPopover() {
@@ -10331,6 +10486,7 @@
 		function setCircleToggleExpanded(expanded) {
 			updateCircleToggleExpanded(query('#toggleCircleOfFifths'), expanded);
 			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromContext'), expanded);
+			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromForm'), expanded);
 		}
 
 		function updateCircleToggleExpanded(button, expanded) {

@@ -199,8 +199,52 @@ assert.ok(/^Am/.test(splitProgression.measures[0].chords[1].chordName));
 assert.equal(splitProgression.measures[0].chords[1].tonalFunction, 'T');
 assert.deepEqual(splitProgression.measures[0].chords.map(function (chord) { return chord.durationBeats; }), [1.5, 1.5]);
 assert.equal(splitProgression.measures[0].chords[1].startBeat, 1.5);
-assert.equal(app.addProgressionMeasureChord(splitProgression, 0, { report: cMajorReport }).measures[0].chords.length, 2);
-assert.equal(app.removeProgressionMeasureChord(splitProgression, 0).measures[0].chords, undefined);
+const threeChordMeasureProgression = app.addProgressionMeasureChord(splitProgression, 0, {
+	chordIndex: 1,
+	data: data,
+	progressionState: {
+		articulation: 'legato',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '3/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 3
+	},
+	report: cMajorReport,
+	rng: function () { return 0; }
+});
+const fourChordMeasureProgression = app.addProgressionMeasureChord(threeChordMeasureProgression, 0, {
+	chordIndex: 2,
+	data: data,
+	progressionState: {
+		articulation: 'legato',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '3/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 3
+	},
+	report: cMajorReport,
+	rng: function () { return 0; }
+});
+assert.equal(threeChordMeasureProgression.measures[0].chords.length, 3);
+assert.deepEqual(threeChordMeasureProgression.measures[0].chords.map(function (chord) { return chord.durationBeats; }), [1, 1, 1]);
+assert.equal(fourChordMeasureProgression.measures[0].chords.length, 4);
+assert.deepEqual(fourChordMeasureProgression.measures[0].chords.map(function (chord) { return chord.durationBeats; }), [0.75, 0.75, 0.75, 0.75]);
+assert.equal(app.addProgressionMeasureChord(fourChordMeasureProgression, 0, { chordIndex: 3, report: cMajorReport }).measures[0].chords.length, 4);
+assert.equal(app.removeProgressionMeasureChord(fourChordMeasureProgression, 0, 0).measures[0].chords.length, 4);
+const removedAdditionalChordProgression = app.removeProgressionMeasureChord(fourChordMeasureProgression, 0, 2);
+assert.equal(removedAdditionalChordProgression.measures[0].chords.length, 3);
+assert.deepEqual(removedAdditionalChordProgression.measures[0].chords.map(function (chord) { return chord.durationBeats; }), [1, 1, 1]);
+assert.equal(app.removeProgressionMeasureChord(splitProgression, 0, 1).measures[0].chords, undefined);
 
 const chordMenu = app.buildProgressionChordMenu({
 	currentSegment: cMajorProgressionPlan.measures[0],
@@ -214,6 +258,39 @@ assert.ok(chordMenu[0].items[0].options.some(function (item) {
 assert.ok(chordMenu[0].items[0].options.some(function (item) {
 	return item.kind === 'seventh' && item.displayName === 'Cmaj7 4/2';
 }));
+
+const eMinorReport = app.buildScaleReport({
+	data: data,
+	domain: domain,
+	preferFlats: false,
+	scaleIndex: 2,
+	scaleName: 'Menor natural',
+	tonicIndex: noteIndex('E'),
+	tonicName: 'E'
+});
+const eMinorProgressionPlan = app.buildProgressionFromState({
+	domain: domain,
+	progressionState: {
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		meter: '4/4',
+		voices: 4
+	},
+	report: eMinorReport
+});
+const eMinorChordMenu = app.buildProgressionChordMenu({
+	currentSegment: eMinorProgressionPlan.measures[0],
+	report: eMinorReport
+});
+const cMajorInEMinor = eMinorChordMenu[1].items.filter(function (item) {
+	return item.chordName === 'Cmaj7';
+})[0];
+assert.equal(cMajorInEMinor.degree, 'VImaj7');
+assert.deepEqual(eMinorChordMenu[1].items.map(function (item) {
+	return item.commonToneCount;
+}), [3, 2, 1, 1]);
 
 const replacedSeventhProgression = app.replaceProgressionMeasureChord(cMajorProgressionPlan, 0, 0, {
 	degreeIndex: 4,
