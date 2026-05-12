@@ -128,12 +128,96 @@ assert.deepEqual(programEvent, {
 	tick: 0,
 	type: 'programChange'
 });
-assert.deepEqual(noteOnEvents.slice(0, 4).map(function (event) { return event.note; }), [60, 64, 67, 71]);
-assert.deepEqual(noteOnEvents.slice(4, 8).map(function (event) { return event.note; }), [65, 69, 72, 76]);
+assert.deepEqual(noteOnEvents.slice(0, 4).map(function (event) { return event.note; }), [48, 52, 55, 60]);
+assert.deepEqual(noteOnEvents.slice(4, 8).map(function (event) { return event.note; }), [48, 53, 57, 65]);
 assert.deepEqual(noteOnEvents.slice(4, 8).map(function (event) { return event.tick; }), [1440, 1440, 1440, 1440]);
 assert.equal(noteOffEvents[0].tick, 1440);
 assert.equal(noteOnEvents.length, 16);
 assert.equal(noteOffEvents.length, 16);
+
+const pluckedPedalEvents = midiExport.createProgressionMidiEvents({
+	initialMidiNote: 60,
+	instrument: {
+		id: 'acoustic_grand_piano',
+		pedalBehavior: 'reattack',
+		supportsPedalHold: false
+	},
+	progression: {
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		measures: [
+			{
+				articulation: 'sustain',
+				bar: 1,
+				degree: 'I',
+				durationBeats: 4,
+				midiNotes: [48, 52, 55],
+				pedalsOut: [{ midiNote: 55, note: 'G', toBar: 2 }],
+				startBeat: 0
+			},
+			{
+				articulation: 'sustain',
+				bar: 2,
+				degree: 'IV',
+				durationBeats: 4,
+				midiNotes: [55, 60, 65],
+				pedalsIn: [{ midiNote: 55, note: 'G', fromBar: 1 }],
+				startBeat: 4
+			}
+		]
+	}
+});
+const pluckedPedalNoteOns = pluckedPedalEvents.filter(function (event) {
+	return event.type === 'noteOn';
+});
+const pluckedPedalOffs = pluckedPedalEvents.filter(function (event) {
+	return event.type === 'noteOff' && event.note === 55;
+});
+assert.equal(pluckedPedalNoteOns.length, 6);
+assert.deepEqual(pluckedPedalOffs.map(function (event) { return event.tick; }), [1920, 3840]);
+
+const sustainedPedalEvents = midiExport.createProgressionMidiEvents({
+	initialMidiNote: 60,
+	instrument: {
+		id: 'drawbar_organ',
+		pedalBehavior: 'sustain',
+		supportsPedalHold: true
+	},
+	progression: {
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		measures: [
+			{
+				articulation: 'sustain',
+				bar: 1,
+				degree: 'I',
+				durationBeats: 4,
+				midiNotes: [48, 52, 55],
+				pedalsOut: [{ midiNote: 55, note: 'G', toBar: 2 }],
+				startBeat: 0
+			},
+			{
+				articulation: 'sustain',
+				bar: 2,
+				degree: 'IV',
+				durationBeats: 4,
+				midiNotes: [55, 60, 65],
+				pedalsIn: [{ midiNote: 55, note: 'G', fromBar: 1 }],
+				startBeat: 4
+			}
+		]
+	}
+});
+const sustainedPedalNoteOns = sustainedPedalEvents.filter(function (event) {
+	return event.type === 'noteOn';
+});
+const sustainedPedalOff = sustainedPedalEvents.filter(function (event) {
+	return event.type === 'noteOff' && event.note === 55;
+})[0];
+assert.equal(sustainedPedalNoteOns.length, 5);
+assert.equal(sustainedPedalOff.tick, 3840);
 
 const staccatoEvents = midiExport.createProgressionMidiEvents({
 	initialMidiNote: 60,

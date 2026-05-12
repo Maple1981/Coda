@@ -130,26 +130,44 @@ assert.equal(cMajorProgressionPlan.meter, '3/4');
 assert.equal(cMajorProgressionPlan.style, 'modern');
 assert.equal(cMajorProgressionPlan.totalBeats, 12);
 assert.equal(cMajorProgressionPlan.totalSeconds, 6);
-assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.degree; }), ['Imaj7', 'IVmaj7', 'V7', 'Imaj7']);
-assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'Fmaj7', 'G7', 'Cmaj7']);
+assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.degree; }), ['I', 'IV 6/4', 'V 6', 'I']);
+assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.chordName; }), ['C', 'F', 'G', 'C']);
 assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'SD', 'D', 'T']);
 assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	articulation: 'legato',
 	bar: 2,
 	beatUnit: 4,
 	chord: cMajorReport.scaleChords[3],
-	chordName: 'Fmaj7',
-	degree: 'IVmaj7',
-	displayName: 'Fmaj7',
+	chordKind: 'triad',
+	chordName: 'F',
+	degree: 'IV 6/4',
+	displayName: 'F 6/4',
 	durationBeats: 3,
 	durationSeconds: 1.5,
 	endBeat: 6,
 	endSeconds: 3,
-	notes: ['F', 'A', 'C', 'E'],
+	inversion: '6/4',
+	inversionIndex: 2,
+	midiNotes: [48, 53, 57],
+	notes: ['C', 'F', 'A'],
+	pedalsIn: [],
+	pedalsOut: [],
 	source: 'diatonic',
 	startBeat: 3,
 	startSeconds: 1.5,
+	suspension: '',
 	tonalFunction: 'SD',
+	voiceNotes: [
+		{ midiNote: 48, note: 'C', role: 'fifth' },
+		{ midiNote: 53, note: 'F', role: 'root' },
+		{ midiNote: 57, note: 'A', role: 'third' }
+	],
+	voiceLeading: {
+		commonTones: 1,
+		exteriorParallelPerfects: 0,
+		parallelPerfects: 0,
+		score: 0
+	},
 	voices: 3
 });
 assert.deepEqual(cMajorProgressionPlan.harmonicColor, {
@@ -183,9 +201,17 @@ assert.equal(generatedHighColorProgression.generation.cadence, 'mixed-plagal');
 assert.equal(generatedHighColorProgression.generation.patternId, 'I-iv-I');
 assert.equal(generatedHighColorProgression.generation.style, 'modern');
 assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.source; }), ['diatonic', 'parallel', 'parallel', 'diatonic']);
-assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'Fm7', 'Fm7', 'Cmaj7']);
+assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'Fm7', 'Fm7', 'C']);
 assert.ok(generatedHighColorProgression.measures[0].displayName.indexOf('add9') > -1);
 assert.ok(generatedHighColorProgression.measures[0].notes.length > 4);
+assert.equal(generatedHighColorProgression.measures[0].chordKind, 'triad');
+assert.deepEqual(generatedHighColorProgression.measures[0].pedalsOut.map(function (pedal) { return pedal.note; }), ['G', 'D']);
+assert.equal(generatedHighColorProgression.measures[1].inversion, '4/2');
+assert.equal(generatedHighColorProgression.measures[1].suspension, 'sus2');
+assert.equal(generatedHighColorProgression.measures[1].degree, 'iv7 4/2 sus2');
+assert.equal(generatedHighColorProgression.measures[1].displayName, 'Fm7 4/2 sus2 add9 add13');
+assert.deepEqual(generatedHighColorProgression.measures[1].pedalsIn.map(function (pedal) { return pedal.midiNote; }), [55, 62]);
+assert.equal(generatedHighColorProgression.measures[1].voiceLeading.parallelPerfects, 0);
 assert.equal(app.formatProgressionDegreeForChord('IVJ', 'Fm7'), 'iv7');
 assert.equal(app.formatProgressionDegreeForChord('VII', 'Bm7♭5'), 'vii7♭5');
 assert.equal(app.formatProgressionDegreeForChord('II', 'Db7♭5'), 'II7♭5');
@@ -213,8 +239,8 @@ assert.notDeepEqual(
 	generatedEightBarProgression.measures.slice(0, 4).map(function (measure) { return measure.chordName; }),
 	generatedEightBarProgression.measures.slice(4, 8).map(function (measure) { return measure.chordName; })
 );
-assert.notEqual(generatedEightBarProgression.measures[3].chordName, 'Cmaj7');
-assert.notDeepEqual(generatedEightBarProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['V7', 'Imaj7']);
+assert.notEqual(generatedEightBarProgression.measures[3].chordName, 'C');
+assert.notDeepEqual(generatedEightBarProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['V', 'I']);
 
 const forcedCadenceRules = {
 	patterns: [
@@ -267,12 +293,12 @@ const classicCadenceProgression = app.generateProgressionFromState({
 	rules: forcedCadenceRules
 });
 assert.equal(modernCadenceProgression.generation.cadence, 'half');
-assert.deepEqual(modernCadenceProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['ii7', 'V7']);
+assert.deepEqual(modernCadenceProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['ii7 sus2', 'V7 4/3 sus4']);
 assert.equal(classicCadenceProgression.generation.cadence, 'authentic');
-assert.deepEqual(classicCadenceProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['V7', 'Imaj7']);
+assert.deepEqual(classicCadenceProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['V 6', 'I']);
 
 const reorderedProgression = app.reorderProgressionMeasures(cMajorProgressionPlan, 1, 3);
-assert.deepEqual(reorderedProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'G7', 'Cmaj7', 'Fmaj7']);
+assert.deepEqual(reorderedProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'G', 'C', 'F']);
 assert.deepEqual(reorderedProgression.measures.map(function (measure) { return measure.bar; }), [1, 2, 3, 4]);
 assert.deepEqual(reorderedProgression.measures.map(function (measure) { return measure.startSeconds; }), [0, 1.5, 3, 4.5]);
 assert.equal(reorderedProgression.totalSeconds, cMajorProgressionPlan.totalSeconds);
@@ -288,9 +314,9 @@ assert.equal(cMajorProgressionMidi.events.find(function (event) {
 }).program, 48);
 assert.deepEqual(cMajorProgressionMidi.events.filter(function (event) {
 	return event.type === 'noteOn';
-}).slice(0, 4).map(function (event) {
+}).slice(0, 3).map(function (event) {
 	return event.note;
-}), [60, 64, 67, 71]);
+}), [48, 52, 55]);
 assert.ok(cMajorProgressionMidi.bytes.length > 60);
 
 const cMajorGuitar = app.buildInstrumentView({

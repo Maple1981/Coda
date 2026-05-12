@@ -37,6 +37,7 @@
 				tensions: progressionState.tensions
 			},
 			measures: buildMeasures(resolvedDegrees, progressionState, secondsPerBeat, {
+				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
 				scaleDefinition: options.report.scaleDefinition
 			}),
 			meter: progressionState.meter,
@@ -81,6 +82,8 @@
 			},
 			measures: buildMeasures(resolvedDegrees, progressionState, secondsPerBeat, {
 				includeTensions: true,
+				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
+				rng: options.rng,
 				scaleDefinition: options.report.scaleDefinition,
 				scaleNotes: options.report.scaleNotes
 			}),
@@ -161,11 +164,27 @@
 
 		for (var key in measure) {
 			if (Object.prototype.hasOwnProperty.call(measure, key)) {
-				clone[key] = key === 'notes' && measure.notes ? measure.notes.slice() : measure[key];
+				if ((key === 'notes' || key === 'midiNotes') && measure[key]) {
+					clone[key] = measure[key].slice();
+				} else if (key === 'voiceNotes' && measure[key]) {
+					clone[key] = cloneVoiceNotes(measure[key]);
+				} else {
+					clone[key] = measure[key];
+				}
 			}
 		}
 
 		return clone;
+	}
+
+	function cloneVoiceNotes(voiceNotes) {
+		var result = [];
+
+		for (var i = 0; i < voiceNotes.length; i++) {
+			result.push(extendProgression({}, voiceNotes[i]));
+		}
+
+		return result;
 	}
 
 	function extendProgression(progression, values) {
@@ -198,48 +217,50 @@
 
 	function buildMeasures(resolvedDegrees, progressionState, secondsPerBeat, options) {
 		var measures = [];
-		var measureOptions;
+		var previousPlan = null;
 
 		options = options || {};
 		for (var i = 0; i < resolvedDegrees.length; i++) {
 			var startBeat = i * progressionState.beatsPerBar;
 			var durationBeats = progressionState.beatsPerBar;
-			var notes = chordNotes(resolvedDegrees[i].chord);
-			var tensionLabel = '';
-
-			if (options.includeTensions) {
-				measureOptions = addTensionsToNotes(notes, {
-					degreeIndex: resolvedDegrees[i].degreeIndex,
-					scaleNotes: options.scaleNotes,
-					tensions: progressionState.tensions,
-					voices: progressionState.voices
-				});
-				notes = measureOptions.notes;
-				tensionLabel = measureOptions.label;
-			}
+			var chordPlan = buildChordPlan({
+				index: i,
+				options: options,
+				previousPlan: previousPlan,
+				progressionState: progressionState,
+				resolvedDegree: resolvedDegrees[i],
+				resolvedDegrees: resolvedDegrees
+			});
 
 			measures.push({
 				articulation: progressionState.articulation,
 				bar: i + 1,
 				beatUnit: progressionState.beatUnit,
 				chord: resolvedDegrees[i].chord,
-				chordName: resolvedDegrees[i].chord ? resolvedDegrees[i].chord.nombre : '',
-				degree: formatDegreeForChord(resolvedDegrees[i].degree, resolvedDegrees[i].chord ? resolvedDegrees[i].chord.nombre : ''),
-				displayName: displayName(resolvedDegrees[i].chord, tensionLabel),
+				chordKind: chordPlan.kind,
+				chordName: chordPlan.chordName,
+				degree: displayDegree(chordPlan.degree, chordPlan.inversionLabel, chordPlan.suspension),
+				displayName: displayName(chordPlan.chordName, chordPlan.inversionLabel, chordPlan.suspension, chordPlan.tensionLabel),
 				durationBeats: durationBeats,
 				durationSeconds: durationBeats * secondsPerBeat,
 				endBeat: startBeat + durationBeats,
 				endSeconds: (startBeat + durationBeats) * secondsPerBeat,
-				notes: notes,
+				inversion: chordPlan.inversionLabel,
+				inversionIndex: chordPlan.inversionIndex,
+				midiNotes: chordPlan.midiNotes,
+				notes: chordPlan.notes,
 				source: resolvedDegrees[i].source || 'diatonic',
 				startBeat: startBeat,
 				startSeconds: startBeat * secondsPerBeat,
+				suspension: chordPlan.suspension,
 				tonalFunction: tonalFunctionForDegree(options.scaleDefinition, resolvedDegrees[i].degreeIndex),
+				voiceNotes: chordPlan.voiceNotes,
 				voices: progressionState.voices
 			});
+			previousPlan = chordPlan;
 		}
 
-		return measures;
+		return annotateMeasureVoiceLeading(measures, progressionState);
 	}
 
 	function attachDegreeIndexes(resolvedDegrees, scaleNotes) {
@@ -291,6 +312,631 @@
 		}
 
 		return [chord.fundamental, chord.tercera, chord.quinta, chord.septima];
+	}
+
+	function triadNotes(chord) {
+		if (!chord) {
+			return [];
+		}
+
+		return [chord.fundamental, chord.tercera, chord.quinta];
+	}
+
+	function buildChordPlan(context) {
+		var resolvedDegree = context.resolvedDegree;
+		var chord = resolvedDegree.chord;
+		var useSeventh = shouldUseSeventh(context);
+		var baseNotes = useSeventh ? chordNotes(chord) : triadNotes(chord);
+		var suspension = chooseSuspension(context, baseNotes, useSeventh ? 'seventh' : 'triad');
+
+		if (suspension) {
+			baseNotes = suspendedNotes(baseNotes, suspension.note);
+		}
+
+		var tensionOptions = context.options.includeTensions ? addTensionsToNotes(baseNotes, {
+			degreeIndex: resolvedDegree.degreeIndex,
+			scaleNotes: context.options.scaleNotes,
+			tensions: context.progressionState.tensions,
+			voices: context.progressionState.voices
+		}) : {
+			label: '',
+			notes: baseNotes
+		};
+		var voicing = chooseVoicing({
+			baseNotes: baseNotes,
+			extraNotes: tensionOptions.notes.slice(baseNotes.length),
+			initialMidiNote: context.options.initialMidiNote || 60,
+			kind: useSeventh ? 'seventh' : 'triad',
+			previousPlan: context.previousPlan,
+			voices: context.progressionState.voices
+		});
+		var chordName = useSeventh ? chord.nombre : triadName(chord);
+
+		return {
+			chordName: chordName,
+			degree: formatDegreeForMeasure(resolvedDegree.degree, chord, useSeventh),
+			inversionIndex: voicing.inversionIndex,
+			inversionLabel: voicing.inversionLabel,
+			kind: useSeventh ? 'seventh' : 'triad',
+			midiNotes: voicing.midiNotes,
+			notes: voicing.notes,
+			suspension: suspension ? suspension.label : '',
+			tensionLabel: tensionOptions.label,
+			voiceNotes: voicing.voiceNotes
+		};
+	}
+
+	function chooseSuspension(context, baseNotes, kind) {
+		var chord = context.resolvedDegree.chord;
+		var previousPlan = context.previousPlan;
+		var progressionState = context.progressionState;
+		var rng = typeof context.options.rng === 'function' ? context.options.rng : function () { return 1; };
+		var label;
+		var suspensionNote;
+		var originalVoicing;
+		var suspendedVoicing;
+		var probability;
+
+		if (!chord || !previousPlan || !chord.segunda || !chord.cuarta || baseNotes.length < 3) {
+			return null;
+		}
+
+		if (isTonicBoundary(context.index, context.resolvedDegrees.length, context.resolvedDegree.degreeIndex)) {
+			return null;
+		}
+
+		label = isMinorQuality(chord.nombre) ? 'sus2' : 'sus4';
+		suspensionNote = label === 'sus2' ? chord.segunda : chord.cuarta;
+		originalVoicing = chooseVoicing({
+			baseNotes: baseNotes,
+			extraNotes: [],
+			initialMidiNote: context.options.initialMidiNote || 60,
+			kind: kind,
+			previousPlan: previousPlan,
+			voices: progressionState.voices
+		});
+		suspendedVoicing = chooseVoicing({
+			baseNotes: suspendedNotes(baseNotes, suspensionNote),
+			extraNotes: [],
+			initialMidiNote: context.options.initialMidiNote || 60,
+			kind: kind,
+			previousPlan: previousPlan,
+			voices: progressionState.voices
+		});
+		probability = 0.04 +
+			Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 35) / 260 +
+			Math.max(0, numberOrDefault(progressionState.tensions, 0) - 30) / 320;
+
+		if (voiceLeadingTransitionScore(previousPlan, suspendedVoicing) <= voiceLeadingTransitionScore(previousPlan, originalVoicing) + 1) {
+			probability += 0.18;
+		}
+
+		if (!voiceMovesParsimoniouslyToNote(previousPlan.voiceNotes, suspensionNote, context.options.initialMidiNote || 60)) {
+			probability *= 0.35;
+		}
+
+		if (rng() >= Math.min(0.55, probability)) {
+			return null;
+		}
+
+		return {
+			label: label,
+			note: suspensionNote
+		};
+	}
+
+	function suspendedNotes(baseNotes, suspensionNote) {
+		var result = baseNotes.slice();
+
+		if (result.length > 1) {
+			result[1] = suspensionNote;
+		}
+
+		return result;
+	}
+
+	function voiceMovesParsimoniouslyToNote(voiceNotes, noteName, initialMidiNote) {
+		var targetMidi = noteNameToMidi(noteName, initialMidiNote);
+
+		for (var i = 0; i < (voiceNotes || []).length; i++) {
+			if (targetMidi != null && Math.abs(nearestMidiTo(voiceNotes[i].midiNote, targetMidi) - voiceNotes[i].midiNote) <= 2) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function shouldUseSeventh(context) {
+		var progressionState = context.progressionState;
+		var resolvedDegree = context.resolvedDegree;
+		var nextResolvedDegree = context.resolvedDegrees[context.index + 1];
+		var rng = typeof context.options.rng === 'function' ? context.options.rng : function () { return 1; };
+		var degreeIndex = resolvedDegree.degreeIndex;
+		var voices = Math.max(1, Math.min(numberOrDefault(progressionState.voices, 4), 6));
+		var probability = 0.08;
+
+		if (!resolvedDegree.chord || voices < 4) {
+			return false;
+		}
+
+		if (isTonicBoundary(context.index, context.resolvedDegrees.length, degreeIndex)) {
+			return false;
+		}
+
+		probability += Math.max(0, numberOrDefault(progressionState.tensions, 0) - 25) / 250;
+		probability += Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 35) / 350;
+
+		if (degreeIndex === 4 || degreeIndex === 1) {
+			probability += 0.14;
+		}
+
+		if (nextResolvedDegree && nextResolvedDegree.degreeIndex === 0) {
+			probability += 0.12;
+		}
+
+		if (seventhImprovesMovement(context)) {
+			probability += 0.22;
+		}
+
+		return rng() < Math.min(0.72, probability);
+	}
+
+	function seventhImprovesMovement(context) {
+		var previousPlan = context.previousPlan;
+		var chord = context.resolvedDegree.chord;
+		var initialMidiNote = context.options.initialMidiNote || 60;
+		var voices = context.progressionState.voices;
+		var triadVoicing;
+		var seventhVoicing;
+
+		if (!previousPlan || !chord) {
+			return false;
+		}
+
+		triadVoicing = chooseVoicing({
+			baseNotes: triadNotes(chord),
+			extraNotes: [],
+			initialMidiNote: initialMidiNote,
+			kind: 'triad',
+			previousPlan: previousPlan,
+			voices: voices
+		});
+		seventhVoicing = chooseVoicing({
+			baseNotes: chordNotes(chord),
+			extraNotes: [],
+			initialMidiNote: initialMidiNote,
+			kind: 'seventh',
+			previousPlan: previousPlan,
+			voices: voices
+		});
+
+		return voiceLeadingTransitionScore(previousPlan, seventhVoicing) + 2 <= voiceLeadingTransitionScore(previousPlan, triadVoicing);
+	}
+
+	function isTonicBoundary(index, length, degreeIndex) {
+		return degreeIndex === 0 && (index === 0 || index === length - 1);
+	}
+
+	function chooseVoicing(options) {
+		var labels = options.kind === 'seventh' ? ['', '6/5', '4/3', '4/2'] : ['', '6', '6/4'];
+		var maxInversions = Math.min(options.baseNotes.length, labels.length);
+		var bestVoicing = null;
+		var bestScore = Infinity;
+
+		for (var i = 0; i < maxInversions; i++) {
+			var voicing = createVoicing({
+				baseNotes: options.baseNotes,
+				extraNotes: options.extraNotes,
+				initialMidiNote: options.initialMidiNote,
+				inversionIndex: i,
+				inversionLabel: labels[i],
+				kind: options.kind,
+				voices: options.voices
+			});
+			if (options.previousPlan) {
+				voicing = fitVoicingToPrevious(voicing, options.previousPlan);
+			}
+			var score = options.previousPlan ? voiceLeadingTransitionScore(options.previousPlan, voicing) : firstVoicingScore(voicing);
+
+			if (score < bestScore) {
+				bestScore = score;
+				bestVoicing = voicing;
+			}
+		}
+
+		return bestVoicing || createVoicing({
+			baseNotes: options.baseNotes,
+			extraNotes: options.extraNotes,
+			initialMidiNote: options.initialMidiNote,
+			inversionIndex: 0,
+			inversionLabel: '',
+			kind: options.kind,
+			voices: options.voices
+		});
+	}
+
+	function fitVoicingToPrevious(voicing, previousPlan) {
+		var fittedMidiNotes = [];
+		var fittedVoiceNotes = [];
+		var previousMidiNotes = previousPlan.midiNotes || [];
+
+		for (var i = 0; i < voicing.midiNotes.length; i++) {
+			var referenceNote = previousMidiNotes[Math.min(i, previousMidiNotes.length - 1)];
+			var midiNote = referenceNote != null ? nearestMidiTo(referenceNote, voicing.midiNotes[i]) : voicing.midiNotes[i];
+
+			if (i > 0) {
+				while (midiNote <= fittedMidiNotes[i - 1]) {
+					midiNote += 12;
+				}
+			}
+
+			fittedMidiNotes.push(midiNote);
+			fittedVoiceNotes.push(extendProgression(voicing.voiceNotes[i], {
+				midiNote: midiNote
+			}));
+		}
+
+		return extendProgression(voicing, {
+			midiNotes: fittedMidiNotes,
+			voiceNotes: fittedVoiceNotes
+		});
+	}
+
+	function annotateMeasureVoiceLeading(measures, progressionState) {
+		for (var i = 0; i < measures.length; i++) {
+			var previousMeasure = measures[i - 1] || null;
+			var nextMeasure = measures[i + 1] || null;
+
+			measures[i].pedalsIn = measures[i].pedalsIn || [];
+			measures[i].pedalsOut = measures[i].pedalsOut || [];
+			measures[i].voiceLeading = {
+				commonTones: previousMeasure ? commonVoiceLinks(previousMeasure, measures[i]).length : 0,
+				exteriorParallelPerfects: previousMeasure ? countParallelPerfects(previousMeasure.midiNotes, measures[i].midiNotes, true) : 0,
+				parallelPerfects: previousMeasure ? countParallelPerfects(previousMeasure.midiNotes, measures[i].midiNotes, false) : 0,
+				score: previousMeasure ? voiceLeadingTransitionScore(previousMeasure, measures[i]) : firstVoicingScore(measures[i])
+			};
+
+			if (nextMeasure) {
+				createPedalsBetween(measures[i], nextMeasure, progressionState);
+			}
+		}
+
+		return measures;
+	}
+
+	function createPedalsBetween(currentMeasure, nextMeasure, progressionState) {
+		var links = commonVoiceLinks(currentMeasure, nextMeasure);
+		var maxPedals = numberOrDefault(progressionState.counterpoint, 0) >= 70 ? 2 : 1;
+		var pedalProbability = 0.16 +
+			Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 20) / 180 +
+			Math.max(0, links.length - 1) * 0.12;
+		var selectedLinks = links.slice(0, Math.min(maxPedals, links.length));
+
+		if (!selectedLinks.length || pedalProbability < 0.25) {
+			return;
+		}
+
+		nextMeasure.pedalsIn = nextMeasure.pedalsIn || [];
+		nextMeasure.pedalsOut = nextMeasure.pedalsOut || [];
+
+		for (var i = 0; i < selectedLinks.length; i++) {
+			var link = selectedLinks[i];
+			var pedal = {
+				durationSeconds: nextMeasure.durationSeconds,
+				fromBar: currentMeasure.bar,
+				midiNote: link.midiNote,
+				note: link.note,
+				toBar: nextMeasure.bar
+			};
+
+			alignPedalVoice(nextMeasure, link);
+			currentMeasure.pedalsOut.push(pedal);
+			nextMeasure.pedalsIn.push(pedal);
+		}
+
+		nextMeasure.midiNotes = midiNotesFromVoiceNotes(nextMeasure.voiceNotes);
+	}
+
+	function alignPedalVoice(measure, link) {
+		for (var i = 0; i < measure.voiceNotes.length; i++) {
+			if (normalizePitchName(measure.voiceNotes[i].note) === normalizePitchName(link.note)) {
+				measure.voiceNotes[i] = extendProgression(measure.voiceNotes[i], {
+					midiNote: link.midiNote,
+					role: measure.voiceNotes[i].role + '-pedal'
+				});
+				return;
+			}
+		}
+	}
+
+	function commonVoiceLinks(firstMeasure, secondMeasure) {
+		var links = [];
+		var usedSecondVoices = {};
+
+		for (var i = 0; i < (firstMeasure.voiceNotes || []).length; i++) {
+			for (var j = 0; j < (secondMeasure.voiceNotes || []).length; j++) {
+				if (usedSecondVoices[j] || normalizePitchName(firstMeasure.voiceNotes[i].note) !== normalizePitchName(secondMeasure.voiceNotes[j].note)) {
+					continue;
+				}
+
+				links.push({
+					firstVoiceIndex: i,
+					midiNote: firstMeasure.voiceNotes[i].midiNote,
+					note: firstMeasure.voiceNotes[i].note,
+					secondVoiceIndex: j
+				});
+				usedSecondVoices[j] = true;
+				break;
+			}
+		}
+
+		return links.sort(function (a, b) {
+			return Math.abs(a.firstVoiceIndex - a.secondVoiceIndex) - Math.abs(b.firstVoiceIndex - b.secondVoiceIndex);
+		});
+	}
+
+	function midiNotesFromVoiceNotes(voiceNotes) {
+		var result = [];
+
+		for (var i = 0; i < (voiceNotes || []).length; i++) {
+			result.push(voiceNotes[i].midiNote);
+		}
+
+		return result;
+	}
+
+	function createVoicing(options) {
+		var voiceCount = Math.max(1, Math.min(numberOrDefault(options.voices, 4), 6));
+		var baseNotes = rotate(options.baseNotes, options.inversionIndex);
+		var notes = baseNotes.slice();
+		var factorRoles = rotate(factorRolesForKind(options.kind), options.inversionIndex);
+		var roles = factorRoles.slice();
+		var duplicateIndex = 0;
+		var duplicatePreference = options.kind === 'triad' ? ['root', 'third', 'fifth'] : ['root', 'third', 'seventh', 'fifth'];
+		var midiNotes;
+		var voiceNotes = [];
+
+		while (options.kind === 'triad' && notes.length < Math.min(voiceCount, 4) && notes.length > 0) {
+			var duplicate = duplicateFactor(options.baseNotes, duplicatePreference[duplicateIndex % duplicatePreference.length], options.kind);
+			notes.push(duplicate.note);
+			roles.push(duplicate.role + '-doubling');
+			duplicateIndex += 1;
+		}
+
+		for (var i = 0; i < options.extraNotes.length && notes.length < voiceCount; i++) {
+			notes.push(options.extraNotes[i]);
+			roles.push('tension');
+		}
+
+		while (notes.length < voiceCount && notes.length > 0) {
+			duplicate = duplicateFactor(options.baseNotes, duplicatePreference[duplicateIndex % duplicatePreference.length], options.kind);
+			notes.push(duplicate.note);
+			roles.push(duplicate.role + '-doubling');
+			duplicateIndex += 1;
+		}
+
+		notes = notes.slice(0, voiceCount);
+		roles = roles.slice(0, voiceCount);
+		midiNotes = notesToAscendingMidi(notes, options.initialMidiNote, options.inversionIndex);
+
+		for (var j = 0; j < notes.length; j++) {
+			voiceNotes.push({
+				midiNote: midiNotes[j],
+				note: notes[j],
+				role: roles[j]
+			});
+		}
+
+		return {
+			inversionIndex: options.inversionIndex,
+			inversionLabel: options.inversionLabel,
+			midiNotes: midiNotes,
+			notes: notes,
+			voiceNotes: voiceNotes
+		};
+	}
+
+	function rotate(values, startIndex) {
+		var result = [];
+
+		for (var i = 0; i < values.length; i++) {
+			result.push(values[(startIndex + i) % values.length]);
+		}
+
+		return result;
+	}
+
+	function factorRolesForKind(kind) {
+		return kind === 'seventh' ? ['root', 'third', 'fifth', 'seventh'] : ['root', 'third', 'fifth'];
+	}
+
+	function duplicateFactor(baseNotes, role, kind) {
+		var roleIndex = {
+			fifth: 2,
+			root: 0,
+			seventh: kind === 'seventh' ? 3 : 0,
+			third: 1
+		}[role];
+
+		return {
+			note: baseNotes[Math.min(roleIndex, baseNotes.length - 1)] || baseNotes[0],
+			role: role
+		};
+	}
+
+	function notesToAscendingMidi(notes, initialMidiNote, inversionIndex) {
+		var result = [];
+		var previousNote = null;
+
+		for (var i = 0; i < notes.length; i++) {
+			var midiNote = noteNameToMidi(notes[i], initialMidiNote);
+
+			if (midiNote == null) {
+				continue;
+			}
+
+			midiNote -= 12;
+
+			while (previousNote != null && midiNote <= previousNote) {
+				midiNote += 12;
+			}
+
+			result.push(midiNote);
+			previousNote = midiNote;
+		}
+
+		return result;
+	}
+
+	function noteNameToMidi(noteName, initialMidiNote) {
+		var index = noteIndex(noteName);
+
+		return index == null ? null : initialMidiNote + index;
+	}
+
+	function noteIndex(noteName) {
+		var indexes = {
+			C: 0,
+			'C#': 1,
+			Db: 1,
+			D: 2,
+			'D#': 3,
+			Eb: 3,
+			E: 4,
+			F: 5,
+			'F#': 6,
+			Gb: 6,
+			G: 7,
+			'G#': 8,
+			Ab: 8,
+			A: 9,
+			'A#': 10,
+			Bb: 10,
+			B: 11
+		};
+		var normalizedName = normalizePitchName(noteName);
+
+		return indexes[normalizedName] != null ? indexes[normalizedName] : null;
+	}
+
+	function normalizePitchName(noteName) {
+		var match = /^([A-G])([#b♯♭]?)/.exec(String(noteName || '').replace('♯', '#').replace('♭', 'b'));
+
+		return match ? match[1] + match[2] : '';
+	}
+
+	function transitionScore(previousMidiNotes, nextMidiNotes) {
+		var length = Math.min(previousMidiNotes.length, nextMidiNotes.length);
+		var score = Math.abs(previousMidiNotes.length - nextMidiNotes.length) * 4;
+
+		for (var i = 0; i < length; i++) {
+			score += Math.abs(nearestMidiTo(previousMidiNotes[i], nextMidiNotes[i]) - previousMidiNotes[i]);
+		}
+
+		return score;
+	}
+
+	function voiceLeadingTransitionScore(previousPlan, nextPlan) {
+		var score = transitionScore(previousPlan.midiNotes, nextPlan.midiNotes);
+		var commonTones = commonPitchNames(previousPlan.notes, nextPlan.notes).length;
+		var parallelPerfects = countParallelPerfects(previousPlan.midiNotes, nextPlan.midiNotes, false);
+		var exteriorParallelPerfects = countParallelPerfects(previousPlan.midiNotes, nextPlan.midiNotes, true);
+
+		score -= commonTones * 3;
+		score += parallelPerfects * 18;
+		score += exteriorParallelPerfects * 28;
+
+		return score;
+	}
+
+	function commonPitchNames(firstNotes, secondNotes) {
+		var common = [];
+		var secondNames = {};
+
+		for (var i = 0; i < (secondNotes || []).length; i++) {
+			secondNames[normalizePitchName(secondNotes[i])] = true;
+		}
+
+		for (var j = 0; j < (firstNotes || []).length; j++) {
+			var name = normalizePitchName(firstNotes[j]);
+
+			if (secondNames[name] && common.indexOf(name) === -1) {
+				common.push(name);
+			}
+		}
+
+		return common;
+	}
+
+	function countParallelPerfects(previousMidiNotes, nextMidiNotes, exteriorOnly) {
+		var count = 0;
+		var length = Math.min((previousMidiNotes || []).length, (nextMidiNotes || []).length);
+
+		for (var i = 0; i < length; i++) {
+			for (var j = i + 1; j < length; j++) {
+				if (exteriorOnly && !(i === 0 && j === length - 1)) {
+					continue;
+				}
+
+				if (isParallelPerfect(previousMidiNotes, nextMidiNotes, i, j)) {
+					count += 1;
+				}
+			}
+		}
+
+		return count;
+	}
+
+	function isParallelPerfect(previousMidiNotes, nextMidiNotes, lowerIndex, upperIndex) {
+		var previousInterval = intervalClass(previousMidiNotes[upperIndex] - previousMidiNotes[lowerIndex]);
+		var nextInterval = intervalClass(nextMidiNotes[upperIndex] - nextMidiNotes[lowerIndex]);
+		var lowerMotion = nextMidiNotes[lowerIndex] - previousMidiNotes[lowerIndex];
+		var upperMotion = nextMidiNotes[upperIndex] - previousMidiNotes[upperIndex];
+
+		if (!isPerfectInterval(previousInterval) || previousInterval !== nextInterval) {
+			return false;
+		}
+
+		if (lowerMotion === 0 || upperMotion === 0) {
+			return false;
+		}
+
+		return (lowerMotion > 0 && upperMotion > 0) || (lowerMotion < 0 && upperMotion < 0);
+	}
+
+	function intervalClass(interval) {
+		return Math.abs(interval) % 12;
+	}
+
+	function isPerfectInterval(interval) {
+		return interval === 0 || interval === 7;
+	}
+
+	function nearestMidiTo(referenceNote, midiNote) {
+		var nearest = midiNote;
+
+		while (nearest - referenceNote > 6) {
+			nearest -= 12;
+		}
+
+		while (referenceNote - nearest > 6) {
+			nearest += 12;
+		}
+
+		return nearest;
+	}
+
+	function firstVoicingScore(voicing) {
+		return voicing.inversionIndex * 2 + voiceSpan(voicing.midiNotes) / 12;
+	}
+
+	function voiceSpan(midiNotes) {
+		if (!midiNotes.length) {
+			return 0;
+		}
+
+		return midiNotes[midiNotes.length - 1] - midiNotes[0];
 	}
 
 	function createGenerationPlan(options) {
@@ -375,6 +1021,7 @@
 		weight += affinityScore(progressionState.counterpoint, pattern.counterpoint);
 		weight += affinityScore(progressionState.modalInterchange, pattern.modalColor);
 		weight += affinityScore(progressionState.tensions, pattern.tensionAffinity);
+		weight += commonToneDegreeScore(pattern.degrees, progressionState);
 		weight *= sensitiveDegreeFactor(pattern.degrees, mode, progressionState);
 
 		if (progressionState.articulation === 'arpeggio' && pattern.form === 'circle-of-fifths') {
@@ -574,6 +1221,7 @@
 		weight += affinityScore(progressionState.counterpoint, block.counterpoint);
 		weight += affinityScore(progressionState.modalInterchange, block.modalColor);
 		weight += affinityScore(progressionState.tensions, block.tensionAffinity);
+		weight += commonToneDegreeScore(block.degrees, progressionState);
 		weight *= sensitiveDegreeFactor(block.degrees, mode, progressionState);
 
 		if (block.id === previousBlockId) {
@@ -598,6 +1246,32 @@
 		}
 
 		return factor;
+	}
+
+	function commonToneDegreeScore(degrees, progressionState) {
+		var score = 0;
+		var affinity = 0.4 + numberOrDefault(progressionState.counterpoint, 0) / 160;
+
+		if (!degrees || degrees.length < 2) {
+			return 0;
+		}
+
+		for (var i = 1; i < degrees.length; i++) {
+			var distance = Math.abs((degrees[i] % 7) - (degrees[i - 1] % 7));
+			var circularDistance = Math.min(distance, 7 - distance);
+
+			if (circularDistance === 0) {
+				score += 3.5;
+			} else if (circularDistance === 2) {
+				score += 3;
+			} else if (circularDistance === 3) {
+				score += 2;
+			} else if (circularDistance === 4) {
+				score += 1.5;
+			}
+		}
+
+		return score * affinity;
 	}
 
 	function isModernStyle(progressionState) {
@@ -705,10 +1379,102 @@
 		}
 	}
 
-	function displayName(chord, tensionLabel) {
-		var name = chord ? chord.nombre : '';
+	function displayDegree(degree, inversionLabel, suspensionLabel) {
+		var name = degree || '';
+
+		if (inversionLabel) {
+			name += ' ' + inversionLabel;
+		}
+
+		return suspensionLabel ? name + ' ' + suspensionLabel : name;
+	}
+
+	function displayName(chordName, inversionLabel, suspensionLabel, tensionLabel) {
+		var name = chordName || '';
+
+		if (inversionLabel) {
+			name += ' ' + inversionLabel;
+		}
+
+		if (suspensionLabel) {
+			name += ' ' + suspensionLabel;
+		}
 
 		return tensionLabel ? name + ' ' + tensionLabel : name;
+	}
+
+	function triadName(chord) {
+		var chordName = chord ? chord.nombre : '';
+		var rootMatch = /^([A-G](#|b|♭)?)/.exec(chordName);
+		var root = rootMatch ? rootMatch[1].replace('b', '♭') : chordName;
+		var suffix = chordQualitySuffix(chordName);
+
+		if (!root) {
+			return '';
+		}
+
+		if (suffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
+			return root + 'º';
+		}
+
+		if (suffix.indexOf('mmaj7') >= 0 || suffix.indexOf('mMaj7') >= 0 || suffix.indexOf('m7') >= 0 || suffix === 'm') {
+			return root + 'm';
+		}
+
+		if (suffix.indexOf('aug') >= 0 || suffix.indexOf('+') >= 0) {
+			return root + '+';
+		}
+
+		return root;
+	}
+
+	function isMinorQuality(chordName) {
+		var suffix = chordQualitySuffix(chordName);
+		var lowerSuffix = suffix.toLowerCase();
+
+		if (lowerSuffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
+			return true;
+		}
+
+		if (lowerSuffix.indexOf('maj') === 0) {
+			return false;
+		}
+
+		return lowerSuffix.charAt(0) === 'm';
+	}
+
+	function formatDegreeForMeasure(degree, chord, useSeventh) {
+		if (useSeventh) {
+			return formatDegreeForChord(degree, chord ? chord.nombre : '');
+		}
+
+		return formatTriadDegreeForChord(degree, chord ? chord.nombre : '');
+	}
+
+	function formatTriadDegreeForChord(degree, chordName) {
+		var cleanDegree = String(degree || '').replace('J', '').replace('M', '').replace('m', '');
+		var suffix = chordQualitySuffix(chordName);
+		var transformedDegree;
+
+		if (!cleanDegree) {
+			return '';
+		}
+
+		if (suffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
+			return cleanDegree.toLowerCase() + 'º';
+		}
+
+		if (suffix.indexOf('mmaj7') >= 0 || suffix.indexOf('mMaj7') >= 0 || suffix.indexOf('m7') >= 0 || suffix === 'm') {
+			transformedDegree = cleanDegree.toLowerCase();
+		} else {
+			transformedDegree = cleanDegree.toUpperCase();
+		}
+
+		if (suffix.indexOf('aug') >= 0 || suffix.indexOf('+') >= 0) {
+			transformedDegree += '+';
+		}
+
+		return transformedDegree;
 	}
 
 	function formatDegreeForChord(degree, chordName) {

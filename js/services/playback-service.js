@@ -161,6 +161,36 @@
 			midi.chordOff(channel, chord, startDelay + duration);
 		}
 
+		function playMidiChord(midiNotes, playbackOptions) {
+			playbackOptions = playbackOptions || {};
+
+			if (!midi) {
+				return;
+			}
+
+			if (!isReady()) {
+				load(function () {
+					playMidiChord(midiNotes, playbackOptions);
+				});
+				return;
+			}
+
+			if (typeof midi.chordOn !== 'function' || typeof midi.chordOff !== 'function') {
+				return;
+			}
+
+			var chord = normalizeMidiNotes(midiNotes);
+			var startDelay = defaultValue(playbackOptions.delay, delay);
+			var duration = defaultValue(playbackOptions.duration, 0.75);
+
+			if (!chord.length) {
+				return;
+			}
+
+			midi.chordOn(channel, chord, currentVelocity(), startDelay);
+			midi.chordOff(channel, chord, startDelay + duration);
+		}
+
 		function playMidiNote(midiNote, playbackOptions) {
 			playbackOptions = playbackOptions || {};
 
@@ -190,6 +220,20 @@
 
 			midi.noteOn(channel, noteNumber, currentVelocity(), startDelay);
 			midi.noteOff(channel, noteNumber, startDelay + duration);
+		}
+
+		function normalizeMidiNotes(midiNotes) {
+			var result = [];
+
+			for (var i = 0; i < (midiNotes || []).length; i++) {
+				var noteNumber = Number(midiNotes[i]);
+
+				if (!isNaN(noteNumber)) {
+					result.push(noteNumber);
+				}
+			}
+
+			return result;
 		}
 
 		function stopAllNotes() {
@@ -224,6 +268,19 @@
 			}
 
 			return activeInstrument;
+		}
+
+		function getInstrumentAttributes() {
+			var instrument = findInstrument(activeInstrument);
+
+			return {
+				family: instrument.family || '',
+				id: instrument.id || activeInstrument,
+				pedalBehavior: instrument.pedalBehavior || (instrument.sustained ? 'sustain' : 'reattack'),
+				soundEnvelope: instrument.soundEnvelope || (instrument.sustained ? 'sustained' : 'percussive'),
+				supportsPedalHold: instrument.supportsPedalHold === true || instrument.sustained === true,
+				sustained: instrument.sustained === true
+			};
 		}
 
 		function addReadyCallback(instrumentId, callback) {
@@ -271,9 +328,11 @@
 			getInstrument: function () {
 				return activeInstrument;
 			},
+			getInstrumentAttributes: getInstrumentAttributes,
 			noteNameToMidi: noteNameToMidi,
 			chordNamesToMidi: chordNamesToMidi,
 			playChordFromNames: playChordFromNames,
+			playMidiChord: playMidiChord,
 			playMidiNote: playMidiNote,
 			setInstrument: setInstrument,
 			setVolume: setVolume,

@@ -69,6 +69,8 @@
 			appendMeasureEvents(events, measures[i], {
 				channel: channel,
 				initialMidiNote: initialMidiNote,
+				instrument: instrument,
+				nextMeasure: measures[i + 1] || null,
 				ticksPerBeat: ticksPerBeat,
 				velocity: velocity
 			});
@@ -78,14 +80,18 @@
 	}
 
 	function appendMeasureEvents(events, measure, options) {
-		var notes = chordNotesToMidi(measure.notes || [], options.initialMidiNote);
+		var notes = measure.midiNotes && measure.midiNotes.length ? measure.midiNotes.slice() : chordNotesToMidi(measure.notes || [], options.initialMidiNote);
 		var startTick = Math.round(measure.startBeat * options.ticksPerBeat);
 		var durationTicks = Math.max(1, Math.round(measure.durationBeats * options.ticksPerBeat * articulationFactor(measure.articulation)));
 		var arpeggioStep = measure.articulation === 'arpeggio' ? Math.max(1, Math.round(options.ticksPerBeat / 4)) : 0;
 
 		for (var i = 0; i < notes.length; i++) {
+			if (supportsPedalHold(options.instrument) && isPedalIn(notes[i], measure)) {
+				continue;
+			}
+
 			var noteStart = startTick + (arpeggioStep * i);
-			var noteEnd = Math.max(noteStart + 1, startTick + durationTicks);
+			var noteEnd = Math.max(noteStart + 1, startTick + durationTicks + (supportsPedalHold(options.instrument) ? pedalOutTicks(notes[i], measure, options) : 0));
 
 			events.push({
 				bar: measure.bar,
@@ -106,6 +112,43 @@
 				velocity: 0
 			});
 		}
+	}
+
+	function isPedalIn(midiNote, measure) {
+		var pedals = measure.pedalsIn || [];
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (pedals[i].midiNote === midiNote) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function supportsPedalHold(instrument) {
+		return instrument && (instrument.supportsPedalHold === true || instrument.sustained === true || instrument.pedalBehavior === 'sustain');
+	}
+
+	function pedalOutTicks(midiNote, measure, options) {
+		var pedals = measure.pedalsOut || [];
+		var ticks = 0;
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (pedals[i].midiNote === midiNote) {
+				ticks = Math.max(ticks, nextMeasureDurationTicks(options));
+			}
+		}
+
+		return ticks;
+	}
+
+	function nextMeasureDurationTicks(options) {
+		if (!options.nextMeasure) {
+			return 0;
+		}
+
+		return Math.max(0, Math.round((Number(options.nextMeasure.durationBeats) || 0) * options.ticksPerBeat));
 	}
 
 	function encodeMidiFile(events, options) {

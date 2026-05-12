@@ -117,8 +117,8 @@ assert.equal(initialProgression.bars, 8);
 assert.equal(initialProgression.meter, '4/4');
 assert.equal(initialProgression.totalBeats, 32);
 assert.equal(initialProgression.totalSeconds, 16);
-assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.degree; }), ['Imaj7', 'vi7', 'ii7', 'V7', 'Imaj7', 'IVmaj7', 'V7', 'Imaj7']);
-assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'Am7', 'Dm7', 'G7', 'Cmaj7', 'Fmaj7', 'G7', 'Cmaj7']);
+assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.degree; }), ['I', 'vi 6', 'ii', 'V 6/4', 'I 6', 'IV', 'V 6/4', 'I 6']);
+assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'Am', 'Dm', 'G', 'C', 'F', 'G', 'C']);
 assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'T', 'SD', 'D', 'T', 'SD', 'D', 'T']);
 
 document.getElementById('progressionBars').value = '4';
@@ -148,26 +148,44 @@ assert.equal(changedProgression.meter, '3/4');
 assert.equal(changedProgression.totalBeats, 12);
 assert.equal(changedProgression.totalSeconds, 6);
 assert.equal(rendered.progression, 2);
-assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.degree; }), ['Imaj7', 'IVmaj7', 'V7', 'Imaj7']);
-assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.chordName; }), ['Cmaj7', 'Fmaj7', 'G7', 'Cmaj7']);
+assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.degree; }), ['I', 'IV 6/4', 'V 6', 'I']);
+assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'F', 'G', 'C']);
 assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'SD', 'D', 'T']);
 assert.deepEqual(changedProgression.measures[1], {
 	articulation: 'staccato',
 	bar: 2,
 	beatUnit: 4,
 	chord: initialized.uiState.getReport().scaleChords[3],
-	chordName: 'Fmaj7',
-	degree: 'IVmaj7',
-	displayName: 'Fmaj7',
+	chordKind: 'triad',
+	chordName: 'F',
+	degree: 'IV 6/4',
+	displayName: 'F 6/4',
 	durationBeats: 3,
 	durationSeconds: 1.5,
 	endBeat: 6,
 	endSeconds: 3,
-	notes: ['F', 'A', 'C', 'E'],
+	inversion: '6/4',
+	inversionIndex: 2,
+	midiNotes: [48, 53, 57],
+	notes: ['C', 'F', 'A'],
+	pedalsIn: [],
+	pedalsOut: [],
 	source: 'diatonic',
 	startBeat: 3,
 	startSeconds: 1.5,
+	suspension: '',
 	tonalFunction: 'SD',
+	voiceNotes: [
+		{ midiNote: 48, note: 'C', role: 'fifth' },
+		{ midiNote: 53, note: 'F', role: 'root' },
+		{ midiNote: 57, note: 'A', role: 'third' }
+	],
+	voiceLeading: {
+		commonTones: 1,
+		exteriorParallelPerfects: 0,
+		parallelPerfects: 0,
+		score: 0
+	},
 	voices: 3
 });
 assert.deepEqual(changedProgression.harmonicColor, {

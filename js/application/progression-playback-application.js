@@ -14,6 +14,7 @@
 
 			var startIndex = normalizeStartIndex(callbacks.startIndex, progression);
 			var schedule = buildProgressionPlaybackSchedule(progression, {
+				instrument: playbackInstrumentAttributes(),
 				startIndex: startIndex
 			});
 			var scheduledMeasures = buildScheduledMeasures(progression, startIndex);
@@ -72,6 +73,14 @@
 				!playbackService.isReady();
 		}
 
+		function playbackInstrumentAttributes() {
+			if (playbackService && typeof playbackService.getInstrumentAttributes === 'function') {
+				return playbackService.getInstrumentAttributes();
+			}
+
+			return null;
+		}
+
 		function startRunPlayback(run, progression, schedule, scheduledMeasures) {
 			if (activeRun !== run) {
 				return;
@@ -96,7 +105,7 @@
 		}
 
 		function asImmediateEvent(event) {
-			return {
+			var immediateEvent = {
 				arpeggioStep: event.arpeggioStep,
 				bar: event.bar,
 				degree: event.degree,
@@ -105,11 +114,31 @@
 				mode: event.mode,
 				notes: event.notes
 			};
+
+			if (event.midiNotes && event.midiNotes.length) {
+				immediateEvent.midiNotes = event.midiNotes;
+			}
+
+			if (event.midiNoteEvents && event.midiNoteEvents.length) {
+				immediateEvent.midiNoteEvents = event.midiNoteEvents;
+			}
+
+			return immediateEvent;
 		}
 
 		function playScheduledEvent(event) {
 			if (event.mode === 'arpeggio') {
 				playArpeggio(event);
+				return;
+			}
+
+			if (event.midiNoteEvents && event.midiNoteEvents.length) {
+				playMidiNoteEvents(event);
+				return;
+			}
+
+			if (event.midiNotes && event.midiNotes.length) {
+				playMidiChord(event);
 				return;
 			}
 
@@ -121,10 +150,47 @@
 			}
 		}
 
+		function playMidiChord(event) {
+			if (typeof playbackService.playMidiChord === 'function') {
+				playbackService.playMidiChord(event.midiNotes, {
+					delay: event.delay,
+					duration: event.duration
+				});
+				return;
+			}
+
+			if (typeof playbackService.playMidiNote !== 'function') {
+				return;
+			}
+
+			for (var i = 0; i < event.midiNotes.length; i++) {
+				playbackService.playMidiNote(event.midiNotes[i], {
+					delay: event.delay,
+					duration: event.duration
+				});
+			}
+		}
+
+		function playMidiNoteEvents(event) {
+			if (typeof playbackService.playMidiNote !== 'function') {
+				playMidiChord(event);
+				return;
+			}
+
+			for (var i = 0; i < event.midiNoteEvents.length; i++) {
+				playbackService.playMidiNote(event.midiNoteEvents[i].midiNote, {
+					delay: event.delay,
+					duration: event.midiNoteEvents[i].duration
+				});
+			}
+		}
+
 		function playArpeggio(event) {
 			var midiNotes;
 
-			if (typeof playbackService.chordNamesToMidi === 'function') {
+			if (event.midiNotes && event.midiNotes.length) {
+				midiNotes = event.midiNotes;
+			} else if (typeof playbackService.chordNamesToMidi === 'function') {
 				midiNotes = playbackService.chordNamesToMidi(event.notes, 0);
 			}
 
@@ -215,7 +281,7 @@
 		var schedule = [];
 
 		for (var i = startIndex; i < measures.length; i++) {
-			schedule.push(buildMeasurePlaybackEvent(measures[i], i, startOffset));
+			schedule.push(buildMeasurePlaybackEvent(measures[i], i, startOffset, options));
 		}
 
 		return schedule;
@@ -239,12 +305,14 @@
 		return scheduledMeasures;
 	}
 
-	function buildMeasurePlaybackEvent(measure, index, startOffset) {
+	function buildMeasurePlaybackEvent(measure, index, startOffset, options) {
 		var duration = playbackDuration(measure);
 		var notes = notesForVoices(measure.notes, measure.voices);
+		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
+		var midiNoteEvents = buildMidiNoteEvents(measure, duration, options);
 		var mode = measure.articulation === 'arpeggio' ? 'arpeggio' : 'chord';
 
-		return {
+		var event = {
 			arpeggioStep: arpeggioStepSeconds(measure),
 			bar: measure.bar,
 			degree: measure.degree,
@@ -254,6 +322,71 @@
 			mode: mode,
 			notes: notes
 		};
+
+		if (midiNotes.length) {
+			event.midiNotes = midiNotes;
+		}
+
+		if (midiNoteEvents.length) {
+			event.midiNoteEvents = midiNoteEvents;
+		}
+
+		return event;
+	}
+
+	function buildMidiNoteEvents(measure, duration, options) {
+		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
+		var events = [];
+
+		if (!hasPedals(measure) || !supportsPedalHold(options ? options.instrument : null)) {
+			return events;
+		}
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			if (isPedalIn(midiNotes[i], measure)) {
+				continue;
+			}
+
+			events.push({
+				duration: duration + pedalOutDuration(midiNotes[i], measure),
+				midiNote: midiNotes[i]
+			});
+		}
+
+		return events;
+	}
+
+	function hasPedals(measure) {
+		return (measure.pedalsIn && measure.pedalsIn.length) || (measure.pedalsOut && measure.pedalsOut.length);
+	}
+
+	function supportsPedalHold(instrument) {
+		return instrument && (instrument.supportsPedalHold === true || instrument.sustained === true || instrument.pedalBehavior === 'sustain');
+	}
+
+	function isPedalIn(midiNote, measure) {
+		var pedals = measure.pedalsIn || [];
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (pedals[i].midiNote === midiNote) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function pedalOutDuration(midiNote, measure) {
+		var pedals = measure.pedalsOut || [];
+		var duration = 0;
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (pedals[i].midiNote === midiNote) {
+				duration = Math.max(duration, Number(pedals[i].durationSeconds) || 0);
+			}
+		}
+
+		return duration;
 	}
 
 	function playbackTotalSeconds(progression, scheduledMeasures) {

@@ -78,6 +78,81 @@ assert.equal(schedule[2].mode, 'arpeggio');
 assert.equal(schedule[2].duration, 1.8);
 assert.deepEqual(schedule[2].notes, ['G', 'B', 'D', 'F']);
 
+const pluckedPedalSchedule = app.buildProgressionPlaybackSchedule({
+	measures: [
+		{
+			articulation: 'sustain',
+			bar: 1,
+			degree: 'I',
+			durationSeconds: 2,
+			midiNotes: [48, 52, 55],
+			notes: ['C', 'E', 'G'],
+			pedalsOut: [{ durationSeconds: 2, midiNote: 55, note: 'G', toBar: 2 }],
+			startSeconds: 0,
+			voices: 3
+		},
+		{
+			articulation: 'sustain',
+			bar: 2,
+			degree: 'IV',
+			durationSeconds: 2,
+			midiNotes: [55, 60, 65],
+			notes: ['G', 'C', 'F'],
+			pedalsIn: [{ durationSeconds: 2, midiNote: 55, note: 'G', fromBar: 1 }],
+			startSeconds: 2,
+			voices: 3
+		}
+	]
+}, {
+	instrument: {
+		pedalBehavior: 'reattack',
+		supportsPedalHold: false
+	}
+});
+assert.equal(pluckedPedalSchedule[0].midiNoteEvents, undefined);
+assert.equal(pluckedPedalSchedule[1].midiNoteEvents, undefined);
+
+const pedalSchedule = app.buildProgressionPlaybackSchedule({
+	measures: [
+		{
+			articulation: 'sustain',
+			bar: 1,
+			degree: 'I',
+			durationSeconds: 2,
+			midiNotes: [48, 52, 55],
+			notes: ['C', 'E', 'G'],
+			pedalsOut: [{ durationSeconds: 2, midiNote: 55, note: 'G', toBar: 2 }],
+			startSeconds: 0,
+			voices: 3
+		},
+		{
+			articulation: 'sustain',
+			bar: 2,
+			degree: 'IV',
+			durationSeconds: 2,
+			midiNotes: [55, 60, 65],
+			notes: ['G', 'C', 'F'],
+			pedalsIn: [{ durationSeconds: 2, midiNote: 55, note: 'G', fromBar: 1 }],
+			startSeconds: 2,
+			voices: 3
+		}
+	]
+}, {
+	instrument: {
+		pedalBehavior: 'sustain',
+		supportsPedalHold: true
+	}
+});
+assert.deepEqual(pedalSchedule[0].midiNoteEvents, [
+	{ duration: 1.9, midiNote: 48 },
+	{ duration: 1.9, midiNote: 52 },
+	{ duration: 3.9, midiNote: 55 }
+]);
+assert.deepEqual(pedalSchedule[1].midiNoteEvents, [
+	{ duration: 1.9, midiNote: 60 },
+	{ duration: 1.9, midiNote: 65 }
+]);
+
 const partialSchedule = app.buildProgressionPlaybackSchedule(progression, { startIndex: 1 });
 assert.deepEqual(partialSchedule.map(function (event) { return event.bar; }), [2, 3]);
 assert.deepEqual(partialSchedule.map(function (event) { return event.delay; }), [0, 2]);
