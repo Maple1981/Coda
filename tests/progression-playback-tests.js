@@ -78,6 +78,31 @@ assert.equal(schedule[2].mode, 'arpeggio');
 assert.equal(schedule[2].duration, 1.8);
 assert.deepEqual(schedule[2].notes, ['G', 'B', 'D', 'F']);
 
+const metronomeSchedule = app.buildProgressionMetronomeSchedule({
+	beatsPerBar: 4,
+	bpm: 120,
+	measures: [
+		{
+			bar: 1,
+			durationBeats: 4,
+			startSeconds: 0
+		},
+		{
+			bar: 2,
+			durationBeats: 4,
+			startSeconds: 2
+		}
+	],
+	secondsPerBeat: 0.5
+});
+assert.deepEqual(metronomeSchedule.slice(0, 5), [
+	{ accent: true, bar: 1, beat: 1, delay: 0 },
+	{ accent: false, bar: 1, beat: 2, delay: 0.5 },
+	{ accent: false, bar: 1, beat: 3, delay: 1 },
+	{ accent: false, bar: 1, beat: 4, delay: 1.5 },
+	{ accent: true, bar: 2, beat: 1, delay: 2 }
+]);
+
 const pluckedPedalSchedule = app.buildProgressionPlaybackSchedule({
 	measures: [
 		{
@@ -174,6 +199,7 @@ assert.equal(app.articulationDurationFactor('staccato'), 0.45);
 
 const chordCalls = [];
 const noteCalls = [];
+const metronomeCalls = [];
 let stopped = false;
 const timers = [];
 const clearedTimers = [];
@@ -195,6 +221,9 @@ const playback = app.createProgressionPlayback({
 				note: note,
 				options: options
 			});
+		},
+		playMetronomeClick: function (options) {
+			metronomeCalls.push(options);
 		},
 		stopAllNotes: function () {
 			stopped = true;
@@ -230,6 +259,9 @@ const playResult = playback.play(progression, {
 	},
 	onStart: function () {
 		started = true;
+	},
+	shouldPlayMetronome: function () {
+		return true;
 	}
 });
 
@@ -238,13 +270,14 @@ assert.equal(playback.isPlaying(), true);
 assert.equal(started, true);
 assert.deepEqual(chordCalls, []);
 assert.deepEqual(noteCalls, []);
-assert.deepEqual(timers.map(function (timer) { return timer.milliseconds; }), [0, 2000, 4000, 0, 2000, 4000, 6000]);
+assert.deepEqual(timers.map(function (timer) { return timer.milliseconds; }).slice(0, 7), [0, 2000, 4000, 0, 500, 1000, 1500]);
 
 runTimersAt(0);
 assert.deepEqual(activeBars, [1]);
 assert.deepEqual(chordCalls.map(function (call) { return call.notes; }), [['C', 'E', 'G', 'B']]);
 assert.deepEqual(chordCalls.map(function (call) { return call.options.delay; }), [0]);
 assert.deepEqual(chordCalls.map(function (call) { return call.options.duration; }), [1.9]);
+assert.equal(metronomeCalls[0].accent, true);
 
 runTimersAt(2000);
 assert.deepEqual(activeBars, [1, 2]);

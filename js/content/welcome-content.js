@@ -28,7 +28,7 @@
 					icon: 'flaky',
 					iconClass: 'licencia',
 					title: 'Licencia',
-					body: 'Esta aplicación está creada utilizando solamente especificaciones y estándares <strong>abiertos</strong> como HTML5, CSS3 y JavaScript a través de JQuery. Su código fuente es <strong>libre</strong> y utiliza una licencia <a href="https://creativecommons.org/licenses/by-sa/4.0/" title="Licencia Creative Commons Atribución/Reconocimiento - Compartir igual 4.0 Internacional" target="_blank" rel="noopener noreferrer">Creative Commons by-sa 4.0 International</a>.'
+					body: 'Esta aplicación está creada utilizando solamente especificaciones y estándares <strong>abiertos</strong> como HTML5, CSS3 y JavaScript. Su código fuente es <strong>libre</strong> y utiliza una licencia <a href="https://creativecommons.org/licenses/by-sa/4.0/" title="Licencia Creative Commons Atribución/Reconocimiento - Compartir igual 4.0 Internacional" target="_blank" rel="noopener noreferrer">Creative Commons by-sa 4.0 International</a>.'
 				}
 			]
 		},
@@ -57,7 +57,7 @@
 					icon: 'flaky',
 					iconClass: 'licencia',
 					title: 'License',
-					body: 'This application is built using only <strong>open</strong> specifications and standards such as HTML5, CSS3 and JavaScript through JQuery. Its source code is <strong>free</strong> and uses a <a href="https://creativecommons.org/licenses/by-sa/4.0/" title="Creative Commons Attribution-ShareAlike 4.0 International" target="_blank" rel="noopener noreferrer">Creative Commons by-sa 4.0 International</a> license.'
+					body: 'This application is built using only <strong>open</strong> specifications and standards such as HTML5, CSS3 and JavaScript. Its source code is <strong>free</strong> and uses a <a href="https://creativecommons.org/licenses/by-sa/4.0/" title="Creative Commons Attribution-ShareAlike 4.0 International" target="_blank" rel="noopener noreferrer">Creative Commons by-sa 4.0 International</a> license.'
 				}
 			]
 		}

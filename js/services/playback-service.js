@@ -34,6 +34,7 @@
 		var loadingInstruments = {};
 		var loadedInstruments = {};
 		var readyCallbacks = {};
+		var metronomeAudioContext = null;
 
 		function load(callback) {
 			return loadInstrument(activeInstrument, callback);
@@ -222,6 +223,55 @@
 			midi.noteOff(channel, noteNumber, startDelay + duration);
 		}
 
+		function playMetronomeClick(playbackOptions) {
+			playbackOptions = playbackOptions || {};
+
+			var audioContext = ensureMetronomeAudioContext();
+			var startDelay = Math.max(0, Number(defaultValue(playbackOptions.delay, 0)) || 0);
+			var startTime;
+			var oscillator;
+			var gain;
+			var accent = playbackOptions.accent === true;
+			var volume = currentVelocity() / Math.max(1, baseVelocity);
+
+			if (!audioContext) {
+				return false;
+			}
+
+			startTime = audioContext.currentTime + startDelay;
+			oscillator = audioContext.createOscillator();
+			gain = audioContext.createGain();
+			oscillator.type = 'square';
+			oscillator.frequency.setValueAtTime(accent ? 1320 : 880, startTime);
+			gain.gain.setValueAtTime(0.0001, startTime);
+			gain.gain.exponentialRampToValueAtTime((accent ? 0.22 : 0.13) * volume, startTime + 0.004);
+			gain.gain.exponentialRampToValueAtTime(0.0001, startTime + (accent ? 0.075 : 0.055));
+			oscillator.connect(gain);
+			gain.connect(audioContext.destination);
+			oscillator.start(startTime);
+			oscillator.stop(startTime + 0.09);
+
+			return true;
+		}
+
+		function ensureMetronomeAudioContext() {
+			var AudioContextConstructor = global.AudioContext || global.webkitAudioContext;
+
+			if (!AudioContextConstructor) {
+				return null;
+			}
+
+			if (!metronomeAudioContext) {
+				metronomeAudioContext = new AudioContextConstructor();
+			}
+
+			if (metronomeAudioContext.state === 'suspended' && typeof metronomeAudioContext.resume === 'function') {
+				metronomeAudioContext.resume();
+			}
+
+			return metronomeAudioContext;
+		}
+
 		function normalizeMidiNotes(midiNotes) {
 			var result = [];
 
@@ -332,6 +382,7 @@
 			noteNameToMidi: noteNameToMidi,
 			chordNamesToMidi: chordNamesToMidi,
 			playChordFromNames: playChordFromNames,
+			playMetronomeClick: playMetronomeClick,
 			playMidiChord: playMidiChord,
 			playMidiNote: playMidiNote,
 			setInstrument: setInstrument,

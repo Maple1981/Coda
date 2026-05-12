@@ -204,6 +204,9 @@
 			shouldLoop: function () {
 				return isLoopEnabled();
 			},
+			shouldPlayMetronome: function () {
+				return isMetronomeEnabled();
+			},
 			startIndex: playbackHeadIndex
 		});
 	}
@@ -382,6 +385,12 @@
 
 	function isLoopEnabled() {
 		var checkbox = query('#progressionLoop');
+
+		return checkbox ? checkbox.checked === true : false;
+	}
+
+	function isMetronomeEnabled() {
+		var checkbox = query('#progressionMetronome');
 
 		return checkbox ? checkbox.checked === true : false;
 	}

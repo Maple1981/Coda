@@ -19,6 +19,7 @@
 		html += '</div>';
 		html += renderTimeline();
 		html += '<div class="transportControls">';
+		html += '<label class="loopControl metronomeControl"><input id="progressionMetronome" type="checkbox" /><span data-i18n="progression.metronome"></span></label>';
 		html += '<label class="loopControl"><input id="progressionLoop" type="checkbox" /><span data-i18n="progression.loop"></span></label>';
 		html += '<button type="button" class="transportButton transportButton--goStart" title="" aria-label="" hidden><span class="material-icons" aria-hidden="true">first_page</span><span data-i18n="progression.goStart"></span></button>';
 		html += '<button type="button" class="transportButton transportButton--listen" aria-pressed="false"><span class="material-icons" aria-hidden="true">play_arrow</span><span data-i18n="progression.listen"></span></button>';

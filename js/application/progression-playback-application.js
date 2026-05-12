@@ -87,6 +87,7 @@
 			}
 
 			schedulePlaybackEvents(run, schedule);
+			scheduleMetronomeEvents(run, progression, run.callbacks);
 			scheduleMeasureCallbacks(run, progression, scheduledMeasures);
 		}
 
@@ -94,6 +95,35 @@
 			for (var i = 0; i < schedule.length; i++) {
 				scheduleTimer(run, schedule[i].delay, createPlaybackCallback(run, schedule[i]));
 			}
+		}
+
+		function scheduleMetronomeEvents(run, progression, callbacks) {
+			var schedule;
+
+			if (!shouldPlayMetronome(callbacks) || !playbackService || typeof playbackService.playMetronomeClick !== 'function') {
+				return;
+			}
+
+			schedule = buildProgressionMetronomeSchedule(progression, {
+				startIndex: callbacks.startIndex
+			});
+
+			for (var i = 0; i < schedule.length; i++) {
+				scheduleTimer(run, schedule[i].delay, createMetronomeCallback(run, schedule[i]));
+			}
+		}
+
+		function createMetronomeCallback(run, event) {
+			return function () {
+				if (activeRun === run) {
+					playbackService.playMetronomeClick({
+						accent: event.accent,
+						bar: event.bar,
+						beat: event.beat,
+						delay: 0
+					});
+				}
+			};
 		}
 
 		function createPlaybackCallback(run, event) {
@@ -287,6 +317,37 @@
 		return schedule;
 	}
 
+	function buildProgressionMetronomeSchedule(progression, options) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
+		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
+		var secondsPerBeat = Number(progression && progression.secondsPerBeat) || secondsPerBeatFromProgression(progression);
+		var schedule = [];
+
+		for (var i = startIndex; i < measures.length; i++) {
+			var measure = measures[i];
+			var beats = Math.max(1, Math.round(Number(measure.durationBeats) || Number(progression.beatsPerBar) || 4));
+			var measureDelay = Math.max(0, (Number(measure.startSeconds) || 0) - startOffset);
+
+			for (var beat = 0; beat < beats; beat++) {
+				schedule.push({
+					accent: beat === 0,
+					bar: measure.bar || i + 1,
+					beat: beat + 1,
+					delay: measureDelay + (beat * secondsPerBeat)
+				});
+			}
+		}
+
+		return schedule;
+	}
+
+	function secondsPerBeatFromProgression(progression) {
+		var bpm = Number(progression && progression.bpm) || 120;
+
+		return 60 / Math.max(1, bpm);
+	}
+
 	function buildScheduledMeasures(progression, startIndex) {
 		var measures = progression && progression.measures ? progression.measures : [];
 		startIndex = normalizeStartIndex(startIndex, progression);
@@ -420,6 +481,14 @@
 		return callbacks && callbacks.loop === true;
 	}
 
+	function shouldPlayMetronome(callbacks) {
+		if (callbacks && typeof callbacks.shouldPlayMetronome === 'function') {
+			return callbacks.shouldPlayMetronome();
+		}
+
+		return callbacks && callbacks.metronome === true;
+	}
+
 	function extendCallbacks(callbacks, values) {
 		var result = {};
 		var key;
@@ -483,6 +552,7 @@
 	global.CodaApplication = global.CodaApplication || {};
 	global.CodaApplication.articulationDurationFactor = articulationDurationFactor;
 	global.CodaApplication.buildProgressionPlaybackSchedule = buildProgressionPlaybackSchedule;
+	global.CodaApplication.buildProgressionMetronomeSchedule = buildProgressionMetronomeSchedule;
 	global.CodaApplication.buildScheduledProgressionMeasures = buildScheduledMeasures;
 	global.CodaApplication.createProgressionPlayback = createProgressionPlayback;
 	global.CodaApplication.notesForVoices = notesForVoices;

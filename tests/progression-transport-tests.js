@@ -146,6 +146,8 @@ assert.ok(stopped >= 2);
 
 document.loop.checked = true;
 assert.equal(lastPlayCallbacks.shouldLoop(), true);
+document.metronome.checked = true;
+assert.equal(lastPlayCallbacks.shouldPlayMetronome(), true);
 
 console.log('Progression transport tests passed');
 
@@ -155,6 +157,7 @@ function createFakeDocument(measureCount) {
 	const exportButton = createFakeElement('export');
 	const goStart = createFakeElement('goStart');
 	const loop = createFakeElement('progressionLoop');
+	const metronome = createFakeElement('progressionMetronome');
 	const measures = [];
 
 	for (let i = 0; i < measureCount; i++) {
@@ -167,6 +170,7 @@ function createFakeDocument(measureCount) {
 		goStart,
 		listen,
 		loop,
+		metronome,
 		measures,
 		querySelector: function (selector) {
 			if (selector === '#constructorProgresiones') {
@@ -183,6 +187,9 @@ function createFakeDocument(measureCount) {
 			}
 			if (selector === '#progressionLoop') {
 				return loop;
+			}
+			if (selector === '#progressionMetronome') {
+				return metronome;
 			}
 			const indexMatch = selector.match(/\.measure\[data-progression-index="(\d+)"\]/);
 			if (indexMatch) {

@@ -120,6 +120,7 @@
 		setText(i18n, '.transportButton--goStart span[data-i18n="progression.goStart"]', 'progression.goStart');
 		setText(i18n, '.transportButton--listen span[data-i18n="progression.listen"]', 'progression.listen');
 		setText(i18n, '.transportButton--export span[data-i18n="progression.exportMidi"]', 'progression.exportMidi');
+		setText(i18n, '.metronomeControl span[data-i18n="progression.metronome"]', 'progression.metronome');
 		setText(i18n, '.loopControl span[data-i18n="progression.loop"]', 'progression.loop');
 		setTitleAndLabel(i18n, '.measureDragHandle[data-i18n-title="progression.dragMeasure"]', 'progression.dragMeasure');
 	}

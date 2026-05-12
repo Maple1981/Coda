@@ -1019,7 +1019,7 @@
 					icon: 'flaky',
 					iconClass: 'licencia',
 					title: 'Licencia',
-					body: 'Esta aplicación está creada utilizando solamente especificaciones y estándares <strong>abiertos</strong> como HTML5, CSS3 y JavaScript a través de JQuery. Su código fuente es <strong>libre</strong> y utiliza una licencia <a href="https://creativecommons.org/licenses/by-sa/4.0/" title="Licencia Creative Commons Atribución/Reconocimiento - Compartir igual 4.0 Internacional" target="_blank" rel="noopener noreferrer">Creative Commons by-sa 4.0 International</a>.'
+					body: 'Esta aplicación está creada utilizando solamente especificaciones y estándares <strong>abiertos</strong> como HTML5, CSS3 y JavaScript. Su código fuente es <strong>libre</strong> y utiliza una licencia <a href="https://creativecommons.org/licenses/by-sa/4.0/" title="Licencia Creative Commons Atribución/Reconocimiento - Compartir igual 4.0 Internacional" target="_blank" rel="noopener noreferrer">Creative Commons by-sa 4.0 International</a>.'
 				}
 			]
 		},
@@ -1048,7 +1048,7 @@
 					icon: 'flaky',
 					iconClass: 'licencia',
 					title: 'License',
-					body: 'This application is built using only <strong>open</strong> specifications and standards such as HTML5, CSS3 and JavaScript through JQuery. Its source code is <strong>free</strong> and uses a <a href="https://creativecommons.org/licenses/by-sa/4.0/" title="Creative Commons Attribution-ShareAlike 4.0 International" target="_blank" rel="noopener noreferrer">Creative Commons by-sa 4.0 International</a> license.'
+					body: 'This application is built using only <strong>open</strong> specifications and standards such as HTML5, CSS3 and JavaScript. Its source code is <strong>free</strong> and uses a <a href="https://creativecommons.org/licenses/by-sa/4.0/" title="Creative Commons Attribution-ShareAlike 4.0 International" target="_blank" rel="noopener noreferrer">Creative Commons by-sa 4.0 International</a> license.'
 				}
 			]
 		}
@@ -1306,7 +1306,7 @@
 			'extended.title': 'Armonía extendida de {tonic} {scale}',
 			'extended.tritoneSubstitutes': 'Tritonos sustitutos (D)',
 			'footer.beta': '<strong>CODA está en fase beta</strong>. Puede contener errores. Por favor, todavía no te tomes la aplicación demasiado en serio.',
-			'footer.contact': 'Si tienes algún consejo, idea de mejora o crítica furibunda, puedes contactar conmigo a través de <a href="https://github.com/Maple1981/" title="Ver perfil de Javier Arce en GitHub" target="_blank" rel="noopener noreferrer">GitHub</a>.',
+			'footer.contact': 'Si tienes algún consejo, idea de mejora o crítica furibunda, puedes contactar conmigo a través de <a href="https://github.com/Maple1981/" title="Ver perfil de Javier Arce en GitHub" target="_blank" rel="noopener noreferrer">GitHub</a> o de <a href="https://soundcloud.com/coronaboreal" title="Escuchar a Javier Arce en SoundCloud" target="_blank" rel="noopener noreferrer">SoundCloud</a>.',
 			'footer.github': 'Ver repositorio GitHub',
 			'footer.licenseTitle': 'Licencia Creative Commons Reconocimiento - Compartir igual Internacional',
 			'footer.news': 'Ver novedades y mejoras',
@@ -1321,7 +1321,7 @@
 			'instrument.change': 'Cambiar',
 			'instrument.pianoView': 'Vista de piano',
 			'instrument.tuning': 'Afinación',
-			'meta.description': 'Genera con un solo click escalas, tonalidades y acordes. Practícalos sobre una guitarra y un piano virtuales.',
+			'meta.description': 'Genera fácilmente escalas, tonalidades, acordes y progresiones. Practica y escúchalos sobre un conjunto de instrumentos virtuales, y exporta a MIDI tus progresiones favoritas.',
 			'modal.avoidChord': 'Acorde a evitar',
 			'modal.cadentialChord': 'Acorde cadencial',
 			'modal.mainNote': 'Nota principal',
@@ -1343,6 +1343,7 @@
 			'progression.harmonicColor': 'Color armónico',
 			'progression.listen': 'Preescuchar',
 			'progression.loop': 'Bucle',
+			'progression.metronome': 'Metrónomo',
 			'progression.meter': 'Compás',
 			'progression.modalInterchange': 'Intercambio',
 			'progression.style': 'Estilo',
@@ -1462,7 +1463,7 @@
 			'extended.title': 'Extended harmony for {tonic} {scale}',
 			'extended.tritoneSubstitutes': 'Tritone substitutes (D)',
 			'footer.beta': '<strong>CODA is in beta</strong>. It may contain errors. Please do not take the application too seriously yet.',
-			'footer.contact': 'If you have advice, an improvement idea or fierce criticism, you can contact me through <a href="https://github.com/Maple1981/" title="View Javier Arce on GitHub" target="_blank" rel="noopener noreferrer">GitHub</a>.',
+			'footer.contact': 'If you have advice, an improvement idea or fierce criticism, you can contact me through <a href="https://github.com/Maple1981/" title="View Javier Arce on GitHub" target="_blank" rel="noopener noreferrer">GitHub</a> or <a href="https://soundcloud.com/coronaboreal" title="Listen to Javier Arce on SoundCloud" target="_blank" rel="noopener noreferrer">SoundCloud</a>.',
 			'footer.github': 'View GitHub repository',
 			'footer.licenseTitle': 'Creative Commons Attribution-ShareAlike International license',
 			'footer.news': 'View news and improvements',
@@ -1477,7 +1478,7 @@
 			'instrument.change': 'Change',
 			'instrument.pianoView': 'Piano view',
 			'instrument.tuning': 'Tuning',
-			'meta.description': 'Generate scales, keys and chords with one click. Practice them on virtual guitar and piano views.',
+			'meta.description': 'Easily generate scales, keys, chords and progressions. Practice and listen to them on a set of virtual instruments, and export your favorite progressions to MIDI.',
 			'modal.avoidChord': 'Avoid chord',
 			'modal.cadentialChord': 'Cadential chord',
 			'modal.mainNote': 'Main note',
@@ -1499,6 +1500,7 @@
 			'progression.harmonicColor': 'Harmonic color',
 			'progression.listen': 'Preview',
 			'progression.loop': 'Loop',
+			'progression.metronome': 'Metronome',
 			'progression.meter': 'Meter',
 			'progression.modalInterchange': 'Interchange',
 			'progression.style': 'Style',
@@ -5134,6 +5136,7 @@
 			}
 
 			schedulePlaybackEvents(run, schedule);
+			scheduleMetronomeEvents(run, progression, run.callbacks);
 			scheduleMeasureCallbacks(run, progression, scheduledMeasures);
 		}
 
@@ -5141,6 +5144,35 @@
 			for (var i = 0; i < schedule.length; i++) {
 				scheduleTimer(run, schedule[i].delay, createPlaybackCallback(run, schedule[i]));
 			}
+		}
+
+		function scheduleMetronomeEvents(run, progression, callbacks) {
+			var schedule;
+
+			if (!shouldPlayMetronome(callbacks) || !playbackService || typeof playbackService.playMetronomeClick !== 'function') {
+				return;
+			}
+
+			schedule = buildProgressionMetronomeSchedule(progression, {
+				startIndex: callbacks.startIndex
+			});
+
+			for (var i = 0; i < schedule.length; i++) {
+				scheduleTimer(run, schedule[i].delay, createMetronomeCallback(run, schedule[i]));
+			}
+		}
+
+		function createMetronomeCallback(run, event) {
+			return function () {
+				if (activeRun === run) {
+					playbackService.playMetronomeClick({
+						accent: event.accent,
+						bar: event.bar,
+						beat: event.beat,
+						delay: 0
+					});
+				}
+			};
 		}
 
 		function createPlaybackCallback(run, event) {
@@ -5334,6 +5366,37 @@
 		return schedule;
 	}
 
+	function buildProgressionMetronomeSchedule(progression, options) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
+		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
+		var secondsPerBeat = Number(progression && progression.secondsPerBeat) || secondsPerBeatFromProgression(progression);
+		var schedule = [];
+
+		for (var i = startIndex; i < measures.length; i++) {
+			var measure = measures[i];
+			var beats = Math.max(1, Math.round(Number(measure.durationBeats) || Number(progression.beatsPerBar) || 4));
+			var measureDelay = Math.max(0, (Number(measure.startSeconds) || 0) - startOffset);
+
+			for (var beat = 0; beat < beats; beat++) {
+				schedule.push({
+					accent: beat === 0,
+					bar: measure.bar || i + 1,
+					beat: beat + 1,
+					delay: measureDelay + (beat * secondsPerBeat)
+				});
+			}
+		}
+
+		return schedule;
+	}
+
+	function secondsPerBeatFromProgression(progression) {
+		var bpm = Number(progression && progression.bpm) || 120;
+
+		return 60 / Math.max(1, bpm);
+	}
+
 	function buildScheduledMeasures(progression, startIndex) {
 		var measures = progression && progression.measures ? progression.measures : [];
 		startIndex = normalizeStartIndex(startIndex, progression);
@@ -5467,6 +5530,14 @@
 		return callbacks && callbacks.loop === true;
 	}
 
+	function shouldPlayMetronome(callbacks) {
+		if (callbacks && typeof callbacks.shouldPlayMetronome === 'function') {
+			return callbacks.shouldPlayMetronome();
+		}
+
+		return callbacks && callbacks.metronome === true;
+	}
+
 	function extendCallbacks(callbacks, values) {
 		var result = {};
 		var key;
@@ -5530,6 +5601,7 @@
 	global.CodaApplication = global.CodaApplication || {};
 	global.CodaApplication.articulationDurationFactor = articulationDurationFactor;
 	global.CodaApplication.buildProgressionPlaybackSchedule = buildProgressionPlaybackSchedule;
+	global.CodaApplication.buildProgressionMetronomeSchedule = buildProgressionMetronomeSchedule;
 	global.CodaApplication.buildScheduledProgressionMeasures = buildScheduledMeasures;
 	global.CodaApplication.createProgressionPlayback = createProgressionPlayback;
 	global.CodaApplication.notesForVoices = notesForVoices;
@@ -6512,6 +6584,7 @@
 		html += '</div>';
 		html += renderTimeline();
 		html += '<div class="transportControls">';
+		html += '<label class="loopControl metronomeControl"><input id="progressionMetronome" type="checkbox" /><span data-i18n="progression.metronome"></span></label>';
 		html += '<label class="loopControl"><input id="progressionLoop" type="checkbox" /><span data-i18n="progression.loop"></span></label>';
 		html += '<button type="button" class="transportButton transportButton--goStart" title="" aria-label="" hidden><span class="material-icons" aria-hidden="true">first_page</span><span data-i18n="progression.goStart"></span></button>';
 		html += '<button type="button" class="transportButton transportButton--listen" aria-pressed="false"><span class="material-icons" aria-hidden="true">play_arrow</span><span data-i18n="progression.listen"></span></button>';
@@ -7008,6 +7081,7 @@
 		setText(i18n, '.transportButton--goStart span[data-i18n="progression.goStart"]', 'progression.goStart');
 		setText(i18n, '.transportButton--listen span[data-i18n="progression.listen"]', 'progression.listen');
 		setText(i18n, '.transportButton--export span[data-i18n="progression.exportMidi"]', 'progression.exportMidi');
+		setText(i18n, '.metronomeControl span[data-i18n="progression.metronome"]', 'progression.metronome');
 		setText(i18n, '.loopControl span[data-i18n="progression.loop"]', 'progression.loop');
 		setTitleAndLabel(i18n, '.measureDragHandle[data-i18n-title="progression.dragMeasure"]', 'progression.dragMeasure');
 	}
@@ -8065,6 +8139,9 @@
 			shouldLoop: function () {
 				return isLoopEnabled();
 			},
+			shouldPlayMetronome: function () {
+				return isMetronomeEnabled();
+			},
 			startIndex: playbackHeadIndex
 		});
 	}
@@ -8243,6 +8320,12 @@
 
 	function isLoopEnabled() {
 		var checkbox = query('#progressionLoop');
+
+		return checkbox ? checkbox.checked === true : false;
+	}
+
+	function isMetronomeEnabled() {
+		var checkbox = query('#progressionMetronome');
 
 		return checkbox ? checkbox.checked === true : false;
 	}
@@ -9746,6 +9829,7 @@
 		var loadingInstruments = {};
 		var loadedInstruments = {};
 		var readyCallbacks = {};
+		var metronomeAudioContext = null;
 
 		function load(callback) {
 			return loadInstrument(activeInstrument, callback);
@@ -9934,6 +10018,55 @@
 			midi.noteOff(channel, noteNumber, startDelay + duration);
 		}
 
+		function playMetronomeClick(playbackOptions) {
+			playbackOptions = playbackOptions || {};
+
+			var audioContext = ensureMetronomeAudioContext();
+			var startDelay = Math.max(0, Number(defaultValue(playbackOptions.delay, 0)) || 0);
+			var startTime;
+			var oscillator;
+			var gain;
+			var accent = playbackOptions.accent === true;
+			var volume = currentVelocity() / Math.max(1, baseVelocity);
+
+			if (!audioContext) {
+				return false;
+			}
+
+			startTime = audioContext.currentTime + startDelay;
+			oscillator = audioContext.createOscillator();
+			gain = audioContext.createGain();
+			oscillator.type = 'square';
+			oscillator.frequency.setValueAtTime(accent ? 1320 : 880, startTime);
+			gain.gain.setValueAtTime(0.0001, startTime);
+			gain.gain.exponentialRampToValueAtTime((accent ? 0.22 : 0.13) * volume, startTime + 0.004);
+			gain.gain.exponentialRampToValueAtTime(0.0001, startTime + (accent ? 0.075 : 0.055));
+			oscillator.connect(gain);
+			gain.connect(audioContext.destination);
+			oscillator.start(startTime);
+			oscillator.stop(startTime + 0.09);
+
+			return true;
+		}
+
+		function ensureMetronomeAudioContext() {
+			var AudioContextConstructor = global.AudioContext || global.webkitAudioContext;
+
+			if (!AudioContextConstructor) {
+				return null;
+			}
+
+			if (!metronomeAudioContext) {
+				metronomeAudioContext = new AudioContextConstructor();
+			}
+
+			if (metronomeAudioContext.state === 'suspended' && typeof metronomeAudioContext.resume === 'function') {
+				metronomeAudioContext.resume();
+			}
+
+			return metronomeAudioContext;
+		}
+
 		function normalizeMidiNotes(midiNotes) {
 			var result = [];
 
@@ -10044,6 +10177,7 @@
 			noteNameToMidi: noteNameToMidi,
 			chordNamesToMidi: chordNamesToMidi,
 			playChordFromNames: playChordFromNames,
+			playMetronomeClick: playMetronomeClick,
 			playMidiChord: playMidiChord,
 			playMidiNote: playMidiNote,
 			setInstrument: setInstrument,
