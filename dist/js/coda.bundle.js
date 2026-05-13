@@ -7602,8 +7602,8 @@
 		return '<div class="measureChord" data-measure-chord-index="' + escapeHtml(chordIndex) + '">' +
 			dragHandle +
 			buttons +
-			'<span class="measureChordName"><strong>' + escapeHtml(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
-			(degree ? '<em class="measureDegree">' + escapeHtml(degree) + '</em>' : '') +
+			'<span class="measureChordName"><strong>' + formatMusicalLabel(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
+			(degree ? '<em class="measureDegree">' + formatMusicalLabel(degree) + '</em>' : '') +
 			(tonalFunction ? '<span class="measureFunction">' + escapeHtml(tonalFunction) + '</span>' : '') +
 			'</div>';
 	}
@@ -7624,6 +7624,20 @@
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&#39;');
+	}
+
+	function formatMusicalLabel(value) {
+		return String(value).split(/(\s+)/).map(function (part) {
+			if (isInversionLabel(part)) {
+				return '<sub class="musicInversion">' + escapeHtml(part) + '</sub>';
+			}
+
+			return escapeHtml(part);
+		}).join('');
+	}
+
+	function isInversionLabel(value) {
+		return /^(6|6\/4|6\/5|4\/3|4\/2)$/.test(value);
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};
@@ -9439,7 +9453,7 @@
 		var optionsContainer = doc.createElement('div');
 
 		details.className = 'progressionChordMenu__chord';
-		summary.textContent = item.chordName + (item.degree ? ' · ' + item.degree : '');
+		summary.innerHTML = formatMusicalLabel(item.chordName) + (item.degree ? ' &middot; ' + formatMusicalLabel(item.degree) : '');
 		optionsContainer.className = 'progressionChordMenu__options';
 		details.appendChild(summary);
 		details.appendChild(optionsContainer);
@@ -9463,9 +9477,32 @@
 		button.setAttribute('data-degree-index', item.degreeIndex);
 		button.setAttribute('data-chord-kind', item.kind);
 		button.setAttribute('data-inversion-index', item.inversionIndex);
-		button.textContent = kindLabel + ': ' + item.displayName + (item.degree ? ' · ' + item.degree : '');
+		button.innerHTML = escapeHtml(kindLabel + ': ') + formatMusicalLabel(item.displayName) + (item.degree ? ' &middot; ' + formatMusicalLabel(item.degree) : '');
 
 		return button;
+	}
+
+	function formatMusicalLabel(value) {
+		return String(value).split(/(\s+)/).map(function (part) {
+			if (isInversionLabel(part)) {
+				return '<sub class="musicInversion">' + escapeHtml(part) + '</sub>';
+			}
+
+			return escapeHtml(part);
+		}).join('');
+	}
+
+	function isInversionLabel(value) {
+		return /^(6|6\/4|6\/5|4\/3|4\/2)$/.test(value);
+	}
+
+	function escapeHtml(value) {
+		return String(value)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
 	}
 
 	function closeChordMenu() {

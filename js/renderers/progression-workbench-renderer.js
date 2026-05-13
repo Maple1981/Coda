@@ -162,8 +162,8 @@
 		return '<div class="measureChord" data-measure-chord-index="' + escapeHtml(chordIndex) + '">' +
 			dragHandle +
 			buttons +
-			'<span class="measureChordName"><strong>' + escapeHtml(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
-			(degree ? '<em class="measureDegree">' + escapeHtml(degree) + '</em>' : '') +
+			'<span class="measureChordName"><strong>' + formatMusicalLabel(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
+			(degree ? '<em class="measureDegree">' + formatMusicalLabel(degree) + '</em>' : '') +
 			(tonalFunction ? '<span class="measureFunction">' + escapeHtml(tonalFunction) + '</span>' : '') +
 			'</div>';
 	}
@@ -184,6 +184,20 @@
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&#39;');
+	}
+
+	function formatMusicalLabel(value) {
+		return String(value).split(/(\s+)/).map(function (part) {
+			if (isInversionLabel(part)) {
+				return '<sub class="musicInversion">' + escapeHtml(part) + '</sub>';
+			}
+
+			return escapeHtml(part);
+		}).join('');
+	}
+
+	function isInversionLabel(value) {
+		return /^(6|6\/4|6\/5|4\/3|4\/2)$/.test(value);
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};

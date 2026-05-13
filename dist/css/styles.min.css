@@ -2001,6 +2001,12 @@ section#bienvenida .columnata article {
   margin-top: .3em;
 }
 
+.musicInversion {
+  font-size: .72em;
+  line-height: 0;
+  vertical-align: sub;
+}
+
 .measureFunction {
   -ms-flex-item-align: start;
       align-self: flex-start;

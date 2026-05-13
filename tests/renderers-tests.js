@@ -434,6 +434,19 @@ assert.ok(renderedProgressionTimeline.indexOf('data-i18n-title="progression.chan
 assert.ok(renderedProgressionTimeline.indexOf('<strong>Cmaj7 add9</strong>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<em class="measureDegree">Imaj7</em>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<span class="measureFunction">T</span>') > -1);
+const invertedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
+	measures: [
+		{
+			bar: 1,
+			chordName: 'F',
+			degree: 'IV 6/4',
+			displayName: 'F 6/4',
+			tonalFunction: 'SD'
+		}
+	]
+});
+assert.ok(invertedProgressionTimeline.indexOf('<strong>F <sub class="musicInversion">6/4</sub></strong>') > -1);
+assert.ok(invertedProgressionTimeline.indexOf('<em class="measureDegree">IV <sub class="musicInversion">6/4</sub></em>') > -1);
 assert.ok(progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [
 		{
