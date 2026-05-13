@@ -245,6 +245,34 @@ const removedAdditionalChordProgression = app.removeProgressionMeasureChord(four
 assert.equal(removedAdditionalChordProgression.measures[0].chords.length, 3);
 assert.deepEqual(removedAdditionalChordProgression.measures[0].chords.map(function (chord) { return chord.durationBeats; }), [1, 1, 1]);
 assert.equal(app.removeProgressionMeasureChord(splitProgression, 0, 1).measures[0].chords, undefined);
+const manualSplitMeasureProgression = {
+	beatsPerBar: 4,
+	bpm: 120,
+	measures: [
+		{
+			bar: 1,
+			chordName: 'C',
+			displayName: 'C',
+			durationBeats: 4,
+			durationSeconds: 2,
+			startBeat: 0,
+			startSeconds: 0,
+			chords: [
+				{ bar: 1, chordIndex: 0, chordName: 'C', displayName: 'C', durationBeats: 1, durationSeconds: 0.5, startBeat: 0, startSeconds: 0 },
+				{ bar: 1, chordIndex: 1, chordName: 'Am', displayName: 'Am', durationBeats: 1, durationSeconds: 0.5, startBeat: 1, startSeconds: 0.5 },
+				{ bar: 1, chordIndex: 2, chordName: 'Em', displayName: 'Em', durationBeats: 1, durationSeconds: 0.5, startBeat: 2, startSeconds: 1 },
+				{ bar: 1, chordIndex: 3, chordName: 'G', displayName: 'G', durationBeats: 1, durationSeconds: 0.5, startBeat: 3, startSeconds: 1.5 }
+			]
+		}
+	],
+	secondsPerBeat: 0.5
+};
+const reorderedMeasureChordsProgression = app.reorderProgressionMeasureChords(manualSplitMeasureProgression, 0, 3, 1);
+assert.deepEqual(reorderedMeasureChordsProgression.measures[0].chords.map(function (chord) { return chord.chordName; }), ['C', 'G', 'Am', 'Em']);
+assert.deepEqual(reorderedMeasureChordsProgression.measures[0].chords.map(function (chord) { return chord.chordIndex; }), [0, 1, 2, 3]);
+assert.deepEqual(reorderedMeasureChordsProgression.measures[0].chords.map(function (chord) { return chord.startBeat; }), [0, 1, 2, 3]);
+assert.strictEqual(app.reorderProgressionMeasureChords(manualSplitMeasureProgression, 0, 3, 0), manualSplitMeasureProgression);
+assert.strictEqual(app.reorderProgressionMeasureChords(manualSplitMeasureProgression, 0, 0, 2), manualSplitMeasureProgression);
 
 const chordMenu = app.buildProgressionChordMenu({
 	currentSegment: cMajorProgressionPlan.measures[0],

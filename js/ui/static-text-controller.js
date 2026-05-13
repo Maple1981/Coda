@@ -33,6 +33,8 @@
 		setAttribute(i18n, '#toggleCircleOfFifths', 'aria-label', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'aria-label', 'circle.open');
+		setAttribute(i18n, '#toggleWorkbenchInstrumentMenu', 'title', 'progression.changeInstrument');
+		setAttribute(i18n, '#toggleWorkbenchInstrumentMenu', 'aria-label', 'progression.changeInstrument');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'aria-label', 'circle.open');
 		setAttribute(i18n, '#closeCircleOfFifths', 'title', 'circle.close');
@@ -118,6 +120,8 @@
 		setText(i18n, 'option[data-i18n="progression.style.classic"]', 'progression.style.classic');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'aria-label', 'circle.open');
+		setAttribute(i18n, '#toggleWorkbenchInstrumentMenu', 'title', 'progression.changeInstrument');
+		setAttribute(i18n, '#toggleWorkbenchInstrumentMenu', 'aria-label', 'progression.changeInstrument');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'aria-label', 'circle.open');
 		setText(i18n, '.transportButton--generate span[data-i18n="progression.generate"]', 'progression.generate');
@@ -128,6 +132,7 @@
 		setText(i18n, '.loopControl span[data-i18n="progression.loop"]', 'progression.loop');
 		setTitleAndLabel(i18n, '.measureChordMenuButton[data-i18n-title="progression.changeMeasureChord"]', 'progression.changeMeasureChord');
 		setTitleAndLabel(i18n, '.measureDragHandle[data-i18n-title="progression.dragMeasure"]', 'progression.dragMeasure');
+		setTitleAndLabel(i18n, '.measureChordDragHandle[data-i18n-title="progression.dragMeasureChord"]', 'progression.dragMeasureChord');
 		setTitleAndLabel(i18n, '.measureSplitButton[data-i18n-title="progression.addMeasureChord"]', 'progression.addMeasureChord');
 		setTitleAndLabel(i18n, '.measureSplitButton[data-i18n-title="progression.removeMeasureChord"]', 'progression.removeMeasureChord');
 	}

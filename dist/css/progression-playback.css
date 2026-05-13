@@ -70,12 +70,49 @@
   line-height: 1;
 }
 
+.measureChordDragHandle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 1.45em;
+  height: 1.45em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #151515;
+  color: #bbb;
+  cursor: grab;
+}
+
+.measureChordDragHandle:hover,
+.measureChordDragHandle:focus {
+  border-color: #a622ae;
+  color: #d85ee0;
+  outline: none;
+}
+
+.measureChordDragHandle .material-icons {
+  font-size: 1em;
+  line-height: 1;
+}
+
 .measure--split .measureChord {
   min-height: 3.1em;
   padding: 0.45em 1.85em 0.45em 0.55em;
   border: 1px solid rgba(197, 246, 255, 0.18);
   border-radius: 5px;
   background: rgba(197, 246, 255, 0.04);
+}
+
+.measure--split .measureChord.isDragging {
+  opacity: 0.55;
+}
+
+.measure--split .measureChord.isChordDropTarget {
+  border-color: #a622ae;
+  background: rgba(172, 72, 190, 0.12);
 }
 
 .measureSplitActions {
@@ -289,6 +326,23 @@ body[data-theme="day"] .measureChordMenuButton {
 body[data-theme="day"] .measureChordMenuButton:hover,
 body[data-theme="day"] .measureChordMenuButton:focus {
   color: #7d2785;
+}
+
+body[data-theme="day"] .measureChordDragHandle {
+  background: #ffffff;
+  border-color: #b7c3ca;
+  color: #59656b;
+}
+
+body[data-theme="day"] .measureChordDragHandle:hover,
+body[data-theme="day"] .measureChordDragHandle:focus {
+  border-color: #7d2785;
+  color: #7d2785;
+}
+
+body[data-theme="day"] .measure--split .measureChord.isChordDropTarget {
+  border-color: #7d2785;
+  background: rgba(125, 39, 133, 0.1);
 }
 
 body[data-theme="day"] .progressionChordMenu {

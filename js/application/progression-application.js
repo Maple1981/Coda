@@ -131,6 +131,34 @@
 		return rebuildProgressionTimeline(progression, measures);
 	}
 
+	function reorderProgressionMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex) {
+		var measures = progression && progression.measures ? progression.measures.slice() : [];
+		var index = clampMeasureIndex(measureIndex, measures.length);
+		var measure = measures[index];
+		var segments;
+		var movedSegment;
+
+		if (!progression || !measure || !measure.chords || measure.chords.length < 3) {
+			return progression;
+		}
+
+		segments = measureSegments(measure);
+		fromChordIndex = clampChordIndex(fromChordIndex, segments.length);
+		toChordIndex = clampChordIndex(toChordIndex, segments.length);
+
+		if (fromChordIndex === 0 || toChordIndex === 0 || fromChordIndex === toChordIndex) {
+			return progression;
+		}
+
+		movedSegment = segments.splice(fromChordIndex, 1)[0];
+		segments.splice(toChordIndex, 0, movedSegment);
+		measures[index] = measureWithSegments(measure, segments, progression);
+
+		return extendProgression(progression, {
+			measures: measures
+		});
+	}
+
 	function addProgressionMeasureChord(progression, measureIndex, options) {
 		var measures = progression && progression.measures ? progression.measures.slice() : [];
 		var index = clampMeasureIndex(measureIndex, measures.length);
@@ -2303,5 +2331,6 @@
 	global.CodaApplication.rebuildProgressionTimeline = rebuildProgressionTimeline;
 	global.CodaApplication.removeProgressionMeasureChord = removeProgressionMeasureChord;
 	global.CodaApplication.replaceProgressionMeasureChord = replaceProgressionMeasureChord;
+	global.CodaApplication.reorderProgressionMeasureChords = reorderProgressionMeasureChords;
 	global.CodaApplication.reorderProgressionMeasures = reorderProgressionMeasures;
 })(window);

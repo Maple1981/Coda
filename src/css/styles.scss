@@ -948,13 +948,31 @@ section#bienvenida .columnata article{
 }
 
 .workbenchContext{
+	display:inline-flex;
+	align-items:center;
+	gap:.75em;
+	min-width:0;
 	margin-bottom:0;
 	font-size:.85em;
 	font-weight:600;
 	text-align:right;
 }
 
+.workbenchContextKey,
+.workbenchContextInstrument{
+	white-space:nowrap;
+}
+
+.workbenchContextKey{
+	color:$basic_front_color;
+}
+
+.workbenchContextInstrument{
+	color:$neutral_color;
+}
+
 .workbenchContextGroup{
+	position:relative;
 	display:flex;
 	align-items:center;
 	justify-content:flex-end;
@@ -963,7 +981,8 @@ section#bienvenida .columnata article{
 	margin-left:auto;
 }
 
-.workbenchCircleToggle{
+.workbenchCircleToggle,
+.workbenchInstrumentToggle{
 	display:inline-flex;
 	align-items:center;
 	justify-content:center;
@@ -978,14 +997,60 @@ section#bienvenida .columnata article{
 }
 
 .workbenchCircleToggle:hover,
-.workbenchCircleToggle:focus{
+.workbenchCircleToggle:focus,
+.workbenchInstrumentToggle:hover,
+.workbenchInstrumentToggle:focus{
 	color:$corporative_mainbright_color;
 	outline:none;
 }
 
-.workbenchCircleToggle .material-icons{
+.workbenchCircleToggle .material-icons,
+.workbenchInstrumentToggle .material-icons{
 	font-size:1.25em;
 	line-height:1;
+}
+
+.workbenchInstrumentMenu{
+	position:absolute;
+	top:calc(100% + .45em);
+	right:0;
+	z-index:72;
+	width:max-content;
+	min-width:12em;
+	max-width:min(18em, calc(100vw - 2em));
+	display:flex;
+	flex-direction:column;
+	gap:.2em;
+	padding:.45em;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:6px;
+	background:$basic_filldarkgrad_color;
+	color:$basic_front_color;
+	box-shadow:0 14px 34px rgba(0, 0, 0, .45);
+}
+
+.workbenchInstrumentMenu[hidden]{
+	display:none;
+}
+
+.workbenchInstrumentMenuItem{
+	width:100%;
+	padding:.45em .65em;
+	border:1px solid transparent;
+	border-radius:4px;
+	background:transparent;
+	color:$basic_front_color;
+	cursor:pointer;
+	text-align:left;
+	white-space:nowrap;
+}
+
+.workbenchInstrumentMenuItem:hover,
+.workbenchInstrumentMenuItem:focus,
+.workbenchInstrumentMenuItem[aria-pressed="true"]{
+	border-color:$corporative_complementary_color;
+	color:$corporative_mainbright_color;
+	outline:none;
 }
 
 .progressionControls{
@@ -1131,12 +1196,49 @@ section#bienvenida .columnata article{
 	line-height:1;
 }
 
+.measureChordDragHandle{
+	position:absolute;
+	right:0;
+	top:0;
+	width:1.45em;
+	height:1.45em;
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:4px;
+	background:$basic_filldarkgrad_color;
+	color:$neutral_color;
+	cursor:grab;
+}
+
+.measureChordDragHandle:hover,
+.measureChordDragHandle:focus{
+	border-color:$corporative_complementary_color;
+	color:$corporative_complementarybright_color;
+	outline:none;
+}
+
+.measureChordDragHandle .material-icons{
+	font-size:1em;
+	line-height:1;
+}
+
 .measure--split .measureChord{
 	min-height:3.1em;
 	padding:.45em 1.85em .45em .55em;
 	border:1px solid rgba(197, 246, 255, .18);
 	border-radius:5px;
 	background:rgba(197, 246, 255, .04);
+}
+
+.measure--split .measureChord.isDragging{
+	opacity:.55;
+}
+
+.measure--split .measureChord.isChordDropTarget{
+	border-color:$corporative_complementary_color;
+	background:rgba(172, 72, 190, .12);
 }
 
 .measureSplitActions{
@@ -1517,6 +1619,32 @@ body[data-theme="day"] .measureFunction{
 	color:#7d2785;
 }
 
+body[data-theme="day"] .workbenchContextKey{
+	color:#1f2528;
+}
+
+body[data-theme="day"] .workbenchContextInstrument{
+	color:#59656b;
+}
+
+body[data-theme="day"] .workbenchInstrumentMenu{
+	background:#ffffff;
+	color:#1f2528;
+	border-color:#b7c3ca;
+	box-shadow:0 14px 32px rgba(25, 36, 42, .24);
+}
+
+body[data-theme="day"] .workbenchInstrumentMenuItem{
+	color:#1f2528;
+}
+
+body[data-theme="day"] .workbenchInstrumentMenuItem:hover,
+body[data-theme="day"] .workbenchInstrumentMenuItem:focus,
+body[data-theme="day"] .workbenchInstrumentMenuItem[aria-pressed="true"]{
+	border-color:#7d2785;
+	color:#006e58;
+}
+
 body[data-theme="day"] .measure--split .measureChord{
 	border-color:rgba(125, 39, 133, .18);
 	background:rgba(125, 39, 133, .05);
@@ -1541,6 +1669,23 @@ body[data-theme="day"] .measureChordMenuButton{
 body[data-theme="day"] .measureChordMenuButton:hover,
 body[data-theme="day"] .measureChordMenuButton:focus{
 	color:#7d2785;
+}
+
+body[data-theme="day"] .measureChordDragHandle{
+	background:#ffffff;
+	border-color:#b7c3ca;
+	color:#59656b;
+}
+
+body[data-theme="day"] .measureChordDragHandle:hover,
+body[data-theme="day"] .measureChordDragHandle:focus{
+	border-color:#7d2785;
+	color:#7d2785;
+}
+
+body[data-theme="day"] .measure--split .measureChord.isChordDropTarget{
+	border-color:#7d2785;
+	background:rgba(125, 39, 133, .1);
 }
 
 body[data-theme="day"] .progressionChordMenu{

@@ -44,6 +44,7 @@ let changedProgression = null;
 let changedOptions = null;
 let playCalls = 0;
 let splitRequest = null;
+let reorderedChordRequest = null;
 
 const controller = context.window.CodaProgressionTransport.initialize({
 	application: {
@@ -75,6 +76,17 @@ const controller = context.window.CodaProgressionTransport.initialize({
 			};
 			return {
 				measures: sourceProgression.measures.slice(0, 2)
+			};
+		},
+		reorderProgressionMeasureChords: function (sourceProgression, measureIndex, fromChordIndex, toChordIndex) {
+			reorderedChordRequest = {
+				fromChordIndex: fromChordIndex,
+				measureIndex: measureIndex,
+				sourceProgression: sourceProgression,
+				toChordIndex: toChordIndex
+			};
+			return {
+				measures: sourceProgression.measures.slice()
 			};
 		}
 	},
@@ -190,6 +202,27 @@ assert.deepEqual(changedOptions, {
 });
 assert.ok(stopped >= 2);
 
+document.measures[1].dispatchChordDragStart(3);
+document.measures[1].dropChordOn(1);
+assert.deepEqual(reorderedChordRequest, {
+	fromChordIndex: 3,
+	measureIndex: 1,
+	sourceProgression: progression,
+	toChordIndex: 1
+});
+assert.deepEqual(changedOptions, {
+	playbackHeadIndex: 1
+});
+
+reorderedChordRequest = null;
+document.measures[1].dispatchChordDragStart(2);
+document.measures[1].dropChordOn(0);
+assert.equal(reorderedChordRequest, null);
+
+document.measures[1].dispatchChordDragStart(2);
+document.measures[2].dropChordOn(1);
+assert.equal(reorderedChordRequest, null);
+
 document.loop.checked = true;
 assert.equal(lastPlayCallbacks.shouldLoop(), true);
 document.metronome.checked = true;
@@ -205,9 +238,10 @@ function createFakeDocument(measureCount) {
 	const loop = createFakeElement('progressionLoop');
 	const metronome = createFakeElement('progressionMetronome');
 	const measures = [];
+	const chordElements = [];
 
 	for (let i = 0; i < measureCount; i++) {
-		measures.push(createFakeMeasure(i, rootElement));
+		measures.push(createFakeMeasure(i, rootElement, chordElements));
 	}
 
 	const fakeDocument = {
@@ -263,6 +297,11 @@ function createFakeDocument(measureCount) {
 					return measure.classList.contains('isDragging') || measure.classList.contains('isDropTarget');
 				});
 			}
+			if (selector === '.measureChord.isDragging, .measureChord.isChordDropTarget') {
+				return chordElements.filter(function (chordElement) {
+					return chordElement.classList.contains('isDragging') || chordElement.classList.contains('isChordDropTarget');
+				});
+			}
 			return [];
 		},
 		dragStart: function (index) {
@@ -287,10 +326,35 @@ function createFakeDocument(measureCount) {
 	return fakeDocument;
 }
 
-function createFakeMeasure(index, rootElement) {
+function createFakeMeasure(index, rootElement, chordElements) {
 	const element = createFakeElement('measure-' + index);
 	const splitButton = createFakeElement('split-' + index);
-	const chordElement = createFakeElement('chord-' + index);
+	const chordElement = createFakeChordElement(index, 0, element);
+	const chords = [chordElement];
+	const chordHandles = [];
+
+	for (let i = 1; i < 4; i++) {
+		const additionalChord = createFakeChordElement(index, i, element);
+		const chordHandle = createFakeElement('chord-handle-' + index + '-' + i);
+
+		chordHandle.closest = function (selector) {
+			if (selector === '.measureChordDragHandle') {
+				return chordHandle;
+			}
+			if (selector === '.measureChord') {
+				return additionalChord;
+			}
+			if (selector === '.measure') {
+				return element;
+			}
+			return null;
+		};
+		chords[i] = additionalChord;
+		chordHandles[i] = chordHandle;
+		chordElements.push(additionalChord);
+	}
+
+	chordElements.push(chordElement);
 
 	element.getAttribute = function (name) {
 		if (name === 'data-progression-index') {
@@ -313,23 +377,8 @@ function createFakeMeasure(index, rootElement) {
 			type: 'click'
 		});
 	};
-	chordElement.getAttribute = function (name) {
-		if (name === 'data-measure-chord-index') {
-			return chordElement.chordIndex || '0';
-		}
-		return null;
-	};
-	chordElement.closest = function (selector) {
-		if (selector === '.measureChord') {
-			return chordElement;
-		}
-		if (selector === '.measure') {
-			return element;
-		}
-		return null;
-	};
 	element.dispatchSplitClick = function (action, chordIndex) {
-		chordElement.chordIndex = String(chordIndex || 0);
+		const targetChord = chords[chordIndex || 0] || chordElement;
 		splitButton.getAttribute = function (name) {
 			if (name === 'data-progression-split-action') {
 				return action;
@@ -344,7 +393,7 @@ function createFakeMeasure(index, rootElement) {
 				return element;
 			}
 			if (selector === '.measureChord') {
-				return chordElement;
+				return targetChord;
 			}
 			return null;
 		};
@@ -354,8 +403,45 @@ function createFakeMeasure(index, rootElement) {
 			type: 'click'
 		});
 	};
+	element.dispatchChordDragStart = function (chordIndex) {
+		rootElement.dispatchEvent({
+			dataTransfer: dataTransfer(),
+			target: chordHandles[chordIndex],
+			type: 'dragstart'
+		});
+	};
+	element.dropChordOn = function (chordIndex) {
+		rootElement.dispatchEvent({
+			dataTransfer: dataTransfer(),
+			preventDefault: function () {},
+			target: chords[chordIndex],
+			type: 'drop'
+		});
+	};
 
 	return element;
+}
+
+function createFakeChordElement(measureIndex, chordIndex, measureElement) {
+	const chordElement = createFakeElement('chord-' + measureIndex + '-' + chordIndex);
+
+	chordElement.getAttribute = function (name) {
+		if (name === 'data-measure-chord-index') {
+			return String(chordIndex);
+		}
+		return null;
+	};
+	chordElement.closest = function (selector) {
+		if (selector === '.measureChord') {
+			return chordElement;
+		}
+		if (selector === '.measure') {
+			return measureElement;
+		}
+		return null;
+	};
+
+	return chordElement;
 }
 
 function createFakeElement(id) {

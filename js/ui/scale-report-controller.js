@@ -67,6 +67,7 @@
 		bindProgressionTransport();
 		bindProgressionGeneration();
 		bindCircleOfFifthsPopover();
+		bindWorkbenchInstrumentMenu();
 		updateCollapsiblePanelStates(i18n);
 		options.ui.scheduleDashboardWorkspaceHeight();
 
@@ -118,9 +119,7 @@
 		});
 
 		on(query('#instrumentoSonoro'), 'change', function (event) {
-			setPlaybackInstrument(options, event.currentTarget.value);
-			saveFormPreferences(preferences);
-			renderReport();
+			updateInstrumentSelection(event.currentTarget.value);
 		});
 
 		on(query('#selectorIdioma'), 'change', function (event) {
@@ -344,6 +343,35 @@
 			});
 		}
 
+		function bindWorkbenchInstrumentMenu() {
+			on(global.document, 'click', function (event) {
+				var toggle = closest(event.target, '#toggleWorkbenchInstrumentMenu');
+				var item = closest(event.target, '.workbenchInstrumentMenuItem');
+
+				if (toggle) {
+					toggleWorkbenchInstrumentMenu();
+					return;
+				}
+
+				if (item) {
+					event.preventDefault();
+					updateInstrumentSelection(item.getAttribute('data-workbench-instrument-id'));
+					closeWorkbenchInstrumentMenu();
+					return;
+				}
+
+				if (isWorkbenchInstrumentMenuOpen() && !closest(event.target, '.workbenchInstrumentMenu')) {
+					closeWorkbenchInstrumentMenu();
+				}
+			});
+
+			on(global.document, 'keydown', function (event) {
+				if (event.key === 'Escape') {
+					closeWorkbenchInstrumentMenu();
+				}
+			});
+		}
+
 		function bindCircleOfFifthsDrag() {
 			var popover = query('#circleOfFifthsPopover');
 			var titlebar = query('.circlePopover__titlebar');
@@ -521,18 +549,76 @@
 		}
 
 		function updateCircleToggleExpanded(button, expanded) {
-			var icon;
-
 			if (!button) {
 				return;
 			}
 
 			button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-			icon = button.querySelector('.material-icons');
+		}
 
-			if (icon && button.id === 'toggleCircleOfFifthsFromContext') {
-				icon.textContent = expanded ? 'expand_less' : 'expand_more';
+		function toggleWorkbenchInstrumentMenu() {
+			if (isWorkbenchInstrumentMenuOpen()) {
+				closeWorkbenchInstrumentMenu();
+				return;
 			}
+
+			openWorkbenchInstrumentMenu();
+		}
+
+		function openWorkbenchInstrumentMenu() {
+			var menu = query('#workbenchInstrumentMenu');
+			var toggle = query('#toggleWorkbenchInstrumentMenu');
+
+			if (!menu) {
+				return;
+			}
+
+			menu.hidden = false;
+			if (toggle) {
+				toggle.setAttribute('aria-expanded', 'true');
+				setWorkbenchInstrumentToggleIcon('expand_less');
+			}
+		}
+
+		function closeWorkbenchInstrumentMenu() {
+			var menu = query('#workbenchInstrumentMenu');
+			var toggle = query('#toggleWorkbenchInstrumentMenu');
+
+			if (menu) {
+				menu.hidden = true;
+			}
+
+			if (toggle) {
+				toggle.setAttribute('aria-expanded', 'false');
+				setWorkbenchInstrumentToggleIcon('expand_more');
+			}
+		}
+
+		function isWorkbenchInstrumentMenuOpen() {
+			var menu = query('#workbenchInstrumentMenu');
+
+			return !!(menu && !menu.hidden);
+		}
+
+		function setWorkbenchInstrumentToggleIcon(iconName) {
+			var icon = query('#toggleWorkbenchInstrumentMenu .material-icons');
+
+			if (icon) {
+				icon.textContent = iconName;
+			}
+		}
+
+		function updateInstrumentSelection(instrumentId) {
+			var instrumentSelect = query('#instrumentoSonoro');
+
+			if (!instrumentId || !instrumentSelect) {
+				return;
+			}
+
+			setValue(instrumentSelect, instrumentId);
+			setPlaybackInstrument(options, instrumentId);
+			saveFormPreferences(preferences);
+			renderReport();
 		}
 
 		function syncProgressionState() {
@@ -598,18 +684,21 @@
 
 		function updateWorkbenchContext(selection, musicalContext) {
 			var contextElement = query('.workbenchContext');
+			var keyElement = query('.workbenchContextKey');
+			var instrumentElement = query('.workbenchContextInstrument');
 			var instrumentName = selectedInstrumentName(selection);
 			var scaleName = selectedScaleName(selection);
 			var tonicName = musicalContext && musicalContext.tonicName ? musicalContext.tonicName : selection.tonicName;
 			var keyLabel = '';
-			var values = [];
 
 			if (!contextElement) {
+				updateWorkbenchInstrumentMenu(selection);
 				return;
 			}
 
 			if (musicalContext && musicalContext.isScaleSeparator) {
 				contextElement.textContent = '';
+				updateWorkbenchInstrumentMenu(selection);
 				return;
 			}
 
@@ -621,15 +710,33 @@
 				keyLabel = keyLabel ? keyLabel + ' ' + scaleName : scaleName;
 			}
 
-			if (keyLabel) {
-				values.push(keyLabel);
+			if (keyElement && instrumentElement) {
+				keyElement.textContent = keyLabel + (keyLabel && instrumentName ? ' ' : '');
+				instrumentElement.textContent = instrumentName;
+			} else {
+				contextElement.textContent = keyLabel + (instrumentName ? ' ' + instrumentName : '');
 			}
 
-			if (instrumentName) {
-				values.push(instrumentName);
+			updateWorkbenchInstrumentMenu(selection);
+		}
+
+		function updateWorkbenchInstrumentMenu(selection) {
+			var menu = query('#workbenchInstrumentMenu');
+			var instruments = options.data.midiInstruments || [];
+			var html = '';
+
+			if (!menu) {
+				return;
 			}
 
-			contextElement.textContent = values.join(' · ');
+			for (var i = 0; i < instruments.length; i++) {
+				var label = i18n ? i18n.dataLabel('midiInstruments', i, instruments[i].nombre) : instruments[i].nombre;
+				var selected = selection && selection.midiInstrument === instruments[i].id;
+
+				html += '<button type="button" class="workbenchInstrumentMenuItem" data-workbench-instrument-id="' + escapeHtml(instruments[i].id) + '" aria-pressed="' + (selected ? 'true' : 'false') + '">' + escapeHtml(label) + '</button>';
+			}
+
+			menu.innerHTML = html;
 		}
 
 		function selectedScaleName(selection) {
@@ -696,6 +803,15 @@
 		if (selectElement) {
 			selectElement.innerHTML = html;
 		}
+	}
+
+	function escapeHtml(value) {
+		return String(value)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
 	}
 
 	function fillInstrumentSelect(select, instruments, i18n) {

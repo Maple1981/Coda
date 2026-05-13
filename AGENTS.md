@@ -46,6 +46,10 @@ La base técnica actual usa:
 - Toda documentación debe redactarse en español estándar escrupuloso, con tildes, signos y ortografía correctos. Mantener este criterio hasta que se acuerde una traducción al inglés.
 - Cualquier cambio de texto visible en la interfaz o en catálogos de datos presentados al usuario debe actualizarse en todos los idiomas disponibles. De momento, los idiomas disponibles son español de España e inglés. Los nombres de las notas deben respetar la preferencia de notación elegida por el usuario: anglosajona (`C, D, E, F, G, A, B`) o latina (`Do, Re, Mi, Fa, Sol, La, Si`).
 
+## Artefactos servidos
+
+`index.html` sirve los estilos desde `dist/css/styles.min.css` y `dist/css/progression-playback.css`. Por tanto, cualquier cambio en estilos fuente (`src/css/styles.scss`, `src/css/styles.css` o CSS relacionado) debe reflejarse también en los archivos CSS de `dist/` antes de dar el trabajo por verificado, pasar smoke tests o publicar cambios. No basta con modificar `src/`, porque Live Server y GitHub Pages cargan los artefactos de `dist/`.
+
 ## Documentación técnica
 
 La documentación técnica vive en `docs/technical/` para no mezclarla con la base teórico-musical de `Docs/`.

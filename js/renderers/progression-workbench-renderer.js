@@ -7,7 +7,7 @@
 
 		html += '<div class="workbenchHeader">';
 		html += '<div class="workbenchTitleGroup"><h2></h2><p class="workbenchKicker"></p></div>';
-		html += '<div class="workbenchContextGroup"><button id="toggleCircleOfFifthsFromContext" class="workbenchCircleToggle" type="button" title="" aria-label="" aria-controls="circleOfFifthsPopover" aria-expanded="false" hidden><span class="material-icons" aria-hidden="true">expand_more</span></button><p class="workbenchContext" aria-live="polite"></p></div>';
+		html += '<div class="workbenchContextGroup"><button id="toggleCircleOfFifthsFromContext" class="workbenchCircleToggle" type="button" title="" aria-label="" aria-controls="circleOfFifthsPopover" aria-expanded="false" hidden><span class="material-icons" aria-hidden="true">donut_large</span></button><p class="workbenchContext" aria-live="polite"><span class="workbenchContextKey"></span><span class="workbenchContextInstrument"></span></p><button id="toggleWorkbenchInstrumentMenu" class="workbenchInstrumentToggle" type="button" title="" aria-label="" aria-controls="workbenchInstrumentMenu" aria-expanded="false"><span class="material-icons" aria-hidden="true">expand_more</span></button><div id="workbenchInstrumentMenu" class="workbenchInstrumentMenu" hidden></div></div>';
 		html += '</div>';
 		html += '<div class="progressionControls">';
 		html += renderTimePanel();
@@ -140,6 +140,11 @@
 		var degree = chord.degree || '';
 		var tonalFunction = chord.tonalFunction || '';
 		var buttons = '';
+		var dragHandle = '';
+
+		if (chordCount > 2 && chordIndex > 0) {
+			dragHandle = '<button type="button" class="measureChordDragHandle" draggable="true" aria-label="" title="" data-i18n-title="progression.dragMeasureChord"><span class="material-icons" aria-hidden="true">open_with</span></button>';
+		}
 
 		if (chordCount === 1 && chordIndex === 0) {
 			buttons += '<button type="button" class="measureSplitButton" data-progression-split-action="add" aria-label="" title="" data-i18n-title="progression.addMeasureChord">+</button>';
@@ -155,6 +160,7 @@
 		}
 
 		return '<div class="measureChord" data-measure-chord-index="' + escapeHtml(chordIndex) + '">' +
+			dragHandle +
 			buttons +
 			'<span class="measureChordName"><strong>' + escapeHtml(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
 			(degree ? '<em class="measureDegree">' + escapeHtml(degree) + '</em>' : '') +

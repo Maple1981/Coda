@@ -3,6 +3,7 @@
 	'use strict';
 
 	var draggedMeasureIndex = null;
+	var draggedMeasureChord = null;
 	var activeChordMenuButton = null;
 
 	function initialize(options) {
@@ -92,8 +93,35 @@
 
 		root.addEventListener('dragstart', function (event) {
 			var measure = closest(event.target, '.measure');
+			var chordHandle = closest(event.target, '.measureChordDragHandle');
+			var chordElement = closest(event.target, '.measureChord');
+			var sourceMeasureIndex;
+			var sourceChordIndex;
 
 			if (!measure || closest(event.target, '.measureSplitButton') || closest(event.target, '.measureChordMenuButton')) {
+				return;
+			}
+
+			if (chordHandle) {
+				sourceMeasureIndex = measureIndex(measure);
+				sourceChordIndex = chordIndex(chordElement);
+				if (sourceChordIndex <= 0) {
+					return;
+				}
+
+				draggedMeasureChord = {
+					chordIndex: sourceChordIndex,
+					measureIndex: sourceMeasureIndex
+				};
+				if (chordElement) {
+					chordElement.classList.add('isDragging');
+				}
+
+				if (event.dataTransfer) {
+					event.dataTransfer.effectAllowed = 'move';
+					event.dataTransfer.setData('text/coda-progression-chord', sourceMeasureIndex + ':' + sourceChordIndex);
+					event.dataTransfer.setData('text/plain', sourceMeasureIndex + ':' + sourceChordIndex);
+				}
 				return;
 			}
 
@@ -108,8 +136,27 @@
 
 		root.addEventListener('dragover', function (event) {
 			var measure = closest(event.target, '.measure');
+			var chordElement = closest(event.target, '.measureChord');
+			var targetChordIndex;
 
 			if (!measure) {
+				return;
+			}
+
+			if (draggedMeasureChord) {
+				targetChordIndex = chordIndex(chordElement);
+				if (measureIndex(measure) !== draggedMeasureChord.measureIndex || targetChordIndex <= 0) {
+					return;
+				}
+
+				event.preventDefault();
+				if (chordElement) {
+					chordElement.classList.add('isChordDropTarget');
+				}
+
+				if (event.dataTransfer) {
+					event.dataTransfer.dropEffect = 'move';
+				}
 				return;
 			}
 
@@ -123,7 +170,11 @@
 
 		root.addEventListener('dragleave', function (event) {
 			var measure = closest(event.target, '.measure');
+			var chordElement = closest(event.target, '.measureChord');
 
+			if (chordElement) {
+				chordElement.classList.remove('isChordDropTarget');
+			}
 			if (measure) {
 				measure.classList.remove('isDropTarget');
 			}
@@ -131,10 +182,30 @@
 
 		root.addEventListener('drop', function (event) {
 			var measure = closest(event.target, '.measure');
+			var chordElement = closest(event.target, '.measureChord');
 			var fromIndex = dragSourceIndex(event, draggedMeasureIndex);
 			var toIndex;
+			var targetChordIndex;
+			var sourceChordDrag;
 
 			if (!measure) {
+				return;
+			}
+
+			if (draggedMeasureChord) {
+				sourceChordDrag = draggedMeasureChord;
+				targetChordIndex = chordIndex(chordElement);
+				if (measureIndex(measure) !== sourceChordDrag.measureIndex || targetChordIndex <= 0) {
+					clearDragState();
+					return;
+				}
+
+				event.preventDefault();
+				clearDragState();
+				stopPreview(options, listenButton, playbackHeadIndex);
+				reorderMeasureChords(options, sourceChordDrag.measureIndex, sourceChordDrag.chordIndex, targetChordIndex);
+				playbackHeadIndex = sourceChordDrag.measureIndex;
+				setPlaybackHead(playbackHeadIndex, false);
 				return;
 			}
 
@@ -284,6 +355,27 @@
 		if (options.onProgressionChanged && reorderedProgression) {
 			options.onProgressionChanged(reorderedProgression, {
 				playbackHeadIndex: toIndex
+			});
+		}
+	}
+
+	function reorderMeasureChords(options, measureIndex, fromChordIndex, toChordIndex) {
+		var progression = options.uiState ? options.uiState.getProgression() : null;
+		var reorderedProgression;
+
+		if (
+			!progression ||
+			!options.application ||
+			typeof options.application.reorderProgressionMeasureChords !== 'function'
+		) {
+			return;
+		}
+
+		reorderedProgression = options.application.reorderProgressionMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex);
+
+		if (options.onProgressionChanged && reorderedProgression) {
+			options.onProgressionChanged(reorderedProgression, {
+				playbackHeadIndex: measureIndex
 			});
 		}
 	}
@@ -608,6 +700,7 @@
 
 	function clearDragState() {
 		draggedMeasureIndex = null;
+		draggedMeasureChord = null;
 		if (!global.document) {
 			return;
 		}
@@ -615,6 +708,10 @@
 		Array.prototype.forEach.call(global.document.querySelectorAll('.measure.isDragging, .measure.isDropTarget'), function (measure) {
 			measure.classList.remove('isDragging');
 			measure.classList.remove('isDropTarget');
+		});
+		Array.prototype.forEach.call(global.document.querySelectorAll('.measureChord.isDragging, .measureChord.isChordDropTarget'), function (chord) {
+			chord.classList.remove('isDragging');
+			chord.classList.remove('isChordDropTarget');
 		});
 	}
 

@@ -372,8 +372,14 @@ assert.ok(welcomeHtml.indexOf('piano, guitarra clásica, órgano y cuerdas') > -
 const progressionWorkbenchHtml = progressionWorkbenchRenderer.render();
 assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchTitleGroup"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchContext" aria-live="polite"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchContextKey"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchContextInstrument"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="toggleCircleOfFifthsFromContext"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('donut_large') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('aria-controls="circleOfFifthsPopover"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="toggleWorkbenchInstrumentMenu"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="workbenchInstrumentMenu"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('expand_more') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('class="progressionControls"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<select id="progressionBars"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<option value="32">32</option>') > -1);
@@ -449,6 +455,8 @@ const fourChordMeasureHtml = progressionWorkbenchRenderer.renderTimelineMeasures
 });
 assert.equal((fourChordMeasureHtml.match(/data-progression-split-action="add"/g) || []).length, 0);
 assert.equal((fourChordMeasureHtml.match(/data-progression-split-action="remove"/g) || []).length, 3);
+assert.equal((fourChordMeasureHtml.match(/measureChordDragHandle/g) || []).length, 3);
+assert.ok(fourChordMeasureHtml.indexOf('data-i18n-title="progression.dragMeasureChord"') > -1);
 assert.equal(progressionWorkbenchRenderer.hasRenderableMeasures([{ chordName: '' }]), false);
 assert.ok(progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [
