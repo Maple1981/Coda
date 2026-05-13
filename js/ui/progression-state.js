@@ -6,6 +6,7 @@
 	var allowedBars = [2, 4, 6, 8, 12, 16, 32];
 	var allowedMeters = ['4/4', '3/4', '6/8'];
 	var allowedStyles = ['modern', 'classic'];
+	var allowedVoicings = ['closed', 'open'];
 	var defaults = {
 		articulation: 'sustain',
 		bars: 8,
@@ -15,6 +16,7 @@
 		modalInterchange: 25,
 		style: 'modern',
 		tensions: 35,
+		voicing: 'closed',
 		voices: 4
 	};
 
@@ -47,6 +49,7 @@
 			modalInterchange: valueOf(root, 'progressionModalInterchange'),
 			style: valueOf(root, 'progressionStyle'),
 			tensions: valueOf(root, 'progressionTensions'),
+			voicing: valueOf(root, 'progressionVoicing'),
 			voices: valueOf(root, 'progressionVoices')
 		});
 	}
@@ -66,6 +69,7 @@
 			modalInterchange: clampInteger(values.modalInterchange, 0, 100, fallback.modalInterchange),
 			style: pick(values.style, allowedStyles, fallback.style),
 			tensions: clampInteger(values.tensions, 0, 100, fallback.tensions),
+			voicing: pick(values.voicing, allowedVoicings, fallback.voicing),
 			voices: clampInteger(values.voices, 1, 6, fallback.voices)
 		};
 	}
@@ -116,6 +120,7 @@
 			modalInterchange: value.modalInterchange,
 			style: value.style,
 			tensions: value.tensions,
+			voicing: value.voicing,
 			voices: value.voices
 		};
 	}
@@ -125,6 +130,7 @@
 		allowedBars: allowedBars.slice(),
 		allowedMeters: allowedMeters.slice(),
 		allowedStyles: allowedStyles.slice(),
+		allowedVoicings: allowedVoicings.slice(),
 		create: create,
 		defaults: clone(normalize(defaults)),
 		normalize: normalize,

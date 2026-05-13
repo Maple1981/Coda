@@ -30,6 +30,31 @@ function runScript(relativePath) {
 	'js/data.js',
 	'js/services/data-index-service.js',
 	'js/services/midi-export-service.js',
+	'js/services/progression-midi-file-service.js',
+	'js/services/progression-state-normalizer-service.js',
+	'js/services/progression-degree-resolver-service.js',
+	'js/services/progression-pitch-service.js',
+	'js/services/progression-voice-leading-score-service.js',
+	'js/services/progression-voicing-disposition-service.js',
+	'js/services/progression-voicing-service.js',
+	'js/services/progression-voice-leading-service.js',
+	'js/services/progression-measure-timeline-service.js',
+	'js/services/progression-formatting-service.js',
+	'js/services/progression-structure-editing-service.js',
+	'js/services/progression-additional-chord-service.js',
+	'js/services/progression-segment-builder-service.js',
+	'js/services/progression-replacement-chord-service.js',
+	'js/services/progression-measure-chord-addition-service.js',
+	'js/services/progression-measure-chord-replacement-service.js',
+	'js/services/progression-editing-service.js',
+	'js/services/progression-tension-service.js',
+	'js/services/progression-chord-plan-service.js',
+	'js/services/progression-measure-builder-service.js',
+	'js/services/progression-result-service.js',
+	'js/services/progression-cadence-planner-service.js',
+	'js/services/progression-planner-service.js',
+	'js/services/progression-builder-service.js',
+	'js/services/progression-chord-menu-service.js',
 	'js/domain/music-utils.js',
 	'js/domain/scale-domain.js',
 	'js/domain/chord-domain.js',
@@ -130,6 +155,7 @@ assert.equal(cMajorProgressionPlan.meter, '3/4');
 assert.equal(cMajorProgressionPlan.style, 'modern');
 assert.equal(cMajorProgressionPlan.totalBeats, 12);
 assert.equal(cMajorProgressionPlan.totalSeconds, 6);
+assert.equal(cMajorProgressionPlan.voicing, 'closed');
 assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.degree; }), ['I', 'IV 6/4', 'V 6', 'I']);
 assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.chordName; }), ['C', 'F', 'G', 'C']);
 assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'SD', 'D', 'T']);
@@ -175,6 +201,40 @@ assert.deepEqual(cMajorProgressionPlan.harmonicColor, {
 	modalInterchange: 10,
 	tensions: 40
 });
+
+const cMajorOpenVoicingPlan = app.buildProgressionFromState({
+	domain: domain,
+	progressionState: {
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '4/4',
+		tensions: 0,
+		voicing: 'open',
+		voices: 4
+	},
+	report: cMajorReport
+});
+const cMajorClosedVoicingPlan = app.buildProgressionFromState({
+	domain: domain,
+	progressionState: {
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '4/4',
+		tensions: 0,
+		voicing: 'closed',
+		voices: 4
+	},
+	report: cMajorReport
+});
+assert.equal(cMajorOpenVoicingPlan.voicing, 'open');
+assert.ok(upperVoiceSpan(cMajorOpenVoicingPlan.measures[0].midiNotes) > 12);
+assert.ok(upperVoiceSpan(cMajorOpenVoicingPlan.measures[0].midiNotes) > upperVoiceSpan(cMajorClosedVoicingPlan.measures[0].midiNotes));
 
 const splitProgression = app.addProgressionMeasureChord(cMajorProgressionPlan, 0, {
 	data: data,
@@ -421,17 +481,20 @@ assert.equal(generatedHighColorProgression.generation.cadence, 'mixed-plagal');
 assert.equal(generatedHighColorProgression.generation.patternId, 'I-iv-I');
 assert.equal(generatedHighColorProgression.generation.style, 'modern');
 assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.source; }), ['diatonic', 'parallel', 'parallel', 'diatonic']);
-assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'Fm7', 'Fm7', 'C']);
+assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'Fm', 'Fm7', 'C']);
 assert.ok(generatedHighColorProgression.measures[0].displayName.indexOf('add9') > -1);
 assert.ok(generatedHighColorProgression.measures[0].notes.length > 4);
 assert.equal(generatedHighColorProgression.measures[0].chordKind, 'triad');
-assert.deepEqual(generatedHighColorProgression.measures[0].pedalsOut.map(function (pedal) { return pedal.note; }), ['G', 'D']);
-assert.equal(generatedHighColorProgression.measures[1].inversion, '4/2');
+assert.equal(generatedHighColorProgression.measures[0].voiceNotes.filter(function (voice) { return voice.role === 'tension'; }).length, 2);
+assert.deepEqual(generatedHighColorProgression.measures[0].pedalsOut.map(function (pedal) { return pedal.note; }), ['C', 'G']);
+assert.equal(generatedHighColorProgression.measures[1].inversion, '6/4');
 assert.equal(generatedHighColorProgression.measures[1].suspension, 'sus2');
-assert.equal(generatedHighColorProgression.measures[1].degree, 'iv7 4/2 sus2');
-assert.equal(generatedHighColorProgression.measures[1].displayName, 'Fm7 4/2 sus2 add9 add13');
-assert.deepEqual(generatedHighColorProgression.measures[1].pedalsIn.map(function (pedal) { return pedal.midiNote; }), [55, 62]);
+assert.equal(generatedHighColorProgression.measures[1].degree, 'iv 6/4 sus2');
+assert.equal(generatedHighColorProgression.measures[1].displayName, 'Fm 6/4 sus2 add11 add13');
+assert.deepEqual(generatedHighColorProgression.measures[1].pedalsIn.map(function (pedal) { return pedal.midiNote; }), [48, 55]);
 assert.equal(generatedHighColorProgression.measures[1].voiceLeading.parallelPerfects, 0);
+assert.equal(generatedHighColorProgression.measures[2].displayName, 'Fm7 4/2 sus2 11 13');
+assert.equal(generatedHighColorProgression.measures[2].voiceNotes.filter(function (voice) { return voice.role === 'seventh-doubling' || voice.role === 'tension-doubling'; }).length, 0);
 assert.equal(app.formatProgressionDegreeForChord('IVJ', 'Fm7'), 'iv7');
 assert.equal(app.formatProgressionDegreeForChord('VII', 'Bm7♭5'), 'vii7♭5');
 assert.equal(app.formatProgressionDegreeForChord('II', 'Db7♭5'), 'II7♭5');
@@ -697,4 +760,8 @@ function sequenceRng(values) {
 		index += 1;
 		return value;
 	};
+}
+
+function upperVoiceSpan(midiNotes) {
+	return midiNotes[midiNotes.length - 1] - midiNotes[1];
 }

@@ -10,6 +10,20 @@ const context = {
 };
 context.window.window = context.window;
 context.window.addEventListener = function () {};
+const pendingTimers = [];
+context.window.setTimeout = function (callback) {
+	const timer = {
+		callback: callback,
+		cleared: false
+	};
+	pendingTimers.push(timer);
+	return timer;
+};
+context.window.clearTimeout = function (timer) {
+	if (timer) {
+		timer.cleared = true;
+	}
+};
 vm.createContext(context);
 
 function runScript(relativePath) {
@@ -29,8 +43,35 @@ function runScript(relativePath) {
 	'js/data/extended-harmony-data.js',
 	'js/data.js',
 	'js/services/data-index-service.js',
+	'js/services/midi-export-service.js',
+	'js/services/progression-midi-file-service.js',
 	'js/services/musical-context-service.js',
 	'js/services/notation-service.js',
+	'js/services/progression-preferences-service.js',
+	'js/services/progression-state-normalizer-service.js',
+	'js/services/progression-degree-resolver-service.js',
+	'js/services/progression-pitch-service.js',
+	'js/services/progression-voice-leading-score-service.js',
+	'js/services/progression-voicing-disposition-service.js',
+	'js/services/progression-voicing-service.js',
+	'js/services/progression-voice-leading-service.js',
+	'js/services/progression-measure-timeline-service.js',
+	'js/services/progression-formatting-service.js',
+	'js/services/progression-structure-editing-service.js',
+	'js/services/progression-additional-chord-service.js',
+	'js/services/progression-segment-builder-service.js',
+	'js/services/progression-replacement-chord-service.js',
+	'js/services/progression-measure-chord-addition-service.js',
+	'js/services/progression-measure-chord-replacement-service.js',
+	'js/services/progression-editing-service.js',
+	'js/services/progression-tension-service.js',
+	'js/services/progression-chord-plan-service.js',
+	'js/services/progression-measure-builder-service.js',
+	'js/services/progression-result-service.js',
+	'js/services/progression-cadence-planner-service.js',
+	'js/services/progression-planner-service.js',
+	'js/services/progression-builder-service.js',
+	'js/services/progression-chord-menu-service.js',
 	'js/domain/music-utils.js',
 	'js/domain/scale-domain.js',
 	'js/domain/chord-domain.js',
@@ -57,6 +98,7 @@ const rendered = {
 	scaleReport: 0
 };
 const playbackInstruments = [];
+const savedPreferences = {};
 const options = {
 	application: context.window.CodaApplication,
 	chordPlayback: {
@@ -87,6 +129,11 @@ const options = {
 			playbackInstruments.push(instrumentId);
 		}
 	},
+	preferences: {
+		setValue: function (key, value) {
+			savedPreferences[key] = value;
+		}
+	},
 	progressionState: context.window.CodaProgressionState,
 	renderers: {},
 	ui: createFakeUi(document, rendered)
@@ -111,6 +158,7 @@ assert.deepEqual(initialState, {
 	modalInterchange: 25,
 	style: 'modern',
 	tensions: 35,
+	voicing: 'closed',
 	voices: 4
 });
 assert.equal(initialProgression.bars, 8);
@@ -120,6 +168,18 @@ assert.equal(initialProgression.totalSeconds, 16);
 assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.degree; }), ['I', 'vi 6', 'ii', 'V 6/4', 'I 6', 'IV', 'V 6/4', 'I 6']);
 assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'Am', 'Dm', 'G', 'C', 'F', 'G', 'C']);
 assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'T', 'SD', 'D', 'T', 'SD', 'D', 'T']);
+
+document.getElementById('progressionTensions').value = '44';
+document.querySelector('.progressionControls').dispatchEvent({
+	target: document.getElementById('progressionTensions'),
+	type: 'input'
+});
+assert.equal(initialized.uiState.getProgressionState().tensions, 35);
+assert.equal(rendered.progression, 1);
+runPendingTimers();
+assert.equal(initialized.uiState.getProgressionState().tensions, 44);
+assert.equal(savedPreferences.progressionTensions, '44');
+assert.equal(rendered.progression, 2);
 
 document.getElementById('progressionBars').value = '4';
 document.getElementById('progressionMeter').value = '3/4';
@@ -144,12 +204,24 @@ assert.equal(changedState.articulation, 'staccato');
 assert.equal(changedState.style, 'classic');
 assert.equal(changedState.tensions, 60);
 assert.equal(changedProgression.bars, 4);
+assert.deepEqual(savedPreferences, {
+	progressionArticulation: 'staccato',
+	progressionBars: '4',
+	progressionBpm: '120',
+	progressionCounterpoint: '20',
+	progressionMeter: '3/4',
+	progressionModalInterchange: '25',
+	progressionStyle: 'classic',
+	progressionTensions: '60',
+	progressionVoicing: 'closed',
+	progressionVoices: '3'
+});
 assert.equal(document.getElementById('undoChange').disabled, false);
 assert.equal(document.getElementById('redoChange').disabled, true);
 assert.equal(changedProgression.meter, '3/4');
 assert.equal(changedProgression.totalBeats, 12);
 assert.equal(changedProgression.totalSeconds, 6);
-assert.equal(rendered.progression, 2);
+assert.equal(rendered.progression, 3);
 assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.degree; }), ['I', 'IV 6/4', 'V 6', 'I']);
 assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'F', 'G', 'C']);
 assert.deepEqual(changedProgression.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'SD', 'D', 'T']);
@@ -158,7 +230,7 @@ document.getElementById('progressionLoop').dispatchEvent({
 	target: document.getElementById('progressionLoop'),
 	type: 'change'
 });
-assert.equal(rendered.progression, 2);
+assert.equal(rendered.progression, 3);
 assert.strictEqual(initialized.uiState.getProgression(), changedProgression);
 assert.deepEqual(changedProgression.measures[1], {
 	articulation: 'staccato',
@@ -244,6 +316,33 @@ document.dispatchDocumentEvent({
 });
 assert.equal(initialized.uiState.getProgressionState().bars, 4);
 
+const focusedSelect = createFakeElement('focused-select');
+focusedSelect.tagName = 'SELECT';
+document.dispatchDocumentEvent({
+	ctrlKey: true,
+	key: 'z',
+	preventDefault: function () {
+		this.preventDefaultCalled = true;
+	},
+	target: focusedSelect,
+	type: 'keydown'
+});
+assert.equal(initialized.uiState.getProgressionState().bars, 8);
+
+const focusedTextInput = createFakeElement('focused-text');
+focusedTextInput.tagName = 'INPUT';
+focusedTextInput.type = 'text';
+document.dispatchDocumentEvent({
+	ctrlKey: true,
+	key: 'z',
+	preventDefault: function () {
+		this.preventDefaultCalled = true;
+	},
+	target: focusedTextInput,
+	type: 'keydown'
+});
+assert.equal(initialized.uiState.getProgressionState().bars, 8);
+
 console.log('Progression UI behavior tests passed');
 
 function createFakeUi(fakeDocument, renderedCounter) {
@@ -285,6 +384,16 @@ function createFakeUi(fakeDocument, renderedCounter) {
 		scheduleInstrumentScale: function () {},
 		scheduleSidebarPanelViewport: function () {}
 	};
+}
+
+function runPendingTimers() {
+	while (pendingTimers.length) {
+		const timer = pendingTimers.shift();
+
+		if (!timer.cleared) {
+			timer.callback();
+		}
+	}
 }
 
 function createFakeDocument() {
@@ -366,6 +475,7 @@ function createFakeDocument() {
 	addElement('progressionModalInterchange', '25');
 	addElement('progressionStyle', 'modern');
 	addElement('progressionTensions', '35');
+	addElement('progressionVoicing', 'closed');
 	addElement('progressionVoices', '4');
 	addElement('progressionLoop');
 	addElement('progressionMetronome');

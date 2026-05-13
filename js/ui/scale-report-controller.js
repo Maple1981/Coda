@@ -10,6 +10,7 @@
 		});
 		var notation = options.notation;
 		var preferences = options.preferences;
+		var progressionPreferences = options.progressionPreferences || global.CodaProgressionPreferences;
 		var progressionTransport = options.progressionTransport || global.CodaProgressionTransport;
 		var progressionTransportController = null;
 		var progressionState = options.progressionState || global.CodaProgressionState;
@@ -26,6 +27,8 @@
 			limit: 11,
 			restoring: false
 		};
+		var progressionStateInputTimer = null;
+		var progressionStateInputDelay = 160;
 		uiState.setNotationStyle(notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon');
 		var initialForm = resolveInitialForm(options.data, options.initialForm);
 
@@ -68,6 +71,7 @@
 				i18n: i18n
 			});
 		}
+		restoreProgressionControls(normalizeInitialProgressionControls(options.initialProgressionState, progressionState, progressionPreferences));
 		syncProgressionState();
 		bindProgressionState();
 		bindProgressionTransport();
@@ -302,9 +306,12 @@
 			}
 
 			controls.setAttribute('data-coda-progression-state', 'true');
-			controls.addEventListener('input', syncProgressionState);
+			controls.addEventListener('input', function () {
+				scheduleProgressionStateUpdate();
+			});
 			controls.addEventListener('change', function () {
-				syncProgressionState();
+				cancelProgressionStateUpdate();
+				updateProgressionStateFromControls();
 				recordHistorySnapshot();
 			});
 		}
@@ -327,7 +334,8 @@
 
 		function bindProgressionGeneration() {
 			on(query('#generateProgression'), 'click', function () {
-				syncProgressionState();
+				cancelProgressionStateUpdate();
+				updateProgressionStateFromControls();
 				generateProgressionPlan();
 				recordHistorySnapshot();
 			});
@@ -396,7 +404,9 @@
 			on(query('#undoChange'), 'click', undoHistorySnapshot);
 			on(query('#redoChange'), 'click', redoHistorySnapshot);
 			on(global.document, 'keydown', function (event) {
-				if (!event.ctrlKey || event.key.toLowerCase() !== 'z' || isEditableTarget(event.target)) {
+				var key = event && event.key ? event.key.toLowerCase() : '';
+
+				if (!(event.ctrlKey || event.metaKey) || key !== 'z' || isTextEntryTarget(event.target)) {
 					return;
 				}
 
@@ -725,6 +735,7 @@
 					tensions: valueOf(query('#progressionTensions')),
 					tonic: valueOf(query('#tonica')),
 					tuning: valueOf(query('#selectorAfinaciones')),
+					voicing: valueOf(query('#progressionVoicing')),
 					voices: valueOf(query('#progressionVoices'))
 				},
 				progression: uiState.getProgression(),
@@ -765,6 +776,11 @@
 		}
 
 		function restoreProgressionControls(controls) {
+			if (progressionPreferences && typeof progressionPreferences.writeControls === 'function') {
+				progressionPreferences.writeControls(global.document, controls);
+				return;
+			}
+
 			setValue(query('#progressionArticulation'), controls.articulation);
 			setValue(query('#progressionBars'), controls.bars);
 			setValue(query('#progressionBpm'), controls.bpm);
@@ -773,6 +789,7 @@
 			setValue(query('#progressionModalInterchange'), controls.modalInterchange);
 			setValue(query('#progressionStyle'), controls.style);
 			setValue(query('#progressionTensions'), controls.tensions);
+			setValue(query('#progressionVoicing'), controls.voicing);
 			setValue(query('#progressionVoices'), controls.voices);
 		}
 
@@ -792,6 +809,33 @@
 				uiState.setProgressionState(progressionState.readFromControls(global.document));
 				syncProgressionPlan();
 			}
+		}
+
+		function updateProgressionStateFromControls() {
+			syncProgressionState();
+			saveProgressionPreferences(preferences, progressionPreferences);
+		}
+
+		function scheduleProgressionStateUpdate() {
+			cancelProgressionStateUpdate();
+
+			if (typeof global.setTimeout !== 'function') {
+				updateProgressionStateFromControls();
+				return;
+			}
+
+			progressionStateInputTimer = global.setTimeout(function () {
+				progressionStateInputTimer = null;
+				updateProgressionStateFromControls();
+			}, progressionStateInputDelay);
+		}
+
+		function cancelProgressionStateUpdate() {
+			if (progressionStateInputTimer && typeof global.clearTimeout === 'function') {
+				global.clearTimeout(progressionStateInputTimer);
+			}
+
+			progressionStateInputTimer = null;
 		}
 
 		function syncProgressionPlan() {
@@ -1062,6 +1106,51 @@
 		preferences.setValue('midiInstrument', valueOf(query('#instrumentoSonoro')));
 	}
 
+	function saveProgressionPreferences(preferences, progressionPreferences) {
+		if (progressionPreferences && typeof progressionPreferences.save === 'function') {
+			progressionPreferences.save(preferences, global.document);
+			return;
+		}
+
+		if (!preferences) {
+			return;
+		}
+
+		preferences.setValue('progressionArticulation', valueOf(query('#progressionArticulation')));
+		preferences.setValue('progressionBars', valueOf(query('#progressionBars')));
+		preferences.setValue('progressionBpm', valueOf(query('#progressionBpm')));
+		preferences.setValue('progressionCounterpoint', valueOf(query('#progressionCounterpoint')));
+		preferences.setValue('progressionMeter', valueOf(query('#progressionMeter')));
+		preferences.setValue('progressionModalInterchange', valueOf(query('#progressionModalInterchange')));
+		preferences.setValue('progressionStyle', valueOf(query('#progressionStyle')));
+		preferences.setValue('progressionTensions', valueOf(query('#progressionTensions')));
+		preferences.setValue('progressionVoicing', valueOf(query('#progressionVoicing')));
+		preferences.setValue('progressionVoices', valueOf(query('#progressionVoices')));
+	}
+
+	function normalizeInitialProgressionControls(initialProgressionState, progressionState, progressionPreferences) {
+		if (progressionPreferences && typeof progressionPreferences.normalizeControls === 'function') {
+			return progressionPreferences.normalizeControls(initialProgressionState, progressionState);
+		}
+
+		var state = progressionState && typeof progressionState.normalize === 'function' ?
+			progressionState.normalize(initialProgressionState || {}) :
+			initialProgressionState || {};
+
+		return {
+			articulation: state.articulation,
+			bars: state.bars,
+			bpm: state.bpm,
+			counterpoint: state.counterpoint,
+			meter: state.meter,
+			modalInterchange: state.modalInterchange,
+			style: state.style,
+			tensions: state.tensions,
+			voicing: state.voicing,
+			voices: state.voices
+		};
+	}
+
 	function resolveInitialForm(data, initialForm) {
 		initialForm = initialForm || {};
 
@@ -1190,15 +1279,26 @@
 		}
 	}
 
-	function isEditableTarget(target) {
+	function isTextEntryTarget(target) {
 		var tagName = target && target.tagName ? String(target.tagName).toLowerCase() : '';
+		var inputType = target && target.type ? String(target.type).toLowerCase() : '';
 
 		return !!(target && (
 			target.isContentEditable ||
-			tagName === 'input' ||
-			tagName === 'select' ||
-			tagName === 'textarea'
+			tagName === 'textarea' ||
+			(tagName === 'input' && isTextInputType(inputType))
 		));
+	}
+
+	function isTextInputType(inputType) {
+		return !inputType || [
+			'email',
+			'password',
+			'search',
+			'tel',
+			'text',
+			'url'
+		].indexOf(inputType) > -1;
 	}
 
 	function cloneJson(value) {

@@ -16,6 +16,14 @@ function runScript(relativePath) {
 	vm.runInContext(source, context, { filename: relativePath });
 }
 
+runScript('js/renderers/progression-chord-menu-renderer.js');
+runScript('js/services/progression-midi-download-service.js');
+runScript('js/services/progression-transport-shortcut-service.js');
+runScript('js/services/progression-transport-drag-service.js');
+runScript('js/services/progression-transport-view-service.js');
+runScript('js/services/progression-transport-actions-service.js');
+runScript('js/services/progression-transport-menu-service.js');
+runScript('js/services/progression-transport-playback-service.js');
 runScript('js/ui/progression-transport-controller.js');
 
 const progression = {
@@ -45,9 +53,19 @@ let changedOptions = null;
 let playCalls = 0;
 let splitRequest = null;
 let reorderedChordRequest = null;
+let midiBuildRequest = null;
+let midiDownloads = 0;
 
 const controller = context.window.CodaProgressionTransport.initialize({
 	application: {
+		buildProgressionMidiFile: function (request) {
+			midiBuildRequest = request;
+			return {
+				bytes: new Uint8Array([77, 84, 104, 100]),
+				fileName: 'test-progression.mid',
+				mimeType: 'audio/midi'
+			};
+		},
 		reorderProgressionMeasures: function (sourceProgression, fromIndex, toIndex) {
 			reorderedRequest = {
 				fromIndex: fromIndex,
@@ -133,7 +151,9 @@ const controller = context.window.CodaProgressionTransport.initialize({
 			return { scaleChords: [] };
 		},
 		getSelection: function () {
-			return {};
+			return {
+				midiInstrument: 'acoustic_grand_piano'
+			};
 		}
 	}
 });
@@ -179,6 +199,28 @@ assert.equal(playing, false);
 
 document.dispatchKeydown('0');
 assert.equal(document.measures[1].classList.contains('isPlaybackHead'), true);
+
+const focusedSelect = createFakeElement('focused-select');
+focusedSelect.tagName = 'SELECT';
+document.dispatchKeydown('3', focusedSelect);
+assert.equal(document.measures[2].classList.contains('isPlaybackHead'), true);
+
+const focusedNumberInput = createFakeElement('focused-number');
+focusedNumberInput.tagName = 'INPUT';
+focusedNumberInput.type = 'number';
+playCalls = 0;
+playing = false;
+document.dispatchKeydown(' ', focusedNumberInput);
+assert.equal(playCalls, 1);
+document.dispatchKeydown(' ', focusedNumberInput);
+assert.equal(playing, false);
+
+const focusedTextInput = createFakeElement('focused-text');
+focusedTextInput.tagName = 'INPUT';
+focusedTextInput.type = 'text';
+playCalls = 0;
+document.dispatchKeydown(' ', focusedTextInput);
+assert.equal(playCalls, 0);
 
 document.measures[1].dispatchSplitClick('add');
 assert.equal(splitRequest.measureIndex, 1);
@@ -243,6 +285,15 @@ assert.equal(lastPlayCallbacks.shouldLoop(), true);
 document.metronome.checked = true;
 assert.equal(lastPlayCallbacks.shouldPlayMetronome(), true);
 
+document.exportButton.dispatchEvent({ type: 'click', target: document.exportButton });
+assert.deepEqual(midiBuildRequest, {
+	data: { midi: { initialMidiNote: 60 } },
+	midiInstrument: 'acoustic_grand_piano',
+	progression: progression
+});
+assert.equal(document.lastDownload.download, 'test-progression.mid');
+assert.equal(midiDownloads, 1);
+
 console.log('Progression transport tests passed');
 
 function createFakeDocument(measureCount) {
@@ -262,6 +313,12 @@ function createFakeDocument(measureCount) {
 
 	const fakeDocument = {
 		body: createFakeElement('body'),
+		createElement: function (tagName) {
+			const element = createFakeElement(tagName);
+
+			element.tagName = tagName.toUpperCase();
+			return element;
+		},
 		exportButton,
 		goStart,
 		listen,
@@ -485,7 +542,17 @@ function createFakeElement(id) {
 	const classes = {};
 
 	return {
+		appendChild: function (child) {
+			this.children = this.children || [];
+			this.children.push(child);
+			child.parentNode = this;
+			return child;
+		},
 		checked: false,
+		click: function () {
+			midiDownloads += 1;
+			document.lastDownload = this;
+		},
 		classList: {
 			add: function (className) {
 				classes[className] = true;
@@ -519,9 +586,17 @@ function createFakeElement(id) {
 		querySelector: function () {
 			return null;
 		},
+		removeChild: function (child) {
+			this.children = (this.children || []).filter(function (item) {
+				return item !== child;
+			});
+			child.parentNode = null;
+			return child;
+		},
 		setAttribute: function (name, value) {
 			attributes[name] = String(value);
-		}
+		},
+		style: {}
 	};
 }
 

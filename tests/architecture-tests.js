@@ -38,7 +38,44 @@ assert.ok(global.CodaI18n.create);
 assert.ok(global.CodaMusicalContext.create);
 assert.ok(global.CodaNotation.formatNoteName);
 assert.ok(global.CodaPreferences.create);
+assert.ok(global.CodaProgressionPreferences.fromPreferences);
+assert.ok(global.CodaProgressionStateNormalizer.normalize);
+assert.ok(global.CodaProgressionDegreeResolver.fromGeneratedPlan);
+assert.ok(global.CodaProgressionPitch.normalizePitchName);
+assert.ok(global.CodaProgressionVoiceLeadingScore.voiceLeadingTransitionScore);
+assert.ok(global.CodaProgressionVoicingDisposition.chooseCandidate);
+assert.ok(global.CodaProgressionVoicing.chooseVoicing);
+assert.ok(global.CodaProgressionVoiceLeading.annotateMeasures);
+assert.ok(global.CodaProgressionMeasureTimeline.rebuildTimeline);
+assert.ok(global.CodaProgressionFormatting.formatDegreeForChord);
+assert.ok(global.CodaProgressionStructureEditing.reorderMeasures);
+assert.ok(global.CodaProgressionAdditionalChord.choose);
+assert.ok(global.CodaProgressionSegmentBuilder.fromPlan);
+assert.ok(global.CodaProgressionReplacementChord.buildSegment);
+assert.ok(global.CodaProgressionMeasureChordAddition.addMeasureChord);
+assert.ok(global.CodaProgressionMeasureChordReplacement.replaceMeasureChord);
+assert.ok(global.CodaProgressionEditing.addMeasureChord);
+assert.ok(global.CodaProgressionTensions.addToNotes);
+assert.ok(global.CodaProgressionChordPlan.build);
+assert.ok(global.CodaProgressionMeasureBuilder.build);
+assert.ok(global.CodaProgressionResult.build);
+assert.ok(global.CodaProgressionCadencePlanner.finalCadenceForPattern);
+assert.ok(global.CodaProgressionPlanner.createPlan);
+assert.ok(global.CodaProgressionBuilder.fromState);
+assert.ok(global.CodaProgressionChordMenu.build);
 assert.ok(global.CodaMidiExport.createProgressionMidiFile);
+assert.ok(global.CodaProgressionMidiFile.build);
+assert.ok(global.CodaProgressionMidiDownload.exportMidi);
+assert.ok(global.CodaProgressionPlaybackSchedule.buildProgressionPlaybackSchedule);
+assert.ok(global.CodaProgressionEventPlayer.play);
+assert.ok(global.CodaProgressionPlaybackCallbacks.shouldLoop);
+assert.ok(global.CodaProgressionPlaybackTimers.create);
+assert.ok(global.CodaProgressionTransportShortcuts.handle);
+assert.ok(global.CodaProgressionTransportDrag.initialize);
+assert.ok(global.CodaProgressionTransportView.setPlaybackHead);
+assert.ok(global.CodaProgressionTransportActions.updateMeasureSplit);
+assert.ok(global.CodaProgressionTransportMenu.open);
+assert.ok(global.CodaProgressionTransportPlayback.toggle);
 assert.ok(global.CodaDomain.buildScale);
 assert.ok(global.CodaDomain.buildScaleReport === undefined);
 assert.ok(global.CodaDomain.resolveProgressionDegrees);
@@ -66,6 +103,7 @@ assert.ok(global.CodaRenderers.circleOfFifths);
 assert.ok(global.CodaRenderers.changelog);
 assert.ok(global.CodaRenderers.welcome);
 assert.ok(global.CodaRenderers.progressionWorkbench);
+assert.ok(global.CodaRenderers.progressionChordMenu);
 assert.ok(global.CodaUiState.create);
 assert.ok(global.CodaProgressionState.normalize);
 assert.ok(global.CodaStaticText.apply);
@@ -97,6 +135,7 @@ assert.ok(manifestScripts.indexOf('js/content/welcome-content.js') > -1);
 assert.ok(manifestScripts.indexOf('js/renderers/changelog-renderer.js') > -1);
 assert.ok(manifestScripts.indexOf('js/renderers/welcome-renderer.js') > -1);
 assert.ok(manifestScripts.indexOf('js/renderers/progression-workbench-renderer.js') > -1);
+assert.ok(manifestScripts.indexOf('js/renderers/progression-chord-menu-renderer.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/ui-state.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/progression-state.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/static-text-controller.js') > -1);
@@ -115,7 +154,43 @@ assert.ok(manifestScripts.indexOf('js/i18n/i18n-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/musical-context-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/notation-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/preferences-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-voicing-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-state-normalizer-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-degree-resolver-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-pitch-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-voice-leading-score-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-voicing-disposition-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-voice-leading-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-measure-timeline-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-formatting-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-structure-editing-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-additional-chord-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-segment-builder-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-replacement-chord-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-measure-chord-addition-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-measure-chord-replacement-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-editing-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-tension-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-chord-plan-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-measure-builder-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-result-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-cadence-planner-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-planner-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-builder-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-chord-menu-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/midi-export-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-midi-file-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-midi-download-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-playback-schedule-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-event-player-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-playback-callbacks-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-playback-timer-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-transport-shortcut-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-transport-drag-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-transport-view-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-transport-actions-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-transport-menu-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-transport-playback-service.js') > -1);
 assert.deepEqual(manifestScripts.slice(-1), ['js/app.js']);
 
 const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
@@ -194,6 +269,16 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	language: 'en',
 	midiInstrument: 'drawbar_organ',
 	notation: 'latin',
+	progressionArticulation: 'arpeggio',
+	progressionBars: '16',
+	progressionBpm: '132',
+	progressionCounterpoint: '65',
+	progressionMeter: '6/8',
+	progressionModalInterchange: '40',
+	progressionStyle: 'classic',
+	progressionTensions: '75',
+	progressionVoicing: 'open',
+	progressionVoices: '5',
 	scaleIndex: '3',
 	theme: 'day',
 	tonicIndex: '8',
@@ -204,6 +289,16 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	language: 'en',
 	midiInstrument: 'drawbar_organ',
 	notation: 'latin',
+	progressionArticulation: 'arpeggio',
+	progressionBars: '16',
+	progressionBpm: 132,
+	progressionCounterpoint: 65,
+	progressionMeter: '6/8',
+	progressionModalInterchange: 40,
+	progressionStyle: 'classic',
+	progressionTensions: 75,
+	progressionVoicing: 'open',
+	progressionVoices: 5,
 	scaleIndex: 3,
 	theme: 'day',
 	tonicIndex: 8,
@@ -214,11 +309,312 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	language: 'fr',
 	midiInstrument: '../bad',
 	notation: 'bad',
+	progressionArticulation: 'tenuto',
+	progressionBars: '5',
+	progressionBpm: 201,
+	progressionCounterpoint: -1,
+	progressionMeter: '5/4',
+	progressionModalInterchange: 101,
+	progressionStyle: 'atonal',
+	progressionTensions: -1,
+	progressionVoicing: 'wide',
+	progressionVoices: 9,
 	scaleIndex: 999,
 	theme: 'dusk',
 	tonicIndex: -1,
 	volume: 101
 }), {});
+assert.deepEqual(global.CodaProgressionPreferences.fromPreferences({
+	progressionArticulation: 'arpeggio',
+	progressionBars: '16',
+	progressionBpm: 132,
+	progressionCounterpoint: 65,
+	progressionMeter: '6/8',
+	progressionModalInterchange: 40,
+	progressionStyle: 'classic',
+	progressionTensions: 75,
+	progressionVoicing: 'open',
+	progressionVoices: 5
+}), {
+	articulation: 'arpeggio',
+	bars: '16',
+	bpm: 132,
+	counterpoint: 65,
+	meter: '6/8',
+	modalInterchange: 40,
+	style: 'classic',
+	tensions: 75,
+	voicing: 'open',
+	voices: 5
+});
+assert.deepEqual(global.CodaProgressionPreferences.normalizeControls({
+	bars: '16',
+	bpm: 132,
+	voicing: 'open'
+}, global.CodaProgressionState), {
+	articulation: 'sustain',
+	bars: 16,
+	bpm: 132,
+	counterpoint: 20,
+	meter: '4/4',
+	modalInterchange: 25,
+	style: 'modern',
+	tensions: 35,
+	voicing: 'open',
+	voices: 4
+});
+assert.deepEqual(global.CodaProgressionStateNormalizer.normalize({
+	beatUnit: 8,
+	beatsPerBar: 7,
+	bpm: '132',
+	meter: '7/8',
+	style: 'classic',
+	voicing: 'open'
+}), {
+	articulation: 'sustain',
+	bars: 8,
+	beatUnit: 8,
+	beatsPerBar: 7,
+	bpm: 132,
+	counterpoint: 20,
+	meter: '7/8',
+	modalInterchange: 25,
+	style: 'classic',
+	tensions: 35,
+	voicing: 'open',
+	voices: 4
+});
+assert.deepEqual(global.CodaProgressionDegreeResolver.fromGeneratedPlan({
+	degrees: [
+		{ index: 0, source: 'diatonic' },
+		{ index: 3, source: 'parallel' }
+	],
+	report: {
+		parallelScaleChords: [{ nombre: 'Cm7' }, { nombre: 'Dm7♭5' }, { nombre: 'E♭maj7' }, { nombre: 'Fm7' }],
+		scaleChords: [{ nombre: 'Cmaj7' }, { nombre: 'Dm7' }, { nombre: 'Em7' }, { nombre: 'Fmaj7' }],
+		scaleNotes: [{ grado: 'I' }, { grado: 'II' }, { grado: 'III' }, { grado: 'IV' }]
+	}
+}).map(function (degree) {
+	return {
+		chord: degree.chord.nombre,
+		degree: degree.degree,
+		degreeIndex: degree.degreeIndex,
+		source: degree.source
+	};
+}), [
+	{ chord: 'Cmaj7', degree: 'I', degreeIndex: 0, source: 'diatonic' },
+	{ chord: 'Fm7', degree: 'IV', degreeIndex: 3, source: 'parallel' }
+]);
+const closedVoicing = global.CodaProgressionVoicing.chooseVoicing({
+	baseNotes: ['C', 'E', 'G'],
+	chordName: 'C',
+	extraNotes: [],
+	initialMidiNote: 60,
+	kind: 'triad',
+	voicing: 'closed',
+	voices: 4
+});
+const openVoicing = global.CodaProgressionVoicing.chooseVoicing({
+	baseNotes: ['C', 'E', 'G'],
+	chordName: 'C',
+	extraNotes: [],
+	initialMidiNote: 60,
+	kind: 'triad',
+	voicing: 'open',
+	voices: 4
+});
+assert.ok(global.CodaProgressionVoicing.upperVoiceSpan(openVoicing.midiNotes) > global.CodaProgressionVoicing.upperVoiceSpan(closedVoicing.midiNotes));
+assert.equal(global.CodaProgressionVoicing.commonPitchNames(['C', 'E'], ['E', 'G']).join(','), 'E');
+const voiceLeadingPedalMeasures = global.CodaProgressionVoiceLeading.annotateMeasures([
+	{
+		bar: 1,
+		durationSeconds: 2,
+		midiNotes: [48, 52, 55],
+		voiceNotes: [
+			{ midiNote: 48, note: 'C', role: 'root' },
+			{ midiNote: 52, note: 'E', role: 'third' },
+			{ midiNote: 55, note: 'G', role: 'fifth' }
+		]
+	},
+	{
+		bar: 2,
+		durationSeconds: 2,
+		midiNotes: [48, 53, 57],
+		voiceNotes: [
+			{ midiNote: 48, note: 'C', role: 'root' },
+			{ midiNote: 53, note: 'F', role: 'fourth' },
+			{ midiNote: 57, note: 'A', role: 'sixth' }
+		]
+	}
+], { counterpoint: 80 });
+assert.deepEqual(voiceLeadingPedalMeasures[0].pedalsOut.map(function (pedal) { return pedal.note; }), ['C']);
+assert.equal(voiceLeadingPedalMeasures[1].voiceNotes[0].role, 'root-pedal');
+const timelineProgression = global.CodaProgressionMeasureTimeline.rebuildTimeline({
+	beatsPerBar: 4,
+	bpm: 120,
+	secondsPerBeat: 0.5
+}, [
+	{
+		bar: 7,
+		chordName: 'Am',
+		durationBeats: 4,
+		midiNotes: [57, 60, 64],
+		notes: ['A', 'C', 'E'],
+		startBeat: 12,
+		voiceNotes: [{ midiNote: 57, note: 'A', role: 'root' }]
+	}
+]);
+assert.equal(timelineProgression.measures[0].bar, 1);
+assert.equal(timelineProgression.measures[0].startSeconds, 0);
+assert.deepEqual(timelineProgression.measures[0].midiNotes, [57, 60, 64]);
+assert.equal(global.CodaProgressionFormatting.triadName({ nombre: 'Cm7' }), 'Cm');
+assert.equal(global.CodaProgressionFormatting.formatDegreeForChord('VI', 'Cmaj7'), 'VImaj7');
+assert.equal(global.CodaProgressionFormatting.displayName('Cmaj7', '4/3', 'sus4', '9'), 'Cmaj7 4/3 sus4 9');
+assert.deepEqual(global.CodaProgressionTensions.addToNotes(['C', 'E', 'G'], {
+	degreeIndex: 0,
+	kind: 'triad',
+	scaleNotes: [{ nombre: 'C' }, { nombre: 'D' }, { nombre: 'E' }, { nombre: 'F' }, { nombre: 'G' }, { nombre: 'A' }, { nombre: 'B' }],
+	tensions: 85,
+	voices: 5
+}), {
+	label: 'add9 add13',
+	notes: ['C', 'E', 'G', 'D', 'A']
+});
+const chordPlanServicePlan = global.CodaProgressionChordPlan.build({
+	index: 0,
+	options: {
+		includeTensions: false,
+		initialMidiNote: 60
+	},
+	previousPlan: null,
+	progressionState: {
+		voices: 4,
+		voicing: 'closed'
+	},
+	resolvedDegree: {
+		chord: { fundamental: 'C', nombre: 'Cmaj7', quinta: 'G', septima: 'B', tercera: 'E' },
+		degree: 'I',
+		degreeIndex: 0
+	},
+	resolvedDegrees: [
+		{
+			chord: { fundamental: 'C', nombre: 'Cmaj7', quinta: 'G', septima: 'B', tercera: 'E' },
+			degree: 'I',
+			degreeIndex: 0
+		}
+	]
+});
+assert.equal(chordPlanServicePlan.chordName, 'C');
+assert.equal(chordPlanServicePlan.kind, 'triad');
+const builtMeasures = global.CodaProgressionMeasureBuilder.build([
+	{
+		chord: { fundamental: 'C', nombre: 'Cmaj7', quinta: 'G', septima: 'B', tercera: 'E' },
+		degree: 'I',
+		degreeIndex: 0,
+		source: 'diatonic'
+	}
+], {
+	articulation: 'sustain',
+	beatUnit: 4,
+	beatsPerBar: 4,
+	counterpoint: 20,
+	voices: 4,
+	voicing: 'closed'
+}, 0.5, {
+	initialMidiNote: 60,
+	scaleDefinition: { funciones: 'T-SD-D', tonal: 'true' }
+});
+assert.equal(builtMeasures[0].displayName, 'C');
+assert.equal(builtMeasures[0].tonalFunction, 'T');
+assert.equal(builtMeasures[0].durationSeconds, 2);
+const progressionResult = global.CodaProgressionResult.build({
+	generationPlan: {
+		pattern: {
+			cadence: 'half',
+			form: 'test-form',
+			id: 'test-pattern'
+		},
+		voiceLeading: 'balanced'
+	},
+	measures: builtMeasures,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 1,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 20,
+		meter: '4/4',
+		modalInterchange: 25,
+		style: 'modern',
+		tensions: 35,
+		voicing: 'closed',
+		voices: 4
+	},
+	secondsPerBeat: 0.5
+});
+assert.equal(progressionResult.totalSeconds, 2);
+assert.equal(progressionResult.generation.patternId, 'test-pattern');
+assert.deepEqual(progressionResult.harmonicColor, { counterpoint: 20, modalInterchange: 25, tensions: 35 });
+assert.equal(global.CodaProgressionMidiFile.findInstrument(global.CodaData, 'string_ensemble_1').program, 48);
+assert.equal(global.CodaProgressionMidiFile.findInstrument(global.CodaData, 'missing').id, global.CodaData.midiInstruments[0].id);
+assert.deepEqual(global.CodaProgressionPlanner.createPlan({
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		counterpoint: 80,
+		modalInterchange: 10,
+		style: 'classic',
+		tensions: 35
+	},
+	report: { mode: 'M' },
+	rng: function () { return 0; },
+	rules: {
+		patterns: [
+			{
+				cadence: 'authentic',
+				counterpoint: 80,
+				degrees: [0, 1, 4, 0],
+				form: 'test',
+				id: 'test-authentic',
+				modes: ['major'],
+				modalColor: 10,
+				tensionAffinity: 35,
+				weight: 1
+			}
+		]
+	}
+}).degrees, [
+	{ index: 0, source: 'diatonic' },
+	{ index: 1, source: 'diatonic' },
+	{ index: 4, source: 'diatonic' },
+	{ index: 0, source: 'diatonic' }
+]);
+const chordMenuServiceGroups = global.CodaProgressionChordMenu.build({
+	currentSegment: {
+		notes: ['C', 'E', 'G'],
+		tonalFunction: 'T'
+	},
+	report: {
+		scaleChords: [
+			{ fundamental: 'C', nombre: 'Cmaj7', quinta: 'G', septima: 'B', tercera: 'E' },
+			{ fundamental: 'D', nombre: 'Dm7', quinta: 'A', septima: 'C', tercera: 'F' },
+			{ fundamental: 'E', nombre: 'Em7', quinta: 'B', septima: 'D', tercera: 'G' }
+		],
+		scaleDefinition: {
+			funciones: 'T-SD-T',
+			tonal: 'true'
+		},
+		scaleNotes: [
+			{ grado: 'I' },
+			{ grado: 'II' },
+			{ grado: 'III' }
+		]
+	}
+});
+assert.deepEqual(chordMenuServiceGroups[0].items.map(function (item) { return item.chordName; }), ['Cmaj7', 'Em7']);
+assert.deepEqual(chordMenuServiceGroups[1].items.map(function (item) { return item.chordName; }), ['Dm7']);
+assert.equal(chordMenuServiceGroups[1].items[0].commonToneCount, 1);
 assert.ok(fs.readFileSync(path.join(root, 'js/midi/loader.js'), 'utf8').indexOf('root.USE_XHR = false') > -1);
 assert.equal(fs.readFileSync(path.join(root, 'js/midi/loader.js'), 'utf8').indexOf('script.text'), -1);
 assert.ok(fs.readFileSync(path.join(root, 'js/ui/static-text-controller.js'), 'utf8').indexOf('setTrustedHtml') > -1);
@@ -274,6 +670,10 @@ const startResult = global.CodaBootstrap.start({
 		tonicIndex: '5'
 	},
 	initialNotation: 'latin',
+	initialProgressionState: {
+		bars: 16,
+		voicing: 'open'
+	},
 	initialTheme: 'day',
 	initialVolume: 73,
 	midi: { plugin: {} },
@@ -324,6 +724,10 @@ assert.deepEqual(controllerOptions.initialForm, {
 	tonicIndex: '5'
 });
 assert.equal(controllerOptions.initialNotation, 'latin');
+assert.deepEqual(controllerOptions.initialProgressionState, {
+	bars: 16,
+	voicing: 'open'
+});
 assert.equal(controllerOptions.initialTheme, 'day');
 assert.equal(controllerOptions.initialVolume, 73);
 assert.equal(controllerOptions.instrumentPlayback, startResult.instrumentPlayback);
@@ -332,6 +736,7 @@ assert.ok(controllerOptions.musicalContext.fromSelection);
 assert.equal(controllerOptions.notation, global.CodaNotation);
 assert.equal(controllerOptions.playbackService, startResult.playbackService);
 assert.equal(controllerOptions.progressionPlayback, startResult.progressionPlayback);
+assert.equal(controllerOptions.progressionPreferences, global.CodaProgressionPreferences);
 assert.equal(controllerOptions.progressionState, global.CodaProgressionState);
 assert.equal(controllerOptions.progressionTransport, global.CodaProgressionTransport);
 assert.equal(controllerOptions.randomSelectControl, global.CodaRandomSelect);

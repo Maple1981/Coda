@@ -48,7 +48,8 @@ function runScript(relativePath) {
 	'js/renderers/circle-of-fifths-renderer.js',
 	'js/renderers/changelog-renderer.js',
 	'js/renderers/welcome-renderer.js',
-	'js/renderers/progression-workbench-renderer.js'
+	'js/renderers/progression-workbench-renderer.js',
+	'js/renderers/progression-chord-menu-renderer.js'
 ].forEach(runScript);
 
 const data = context.window.CodaData;
@@ -61,6 +62,7 @@ const scaleChordsRenderer = context.window.CodaRenderers.scaleChords;
 const scaleSummaryRenderer = context.window.CodaRenderers.scaleSummary;
 const welcomeRenderer = context.window.CodaRenderers.welcome;
 const progressionWorkbenchRenderer = context.window.CodaRenderers.progressionWorkbench;
+const progressionChordMenuRenderer = context.window.CodaRenderers.progressionChordMenu;
 const notation = context.window.CodaNotation;
 const englishI18n = context.window.CodaI18n.create({
 	initialLanguage: 'en',
@@ -77,6 +79,36 @@ function noteIndex(name) {
 	return data.notes.findIndex(function (note) {
 		return note.nombre === name || note.enarmonica === name;
 	});
+}
+
+function createRendererDocument() {
+	return {
+		createElement: function (tagName) {
+			const attributes = {};
+
+			return {
+				children: [],
+				className: '',
+				innerHTML: '',
+				parentNode: null,
+				style: {},
+				tagName: tagName.toUpperCase(),
+				textContent: '',
+				type: '',
+				appendChild: function (child) {
+					this.children.push(child);
+					child.parentNode = this;
+					return child;
+				},
+				getAttribute: function (name) {
+					return attributes[name];
+				},
+				setAttribute: function (name, value) {
+					attributes[name] = String(value);
+				}
+			};
+		}
+	};
 }
 
 const cMajor = domain.buildScale({
@@ -390,8 +422,14 @@ assert.ok(progressionWorkbenchHtml.indexOf('<select id="progressionBars"') > -1)
 assert.ok(progressionWorkbenchHtml.indexOf('<option value="32">32</option>') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="progressionBpm" type="number" value="120" min="20" max="200"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="progressionVoices" type="number" value="4" min="1" max="6"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="progressionVoicing"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.voicing.closed"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-help-i18n="progression.help.voicing"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-random-control-target="#progressionCounterpoint"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-random-group="global"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-help-i18n="progression.help.style"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-help-i18n="progression.help.tensions"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-help-i18n="progression.help.counterpoint"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.articulation.sustain"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="progressionStyle"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.style.modern"') > -1);
@@ -484,5 +522,38 @@ assert.ok(progressionWorkbenchRenderer.renderTimelineMeasures({
 		}
 	]
 }).indexOf('<strong>Imaj7</strong>') > -1);
+
+context.window.document = createRendererDocument();
+const chordMenu = progressionChordMenuRenderer.render([
+	{
+		id: 'sameFunction',
+		items: [
+			{
+				chordName: 'Cmaj7 4/3',
+				degree: 'Imaj7 4/3',
+				options: [
+					{
+						degree: 'I 6',
+						degreeIndex: 0,
+						displayName: 'C 6',
+						inversionIndex: 1,
+						kind: 'triad'
+					}
+				]
+			}
+		]
+	}
+], {
+	chordIndex: 2,
+	i18n: englishI18n,
+	measureIndex: 4
+});
+
+assert.equal(chordMenu.className, 'progressionChordMenu');
+assert.equal(chordMenu.children[0].children[0].textContent, 'Same tonal function');
+assert.ok(chordMenu.children[0].children[1].children[0].innerHTML.indexOf('<sub class="musicInversion">4/3</sub>') > -1);
+assert.equal(chordMenu.children[0].children[1].children[1].children[0].getAttribute('data-progression-index'), '4');
+assert.equal(chordMenu.children[0].children[1].children[1].children[0].getAttribute('data-measure-chord-index'), '2');
+assert.ok(chordMenu.children[0].children[1].children[1].children[0].innerHTML.indexOf('<sub class="musicInversion">6</sub>') > -1);
 
 console.log('Renderer tests passed');

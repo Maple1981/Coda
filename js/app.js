@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			tonicIndex: storedPreferences.tonicIndex
 		},
 		initialNotation: storedPreferences.notation,
+		initialProgressionState: CodaProgressionPreferences.fromPreferences(storedPreferences),
 		initialTheme: storedPreferences.theme,
 		initialVolume: storedPreferences.volume,
 		musicalContextFactory: CodaMusicalContext,

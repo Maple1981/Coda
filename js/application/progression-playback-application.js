@@ -6,18 +6,21 @@
 		options = options || {};
 
 		var playbackService = options.playbackService;
-		var timerApi = options.timerApi || global;
+		var playbackSchedule = options.playbackSchedule || global.CodaProgressionPlaybackSchedule;
+		var eventPlayer = options.eventPlayer || global.CodaProgressionEventPlayer;
+		var playbackCallbacks = options.playbackCallbacks || global.CodaProgressionPlaybackCallbacks;
+		var playbackTimers = options.playbackTimers || global.CodaProgressionPlaybackTimers.create(options.timerApi || global);
 		var activeRun = null;
 
 		function play(progression, callbacks) {
 			callbacks = callbacks || {};
 
-			var startIndex = normalizeStartIndex(callbacks.startIndex, progression);
-			var schedule = buildProgressionPlaybackSchedule(progression, {
+			var startIndex = playbackSchedule.normalizeStartIndex(callbacks.startIndex, progression);
+			var schedule = playbackSchedule.buildProgressionPlaybackSchedule(progression, {
 				instrument: playbackInstrumentAttributes(),
 				startIndex: startIndex
 			});
-			var scheduledMeasures = buildScheduledMeasures(progression, startIndex);
+			var scheduledMeasures = playbackSchedule.buildScheduledMeasures(progression, startIndex);
 			var run;
 
 			if (!schedule.length || !playbackService) {
@@ -30,7 +33,7 @@
 				timers: []
 			};
 			activeRun = run;
-			runCallback(callbacks.onStart, progression, startIndex);
+			playbackCallbacks.run(callbacks.onStart, progression, startIndex);
 
 			if (shouldLoadBeforePlayback()) {
 				playbackService.load(function () {
@@ -51,14 +54,14 @@
 				return false;
 			}
 
-			clearTimers(run.timers);
+			playbackTimers.clear(run.timers);
 			activeRun = null;
 
 			if (playbackService && typeof playbackService.stopAllNotes === 'function') {
 				playbackService.stopAllNotes();
 			}
 
-			runCallback(run.callbacks.onStop);
+			playbackCallbacks.run(run.callbacks.onStop);
 			return true;
 		}
 
@@ -93,29 +96,29 @@
 
 		function schedulePlaybackEvents(run, schedule) {
 			for (var i = 0; i < schedule.length; i++) {
-				scheduleTimer(run, schedule[i].delay, createPlaybackCallback(run, schedule[i]));
+				playbackTimers.schedule(run, schedule[i].delay, createPlaybackCallback(run, schedule[i]));
 			}
 		}
 
 		function scheduleMetronomeEvents(run, progression, callbacks) {
 			var schedule;
 
-			if (!shouldPlayMetronome(callbacks) || !playbackService || typeof playbackService.playMetronomeClick !== 'function') {
+			if (!playbackService || typeof playbackService.playMetronomeClick !== 'function') {
 				return;
 			}
 
-			schedule = buildProgressionMetronomeSchedule(progression, {
+			schedule = playbackSchedule.buildProgressionMetronomeSchedule(progression, {
 				startIndex: callbacks.startIndex
 			});
 
 			for (var i = 0; i < schedule.length; i++) {
-				scheduleTimer(run, schedule[i].delay, createMetronomeCallback(run, schedule[i]));
+				playbackTimers.schedule(run, schedule[i].delay, createMetronomeCallback(run, schedule[i]));
 			}
 		}
 
 		function createMetronomeCallback(run, event) {
 			return function () {
-				if (activeRun === run) {
+				if (activeRun === run && playbackCallbacks.shouldPlayMetronome(run.callbacks)) {
 					playbackService.playMetronomeClick({
 						accent: event.accent,
 						bar: event.bar,
@@ -129,172 +132,43 @@
 		function createPlaybackCallback(run, event) {
 			return function () {
 				if (activeRun === run) {
-					playScheduledEvent(asImmediateEvent(event));
+					eventPlayer.play(playbackService, eventPlayer.asImmediateEvent(event));
 				}
 			};
-		}
-
-		function asImmediateEvent(event) {
-			var immediateEvent = {
-				arpeggioStep: event.arpeggioStep,
-				bar: event.bar,
-				degree: event.degree,
-				delay: 0,
-				duration: event.duration,
-				mode: event.mode,
-				notes: event.notes
-			};
-
-			if (event.midiNotes && event.midiNotes.length) {
-				immediateEvent.midiNotes = event.midiNotes;
-			}
-
-			if (event.midiNoteEvents && event.midiNoteEvents.length) {
-				immediateEvent.midiNoteEvents = event.midiNoteEvents;
-			}
-
-			return immediateEvent;
-		}
-
-		function playScheduledEvent(event) {
-			if (event.mode === 'arpeggio') {
-				playArpeggio(event);
-				return;
-			}
-
-			if (event.midiNoteEvents && event.midiNoteEvents.length) {
-				playMidiNoteEvents(event);
-				return;
-			}
-
-			if (event.midiNotes && event.midiNotes.length) {
-				playMidiChord(event);
-				return;
-			}
-
-			if (typeof playbackService.playChordFromNames === 'function') {
-				playbackService.playChordFromNames(event.notes, {
-					delay: event.delay,
-					duration: event.duration
-				});
-			}
-		}
-
-		function playMidiChord(event) {
-			if (typeof playbackService.playMidiChord === 'function') {
-				playbackService.playMidiChord(event.midiNotes, {
-					delay: event.delay,
-					duration: event.duration
-				});
-				return;
-			}
-
-			if (typeof playbackService.playMidiNote !== 'function') {
-				return;
-			}
-
-			for (var i = 0; i < event.midiNotes.length; i++) {
-				playbackService.playMidiNote(event.midiNotes[i], {
-					delay: event.delay,
-					duration: event.duration
-				});
-			}
-		}
-
-		function playMidiNoteEvents(event) {
-			if (typeof playbackService.playMidiNote !== 'function') {
-				playMidiChord(event);
-				return;
-			}
-
-			for (var i = 0; i < event.midiNoteEvents.length; i++) {
-				playbackService.playMidiNote(event.midiNoteEvents[i].midiNote, {
-					delay: event.delay,
-					duration: event.midiNoteEvents[i].duration
-				});
-			}
-		}
-
-		function playArpeggio(event) {
-			var midiNotes;
-
-			if (event.midiNotes && event.midiNotes.length) {
-				midiNotes = event.midiNotes;
-			} else if (typeof playbackService.chordNamesToMidi === 'function') {
-				midiNotes = playbackService.chordNamesToMidi(event.notes, 0);
-			}
-
-			if (!midiNotes || !midiNotes.length || typeof playbackService.playMidiNote !== 'function') {
-				if (typeof playbackService.playChordFromNames === 'function') {
-					playbackService.playChordFromNames(event.notes, {
-						delay: event.delay,
-						duration: event.duration
-					});
-				}
-				return;
-			}
-
-			for (var i = 0; i < midiNotes.length; i++) {
-				playbackService.playMidiNote(midiNotes[i], {
-					delay: event.delay + (event.arpeggioStep * i),
-					duration: Math.max(0.1, event.duration - (event.arpeggioStep * i))
-				});
-			}
 		}
 
 		function scheduleMeasureCallbacks(run, progression, scheduledMeasures) {
-			var totalSeconds = playbackTotalSeconds(progression, scheduledMeasures);
+			var totalSeconds = playbackSchedule.playbackTotalSeconds(progression, scheduledMeasures);
 
 			for (var i = 0; i < scheduledMeasures.length; i++) {
-				scheduleTimer(run, scheduledMeasures[i].delay, createMeasureStartCallback(run, scheduledMeasures[i].measure, scheduledMeasures[i].index));
+				playbackTimers.schedule(run, scheduledMeasures[i].delay, createMeasureStartCallback(run, scheduledMeasures[i].measure, scheduledMeasures[i].index));
 			}
 
-			scheduleTimer(run, totalSeconds, function () {
+			playbackTimers.schedule(run, totalSeconds, function () {
 				if (activeRun !== run) {
 					return;
 				}
 
 				activeRun = null;
 
-				if (shouldLoop(run.callbacks)) {
-					runCallback(run.callbacks.onCycleComplete, progression);
-					play(progression, extendCallbacks(run.callbacks, {
+				if (playbackCallbacks.shouldLoop(run.callbacks)) {
+					playbackCallbacks.run(run.callbacks.onCycleComplete, progression);
+					play(progression, playbackCallbacks.extend(run.callbacks, {
 						startIndex: 0
 					}));
 					return;
 				}
 
-				runCallback(run.callbacks.onComplete, progression);
+				playbackCallbacks.run(run.callbacks.onComplete, progression);
 			});
 		}
 
 		function createMeasureStartCallback(run, measure, index) {
 			return function () {
 				if (activeRun === run) {
-					runCallback(run.callbacks.onMeasureStart, measure, index);
+					playbackCallbacks.run(run.callbacks.onMeasureStart, measure, index);
 				}
 			};
-		}
-
-		function scheduleTimer(run, seconds, callback) {
-			var timerId;
-
-			if (typeof timerApi.setTimeout !== 'function') {
-				return;
-			}
-
-			timerId = timerApi.setTimeout(callback, Math.max(0, seconds * 1000));
-			run.timers.push(timerId);
-		}
-
-		function clearTimers(timers) {
-			if (typeof timerApi.clearTimeout !== 'function') {
-				return;
-			}
-
-			for (var i = 0; i < timers.length; i++) {
-				timerApi.clearTimeout(timers[i]);
-			}
 		}
 
 		return {
@@ -304,271 +178,11 @@
 		};
 	}
 
-	function buildProgressionPlaybackSchedule(progression, options) {
-		var measures = progression && progression.measures ? progression.measures : [];
-		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
-		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
-		var schedule = [];
-
-		for (var i = startIndex; i < measures.length; i++) {
-			schedule = schedule.concat(buildMeasurePlaybackEvents(measures[i], i, startOffset, options));
-		}
-
-		return schedule;
-	}
-
-	function buildProgressionMetronomeSchedule(progression, options) {
-		var measures = progression && progression.measures ? progression.measures : [];
-		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
-		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
-		var secondsPerBeat = Number(progression && progression.secondsPerBeat) || secondsPerBeatFromProgression(progression);
-		var schedule = [];
-
-		for (var i = startIndex; i < measures.length; i++) {
-			var measure = measures[i];
-			var beats = Math.max(1, Math.round(Number(measure.durationBeats) || Number(progression.beatsPerBar) || 4));
-			var measureDelay = Math.max(0, (Number(measure.startSeconds) || 0) - startOffset);
-
-			for (var beat = 0; beat < beats; beat++) {
-				schedule.push({
-					accent: beat === 0,
-					bar: measure.bar || i + 1,
-					beat: beat + 1,
-					delay: measureDelay + (beat * secondsPerBeat)
-				});
-			}
-		}
-
-		return schedule;
-	}
-
-	function secondsPerBeatFromProgression(progression) {
-		var bpm = Number(progression && progression.bpm) || 120;
-
-		return 60 / Math.max(1, bpm);
-	}
-
-	function buildScheduledMeasures(progression, startIndex) {
-		var measures = progression && progression.measures ? progression.measures : [];
-		startIndex = normalizeStartIndex(startIndex, progression);
-
-		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
-		var scheduledMeasures = [];
-
-		for (var i = startIndex; i < measures.length; i++) {
-			scheduledMeasures.push({
-				delay: Math.max(0, (Number(measures[i].startSeconds) || 0) - startOffset),
-				index: i,
-				measure: measures[i]
-			});
-		}
-
-		return scheduledMeasures;
-	}
-
-	function buildMeasurePlaybackEvents(measure, index, startOffset, options) {
-		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
-		var events = [];
-
-		for (var i = 0; i < chords.length; i++) {
-			events.push(buildMeasurePlaybackEvent(chords[i], index, startOffset, options, i));
-		}
-
-		return events;
-	}
-
-	function buildMeasurePlaybackEvent(measure, index, startOffset, options, chordIndex) {
-		var duration = playbackDuration(measure);
-		var notes = notesForVoices(measure.notes, measure.voices);
-		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
-		var midiNoteEvents = buildMidiNoteEvents(measure, duration, options);
-		var mode = measure.articulation === 'arpeggio' ? 'arpeggio' : 'chord';
-
-		var event = {
-			arpeggioStep: arpeggioStepSeconds(measure),
-			bar: measure.bar,
-			degree: measure.degree,
-			delay: Math.max(0, (measure.startSeconds || 0) - (startOffset || 0)),
-			duration: duration,
-			index: index,
-			mode: mode,
-			notes: notes
-		};
-
-		if (chordIndex) {
-			event.chordIndex = chordIndex;
-		}
-
-		if (midiNotes.length) {
-			event.midiNotes = midiNotes;
-		}
-
-		if (midiNoteEvents.length) {
-			event.midiNoteEvents = midiNoteEvents;
-		}
-
-		return event;
-	}
-
-	function buildMidiNoteEvents(measure, duration, options) {
-		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
-		var events = [];
-
-		if (!hasPedals(measure) || !supportsPedalHold(options ? options.instrument : null)) {
-			return events;
-		}
-
-		for (var i = 0; i < midiNotes.length; i++) {
-			if (isPedalIn(midiNotes[i], measure)) {
-				continue;
-			}
-
-			events.push({
-				duration: duration + pedalOutDuration(midiNotes[i], measure),
-				midiNote: midiNotes[i]
-			});
-		}
-
-		return events;
-	}
-
-	function hasPedals(measure) {
-		return (measure.pedalsIn && measure.pedalsIn.length) || (measure.pedalsOut && measure.pedalsOut.length);
-	}
-
-	function supportsPedalHold(instrument) {
-		return instrument && (instrument.supportsPedalHold === true || instrument.sustained === true || instrument.pedalBehavior === 'sustain');
-	}
-
-	function isPedalIn(midiNote, measure) {
-		var pedals = measure.pedalsIn || [];
-
-		for (var i = 0; i < pedals.length; i++) {
-			if (pedals[i].midiNote === midiNote) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	function pedalOutDuration(midiNote, measure) {
-		var pedals = measure.pedalsOut || [];
-		var duration = 0;
-
-		for (var i = 0; i < pedals.length; i++) {
-			if (pedals[i].midiNote === midiNote) {
-				duration = Math.max(duration, Number(pedals[i].durationSeconds) || 0);
-			}
-		}
-
-		return duration;
-	}
-
-	function playbackTotalSeconds(progression, scheduledMeasures) {
-		var lastMeasure;
-
-		if (!scheduledMeasures.length) {
-			return 0;
-		}
-
-		lastMeasure = scheduledMeasures[scheduledMeasures.length - 1].measure;
-
-		return scheduledMeasures[scheduledMeasures.length - 1].delay + (Number(lastMeasure.durationSeconds) || 0);
-	}
-
-	function normalizeStartIndex(startIndex, progression) {
-		var measures = progression && progression.measures ? progression.measures : [];
-		var numericIndex = parseInt(startIndex, 10);
-
-		if (!measures.length || isNaN(numericIndex)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(measures.length - 1, numericIndex));
-	}
-
-	function shouldLoop(callbacks) {
-		if (callbacks && typeof callbacks.shouldLoop === 'function') {
-			return callbacks.shouldLoop();
-		}
-
-		return callbacks && callbacks.loop === true;
-	}
-
-	function shouldPlayMetronome(callbacks) {
-		if (callbacks && typeof callbacks.shouldPlayMetronome === 'function') {
-			return callbacks.shouldPlayMetronome();
-		}
-
-		return callbacks && callbacks.metronome === true;
-	}
-
-	function extendCallbacks(callbacks, values) {
-		var result = {};
-		var key;
-
-		for (key in callbacks) {
-			if (Object.prototype.hasOwnProperty.call(callbacks, key)) {
-				result[key] = callbacks[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
-	}
-
-	function notesForVoices(notes, voices) {
-		var voiceCount = Math.max(1, Math.min(Number(voices) || 4, 6));
-
-		return (notes || []).slice(0, voiceCount);
-	}
-
-	function playbackDuration(measure) {
-		var duration = Number(measure && measure.durationSeconds) || 0;
-		var factor = articulationDurationFactor(measure ? measure.articulation : null);
-
-		return Math.max(0.1, duration * factor);
-	}
-
-	function articulationDurationFactor(articulation) {
-		if (articulation === 'staccato') {
-			return 0.45;
-		}
-
-		if (articulation === 'arpeggio') {
-			return 0.9;
-		}
-
-		if (articulation === 'legato') {
-			return 1;
-		}
-
-		return 0.95;
-	}
-
-	function arpeggioStepSeconds(measure) {
-		var duration = Number(measure && measure.durationSeconds) || 0;
-
-		return Math.max(0.05, Math.min(0.18, duration / 8));
-	}
-
-	function runCallback(callback, value, index) {
-		if (typeof callback === 'function') {
-			callback(value, index);
-		}
-	}
-
 	global.CodaApplication = global.CodaApplication || {};
-	global.CodaApplication.articulationDurationFactor = articulationDurationFactor;
-	global.CodaApplication.buildProgressionPlaybackSchedule = buildProgressionPlaybackSchedule;
-	global.CodaApplication.buildProgressionMetronomeSchedule = buildProgressionMetronomeSchedule;
-	global.CodaApplication.buildScheduledProgressionMeasures = buildScheduledMeasures;
+	global.CodaApplication.articulationDurationFactor = global.CodaProgressionPlaybackSchedule.articulationDurationFactor;
+	global.CodaApplication.buildProgressionPlaybackSchedule = global.CodaProgressionPlaybackSchedule.buildProgressionPlaybackSchedule;
+	global.CodaApplication.buildProgressionMetronomeSchedule = global.CodaProgressionPlaybackSchedule.buildProgressionMetronomeSchedule;
+	global.CodaApplication.buildScheduledProgressionMeasures = global.CodaProgressionPlaybackSchedule.buildScheduledMeasures;
 	global.CodaApplication.createProgressionPlayback = createProgressionPlayback;
-	global.CodaApplication.notesForVoices = notesForVoices;
+	global.CodaApplication.notesForVoices = global.CodaProgressionPlaybackSchedule.notesForVoices;
 })(window);

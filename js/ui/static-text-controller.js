@@ -113,6 +113,7 @@
 		setText(i18n, 'span[data-i18n="progression.bars"]', 'progression.bars');
 		setText(i18n, 'span[data-i18n="progression.meter"]', 'progression.meter');
 		setText(i18n, 'span[data-i18n="progression.voices"]', 'progression.voices');
+		setText(i18n, 'span[data-i18n="progression.voicing"]', 'progression.voicing');
 		setText(i18n, 'span[data-i18n="progression.writing"]', 'progression.writing');
 		setText(i18n, 'span[data-i18n="progression.articulation"]', 'progression.articulation');
 		setText(i18n, 'span[data-i18n="progression.style"]', 'progression.style');
@@ -120,10 +121,13 @@
 		setText(i18n, 'span[data-i18n="progression.modalInterchange"]', 'progression.modalInterchange');
 		setText(i18n, 'span[data-i18n="progression.tensions"]', 'progression.tensions');
 		setText(i18n, 'span[data-i18n="progression.counterpoint"]', 'progression.counterpoint');
+		applyProgressionHelpTooltips(i18n);
 		setText(i18n, 'option[data-i18n="progression.articulation.sustain"]', 'progression.articulation.sustain');
 		setText(i18n, 'option[data-i18n="progression.articulation.legato"]', 'progression.articulation.legato');
 		setText(i18n, 'option[data-i18n="progression.articulation.staccato"]', 'progression.articulation.staccato');
 		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio"]', 'progression.articulation.arpeggio');
+		setText(i18n, 'option[data-i18n="progression.voicing.closed"]', 'progression.voicing.closed');
+		setText(i18n, 'option[data-i18n="progression.voicing.open"]', 'progression.voicing.open');
 		setText(i18n, 'option[data-i18n="progression.style.modern"]', 'progression.style.modern');
 		setText(i18n, 'option[data-i18n="progression.style.classic"]', 'progression.style.classic');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
@@ -143,6 +147,15 @@
 		setTitleAndLabel(i18n, '.measureChordDragHandle[data-i18n-title="progression.dragMeasureChord"]', 'progression.dragMeasureChord');
 		setTitleAndLabel(i18n, '.measureSplitButton[data-i18n-title="progression.addMeasureChord"]', 'progression.addMeasureChord');
 		setTitleAndLabel(i18n, '.measureSplitButton[data-i18n-title="progression.removeMeasureChord"]', 'progression.removeMeasureChord');
+	}
+
+	function applyProgressionHelpTooltips(i18n) {
+		forEachElement('.workbenchControl[data-help-i18n]', function (element) {
+			var text = i18n.t(element.getAttribute('data-help-i18n'));
+
+			element.setAttribute('title', text);
+			element.setAttribute('aria-description', text);
+		});
 	}
 
 	function ensureProgressionWorkbench() {

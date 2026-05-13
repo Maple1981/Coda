@@ -16,6 +16,10 @@ function runScript(relativePath) {
 	vm.runInContext(source, context, { filename: relativePath });
 }
 
+runScript('js/services/progression-playback-schedule-service.js');
+runScript('js/services/progression-event-player-service.js');
+runScript('js/services/progression-playback-callbacks-service.js');
+runScript('js/services/progression-playback-timer-service.js');
 runScript('js/application/progression-playback-application.js');
 
 const app = context.window.CodaApplication;
@@ -419,6 +423,55 @@ loopTimers.filter(function (timer) {
 assert.equal(cycleCompleted, true);
 assert.equal(loopCompleted, false);
 assert.equal(loopStarted, 2);
+
+let metronomeEnabled = false;
+const hotMetronomeCalls = [];
+const hotMetronomeTimers = [];
+const hotMetronomePlayback = app.createProgressionPlayback({
+	playbackService: {
+		playChordFromNames: function () {},
+		playMetronomeClick: function (options) {
+			hotMetronomeCalls.push(options);
+		},
+		stopAllNotes: function () {}
+	},
+	timerApi: {
+		clearTimeout: function () {},
+		setTimeout: function (callback, milliseconds) {
+			hotMetronomeTimers.push({
+				callback: callback,
+				milliseconds: milliseconds
+			});
+			return hotMetronomeTimers.length;
+		}
+	}
+});
+
+hotMetronomePlayback.play(progression, {
+	shouldPlayMetronome: function () {
+		return metronomeEnabled;
+	}
+});
+hotMetronomeTimers.filter(function (timer) {
+	return timer.milliseconds === 0;
+}).forEach(function (timer) {
+	timer.callback();
+});
+assert.equal(hotMetronomeCalls.length, 0);
+metronomeEnabled = true;
+hotMetronomeTimers.filter(function (timer) {
+	return timer.milliseconds === 500;
+}).forEach(function (timer) {
+	timer.callback();
+});
+assert.equal(hotMetronomeCalls.length, 1);
+metronomeEnabled = false;
+hotMetronomeTimers.filter(function (timer) {
+	return timer.milliseconds === 1000;
+}).forEach(function (timer) {
+	timer.callback();
+});
+assert.equal(hotMetronomeCalls.length, 1);
 
 console.log('Progression playback tests passed');
 

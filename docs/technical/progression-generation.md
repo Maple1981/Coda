@@ -15,7 +15,11 @@ Esta distinción afecta a la selección de patrones completos y a los bloques de
 
 Las progresiones se construyen por defecto con tríadas. Las cuatríadas con séptima se añaden de forma ocasional y ponderada cuando el nivel de tensiones, el contrapunto o el movimiento parsimonioso entre acordes lo justifican. El primer acorde no añade séptima si es una tónica, y el último acorde tampoco la añade cuando cierra en tónica.
 
-En escritura de cuatro o más voces, una tríada completa dobla factores del acorde antes de añadir material opcional: primero la fundamental, después la tercera y finalmente la quinta. Este orden sigue el modelo de trabajo de la aplicación, aunque cada caso puede ajustarse en el futuro con reglas más estrictas de estilo.
+El control **Tensiones** gobierna tanto la aparición de suspensiones como de tensiones añadidas. Las tensiones disponibles se calculan sobre los grados 9, 11 y 13 de la escala activa y se descartan cuando ya forman parte del acorde o quedan un semitono por encima de una nota estructural del acorde, porque esa relación produce clústers poco estables. En acordes sin séptima se cifran como `add9`, `add11` o `add13`; en cuatríadas se cifran como `9`, `11` o `13`, siguiendo la convención moderna de extensiones por encima de la séptima.
+
+En escritura de cuatro o más voces, una tríada completa dobla factores del acorde cuando no hay tensiones disponibles: primero la fundamental, después la tercera y finalmente la quinta. Si el fader de tensiones activa notas disponibles, esas notas ocupan voces antes que los doblajes. En cuatríadas no se dobla la séptima, y las tensiones tampoco se doblan.
+
+El control **Disposición** alterna entre escritura cerrada y abierta. En disposición cerrada, las voces superiores se mantienen dentro del registro más compacto posible y el generador penaliza aperturas innecesarias. En disposición abierta, el algoritmo abre la voz superior cuando es necesario para que el espacio entre voces superiores supere la octava, escogiendo la inversión que conserva el movimiento más parsimonioso frente al acorde anterior.
 
 El generador elige inversiones para reducir el desplazamiento entre voces consecutivas. La nomenclatura usada es la tradicional:
 

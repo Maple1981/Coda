@@ -1416,6 +1416,16 @@
 			'progression.generate': 'Generar progresión aleatoria',
 			'progression.goStart': 'Inicio',
 			'progression.harmonicColor': 'Color armónico',
+			'progression.help.articulation': 'Define cómo se atacan y enlazan los acordes durante la preescucha.',
+			'progression.help.bars': 'Longitud total de la progresión generada.',
+			'progression.help.bpm': 'Velocidad de reproducción y exportación MIDI, entre 20 y 200 BPM.',
+			'progression.help.counterpoint': 'Controla el movimiento parsimonioso de voces y la adhesión a reglas clásicas de contrapunto, evitando quintas y octavas paralelas.',
+			'progression.help.meter': 'Organización rítmica de cada compás.',
+			'progression.help.modalInterchange': 'Controla la frecuencia de acordes préstamo por intercambio modal de escalas, tonalidades o modos relacionados.',
+			'progression.help.style': 'El estilo moderno evita cadencias auténticas; el clásico favorece su aparición al final de bloques de secuencia.',
+			'progression.help.tensions': 'Controla suspensiones sus2/sus4 y tensiones disponibles de novena, oncena o trecena.',
+			'progression.help.voicing': 'En disposición cerrada, las voces superiores están lo más juntas posible, sin poder insertar otra nota del acorde entre ellas. En disposición abierta, entre voces superiores podría insertarse otra nota del acorde.',
+			'progression.help.voices': 'Número de voces simultáneas usadas para distribuir cada acorde.',
 			'progression.listen': 'Preescuchar',
 			'progression.loop': 'Bucle',
 			'progression.metronome': 'Metrónomo',
@@ -1430,6 +1440,9 @@
 			'progression.tensions': 'Tensiones',
 			'progression.time': 'Tiempo',
 			'progression.title': 'Área de trabajo armónica',
+			'progression.voicing': 'Disposición',
+			'progression.voicing.closed': 'Cerrada',
+			'progression.voicing.open': 'Abierta',
 			'progression.voices': 'Voces',
 			'progression.writing': 'Escritura',
 			'randomSelect.label': 'Elegir valor aleatorio',
@@ -1586,6 +1599,16 @@
 			'progression.generate': 'Generate random progression',
 			'progression.goStart': 'Start',
 			'progression.harmonicColor': 'Harmonic color',
+			'progression.help.articulation': 'Sets how chords are attacked and connected during preview.',
+			'progression.help.bars': 'Total length of the generated progression.',
+			'progression.help.bpm': 'Playback and MIDI export tempo, from 20 to 200 BPM.',
+			'progression.help.counterpoint': 'Controls parsimonious voice leading and adherence to classical counterpoint rules, avoiding parallel fifths and octaves.',
+			'progression.help.meter': 'Rhythmic organization of each bar.',
+			'progression.help.modalInterchange': 'Controls how often borrowed chords appear through modal interchange from related scales, keys or modes.',
+			'progression.help.style': 'Modern style avoids authentic cadences; classical style favors them at the end of sequence blocks.',
+			'progression.help.tensions': 'Controls sus2/sus4 suspensions and available ninth, eleventh or thirteenth tensions.',
+			'progression.help.voicing': 'In closed voicing, the upper voices are as close together as possible, with no other chord tone fitting between them. In open voicing, another chord tone could fit between upper voices.',
+			'progression.help.voices': 'Number of simultaneous voices used to distribute each chord.',
 			'progression.listen': 'Preview',
 			'progression.loop': 'Loop',
 			'progression.metronome': 'Metronome',
@@ -1600,6 +1623,9 @@
 			'progression.tensions': 'Tensions',
 			'progression.time': 'Time',
 			'progression.title': 'Harmonic workspace',
+			'progression.voicing': 'Voicing',
+			'progression.voicing.closed': 'Closed',
+			'progression.voicing.open': 'Open',
 			'progression.voices': 'Voices',
 			'progression.writing': 'Writing',
 			'randomSelect.label': 'Choose random value',
@@ -1916,6 +1942,16 @@
 			language: allowList(['es', 'en']),
 			midiInstrument: allowList(['acoustic_grand_piano', 'acoustic_guitar_nylon', 'drawbar_organ', 'string_ensemble_1']),
 			notation: allowList(['anglosaxon', 'latin']),
+			progressionArticulation: allowList(['sustain', 'legato', 'staccato', 'arpeggio']),
+			progressionBars: allowList(['2', '4', '6', '8', '12', '16', '32']),
+			progressionBpm: integerRange(20, 200),
+			progressionCounterpoint: integerRange(0, 100),
+			progressionMeter: allowList(['4/4', '3/4', '6/8']),
+			progressionModalInterchange: integerRange(0, 100),
+			progressionStyle: allowList(['modern', 'classic']),
+			progressionTensions: integerRange(0, 100),
+			progressionVoicing: allowList(['closed', 'open']),
+			progressionVoices: integerRange(1, 6),
 			scaleIndex: integerRange(0, 54),
 			theme: allowList(['night', 'day']),
 			tonicIndex: integerRange(0, 11),
@@ -2026,6 +2062,3528 @@
 		create: create,
 		sanitizeValue: sanitizeValue,
 		sanitizeValues: sanitizeValues
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-preferences-service.js */
+// Mapeo entre preferencias ligeras de usuario y controles del constructor.
+(function (global) {
+	'use strict';
+
+	var mappings = [
+		{ id: 'progressionArticulation', preference: 'progressionArticulation', state: 'articulation' },
+		{ id: 'progressionBars', preference: 'progressionBars', state: 'bars' },
+		{ id: 'progressionBpm', preference: 'progressionBpm', state: 'bpm' },
+		{ id: 'progressionCounterpoint', preference: 'progressionCounterpoint', state: 'counterpoint' },
+		{ id: 'progressionMeter', preference: 'progressionMeter', state: 'meter' },
+		{ id: 'progressionModalInterchange', preference: 'progressionModalInterchange', state: 'modalInterchange' },
+		{ id: 'progressionStyle', preference: 'progressionStyle', state: 'style' },
+		{ id: 'progressionTensions', preference: 'progressionTensions', state: 'tensions' },
+		{ id: 'progressionVoicing', preference: 'progressionVoicing', state: 'voicing' },
+		{ id: 'progressionVoices', preference: 'progressionVoices', state: 'voices' }
+	];
+
+	function fromPreferences(preferences) {
+		var state = {};
+
+		preferences = preferences || {};
+
+		for (var i = 0; i < mappings.length; i++) {
+			state[mappings[i].state] = preferences[mappings[i].preference];
+		}
+
+		return state;
+	}
+
+	function normalizeControls(values, progressionState) {
+		var state = progressionState && typeof progressionState.normalize === 'function' ?
+			progressionState.normalize(values || {}) :
+			values || {};
+
+		return controlsFromState(state);
+	}
+
+	function readControls(root) {
+		var controls = {};
+
+		for (var i = 0; i < mappings.length; i++) {
+			controls[mappings[i].state] = valueOf(root, mappings[i].id);
+		}
+
+		return controls;
+	}
+
+	function writeControls(root, controls) {
+		controls = controls || {};
+
+		for (var i = 0; i < mappings.length; i++) {
+			setValue(root, mappings[i].id, controls[mappings[i].state]);
+		}
+	}
+
+	function save(preferences, root) {
+		if (!preferences || typeof preferences.setValue !== 'function') {
+			return;
+		}
+
+		for (var i = 0; i < mappings.length; i++) {
+			preferences.setValue(mappings[i].preference, valueOf(root, mappings[i].id));
+		}
+	}
+
+	function controlsFromState(state) {
+		var controls = {};
+
+		state = state || {};
+
+		for (var i = 0; i < mappings.length; i++) {
+			controls[mappings[i].state] = state[mappings[i].state];
+		}
+
+		return controls;
+	}
+
+	function valueOf(root, id) {
+		var element = elementById(root, id);
+
+		return element ? element.value : '';
+	}
+
+	function setValue(root, id, value) {
+		var element = elementById(root, id);
+
+		if (element && value !== undefined && value !== null) {
+			element.value = value;
+		}
+	}
+
+	function elementById(root, id) {
+		root = root || global.document;
+
+		return root && typeof root.getElementById === 'function' ? root.getElementById(id) : null;
+	}
+
+	global.CodaProgressionPreferences = {
+		fromPreferences: fromPreferences,
+		mappings: mappings.slice(),
+		normalizeControls: normalizeControls,
+		readControls: readControls,
+		save: save,
+		writeControls: writeControls
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-state-normalizer-service.js */
+// Internal progression-state normalizer for application use cases.
+(function (global) {
+	'use strict';
+
+	function normalize(progressionState) {
+		progressionState = progressionState || {};
+
+		return {
+			articulation: progressionState.articulation || 'sustain',
+			bars: numberOrDefault(progressionState.bars, 8),
+			beatUnit: numberOrDefault(progressionState.beatUnit, meterPart(progressionState.meter, 1, 4)),
+			beatsPerBar: numberOrDefault(progressionState.beatsPerBar, meterPart(progressionState.meter, 0, 4)),
+			bpm: numberOrDefault(progressionState.bpm, 120),
+			counterpoint: numberOrDefault(progressionState.counterpoint, 20),
+			meter: progressionState.meter || '4/4',
+			modalInterchange: numberOrDefault(progressionState.modalInterchange, 25),
+			style: progressionState.style === 'classic' ? 'classic' : 'modern',
+			tensions: numberOrDefault(progressionState.tensions, 35),
+			voicing: progressionState.voicing === 'open' ? 'open' : 'closed',
+			voices: numberOrDefault(progressionState.voices, 4)
+		};
+	}
+
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
+	function meterPart(meter, partIndex, fallback) {
+		var parts = String(meter || '').split('/');
+		var number = Number(parts[partIndex]);
+
+		return isFinite(number) ? number : fallback;
+	}
+
+	global.CodaProgressionStateNormalizer = {
+		normalize: normalize,
+		numberOrDefault: numberOrDefault
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-degree-resolver-service.js */
+// Resolves progression degree plans against scale and parallel chord catalogs.
+(function (global) {
+	'use strict';
+
+	function fromDegreeNames(options) {
+		var resolvedDegrees = options.domain.resolveProgressionDegrees({
+			degrees: options.degrees,
+			scaleChords: options.report.scaleChords,
+			scaleNotes: options.report.scaleNotes
+		});
+
+		return attachDegreeIndexes(resolvedDegrees, options.report.scaleNotes);
+	}
+
+	function fromGeneratedPlan(options) {
+		var resolved = [];
+		var degrees = options.degrees || [];
+		var scaleNotes = options.report.scaleNotes || [];
+		var scaleChords = options.report.scaleChords || [];
+		var parallelChords = options.report.parallelScaleChords || [];
+
+		for (var i = 0; i < degrees.length; i++) {
+			resolved.push({
+				chord: degrees[i].source === 'parallel' && parallelChords[degrees[i].index] ? parallelChords[degrees[i].index] : scaleChords[degrees[i].index],
+				degree: scaleNotes[degrees[i].index] ? scaleNotes[degrees[i].index].grado : '',
+				degreeIndex: degrees[i].index,
+				source: degrees[i].source || 'diatonic'
+			});
+		}
+
+		return resolved;
+	}
+
+	function attachDegreeIndexes(resolvedDegrees, scaleNotes) {
+		var result = [];
+
+		for (var i = 0; i < resolvedDegrees.length; i++) {
+			result.push(extendObject(resolvedDegrees[i], {
+				degreeIndex: resolvedDegrees[i].degreeIndex != null ? resolvedDegrees[i].degreeIndex : degreeIndexForDegree(scaleNotes, resolvedDegrees[i].degree)
+			}));
+		}
+
+		return result;
+	}
+
+	function degreeIndexForDegree(scaleNotes, degree) {
+		var normalizedDegree = normalizeDegreeName(degree);
+
+		scaleNotes = scaleNotes || [];
+		for (var i = 0; i < scaleNotes.length; i++) {
+			if (normalizeDegreeName(scaleNotes[i].grado) === normalizedDegree) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	function normalizeDegreeName(degree) {
+		return String(degree || '').replace('J', '').replace('M', '').replace('m', '').toUpperCase();
+	}
+
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
+	global.CodaProgressionDegreeResolver = {
+		attachDegreeIndexes: attachDegreeIndexes,
+		degreeIndexForDegree: degreeIndexForDegree,
+		fromDegreeNames: fromDegreeNames,
+		fromGeneratedPlan: fromGeneratedPlan,
+		normalizeDegreeName: normalizeDegreeName
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-pitch-service.js */
+// Pitch helpers shared by progression voicing, voice leading and chord menus.
+(function (global) {
+	'use strict';
+
+	function commonPitchNames(firstNotes, secondNotes) {
+		var common = [];
+		var firstNamesList = noteNamesFromValue(firstNotes);
+		var secondNamesList = noteNamesFromValue(secondNotes);
+		var secondNames = {};
+
+		for (var i = 0; i < secondNamesList.length; i++) {
+			secondNames[normalizePitchName(secondNamesList[i])] = true;
+		}
+
+		for (var j = 0; j < firstNamesList.length; j++) {
+			var name = normalizePitchName(firstNamesList[j]);
+
+			if (secondNames[name] && common.indexOf(name) === -1) {
+				common.push(name);
+			}
+		}
+
+		return common;
+	}
+
+	function noteNameToMidi(noteName, initialMidiNote) {
+		var index = noteIndex(noteName);
+
+		return index == null ? null : initialMidiNote + index;
+	}
+
+	function noteIndex(noteName) {
+		var indexes = {
+			C: 0,
+			'C#': 1,
+			Db: 1,
+			D: 2,
+			'D#': 3,
+			Eb: 3,
+			E: 4,
+			F: 5,
+			'F#': 6,
+			Gb: 6,
+			G: 7,
+			'G#': 8,
+			Ab: 8,
+			A: 9,
+			'A#': 10,
+			Bb: 10,
+			B: 11
+		};
+		var normalizedName = normalizePitchName(noteName);
+
+		return indexes[normalizedName] != null ? indexes[normalizedName] : null;
+	}
+
+	function normalizePitchName(noteName) {
+		var match = /^([A-G])([#b\u266f\u266d]?)/.exec(String(noteName || '').replace('\u266f', '#').replace('\u266d', 'b'));
+
+		return match ? match[1] + match[2] : '';
+	}
+
+	function nearestMidiTo(referenceNote, midiNote) {
+		var nearest = midiNote;
+
+		while (nearest - referenceNote > 6) {
+			nearest -= 12;
+		}
+
+		while (referenceNote - nearest > 6) {
+			nearest += 12;
+		}
+
+		return nearest;
+	}
+
+	function noteNamesFromValue(value) {
+		var result = [];
+
+		if (!value) {
+			return result;
+		}
+
+		if (Object.prototype.toString.call(value) === '[object Array]') {
+			return value;
+		}
+
+		if (value.notes) {
+			return value.notes;
+		}
+
+		for (var i = 0; i < (value.voiceNotes || []).length; i++) {
+			result.push(value.voiceNotes[i].note);
+		}
+
+		return result;
+	}
+
+	global.CodaProgressionPitch = {
+		commonPitchNames: commonPitchNames,
+		nearestMidiTo: nearestMidiTo,
+		normalizePitchName: normalizePitchName,
+		noteIndex: noteIndex,
+		noteNameToMidi: noteNameToMidi
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-voice-leading-score-service.js */
+// Scores voice-leading transitions and detects parallel perfect intervals.
+(function (global) {
+	'use strict';
+
+	var pitchService = global.CodaProgressionPitch;
+
+	function voiceLeadingTransitionScore(previousPlan, nextPlan) {
+		var score = transitionScore(previousPlan.midiNotes, nextPlan.midiNotes);
+		var commonTones = pitchService.commonPitchNames(previousPlan.notes, nextPlan.notes).length;
+		var parallelPerfects = countParallelPerfects(previousPlan.midiNotes, nextPlan.midiNotes, false);
+		var exteriorParallelPerfects = countParallelPerfects(previousPlan.midiNotes, nextPlan.midiNotes, true);
+
+		score -= commonTones * 3;
+		score += parallelPerfects * 18;
+		score += exteriorParallelPerfects * 28;
+
+		return score;
+	}
+
+	function countParallelPerfects(previousMidiNotes, nextMidiNotes, exteriorOnly) {
+		var count = 0;
+		var length = Math.min((previousMidiNotes || []).length, (nextMidiNotes || []).length);
+
+		for (var i = 0; i < length; i++) {
+			for (var j = i + 1; j < length; j++) {
+				if (exteriorOnly && !(i === 0 && j === length - 1)) {
+					continue;
+				}
+
+				if (isParallelPerfect(previousMidiNotes, nextMidiNotes, i, j)) {
+					count += 1;
+				}
+			}
+		}
+
+		return count;
+	}
+
+	function firstVoicingScore(voicing) {
+		return voicing.inversionIndex * 2 + voiceSpan(voicing.midiNotes) / 12;
+	}
+
+	function transitionScore(previousMidiNotes, nextMidiNotes) {
+		var length = Math.min(previousMidiNotes.length, nextMidiNotes.length);
+		var score = Math.abs(previousMidiNotes.length - nextMidiNotes.length) * 4;
+
+		for (var i = 0; i < length; i++) {
+			score += Math.abs(pitchService.nearestMidiTo(previousMidiNotes[i], nextMidiNotes[i]) - previousMidiNotes[i]);
+		}
+
+		return score;
+	}
+
+	function isParallelPerfect(previousMidiNotes, nextMidiNotes, lowerIndex, upperIndex) {
+		var previousInterval = intervalClass(previousMidiNotes[upperIndex] - previousMidiNotes[lowerIndex]);
+		var nextInterval = intervalClass(nextMidiNotes[upperIndex] - nextMidiNotes[lowerIndex]);
+		var lowerMotion = nextMidiNotes[lowerIndex] - previousMidiNotes[lowerIndex];
+		var upperMotion = nextMidiNotes[upperIndex] - previousMidiNotes[upperIndex];
+
+		if (!isPerfectInterval(previousInterval) || previousInterval !== nextInterval) {
+			return false;
+		}
+
+		if (lowerMotion === 0 || upperMotion === 0) {
+			return false;
+		}
+
+		return (lowerMotion > 0 && upperMotion > 0) || (lowerMotion < 0 && upperMotion < 0);
+	}
+
+	function intervalClass(interval) {
+		return Math.abs(interval) % 12;
+	}
+
+	function isPerfectInterval(interval) {
+		return interval === 0 || interval === 7;
+	}
+
+	function voiceSpan(midiNotes) {
+		if (!midiNotes.length) {
+			return 0;
+		}
+
+		return midiNotes[midiNotes.length - 1] - midiNotes[0];
+	}
+
+	global.CodaProgressionVoiceLeadingScore = {
+		countParallelPerfects: countParallelPerfects,
+		firstVoicingScore: firstVoicingScore,
+		voiceLeadingTransitionScore: voiceLeadingTransitionScore
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-voicing-disposition-service.js */
+// Applies closed/open voicing disposition rules to generated chord voicings.
+(function (global) {
+	'use strict';
+
+	var voiceLeadingScoreService = global.CodaProgressionVoiceLeadingScore;
+
+	function chooseCandidate(voicing, previousPlan, disposition) {
+		var normalizedDisposition = normalize(disposition);
+		var candidates = dispositionCandidates(voicing, normalizedDisposition);
+		var bestCandidate = candidates[0];
+		var bestScore = score(bestCandidate, previousPlan, normalizedDisposition);
+
+		for (var i = 1; i < candidates.length; i++) {
+			var candidateScore = score(candidates[i], previousPlan, normalizedDisposition);
+
+			if (candidateScore < bestScore) {
+				bestScore = candidateScore;
+				bestCandidate = candidates[i];
+			}
+		}
+
+		return bestCandidate;
+	}
+
+	function dispositionCandidates(voicing, disposition) {
+		if (!voicing.midiNotes || voicing.midiNotes.length < 3) {
+			return [voicing];
+		}
+
+		if (disposition === 'open') {
+			return isOpenVoicing(voicing.midiNotes) ? [voicing] : [
+				openUpperVoice(voicing, voicing.midiNotes.length - 1)
+			];
+		}
+
+		return isOpenVoicing(voicing.midiNotes) ? [compactUpperVoices(voicing)] : [voicing];
+	}
+
+	function score(voicing, previousPlan, disposition) {
+		var baseScore = previousPlan ?
+			voiceLeadingScoreService.voiceLeadingTransitionScore(previousPlan, voicing) :
+			voiceLeadingScoreService.firstVoicingScore(voicing);
+
+		if (normalize(disposition) === 'open') {
+			return baseScore + (isOpenVoicing(voicing.midiNotes) ? 0 : 24);
+		}
+
+		return baseScore;
+	}
+
+	function openUpperVoice(voicing, voiceIndex) {
+		var midiNotes = voicing.midiNotes.slice();
+		var voiceNotes = cloneVoiceNotes(voicing.voiceNotes);
+
+		midiNotes[voiceIndex] += 12;
+		voiceNotes[voiceIndex] = extendObject(voiceNotes[voiceIndex], {
+			midiNote: midiNotes[voiceIndex]
+		});
+
+		return extendObject(voicing, {
+			midiNotes: midiNotes,
+			voiceNotes: voiceNotes
+		});
+	}
+
+	function compactUpperVoices(voicing) {
+		var midiNotes = voicing.midiNotes.slice();
+		var voiceNotes = cloneVoiceNotes(voicing.voiceNotes);
+
+		for (var i = midiNotes.length - 1; i >= 2; i--) {
+			while (midiNotes[i] - 12 > midiNotes[i - 1]) {
+				midiNotes[i] -= 12;
+			}
+			voiceNotes[i] = extendObject(voiceNotes[i], {
+				midiNote: midiNotes[i]
+			});
+		}
+
+		return extendObject(voicing, {
+			midiNotes: midiNotes,
+			voiceNotes: voiceNotes
+		});
+	}
+
+	function isOpenVoicing(midiNotes) {
+		return upperVoiceSpan(midiNotes) > 12;
+	}
+
+	function upperVoiceSpan(midiNotes) {
+		if (!midiNotes || midiNotes.length < 3) {
+			return 0;
+		}
+
+		return midiNotes[midiNotes.length - 1] - midiNotes[1];
+	}
+
+	function normalize(value) {
+		return value === 'open' ? 'open' : 'closed';
+	}
+
+	function cloneVoiceNotes(voiceNotes) {
+		var result = [];
+
+		for (var i = 0; i < voiceNotes.length; i++) {
+			result.push(extendObject({}, voiceNotes[i]));
+		}
+
+		return result;
+	}
+
+	function extendObject(source, values) {
+		var result = {};
+
+		for (var key in source) {
+			if (Object.prototype.hasOwnProperty.call(source, key)) {
+				result[key] = source[key];
+			}
+		}
+
+		for (var valueKey in values) {
+			if (Object.prototype.hasOwnProperty.call(values, valueKey)) {
+				result[valueKey] = values[valueKey];
+			}
+		}
+
+		return result;
+	}
+
+	global.CodaProgressionVoicingDisposition = {
+		chooseCandidate: chooseCandidate,
+		score: score,
+		upperVoiceSpan: upperVoiceSpan
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-voicing-service.js */
+// Servicio de disposición y conducción de voces para progresiones armónicas.
+(function (global) {
+	'use strict';
+
+	var pitchService = global.CodaProgressionPitch;
+	var voiceLeadingScoreService = global.CodaProgressionVoiceLeadingScore;
+	var voicingDispositionService = global.CodaProgressionVoicingDisposition;
+
+	function chooseVoicing(options) {
+		var labels = options.kind === 'seventh' ? ['', '6/5', '4/3', '4/2'] : ['', '6', '6/4'];
+		var maxInversions = Math.min(options.baseNotes.length, labels.length);
+		var bestVoicing = null;
+		var bestScore = Infinity;
+		var forcedInversionIndex = options.forceInversionIndex != null ? clampInversionIndex(options.forceInversionIndex, maxInversions) : null;
+		var disposition = normalizeVoicingDisposition(options.voicing);
+
+		if (forcedInversionIndex != null) {
+			bestVoicing = createVoicing({
+				baseNotes: options.baseNotes,
+				chordName: options.chordName,
+				extraNotes: options.extraNotes,
+				initialMidiNote: options.initialMidiNote,
+				inversionIndex: forcedInversionIndex,
+				inversionLabel: labels[forcedInversionIndex],
+				kind: options.kind,
+				voices: options.voices
+			});
+			if (options.previousPlan) {
+				bestVoicing = fitVoicingToPrevious(bestVoicing, options.previousPlan);
+			}
+
+			return voicingDispositionService.chooseCandidate(bestVoicing, options.previousPlan, disposition);
+		}
+
+		for (var i = 0; i < maxInversions; i++) {
+			var voicing = createVoicing({
+				baseNotes: options.baseNotes,
+				chordName: options.chordName,
+				extraNotes: options.extraNotes,
+				initialMidiNote: options.initialMidiNote,
+				inversionIndex: i,
+				inversionLabel: labels[i],
+				kind: options.kind,
+				voices: options.voices
+			});
+			if (options.previousPlan) {
+				voicing = fitVoicingToPrevious(voicing, options.previousPlan);
+			}
+			voicing = voicingDispositionService.chooseCandidate(voicing, options.previousPlan, disposition);
+			var score = voicingScore(voicing, options.previousPlan, disposition);
+
+			if (score < bestScore) {
+				bestScore = score;
+				bestVoicing = voicing;
+			}
+		}
+
+		return bestVoicing || voicingDispositionService.chooseCandidate(createVoicing({
+			baseNotes: options.baseNotes,
+			chordName: options.chordName,
+			extraNotes: options.extraNotes,
+			initialMidiNote: options.initialMidiNote,
+			inversionIndex: 0,
+			inversionLabel: '',
+			kind: options.kind,
+			voices: options.voices
+	}), options.previousPlan, disposition);
+	}
+
+	function voicingScore(voicing, previousPlan, disposition) {
+		return voicingDispositionService.score(voicing, previousPlan, disposition);
+	}
+
+	function createVoicing(options) {
+		var voiceCount = Math.max(1, Math.min(numberOrDefault(options.voices, 4), 6));
+		var preparedBase = prepareBaseNotesForVoiceCount(options.baseNotes, options.kind, voiceCount, options.chordName);
+		var baseNotes = rotate(preparedBase.notes, options.inversionIndex);
+		var notes = baseNotes.slice();
+		var factorRoles = rotate(preparedBase.roles, options.inversionIndex);
+		var roles = factorRoles.slice();
+		var duplicateIndex = 0;
+		var duplicatePreference = ['root', 'third', 'fifth'];
+		var midiNotes;
+		var voiceNotes = [];
+
+		for (var i = 0; i < options.extraNotes.length && notes.length < voiceCount; i++) {
+			notes.push(options.extraNotes[i]);
+			roles.push('tension');
+		}
+
+		while (notes.length < voiceCount && notes.length > 0) {
+			var duplicate = duplicateFactor(options.baseNotes, duplicatePreference[duplicateIndex % duplicatePreference.length], options.kind);
+			notes.push(duplicate.note);
+			roles.push(duplicate.role + '-doubling');
+			duplicateIndex += 1;
+		}
+
+		notes = notes.slice(0, voiceCount);
+		roles = roles.slice(0, voiceCount);
+		midiNotes = notesToAscendingMidi(notes, options.initialMidiNote);
+
+		for (var j = 0; j < notes.length; j++) {
+			voiceNotes.push({
+				midiNote: midiNotes[j],
+				note: notes[j],
+				role: roles[j]
+			});
+		}
+
+		return {
+			inversionIndex: options.inversionIndex,
+			inversionLabel: options.inversionLabel,
+			midiNotes: midiNotes,
+			notes: notes,
+			voiceNotes: voiceNotes
+		};
+	}
+
+	function prepareBaseNotesForVoiceCount(baseNotes, kind, voiceCount, chordName) {
+		var roles = factorRolesForKind(kind);
+		var selectedNotes = [];
+		var selectedRoles = [];
+		var allowedRoles;
+
+		if (kind !== 'seventh' || voiceCount !== 3 || baseNotes.length < 4) {
+			return {
+				notes: baseNotes.slice(),
+				roles: roles
+			};
+		}
+
+		allowedRoles = isDiminishedSeventhQuality(chordName) ?
+			{ fifth: true, root: true, third: true } :
+			{ root: true, seventh: true, third: true };
+
+		for (var i = 0; i < baseNotes.length; i++) {
+			if (allowedRoles[roles[i]]) {
+				selectedNotes.push(baseNotes[i]);
+				selectedRoles.push(roles[i]);
+			}
+		}
+
+		return {
+			notes: selectedNotes,
+			roles: selectedRoles
+		};
+	}
+
+	function fitVoicingToPrevious(voicing, previousPlan) {
+		var fittedMidiNotes = [];
+		var fittedVoiceNotes = [];
+		var previousMidiNotes = previousPlan.midiNotes || [];
+
+		for (var i = 0; i < voicing.midiNotes.length; i++) {
+			var referenceNote = previousMidiNotes[Math.min(i, previousMidiNotes.length - 1)];
+			var midiNote = referenceNote != null ? nearestMidiTo(referenceNote, voicing.midiNotes[i]) : voicing.midiNotes[i];
+
+			if (i > 0) {
+				while (midiNote <= fittedMidiNotes[i - 1]) {
+					midiNote += 12;
+				}
+			}
+
+			fittedMidiNotes.push(midiNote);
+			fittedVoiceNotes.push(extendObject(voicing.voiceNotes[i], {
+				midiNote: midiNote
+			}));
+		}
+
+		return extendObject(voicing, {
+			midiNotes: fittedMidiNotes,
+			voiceNotes: fittedVoiceNotes
+		});
+	}
+
+	function voiceLeadingTransitionScore(previousPlan, nextPlan) {
+		return voiceLeadingScoreService.voiceLeadingTransitionScore(previousPlan, nextPlan);
+	}
+
+	function commonPitchNames(firstNotes, secondNotes) {
+		return pitchService.commonPitchNames(firstNotes, secondNotes);
+	}
+
+	function countParallelPerfects(previousMidiNotes, nextMidiNotes, exteriorOnly) {
+		return voiceLeadingScoreService.countParallelPerfects(previousMidiNotes, nextMidiNotes, exteriorOnly);
+	}
+
+	function firstVoicingScore(voicing) {
+		return voiceLeadingScoreService.firstVoicingScore(voicing);
+	}
+
+	function notesToAscendingMidi(notes, initialMidiNote) {
+		var result = [];
+		var previousNote = null;
+
+		for (var i = 0; i < notes.length; i++) {
+			var midiNote = noteNameToMidi(notes[i], initialMidiNote);
+
+			if (midiNote == null) {
+				continue;
+			}
+
+			midiNote -= 12;
+
+			while (previousNote != null && midiNote <= previousNote) {
+				midiNote += 12;
+			}
+
+			result.push(midiNote);
+			previousNote = midiNote;
+		}
+
+		return result;
+	}
+
+	function noteNameToMidi(noteName, initialMidiNote) {
+		return pitchService.noteNameToMidi(noteName, initialMidiNote);
+	}
+
+	function noteIndex(noteName) {
+		return pitchService.noteIndex(noteName);
+	}
+
+	function normalizePitchName(noteName) {
+		return pitchService.normalizePitchName(noteName);
+	}
+
+	function nearestMidiTo(referenceNote, midiNote) {
+		return pitchService.nearestMidiTo(referenceNote, midiNote);
+	}
+
+	function upperVoiceSpan(midiNotes) {
+		return voicingDispositionService.upperVoiceSpan(midiNotes);
+	}
+
+	function rotate(values, startIndex) {
+		var result = [];
+
+		for (var i = 0; i < values.length; i++) {
+			result.push(values[(startIndex + i) % values.length]);
+		}
+
+		return result;
+	}
+
+	function factorRolesForKind(kind) {
+		return kind === 'seventh' ? ['root', 'third', 'fifth', 'seventh'] : ['root', 'third', 'fifth'];
+	}
+
+	function duplicateFactor(baseNotes, role, kind) {
+		var roleIndex = {
+			fifth: 2,
+			root: 0,
+			seventh: kind === 'seventh' ? 3 : 0,
+			third: 1
+		}[role];
+
+		return {
+			note: baseNotes[Math.min(roleIndex, baseNotes.length - 1)] || baseNotes[0],
+			role: role
+		};
+	}
+
+	function normalizeVoicingDisposition(value) {
+		return value === 'open' ? 'open' : 'closed';
+	}
+
+	function clampInversionIndex(value, maxInversions) {
+		var numericValue = parseInt(value, 10);
+
+		if (isNaN(numericValue)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(maxInversions - 1, numericValue));
+	}
+
+	function isDiminishedSeventhQuality(chordName) {
+		var suffix = chordQualitySuffix(chordName);
+		var lowerSuffix = suffix.toLowerCase();
+
+		return lowerSuffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0 || suffix.indexOf('7b5') >= 0;
+	}
+
+	function chordQualitySuffix(chordName) {
+		return String(chordName || '')
+			.replace(/^[A-G](#|b|♭)?/, '')
+			.replace(/b5/g, '♭5');
+	}
+
+	function extendObject(source, values) {
+		var result = {};
+
+		for (var key in source) {
+			if (Object.prototype.hasOwnProperty.call(source, key)) {
+				result[key] = source[key];
+			}
+		}
+
+		for (var valueKey in values) {
+			if (Object.prototype.hasOwnProperty.call(values, valueKey)) {
+				result[valueKey] = values[valueKey];
+			}
+		}
+
+		return result;
+	}
+
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
+	global.CodaProgressionVoicing = {
+		chooseVoicing: chooseVoicing,
+		commonPitchNames: commonPitchNames,
+		countParallelPerfects: countParallelPerfects,
+		firstVoicingScore: firstVoicingScore,
+		nearestMidiTo: nearestMidiTo,
+		normalizePitchName: normalizePitchName,
+		noteIndex: noteIndex,
+		noteNameToMidi: noteNameToMidi,
+		upperVoiceSpan: upperVoiceSpan,
+		voiceLeadingTransitionScore: voiceLeadingTransitionScore
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-voice-leading-service.js */
+// Voice-leading annotations and pedal links between progression measures.
+(function (global) {
+	'use strict';
+
+	var voicingService = global.CodaProgressionVoicing;
+
+	function annotateMeasures(measures, progressionState) {
+		for (var i = 0; i < measures.length; i++) {
+			var previousMeasure = measures[i - 1] || null;
+			var nextMeasure = measures[i + 1] || null;
+
+			measures[i].pedalsIn = measures[i].pedalsIn || [];
+			measures[i].pedalsOut = measures[i].pedalsOut || [];
+			measures[i].voiceLeading = {
+				commonTones: previousMeasure ? commonVoiceLinks(previousMeasure, measures[i]).length : 0,
+				exteriorParallelPerfects: previousMeasure ? voicingService.countParallelPerfects(previousMeasure.midiNotes, measures[i].midiNotes, true) : 0,
+				parallelPerfects: previousMeasure ? voicingService.countParallelPerfects(previousMeasure.midiNotes, measures[i].midiNotes, false) : 0,
+				score: previousMeasure ? voicingService.voiceLeadingTransitionScore(previousMeasure, measures[i]) : voicingService.firstVoicingScore(measures[i])
+			};
+
+			if (nextMeasure) {
+				createPedalsBetween(measures[i], nextMeasure, progressionState);
+			}
+		}
+
+		return measures;
+	}
+
+	function createPedalsBetween(currentMeasure, nextMeasure, progressionState) {
+		var links = commonVoiceLinks(currentMeasure, nextMeasure);
+		var maxPedals = numberOrDefault(progressionState.counterpoint, 0) >= 70 ? 2 : 1;
+		var pedalProbability = 0.16 +
+			Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 20) / 180 +
+			Math.max(0, links.length - 1) * 0.12;
+		var selectedLinks = links.slice(0, Math.min(maxPedals, links.length));
+
+		if (!selectedLinks.length || pedalProbability < 0.25) {
+			return;
+		}
+
+		nextMeasure.pedalsIn = nextMeasure.pedalsIn || [];
+		nextMeasure.pedalsOut = nextMeasure.pedalsOut || [];
+
+		for (var i = 0; i < selectedLinks.length; i++) {
+			var link = selectedLinks[i];
+			var pedal = {
+				durationSeconds: nextMeasure.durationSeconds,
+				fromBar: currentMeasure.bar,
+				midiNote: link.midiNote,
+				note: link.note,
+				toBar: nextMeasure.bar
+			};
+
+			alignPedalVoice(nextMeasure, link);
+			currentMeasure.pedalsOut.push(pedal);
+			nextMeasure.pedalsIn.push(pedal);
+		}
+
+		nextMeasure.midiNotes = midiNotesFromVoiceNotes(nextMeasure.voiceNotes);
+	}
+
+	function alignPedalVoice(measure, link) {
+		for (var i = 0; i < measure.voiceNotes.length; i++) {
+			if (voicingService.normalizePitchName(measure.voiceNotes[i].note) === voicingService.normalizePitchName(link.note)) {
+				measure.voiceNotes[i] = extendObject(measure.voiceNotes[i], {
+					midiNote: link.midiNote,
+					role: measure.voiceNotes[i].role + '-pedal'
+				});
+				return;
+			}
+		}
+	}
+
+	function commonVoiceLinks(firstMeasure, secondMeasure) {
+		var links = [];
+		var usedSecondVoices = {};
+
+		for (var i = 0; i < (firstMeasure.voiceNotes || []).length; i++) {
+			for (var j = 0; j < (secondMeasure.voiceNotes || []).length; j++) {
+				if (usedSecondVoices[j] || voicingService.normalizePitchName(firstMeasure.voiceNotes[i].note) !== voicingService.normalizePitchName(secondMeasure.voiceNotes[j].note)) {
+					continue;
+				}
+
+				links.push({
+					firstVoiceIndex: i,
+					midiNote: firstMeasure.voiceNotes[i].midiNote,
+					note: firstMeasure.voiceNotes[i].note,
+					secondVoiceIndex: j
+				});
+				usedSecondVoices[j] = true;
+				break;
+			}
+		}
+
+		return links.sort(function (a, b) {
+			return Math.abs(a.firstVoiceIndex - a.secondVoiceIndex) - Math.abs(b.firstVoiceIndex - b.secondVoiceIndex);
+		});
+	}
+
+	function midiNotesFromVoiceNotes(voiceNotes) {
+		var result = [];
+
+		for (var i = 0; i < (voiceNotes || []).length; i++) {
+			result.push(voiceNotes[i].midiNote);
+		}
+
+		return result;
+	}
+
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
+	global.CodaProgressionVoiceLeading = {
+		annotateMeasures: annotateMeasures,
+		commonVoiceLinks: commonVoiceLinks,
+		midiNotesFromVoiceNotes: midiNotesFromVoiceNotes
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-measure-timeline-service.js */
+// Measure cloning, segmentation and timing utilities for progression editing.
+(function (global) {
+	'use strict';
+
+	function rebuildTimeline(progression, measures) {
+		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
+		var beatsPerBar = Number(progression.beatsPerBar) || 4;
+		var rebuiltMeasures = [];
+
+		for (var i = 0; i < measures.length; i++) {
+			var startBeat = i * beatsPerBar;
+			var durationBeats = Number(measures[i].durationBeats) || beatsPerBar;
+			var measure = cloneMeasure(measures[i]);
+
+			measure.bar = i + 1;
+			measure.startBeat = startBeat;
+			measure.endBeat = startBeat + durationBeats;
+			measure.durationBeats = durationBeats;
+			measure.durationSeconds = durationBeats * secondsPerBeat;
+			measure.startSeconds = startBeat * secondsPerBeat;
+			measure.endSeconds = measure.endBeat * secondsPerBeat;
+			if (measure.chords && measure.chords.length) {
+				measure.chords = retimeMeasureChords(measure, secondsPerBeat);
+			}
+			rebuiltMeasures.push(measure);
+		}
+
+		return extendObject(progression, {
+			bars: rebuiltMeasures.length,
+			measures: rebuiltMeasures,
+			totalBeats: rebuiltMeasures.length * beatsPerBar,
+			totalSeconds: rebuiltMeasures.length * beatsPerBar * secondsPerBeat
+		});
+	}
+
+	function cloneMeasure(measure) {
+		var clone = {};
+
+		for (var key in measure) {
+			if (Object.prototype.hasOwnProperty.call(measure, key)) {
+				if ((key === 'notes' || key === 'midiNotes') && measure[key]) {
+					clone[key] = measure[key].slice();
+				} else if (key === 'chords' && measure[key]) {
+					clone[key] = measure[key].map(cloneMeasure);
+				} else if (key === 'voiceNotes' && measure[key]) {
+					clone[key] = cloneVoiceNotes(measure[key]);
+				} else {
+					clone[key] = measure[key];
+				}
+			}
+		}
+
+		return clone;
+	}
+
+	function measureSegments(measure) {
+		if (measure && measure.chords && measure.chords.length) {
+			return measure.chords.map(cloneMeasure);
+		}
+
+		return measure ? [segmentFromMeasure(measure, {
+			chordIndex: 0,
+			durationBeats: Number(measure.durationBeats) || 4,
+			durationSeconds: Number(measure.durationSeconds) || 0,
+			startBeat: Number(measure.startBeat) || 0,
+			startSeconds: Number(measure.startSeconds) || 0
+		})] : [];
+	}
+
+	function measureWithSegments(measure, segments, progression) {
+		var rebuiltMeasure = cloneMeasure(measure);
+		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
+
+		if (!segments.length) {
+			return rebuiltMeasure;
+		}
+
+		rebuiltMeasure = copySegmentToMeasure(rebuiltMeasure, segments[0]);
+		if (segments.length === 1) {
+			delete rebuiltMeasure.chords;
+			return rebuiltMeasure;
+		}
+
+		rebuiltMeasure.chords = retimeMeasureChordList(rebuiltMeasure, segments, secondsPerBeat);
+
+		return rebuiltMeasure;
+	}
+
+	function segmentFromMeasure(measure, timing) {
+		var segment = cloneMeasure(measure);
+
+		delete segment.chords;
+		return extendObject(segment, {
+			chordIndex: timing.chordIndex,
+			durationBeats: timing.durationBeats,
+			durationSeconds: timing.durationSeconds,
+			endBeat: timing.startBeat + timing.durationBeats,
+			endSeconds: timing.startSeconds + timing.durationSeconds,
+			startBeat: timing.startBeat,
+			startSeconds: timing.startSeconds
+		});
+	}
+
+	function retimeMeasureChords(measure, secondsPerBeat) {
+		var chords = measure.chords || [];
+
+		return retimeMeasureChordList(measure, chords, secondsPerBeat);
+	}
+
+	function retimeMeasureChordList(measure, chords, secondsPerBeat) {
+		var durationBeats = (Number(measure.durationBeats) || 4) / Math.max(1, chords.length);
+		var result = [];
+
+		for (var i = 0; i < chords.length; i++) {
+			result.push(segmentFromMeasure(chords[i], {
+				chordIndex: i,
+				durationBeats: durationBeats,
+				durationSeconds: durationBeats * secondsPerBeat,
+				startBeat: (Number(measure.startBeat) || 0) + (durationBeats * i),
+				startSeconds: (Number(measure.startSeconds) || 0) + (durationBeats * secondsPerBeat * i)
+			}));
+		}
+
+		return result;
+	}
+
+	function copySegmentToMeasure(measure, segment) {
+		var keys = [
+			'chord',
+			'chordKind',
+			'chordName',
+			'degree',
+			'displayName',
+			'inversion',
+			'inversionIndex',
+			'midiNotes',
+			'notes',
+			'source',
+			'suspension',
+			'tonalFunction',
+			'voiceNotes',
+			'voices'
+		];
+
+		for (var i = 0; i < keys.length; i++) {
+			measure[keys[i]] = segment[keys[i]];
+		}
+
+		return measure;
+	}
+
+	function cloneVoiceNotes(voiceNotes) {
+		var result = [];
+
+		for (var i = 0; i < voiceNotes.length; i++) {
+			result.push(extendObject({}, voiceNotes[i]));
+		}
+
+		return result;
+	}
+
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
+	global.CodaProgressionMeasureTimeline = {
+		cloneMeasure: cloneMeasure,
+		measureSegments: measureSegments,
+		measureWithSegments: measureWithSegments,
+		rebuildTimeline: rebuildTimeline,
+		retimeMeasureChordList: retimeMeasureChordList,
+		retimeMeasureChords: retimeMeasureChords,
+		segmentFromMeasure: segmentFromMeasure
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-formatting-service.js */
+// Nomenclatura de acordes, grados e inversiones para progresiones.
+(function (global) {
+	'use strict';
+
+	function displayDegree(degree, inversionLabel, suspensionLabel) {
+		var name = degree || '';
+
+		if (inversionLabel) {
+			name += ' ' + inversionLabel;
+		}
+
+		return suspensionLabel ? name + ' ' + suspensionLabel : name;
+	}
+
+	function displayName(chordName, inversionLabel, suspensionLabel, tensionLabel) {
+		var name = chordName || '';
+
+		if (inversionLabel) {
+			name += ' ' + inversionLabel;
+		}
+
+		if (suspensionLabel) {
+			name += ' ' + suspensionLabel;
+		}
+
+		return tensionLabel ? name + ' ' + tensionLabel : name;
+	}
+
+	function triadName(chord) {
+		var chordName = normalizeChordText(chord ? chord.nombre : '');
+		var rootMatch = /^([A-G](#|b|♭)?)/.exec(chordName);
+		var root = rootMatch ? rootMatch[1].replace('b', '♭') : chordName;
+		var suffix = chordQualitySuffix(chordName);
+
+		if (!root) {
+			return '';
+		}
+
+		if (suffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
+			return root + 'º';
+		}
+
+		if (suffix.indexOf('mmaj7') >= 0 || suffix.indexOf('mMaj7') >= 0 || suffix.indexOf('m7') >= 0 || suffix === 'm') {
+			return root + 'm';
+		}
+
+		if (suffix.indexOf('aug') >= 0 || suffix.indexOf('+') >= 0) {
+			return root + '+';
+		}
+
+		return root;
+	}
+
+	function isMinorQuality(chordName) {
+		var suffix = chordQualitySuffix(chordName);
+		var lowerSuffix = suffix.toLowerCase();
+
+		if (lowerSuffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
+			return true;
+		}
+
+		if (lowerSuffix.indexOf('maj') === 0) {
+			return false;
+		}
+
+		return lowerSuffix.charAt(0) === 'm';
+	}
+
+	function isDiminishedSeventhQuality(chordName) {
+		var suffix = chordQualitySuffix(chordName);
+		var lowerSuffix = suffix.toLowerCase();
+
+		return lowerSuffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0;
+	}
+
+	function formatDegreeForMeasure(degree, chord, useSeventh) {
+		if (useSeventh) {
+			return formatDegreeForChord(degree, chord ? chord.nombre : '');
+		}
+
+		return formatTriadDegreeForChord(degree, chord ? chord.nombre : '');
+	}
+
+	function formatTriadDegreeForChord(degree, chordName) {
+		var cleanDegree = String(degree || '').replace('J', '').replace('M', '').replace('m', '');
+		var suffix = chordQualitySuffix(chordName);
+		var transformedDegree;
+
+		if (!cleanDegree) {
+			return '';
+		}
+
+		if (suffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
+			return cleanDegree.toLowerCase() + 'º';
+		}
+
+		if (suffix.indexOf('mmaj7') >= 0 || suffix.indexOf('mMaj7') >= 0 || suffix.indexOf('m7') >= 0 || suffix === 'm') {
+			transformedDegree = cleanDegree.toLowerCase();
+		} else {
+			transformedDegree = cleanDegree.toUpperCase();
+		}
+
+		if (suffix.indexOf('aug') >= 0 || suffix.indexOf('+') >= 0) {
+			transformedDegree += '+';
+		}
+
+		return transformedDegree;
+	}
+
+	function formatDegreeForChord(degree, chordName) {
+		var transformedDegree = '';
+		var cleanDegree = String(degree || '').replace('J', '').replace('M', '').replace('m', '');
+		var normalizedChordName = normalizeChordText(chordName);
+		var chordQuality = chordQualitySuffix(normalizedChordName);
+
+		if (!cleanDegree) {
+			return '';
+		}
+
+		if (normalizedChordName.indexOf('mmaj7') >= 0) {
+			transformedDegree = cleanDegree.toLowerCase();
+		} else if (normalizedChordName.indexOf('maj7') >= 0) {
+			transformedDegree = cleanDegree.toUpperCase();
+		} else if (normalizedChordName.indexOf('m') >= 0) {
+			transformedDegree = cleanDegree.toLowerCase();
+		} else {
+			transformedDegree = cleanDegree.toUpperCase();
+		}
+
+		transformedDegree += chordQuality;
+
+		if (transformedDegree.indexOf('m7') >= 0 && transformedDegree.indexOf('dim7') === -1) {
+			transformedDegree = transformedDegree.replace('m', '');
+		}
+
+		return transformedDegree;
+	}
+
+	function chordQualitySuffix(chordName) {
+		return normalizeChordText(chordName)
+			.replace(/^[A-G](#|b|♭)?/, '')
+			.replace(/b5/g, '♭5');
+	}
+
+	function normalizeChordText(value) {
+		return String(value || '')
+			.replace(/Ã¢â„¢Â­|â™­/g, '♭')
+			.replace(/Ã‚Âº|Âº/g, 'º');
+	}
+
+	global.CodaProgressionFormatting = {
+		chordQualitySuffix: chordQualitySuffix,
+		displayDegree: displayDegree,
+		displayName: displayName,
+		formatDegreeForChord: formatDegreeForChord,
+		formatDegreeForMeasure: formatDegreeForMeasure,
+		formatTriadDegreeForChord: formatTriadDegreeForChord,
+		isDiminishedSeventhQuality: isDiminishedSeventhQuality,
+		isMinorQuality: isMinorQuality,
+		triadName: triadName
+	};
+})(window);
+;
+
+/* Source: js/services/progression-structure-editing-service.js */
+// Structural editing operations for progression measures and split-measure chords.
+(function (global) {
+	'use strict';
+
+	var measureTimelineService = global.CodaProgressionMeasureTimeline;
+
+	function reorderMeasures(progression, fromIndex, toIndex) {
+		var measures = progression && progression.measures ? progression.measures.slice() : [];
+		var movedMeasure;
+
+		fromIndex = clampMeasureIndex(fromIndex, measures.length);
+		toIndex = clampMeasureIndex(toIndex, measures.length);
+
+		if (!progression || !measures.length || fromIndex === toIndex) {
+			return progression;
+		}
+
+		movedMeasure = measures.splice(fromIndex, 1)[0];
+		measures.splice(toIndex, 0, movedMeasure);
+
+		return measureTimelineService.rebuildTimeline(progression, measures);
+	}
+
+	function reorderMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex) {
+		var measures = progression && progression.measures ? progression.measures.slice() : [];
+		var index = clampMeasureIndex(measureIndex, measures.length);
+		var measure = measures[index];
+		var segments;
+		var movedSegment;
+
+		if (!progression || !measure || !measure.chords || measure.chords.length < 3) {
+			return progression;
+		}
+
+		segments = measureTimelineService.measureSegments(measure);
+		fromChordIndex = clampChordIndex(fromChordIndex, segments.length);
+		toChordIndex = clampChordIndex(toChordIndex, segments.length);
+
+		if (fromChordIndex === 0 || toChordIndex === 0 || fromChordIndex === toChordIndex) {
+			return progression;
+		}
+
+		movedSegment = segments.splice(fromChordIndex, 1)[0];
+		segments.splice(toChordIndex, 0, movedSegment);
+		measures[index] = measureTimelineService.measureWithSegments(measure, segments, progression);
+
+		return extendObject(progression, {
+			measures: measures
+		});
+	}
+
+	function removeMeasureChord(progression, measureIndex, chordIndex) {
+		var measures = progression && progression.measures ? progression.measures.slice() : [];
+		var index = clampMeasureIndex(measureIndex, measures.length);
+		var measure = measures[index];
+		var segments;
+		var normalizedChordIndex;
+
+		if (!progression || !measure || !measure.chords || measure.chords.length < 2) {
+			return progression;
+		}
+
+		segments = measureTimelineService.measureSegments(measure);
+		normalizedChordIndex = clampChordIndex(chordIndex, segments.length);
+		if (normalizedChordIndex === 0) {
+			return progression;
+		}
+
+		segments.splice(normalizedChordIndex, 1);
+		measures[index] = measureTimelineService.measureWithSegments(measure, segments, progression);
+
+		return extendObject(progression, {
+			measures: measures
+		});
+	}
+
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
+	function clampMeasureIndex(index, length) {
+		var numericIndex = parseInt(index, 10);
+
+		if (!length || isNaN(numericIndex)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(length - 1, numericIndex));
+	}
+
+	function clampChordIndex(index, length) {
+		var numericIndex = parseInt(index, 10);
+
+		if (!length || isNaN(numericIndex)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(length - 1, numericIndex));
+	}
+
+	global.CodaProgressionStructureEditing = {
+		clampChordIndex: clampChordIndex,
+		clampMeasureIndex: clampMeasureIndex,
+		removeMeasureChord: removeMeasureChord,
+		reorderMeasureChords: reorderMeasureChords,
+		reorderMeasures: reorderMeasures
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-additional-chord-service.js */
+// Chooses an additional chord for a split measure using tonal function and voice-leading heuristics.
+(function (global) {
+	'use strict';
+
+	var formattingService = global.CodaProgressionFormatting;
+	var voicingService = global.CodaProgressionVoicing;
+
+	function choose(options) {
+		var report = options.report || {};
+		var scaleChords = report.scaleChords || [];
+		var scaleNotes = report.scaleNotes || [];
+		var candidates = [];
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var previousPlan = measurePlan(options.measure);
+		var nextPlan = options.nextMeasure ? measurePlan(options.nextMeasure) : null;
+		var progressionState = options.progressionState;
+		var initialMidiNote = options.data && options.data.midi ? options.data.midi.initialMidiNote : 60;
+		var suspensionResolution = chooseSuspensionResolutionForMeasure({
+			buildChordPlan: options.buildChordPlan,
+			initialMidiNote: initialMidiNote,
+			measure: options.measure,
+			nextMeasure: options.nextMeasure,
+			nextPlan: nextPlan,
+			previousPlan: previousPlan,
+			progressionState: progressionState,
+			report: report,
+			rng: rng
+		});
+
+		if (suspensionResolution) {
+			return suspensionResolution;
+		}
+
+		for (var i = 0; i < scaleChords.length; i++) {
+			var resolvedDegree;
+			var chordPlan;
+			var score;
+
+			if (!scaleChords[i] || sameChordFamily(scaleChords[i], options.measure)) {
+				continue;
+			}
+
+			resolvedDegree = {
+				chord: scaleChords[i],
+				degree: scaleNotes[i] ? scaleNotes[i].grado : '',
+				degreeIndex: i,
+				source: 'diatonic'
+			};
+			chordPlan = options.buildChordPlan({
+				index: 1,
+				options: {
+					includeTensions: true,
+					initialMidiNote: initialMidiNote,
+					rng: rng,
+					scaleDefinition: report.scaleDefinition,
+					scaleNotes: scaleNotes
+				},
+				previousPlan: previousPlan,
+				progressionState: progressionState,
+				resolvedDegree: resolvedDegree,
+				resolvedDegrees: [
+					resolvedDegreeFromMeasure(options.measure, report) || resolvedDegree,
+					resolvedDegree,
+					resolvedDegreeFromMeasure(options.nextMeasure, report) || resolvedDegree
+				]
+			});
+			score = additionalChordScore({
+				chordPlan: chordPlan,
+				currentMeasure: options.measure,
+				nextMeasure: options.nextMeasure,
+				nextPlan: nextPlan,
+				progressionState: progressionState,
+				report: report,
+				resolvedDegree: resolvedDegree,
+				rng: rng
+			});
+
+			candidates.push({
+				chordPlan: chordPlan,
+				reportScaleDefinition: report.scaleDefinition,
+				resolvedDegree: resolvedDegree,
+				score: score
+			});
+		}
+
+		candidates.sort(function (a, b) {
+			return b.score - a.score;
+		});
+
+		return candidates.length ? candidates[0] : null;
+	}
+
+	function chooseSuspensionResolutionForMeasure(options) {
+		var measure = options.measure;
+		var resolvedDegree;
+		var candidates = [];
+		var kinds = ['triad', 'seventh'];
+
+		if (!measure || !measure.suspension) {
+			return null;
+		}
+
+		resolvedDegree = resolvedDegreeFromMeasure(measure, options.report);
+		if (!resolvedDegree || !resolvedDegree.chord) {
+			return null;
+		}
+
+		for (var i = 0; i < kinds.length; i++) {
+			var labels = kinds[i] === 'seventh' ? ['', '6/5', '4/3', '4/2'] : ['', '6', '6/4'];
+
+			for (var j = 0; j < labels.length; j++) {
+				var chordPlan = options.buildChordPlan({
+					index: 1,
+					options: {
+						forceInversionIndex: j,
+						forceKind: kinds[i],
+						includeTensions: false,
+						initialMidiNote: options.initialMidiNote,
+						preventSuspension: true,
+						scaleDefinition: options.report.scaleDefinition,
+						scaleNotes: options.report.scaleNotes
+					},
+					previousPlan: options.previousPlan,
+					progressionState: options.progressionState,
+					resolvedDegree: resolvedDegree,
+					resolvedDegrees: [
+						resolvedDegree,
+						resolvedDegree,
+						resolvedDegreeFromMeasure(options.nextMeasure, options.report) || resolvedDegree
+					]
+				});
+
+				candidates.push({
+					chordPlan: chordPlan,
+					reportScaleDefinition: options.report.scaleDefinition,
+					resolvedDegree: resolvedDegree,
+					score: suspensionResolutionScore({
+						chordPlan: chordPlan,
+						nextPlan: options.nextPlan,
+						previousPlan: options.previousPlan,
+						rng: options.rng
+					})
+				});
+			}
+		}
+
+		candidates.sort(function (a, b) {
+			return a.score - b.score;
+		});
+
+		return candidates.length ? candidates[0] : null;
+	}
+
+	function suspensionResolutionScore(options) {
+		var score = voicingService.voiceLeadingTransitionScore(options.previousPlan, options.chordPlan);
+
+		if (options.nextPlan) {
+			score += voicingService.voiceLeadingTransitionScore(options.chordPlan, options.nextPlan) * 0.25;
+		}
+
+		if (options.chordPlan.kind === 'seventh') {
+			score += 0.25;
+		}
+
+		return score + ((typeof options.rng === 'function' ? options.rng() : Math.random()) * 0.01);
+	}
+
+	function additionalChordScore(options) {
+		var currentCommon = voicingService.commonPitchNames(options.currentMeasure, options.chordPlan).length;
+		var nextCommon = options.nextMeasure ? voicingService.commonPitchNames(options.chordPlan, options.nextMeasure).length : 0;
+		var currentFunction = options.currentMeasure.tonalFunction || '';
+		var nextFunction = options.nextMeasure ? options.nextMeasure.tonalFunction || '' : '';
+		var candidateFunction = tonalFunctionForDegree(options.report.scaleDefinition, options.resolvedDegree.degreeIndex);
+		var score = 0;
+
+		score += currentCommon * 9;
+		score += nextCommon * 7;
+
+		if (currentCommon > 0 && (!options.nextMeasure || nextCommon > 0)) {
+			score += 10;
+		}
+
+		if (candidateFunction && candidateFunction === currentFunction) {
+			score += currentFunction === 'T' ? 18 : 8;
+		} else if (currentFunction && candidateFunction) {
+			score -= currentFunction === 'T' ? 8 : 4;
+		}
+
+		if (candidateFunction && candidateFunction === nextFunction) {
+			score += 4;
+		}
+
+		if (options.nextMeasure && sameChordFamily(options.resolvedDegree.chord, options.nextMeasure)) {
+			score -= 16;
+		}
+
+		score -= voicingService.voiceLeadingTransitionScore(options.currentMeasure, options.chordPlan) * 0.45;
+
+		if (options.nextPlan) {
+			score -= voicingService.voiceLeadingTransitionScore(options.chordPlan, options.nextPlan) * 0.35;
+		}
+
+		if (currentCommon === 0 && nextCommon === 0) {
+			score -= 24;
+		}
+
+		score += (typeof options.rng === 'function' ? options.rng() : Math.random()) * 2.5;
+
+		return score;
+	}
+
+	function measurePlan(measure) {
+		if (!measure) {
+			return null;
+		}
+
+		return {
+			midiNotes: measure.midiNotes || [],
+			notes: measure.notes || [],
+			voiceNotes: measure.voiceNotes || []
+		};
+	}
+
+	function resolvedDegreeFromMeasure(measure, report) {
+		var scaleChords = report && report.scaleChords ? report.scaleChords : [];
+		var parallelChords = report && report.parallelScaleChords ? report.parallelScaleChords : [];
+		var scaleNotes = report && report.scaleNotes ? report.scaleNotes : [];
+		var chordName = measure ? measure.chordName : '';
+
+		if (!measure) {
+			return null;
+		}
+
+		for (var i = 0; i < scaleChords.length; i++) {
+			if (scaleChords[i] === measure.chord || formattingService.triadName(scaleChords[i]) === chordName || scaleChords[i].nombre === chordName) {
+				return {
+					chord: scaleChords[i],
+					degree: scaleNotes[i] ? scaleNotes[i].grado : '',
+					degreeIndex: i,
+					source: measure.source || 'diatonic'
+				};
+			}
+		}
+
+		for (var j = 0; j < parallelChords.length; j++) {
+			if (parallelChords[j] === measure.chord || formattingService.triadName(parallelChords[j]) === chordName || parallelChords[j].nombre === chordName) {
+				return {
+					chord: parallelChords[j],
+					degree: scaleNotes[j] ? scaleNotes[j].grado : '',
+					degreeIndex: j,
+					source: measure.source || 'parallel'
+				};
+			}
+		}
+
+		return null;
+	}
+
+	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
+		var funciones = scaleDefinition && scaleDefinition.funciones ? String(scaleDefinition.funciones).split('-') : [];
+		var tonalFunction = funciones[degreeIndex] || '';
+
+		return tonalFunction === 'â€”' || tonalFunction === 'Ã¢â‚¬â€' ? '' : tonalFunction;
+	}
+
+	function sameChordFamily(chord, measure) {
+		return measure && (measure.chord === chord || measure.chordName === chord.nombre || measure.chordName === formattingService.triadName(chord));
+	}
+
+	global.CodaProgressionAdditionalChord = {
+		choose: choose
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-segment-builder-service.js */
+// Builds and replaces measure segments from chord plans.
+(function (global) {
+	'use strict';
+
+	var formattingService = global.CodaProgressionFormatting;
+	var measureTimelineService = global.CodaProgressionMeasureTimeline;
+
+	function fromPlan(measure, chordSelection, timing) {
+		var resolvedDegree = chordSelection.resolvedDegree;
+		var chordPlan = chordSelection.chordPlan;
+
+		return {
+			articulation: measure.articulation,
+			bar: measure.bar,
+			beatUnit: measure.beatUnit,
+			chord: resolvedDegree.chord,
+			chordIndex: timing.chordIndex,
+			chordKind: chordPlan.kind,
+			chordName: chordPlan.chordName,
+			degree: formattingService.displayDegree(chordPlan.degree, chordPlan.inversionLabel, chordPlan.suspension),
+			displayName: formattingService.displayName(chordPlan.chordName, chordPlan.inversionLabel, chordPlan.suspension, chordPlan.tensionLabel),
+			durationBeats: timing.durationBeats,
+			durationSeconds: timing.durationSeconds,
+			endBeat: timing.startBeat + timing.durationBeats,
+			endSeconds: timing.startSeconds + timing.durationSeconds,
+			inversion: chordPlan.inversionLabel,
+			inversionIndex: chordPlan.inversionIndex,
+			midiNotes: chordPlan.midiNotes,
+			notes: chordPlan.notes,
+			source: resolvedDegree.source || 'diatonic',
+			startBeat: timing.startBeat,
+			startSeconds: timing.startSeconds,
+			suspension: chordPlan.suspension,
+			tonalFunction: tonalFunctionForDegree(chordSelection.reportScaleDefinition, resolvedDegree.degreeIndex),
+			voiceNotes: chordPlan.voiceNotes,
+			voices: measure.voices
+		};
+	}
+
+	function replaceSplitMeasureSegment(measure, chordIndex, segment) {
+		var replacedMeasure = measureTimelineService.cloneMeasure(measure);
+		var index = Math.min(chordIndex, replacedMeasure.chords.length - 1);
+
+		replacedMeasure.chords[index] = segment;
+		if (index === 0) {
+			replacedMeasure = copySegmentToMeasure(replacedMeasure, segment);
+		}
+
+		return replacedMeasure;
+	}
+
+	function replaceWholeMeasure(measure, segment) {
+		return copySegmentToMeasure(measureTimelineService.cloneMeasure(measure), segment);
+	}
+
+	function copySegmentToMeasure(measure, segment) {
+		var keys = [
+			'chord',
+			'chordKind',
+			'chordName',
+			'degree',
+			'displayName',
+			'inversion',
+			'inversionIndex',
+			'midiNotes',
+			'notes',
+			'source',
+			'suspension',
+			'tonalFunction',
+			'voiceNotes',
+			'voices'
+		];
+
+		for (var i = 0; i < keys.length; i++) {
+			measure[keys[i]] = segment[keys[i]];
+		}
+
+		measure.pedalsIn = [];
+		measure.pedalsOut = [];
+
+		return measure;
+	}
+
+	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
+		var funciones = scaleDefinition && scaleDefinition.funciones ? String(scaleDefinition.funciones).split('-') : [];
+		var tonalFunction = funciones[degreeIndex] || '';
+
+		return tonalFunction === 'â€”' || tonalFunction === 'Ã¢â‚¬â€' ? '' : tonalFunction;
+	}
+
+	global.CodaProgressionSegmentBuilder = {
+		copySegmentToMeasure: copySegmentToMeasure,
+		fromPlan: fromPlan,
+		replaceSplitMeasureSegment: replaceSplitMeasureSegment,
+		replaceWholeMeasure: replaceWholeMeasure,
+		tonalFunctionForDegree: tonalFunctionForDegree
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-replacement-chord-service.js */
+// Builds replacement chord segments for the progression chord menu.
+(function (global) {
+	'use strict';
+
+	var formattingService = global.CodaProgressionFormatting;
+	var segmentBuilder = global.CodaProgressionSegmentBuilder;
+
+	function buildSegment(options) {
+		var report = options.report || {};
+		var scaleChords = report.scaleChords || [];
+		var scaleNotes = report.scaleNotes || [];
+		var degreeIndex = parseInt(options.replacement.degreeIndex, 10);
+		var resolvedDegree;
+		var chordPlan;
+		var previousPlan;
+
+		if (isNaN(degreeIndex) || !scaleChords[degreeIndex]) {
+			return null;
+		}
+
+		resolvedDegree = {
+			chord: scaleChords[degreeIndex],
+			degree: scaleNotes[degreeIndex] ? scaleNotes[degreeIndex].grado : '',
+			degreeIndex: degreeIndex,
+			source: 'diatonic'
+		};
+		previousPlan = previousSegmentPlan(options.progression, options.measure.bar, options.chordIndex);
+		chordPlan = options.buildChordPlan({
+			index: 1,
+			options: {
+				forceInversionIndex: parseInt(options.replacement.inversionIndex, 10) || 0,
+				forceKind: options.replacement.kind === 'seventh' ? 'seventh' : 'triad',
+				includeTensions: false,
+				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
+				preventSuspension: true,
+				scaleDefinition: report.scaleDefinition,
+				scaleNotes: scaleNotes
+			},
+			previousPlan: previousPlan,
+			progressionState: options.progressionState,
+			resolvedDegree: resolvedDegree,
+			resolvedDegrees: [
+				resolvedDegreeFromMeasure(options.segment, report) || resolvedDegree,
+				resolvedDegree,
+				resolvedDegreeFromMeasure(options.nextMeasure, report) || resolvedDegree
+			]
+		});
+
+		return segmentBuilder.fromPlan(options.segment, {
+			chordPlan: chordPlan,
+			reportScaleDefinition: report.scaleDefinition,
+			resolvedDegree: resolvedDegree
+		}, {
+			chordIndex: options.chordIndex,
+			durationBeats: Number(options.segment.durationBeats) || Number(options.measure.durationBeats) || 4,
+			durationSeconds: Number(options.segment.durationSeconds) || Number(options.measure.durationSeconds) || 0,
+			startBeat: Number(options.segment.startBeat) || Number(options.measure.startBeat) || 0,
+			startSeconds: Number(options.segment.startSeconds) || Number(options.measure.startSeconds) || 0
+		});
+	}
+
+	function previousSegmentPlan(progression, bar, chordIndex) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var measureIndex = Math.max(0, (Number(bar) || 1) - 1);
+		var currentMeasure = measures[measureIndex];
+		var previousMeasure;
+
+		if (chordIndex > 0 && currentMeasure && currentMeasure.chords && currentMeasure.chords[chordIndex - 1]) {
+			return measurePlan(currentMeasure.chords[chordIndex - 1]);
+		}
+
+		previousMeasure = measures[measureIndex - 1];
+		if (!previousMeasure) {
+			return null;
+		}
+
+		if (previousMeasure.chords && previousMeasure.chords.length) {
+			return measurePlan(previousMeasure.chords[previousMeasure.chords.length - 1]);
+		}
+
+		return measurePlan(previousMeasure);
+	}
+
+	function measurePlan(measure) {
+		if (!measure) {
+			return null;
+		}
+
+		return {
+			midiNotes: measure.midiNotes || [],
+			notes: measure.notes || [],
+			voiceNotes: measure.voiceNotes || []
+		};
+	}
+
+	function resolvedDegreeFromMeasure(measure, report) {
+		var scaleChords = report && report.scaleChords ? report.scaleChords : [];
+		var parallelChords = report && report.parallelScaleChords ? report.parallelScaleChords : [];
+		var scaleNotes = report && report.scaleNotes ? report.scaleNotes : [];
+		var chordName = measure ? measure.chordName : '';
+
+		if (!measure) {
+			return null;
+		}
+
+		for (var i = 0; i < scaleChords.length; i++) {
+			if (scaleChords[i] === measure.chord || formattingService.triadName(scaleChords[i]) === chordName || scaleChords[i].nombre === chordName) {
+				return {
+					chord: scaleChords[i],
+					degree: scaleNotes[i] ? scaleNotes[i].grado : '',
+					degreeIndex: i,
+					source: measure.source || 'diatonic'
+				};
+			}
+		}
+
+		for (var j = 0; j < parallelChords.length; j++) {
+			if (parallelChords[j] === measure.chord || formattingService.triadName(parallelChords[j]) === chordName || parallelChords[j].nombre === chordName) {
+				return {
+					chord: parallelChords[j],
+					degree: scaleNotes[j] ? scaleNotes[j].grado : '',
+					degreeIndex: j,
+					source: measure.source || 'parallel'
+				};
+			}
+		}
+
+		return null;
+	}
+
+	global.CodaProgressionReplacementChord = {
+		buildSegment: buildSegment
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-measure-chord-addition-service.js */
+// Adds compatible secondary chords inside a progression measure.
+(function (global) {
+	'use strict';
+
+	var additionalChordService = global.CodaProgressionAdditionalChord;
+	var measureTimelineService = global.CodaProgressionMeasureTimeline;
+	var segmentBuilder = global.CodaProgressionSegmentBuilder;
+
+	function addMeasureChord(progression, measureIndex, options, dependencies) {
+		var measures = progression && progression.measures ? progression.measures.slice() : [];
+		var index = clampMeasureIndex(measureIndex, measures.length);
+		var measure = measures[index];
+		var segments;
+		var insertAfterIndex;
+		var additionalChord;
+		var additionalSegment;
+
+		options = options || {};
+		dependencies = dependencies || {};
+		if (!progression || !measure) {
+			return progression;
+		}
+
+		segments = measureTimelineService.measureSegments(measure);
+		if (segments.length >= 4) {
+			return progression;
+		}
+
+		insertAfterIndex = clampChordIndex(options.chordIndex, segments.length);
+		additionalChord = additionalChordService.choose({
+			buildChordPlan: dependencies.buildChordPlan,
+			data: options.data,
+			measure: segments[insertAfterIndex],
+			nextMeasure: segments[insertAfterIndex + 1] || measures[index + 1] || null,
+			progression: progression,
+			progressionState: dependencies.normalizeProgressionState(options.progressionState || progression),
+			report: options.report,
+			rng: options.rng
+		});
+
+		if (!additionalChord) {
+			return progression;
+		}
+
+		additionalSegment = segmentBuilder.fromPlan(segments[insertAfterIndex], additionalChord, {
+			chordIndex: insertAfterIndex + 1,
+			durationBeats: Number(segments[insertAfterIndex].durationBeats) || Number(measure.durationBeats) || Number(progression.beatsPerBar) || 4,
+			durationSeconds: Number(segments[insertAfterIndex].durationSeconds) || Number(measure.durationSeconds) || 0,
+			startBeat: Number(segments[insertAfterIndex].endBeat) || Number(segments[insertAfterIndex].startBeat) || Number(measure.startBeat) || 0,
+			startSeconds: Number(segments[insertAfterIndex].endSeconds) || Number(segments[insertAfterIndex].startSeconds) || Number(measure.startSeconds) || 0
+		});
+		segments.splice(insertAfterIndex + 1, 0, additionalSegment);
+		measures[index] = measureTimelineService.measureWithSegments(measure, segments, progression);
+
+		return extendObject(progression, {
+			measures: measures
+		});
+	}
+
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
+	function clampMeasureIndex(index, length) {
+		var numericIndex = parseInt(index, 10);
+
+		if (isNaN(numericIndex)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(length - 1, numericIndex));
+	}
+
+	function clampChordIndex(index, length) {
+		var numericIndex = parseInt(index, 10);
+
+		if (isNaN(numericIndex)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(Math.max(0, length - 1), numericIndex));
+	}
+
+	global.CodaProgressionMeasureChordAddition = {
+		addMeasureChord: addMeasureChord
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-measure-chord-replacement-service.js */
+// Replaces a chord inside a progression measure with a menu-selected variant.
+(function (global) {
+	'use strict';
+
+	var replacementChordService = global.CodaProgressionReplacementChord;
+	var segmentBuilder = global.CodaProgressionSegmentBuilder;
+
+	function replaceMeasureChord(progression, measureIndex, chordIndex, replacement, options, dependencies) {
+		var measures = progression && progression.measures ? progression.measures.slice() : [];
+		var index = clampMeasureIndex(measureIndex, measures.length);
+		var measure = measures[index];
+		var normalizedChordIndex = Math.max(0, parseInt(chordIndex, 10) || 0);
+		var segment;
+		var nextMeasure;
+		var replacedSegment;
+
+		options = options || {};
+		replacement = replacement || {};
+		dependencies = dependencies || {};
+		if (!progression || !measure || replacement.degreeIndex == null) {
+			return progression;
+		}
+
+		segment = measure.chords && measure.chords.length ? measure.chords[Math.min(normalizedChordIndex, measure.chords.length - 1)] : measure;
+		nextMeasure = measures[index + 1] || null;
+		replacedSegment = replacementChordService.buildSegment({
+			buildChordPlan: dependencies.buildChordPlan,
+			chordIndex: normalizedChordIndex,
+			data: options.data,
+			measure: measure,
+			nextMeasure: nextMeasure,
+			progression: progression,
+			progressionState: dependencies.normalizeProgressionState(options.progressionState || progression),
+			replacement: replacement,
+			report: options.report,
+			segment: segment
+		});
+
+		if (!replacedSegment) {
+			return progression;
+		}
+
+		if (measure.chords && measure.chords.length) {
+			measures[index] = segmentBuilder.replaceSplitMeasureSegment(measure, normalizedChordIndex, replacedSegment);
+		} else {
+			measures[index] = segmentBuilder.replaceWholeMeasure(measure, replacedSegment);
+		}
+
+		return extendObject(progression, {
+			measures: measures
+		});
+	}
+
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
+	function clampMeasureIndex(index, length) {
+		var numericIndex = parseInt(index, 10);
+
+		if (isNaN(numericIndex)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(length - 1, numericIndex));
+	}
+
+	global.CodaProgressionMeasureChordReplacement = {
+		replaceMeasureChord: replaceMeasureChord
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-editing-service.js */
+// Facade for progression editing operations used by the UI and application layer.
+(function (global) {
+	'use strict';
+
+	var measureChordAdditionService = global.CodaProgressionMeasureChordAddition;
+	var measureChordReplacementService = global.CodaProgressionMeasureChordReplacement;
+	var structureEditingService = global.CodaProgressionStructureEditing;
+
+	function reorderMeasures(progression, fromIndex, toIndex) {
+		return structureEditingService.reorderMeasures(progression, fromIndex, toIndex);
+	}
+
+	function reorderMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex) {
+		return structureEditingService.reorderMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex);
+	}
+
+	function addMeasureChord(progression, measureIndex, options, dependencies) {
+		return measureChordAdditionService.addMeasureChord(progression, measureIndex, options, dependencies);
+	}
+
+	function removeMeasureChord(progression, measureIndex, chordIndex) {
+		return structureEditingService.removeMeasureChord(progression, measureIndex, chordIndex);
+	}
+
+	function replaceMeasureChord(progression, measureIndex, chordIndex, replacement, options, dependencies) {
+		return measureChordReplacementService.replaceMeasureChord(progression, measureIndex, chordIndex, replacement, options, dependencies);
+	}
+
+	global.CodaProgressionEditing = {
+		addMeasureChord: addMeasureChord,
+		removeMeasureChord: removeMeasureChord,
+		reorderMeasureChords: reorderMeasureChords,
+		reorderMeasures: reorderMeasures,
+		replaceMeasureChord: replaceMeasureChord
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-tension-service.js */
+// Rules for adding safe chord tensions to generated progressions.
+(function (global) {
+	'use strict';
+
+	var NOTE_INDEXES = {
+		C: 0,
+		'C#': 1,
+		Db: 1,
+		D: 2,
+		'D#': 3,
+		Eb: 3,
+		E: 4,
+		F: 5,
+		'F#': 6,
+		Gb: 6,
+		G: 7,
+		'G#': 8,
+		Ab: 8,
+		A: 9,
+		'A#': 10,
+		Bb: 10,
+		B: 11
+	};
+
+	function addToNotes(notes, options) {
+		var result = notes.slice();
+		var labels = [];
+		var maxVoices = Math.max(1, Math.min(numberOrDefault(options.voices, 4), 6));
+		var slots = Math.max(0, maxVoices - result.length);
+		var desiredTensions = desiredTensionCount(options.tensions);
+		var candidates = availableCandidates(notes, options);
+		var selectedCount = Math.min(slots, desiredTensions, candidates.length);
+
+		for (var i = 0; i < selectedCount; i++) {
+			result.push(candidates[i].note);
+			labels.push(tensionLabel(candidates[i].label, options.kind));
+		}
+
+		return {
+			label: labels.join(' '),
+			notes: result.slice(0, maxVoices)
+		};
+	}
+
+	function desiredTensionCount(tensions) {
+		var value = numberOrDefault(tensions, 0);
+
+		if (value >= 85) {
+			return 3;
+		}
+
+		if (value >= 65) {
+			return 2;
+		}
+
+		if (value >= 40) {
+			return 1;
+		}
+
+		return 0;
+	}
+
+	function availableCandidates(notes, options) {
+		var scaleNotes = options.scaleNotes || [];
+		var candidates = [
+			{ degreeOffset: 1, label: '9' },
+			{ degreeOffset: 3, label: '11' },
+			{ degreeOffset: 5, label: '13' }
+		];
+		var result = [];
+
+		for (var i = 0; i < candidates.length; i++) {
+			var scaleNote = scaleNotes.length ? scaleNotes[(options.degreeIndex + candidates[i].degreeOffset) % scaleNotes.length] : null;
+
+			if (!scaleNote || containsPitchName(notes, scaleNote.nombre) || createsUpperSemitone(scaleNote.nombre, notes)) {
+				continue;
+			}
+
+			result.push({
+				label: candidates[i].label,
+				note: scaleNote.nombre
+			});
+		}
+
+		return result;
+	}
+
+	function containsPitchName(notes, noteName) {
+		var normalizedNote = normalizePitchName(noteName);
+
+		for (var i = 0; i < notes.length; i++) {
+			if (normalizePitchName(notes[i]) === normalizedNote) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function createsUpperSemitone(tensionNote, structuralNotes) {
+		var tensionIndex = noteIndex(tensionNote);
+
+		if (tensionIndex == null) {
+			return false;
+		}
+
+		for (var i = 0; i < structuralNotes.length; i++) {
+			var structuralIndex = noteIndex(structuralNotes[i]);
+
+			if (structuralIndex != null && (tensionIndex - structuralIndex + 12) % 12 === 1) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function tensionLabel(label, kind) {
+		return kind === 'seventh' ? label : 'add' + label;
+	}
+
+	function noteIndex(noteName) {
+		var normalized = normalizePitchName(noteName);
+
+		return Object.prototype.hasOwnProperty.call(NOTE_INDEXES, normalized) ? NOTE_INDEXES[normalized] : null;
+	}
+
+	function normalizePitchName(noteName) {
+		return String(noteName || '').replace('♭', 'b');
+	}
+
+	function numberOrDefault(value, fallback) {
+		var parsed = Number(value);
+
+		return Number.isFinite(parsed) ? parsed : fallback;
+	}
+
+	global.CodaProgressionTensions = {
+		addToNotes: addToNotes,
+		availableCandidates: availableCandidates,
+		containsPitchName: containsPitchName,
+		createsUpperSemitone: createsUpperSemitone,
+		desiredTensionCount: desiredTensionCount,
+		tensionLabel: tensionLabel
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-chord-plan-service.js */
+// Chord-plan builder for generated progressions.
+(function (global) {
+	'use strict';
+
+	var formattingService = global.CodaProgressionFormatting;
+	var tensionService = global.CodaProgressionTensions;
+	var voicingService = global.CodaProgressionVoicing;
+
+	function build(context) {
+		var resolvedDegree = context.resolvedDegree;
+		var chord = resolvedDegree.chord;
+		var useSeventh = context.options.forceKind ? context.options.forceKind === 'seventh' : shouldUseSeventh(context);
+		var baseNotes = useSeventh ? chordNotes(chord) : triadNotes(chord);
+		var suspension = context.options.preventSuspension ? null : chooseSuspension(context, baseNotes, useSeventh ? 'seventh' : 'triad');
+		var tensionOptions;
+		var voicing;
+		var chordName;
+
+		if (suspension) {
+			baseNotes = suspendedNotes(baseNotes, suspension.note);
+		}
+
+		tensionOptions = context.options.includeTensions ? tensionService.addToNotes(baseNotes, {
+			degreeIndex: resolvedDegree.degreeIndex,
+			kind: useSeventh ? 'seventh' : 'triad',
+			rng: context.options.rng,
+			scaleNotes: context.options.scaleNotes,
+			tensions: context.progressionState.tensions,
+			voices: context.progressionState.voices
+		}) : {
+			label: '',
+			notes: baseNotes
+		};
+		voicing = voicingService.chooseVoicing({
+			baseNotes: baseNotes,
+			chordName: chord.nombre,
+			extraNotes: tensionOptions.notes.slice(baseNotes.length),
+			forceInversionIndex: context.options.forceInversionIndex,
+			initialMidiNote: context.options.initialMidiNote || 60,
+			kind: useSeventh ? 'seventh' : 'triad',
+			previousPlan: context.previousPlan,
+			voicing: context.progressionState.voicing,
+			voices: context.progressionState.voices
+		});
+		chordName = useSeventh ? chord.nombre : formattingService.triadName(chord);
+
+		return {
+			chordName: chordName,
+			degree: formattingService.formatDegreeForMeasure(resolvedDegree.degree, chord, useSeventh),
+			inversionIndex: voicing.inversionIndex,
+			inversionLabel: voicing.inversionLabel,
+			kind: useSeventh ? 'seventh' : 'triad',
+			midiNotes: voicing.midiNotes,
+			notes: voicing.notes,
+			suspension: suspension ? suspension.label : '',
+			tensionLabel: tensionOptions.label,
+			voiceNotes: voicing.voiceNotes
+		};
+	}
+
+	function chooseSuspension(context, baseNotes, kind) {
+		var chord = context.resolvedDegree.chord;
+		var previousPlan = context.previousPlan;
+		var progressionState = context.progressionState;
+		var rng = typeof context.options.rng === 'function' ? context.options.rng : function () { return 1; };
+		var label;
+		var suspensionNote;
+		var originalVoicing;
+		var suspendedVoicing;
+		var probability;
+		var originalScore;
+		var suspendedScore;
+
+		if (!chord || !previousPlan || !chord.segunda || !chord.cuarta || baseNotes.length < 3) {
+			return null;
+		}
+
+		if (isTonicBoundary(context.index, context.resolvedDegrees.length, context.resolvedDegree.degreeIndex)) {
+			return null;
+		}
+
+		label = formattingService.isMinorQuality(chord.nombre) ? 'sus2' : 'sus4';
+		suspensionNote = label === 'sus2' ? chord.segunda : chord.cuarta;
+		originalVoicing = voicingService.chooseVoicing({
+			baseNotes: baseNotes,
+			chordName: chord.nombre,
+			extraNotes: [],
+			initialMidiNote: context.options.initialMidiNote || 60,
+			kind: kind,
+			previousPlan: previousPlan,
+			voicing: progressionState.voicing,
+			voices: progressionState.voices
+		});
+		suspendedVoicing = voicingService.chooseVoicing({
+			baseNotes: suspendedNotes(baseNotes, suspensionNote),
+			chordName: chord.nombre,
+			extraNotes: [],
+			initialMidiNote: context.options.initialMidiNote || 60,
+			kind: kind,
+			previousPlan: previousPlan,
+			voicing: progressionState.voicing,
+			voices: progressionState.voices
+		});
+		originalScore = voicingService.voiceLeadingTransitionScore(previousPlan, originalVoicing);
+		suspendedScore = voicingService.voiceLeadingTransitionScore(previousPlan, suspendedVoicing);
+		probability = suspensionProbability({
+			originalScore: originalScore,
+			progressionState: progressionState,
+			suspendedScore: suspendedScore
+		});
+
+		if (!voiceMovesParsimoniouslyToNote(previousPlan.voiceNotes, suspensionNote, context.options.initialMidiNote || 60)) {
+			probability *= 0.5;
+		}
+
+		if (rng() >= Math.min(0.55, probability)) {
+			return null;
+		}
+
+		return {
+			label: label,
+			note: suspensionNote
+		};
+	}
+
+	function suspensionProbability(options) {
+		var progressionState = options.progressionState || {};
+		var probability = 0.045 +
+			Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 25) / 360 +
+			Math.max(0, numberOrDefault(progressionState.tensions, 0) - 30) / 430;
+
+		if (numberOrDefault(progressionState.voices, 4) >= 4) {
+			probability += 0.02;
+		}
+
+		if (progressionState.articulation === 'sustain' || progressionState.articulation === 'legato') {
+			probability += 0.02;
+		} else if (progressionState.articulation === 'staccato') {
+			probability -= 0.035;
+		}
+
+		if (numberOrDefault(progressionState.counterpoint, 0) >= 70 && numberOrDefault(progressionState.tensions, 0) >= 70) {
+			probability += 0.08;
+		}
+
+		if (options.suspendedScore <= options.originalScore) {
+			probability += 0.14;
+		} else if (options.suspendedScore <= options.originalScore + 2) {
+			probability += 0.09;
+		} else {
+			probability -= 0.05;
+		}
+
+		return Math.max(0.03, probability);
+	}
+
+	function suspendedNotes(baseNotes, suspensionNote) {
+		var result = baseNotes.slice();
+
+		if (result.length > 1) {
+			result[1] = suspensionNote;
+		}
+
+		return result;
+	}
+
+	function voiceMovesParsimoniouslyToNote(voiceNotes, noteName, initialMidiNote) {
+		var targetMidi = voicingService.noteNameToMidi(noteName, initialMidiNote);
+
+		for (var i = 0; i < (voiceNotes || []).length; i++) {
+			if (targetMidi != null && Math.abs(voicingService.nearestMidiTo(voiceNotes[i].midiNote, targetMidi) - voiceNotes[i].midiNote) <= 2) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function shouldUseSeventh(context) {
+		var progressionState = context.progressionState;
+		var resolvedDegree = context.resolvedDegree;
+		var nextResolvedDegree = context.resolvedDegrees[context.index + 1];
+		var rng = typeof context.options.rng === 'function' ? context.options.rng : function () { return 1; };
+		var degreeIndex = resolvedDegree.degreeIndex;
+		var voices = Math.max(1, Math.min(numberOrDefault(progressionState.voices, 4), 6));
+		var probability = 0.08;
+
+		if (!resolvedDegree.chord || voices < 4) {
+			return false;
+		}
+
+		if (isTonicBoundary(context.index, context.resolvedDegrees.length, degreeIndex)) {
+			return false;
+		}
+
+		probability += Math.max(0, numberOrDefault(progressionState.tensions, 0) - 25) / 250;
+		probability += Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 35) / 350;
+
+		if (degreeIndex === 4 || degreeIndex === 1) {
+			probability += 0.14;
+		}
+
+		if (nextResolvedDegree && nextResolvedDegree.degreeIndex === 0) {
+			probability += 0.12;
+		}
+
+		if (seventhImprovesMovement(context)) {
+			probability += 0.22;
+		}
+
+		return rng() < Math.min(0.72, probability);
+	}
+
+	function seventhImprovesMovement(context) {
+		var previousPlan = context.previousPlan;
+		var chord = context.resolvedDegree.chord;
+		var initialMidiNote = context.options.initialMidiNote || 60;
+		var voices = context.progressionState.voices;
+		var triadVoicing;
+		var seventhVoicing;
+
+		if (!previousPlan || !chord) {
+			return false;
+		}
+
+		triadVoicing = voicingService.chooseVoicing({
+			baseNotes: triadNotes(chord),
+			chordName: chord.nombre,
+			extraNotes: [],
+			initialMidiNote: initialMidiNote,
+			kind: 'triad',
+			previousPlan: previousPlan,
+			voicing: context.progressionState.voicing,
+			voices: voices
+		});
+		seventhVoicing = voicingService.chooseVoicing({
+			baseNotes: chordNotes(chord),
+			chordName: chord.nombre,
+			extraNotes: [],
+			initialMidiNote: initialMidiNote,
+			kind: 'seventh',
+			previousPlan: previousPlan,
+			voicing: context.progressionState.voicing,
+			voices: voices
+		});
+
+		return voicingService.voiceLeadingTransitionScore(previousPlan, seventhVoicing) + 2 <= voicingService.voiceLeadingTransitionScore(previousPlan, triadVoicing);
+	}
+
+	function isTonicBoundary(index, length, degreeIndex) {
+		return degreeIndex === 0 && (index === 0 || index === length - 1);
+	}
+
+	function chordNotes(chord) {
+		if (!chord) {
+			return [];
+		}
+
+		return [chord.fundamental, chord.tercera, chord.quinta, chord.septima];
+	}
+
+	function triadNotes(chord) {
+		if (!chord) {
+			return [];
+		}
+
+		return [chord.fundamental, chord.tercera, chord.quinta];
+	}
+
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
+	global.CodaProgressionChordPlan = {
+		build: build,
+		chordNotes: chordNotes,
+		suspendedNotes: suspendedNotes,
+		triadNotes: triadNotes
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-measure-builder-service.js */
+// Builds timed progression measures from resolved harmonic degrees.
+(function (global) {
+	'use strict';
+
+	var chordPlanService = global.CodaProgressionChordPlan;
+	var formattingService = global.CodaProgressionFormatting;
+	var voiceLeadingService = global.CodaProgressionVoiceLeading;
+
+	function build(resolvedDegrees, progressionState, secondsPerBeat, options) {
+		var measures = [];
+		var previousPlan = null;
+
+		options = options || {};
+		for (var i = 0; i < resolvedDegrees.length; i++) {
+			var startBeat = i * progressionState.beatsPerBar;
+			var durationBeats = progressionState.beatsPerBar;
+			var chordPlan = chordPlanService.build({
+				index: i,
+				options: options,
+				previousPlan: previousPlan,
+				progressionState: progressionState,
+				resolvedDegree: resolvedDegrees[i],
+				resolvedDegrees: resolvedDegrees
+			});
+
+			measures.push({
+				articulation: progressionState.articulation,
+				bar: i + 1,
+				beatUnit: progressionState.beatUnit,
+				chord: resolvedDegrees[i].chord,
+				chordKind: chordPlan.kind,
+				chordName: chordPlan.chordName,
+				degree: formattingService.displayDegree(chordPlan.degree, chordPlan.inversionLabel, chordPlan.suspension),
+				displayName: formattingService.displayName(chordPlan.chordName, chordPlan.inversionLabel, chordPlan.suspension, chordPlan.tensionLabel),
+				durationBeats: durationBeats,
+				durationSeconds: durationBeats * secondsPerBeat,
+				endBeat: startBeat + durationBeats,
+				endSeconds: (startBeat + durationBeats) * secondsPerBeat,
+				inversion: chordPlan.inversionLabel,
+				inversionIndex: chordPlan.inversionIndex,
+				midiNotes: chordPlan.midiNotes,
+				notes: chordPlan.notes,
+				source: resolvedDegrees[i].source || 'diatonic',
+				startBeat: startBeat,
+				startSeconds: startBeat * secondsPerBeat,
+				suspension: chordPlan.suspension,
+				tonalFunction: tonalFunctionForDegree(options.scaleDefinition, resolvedDegrees[i].degreeIndex),
+				voiceNotes: chordPlan.voiceNotes,
+				voices: progressionState.voices
+			});
+			previousPlan = chordPlan;
+		}
+
+		return voiceLeadingService.annotateMeasures(measures, progressionState);
+	}
+
+	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
+		var functions;
+		var tonalFunction;
+
+		if (!scaleDefinition || scaleDefinition.tonal !== 'true' || !scaleDefinition.funciones || degreeIndex < 0) {
+			return '';
+		}
+
+		functions = scaleDefinition.funciones.split('-');
+		tonalFunction = functions[degreeIndex] || '';
+
+		return tonalFunction === '—' || tonalFunction === 'â€”' ? '' : tonalFunction;
+	}
+
+	global.CodaProgressionMeasureBuilder = {
+		build: build,
+		tonalFunctionForDegree: tonalFunctionForDegree
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-result-service.js */
+// Builds final progression objects from normalized state and prepared measures.
+(function (global) {
+	'use strict';
+
+	function build(options) {
+		var progressionState = options.progressionState;
+		var secondsPerBeat = options.secondsPerBeat;
+		var progression = {
+			articulation: progressionState.articulation,
+			bars: progressionState.bars,
+			beatUnit: progressionState.beatUnit,
+			beatsPerBar: progressionState.beatsPerBar,
+			bpm: progressionState.bpm,
+			harmonicColor: {
+				counterpoint: progressionState.counterpoint,
+				modalInterchange: progressionState.modalInterchange,
+				tensions: progressionState.tensions
+			},
+			measures: options.measures || [],
+			meter: progressionState.meter,
+			secondsPerBeat: secondsPerBeat,
+			style: progressionState.style,
+			totalBeats: progressionState.bars * progressionState.beatsPerBar,
+			totalSeconds: progressionState.bars * progressionState.beatsPerBar * secondsPerBeat,
+			voicing: progressionState.voicing,
+			voices: progressionState.voices
+		};
+
+		if (options.generationPlan) {
+			progression.generation = {
+				cadence: options.generationPlan.pattern.cadence,
+				form: options.generationPlan.pattern.form,
+				patternId: options.generationPlan.pattern.id,
+				style: progressionState.style,
+				voiceLeading: options.generationPlan.voiceLeading
+			};
+		}
+
+		return progression;
+	}
+
+	global.CodaProgressionResult = {
+		build: build
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-cadence-planner-service.js */
+// Cadence decisions and cadential endings for generated progressions.
+(function (global) {
+	'use strict';
+
+	function finalCadenceForPattern(pattern, progressionState, rng) {
+		if (isModernStyle(progressionState)) {
+			return modernFinalCadence(pattern, rng);
+		}
+
+		if (pattern && (pattern.cadence === 'plagal' || pattern.cadence === 'mixed-plagal' || pattern.cadence === 'deceptive')) {
+			return pattern.cadence;
+		}
+
+		return 'authentic';
+	}
+
+	function modernFinalCadence(pattern, rng) {
+		var value;
+
+		if (pattern && !isAuthenticCadence(pattern.cadence)) {
+			return pattern.cadence === 'mixed-plagal' ? 'plagal' : pattern.cadence;
+		}
+
+		value = typeof rng === 'function' ? rng() : Math.random();
+
+		if (value < 0.34) {
+			return 'half';
+		}
+
+		if (value < 0.68) {
+			return 'plagal';
+		}
+
+		return 'deceptive';
+	}
+
+	function chooseIntermediateCadence(rng) {
+		var value = typeof rng === 'function' ? rng() : Math.random();
+
+		if (value < 0.42) {
+			return 'half';
+		}
+
+		if (value < 0.72) {
+			return 'plagal';
+		}
+
+		return 'deceptive';
+	}
+
+	function forceCadentialEnding(degrees, pattern) {
+		if (degrees.length < 2) {
+			return;
+		}
+
+		if (pattern.cadence === 'authentic') {
+			degrees[degrees.length - 2] = { index: 4, source: 'diatonic' };
+			degrees[degrees.length - 1] = { index: 0, source: 'diatonic' };
+		} else if (pattern.cadence === 'plagal' || pattern.cadence === 'mixed-plagal') {
+			degrees[degrees.length - 2] = { index: 3, source: pattern.cadence === 'mixed-plagal' ? 'parallel' : 'diatonic' };
+			degrees[degrees.length - 1] = { index: 0, source: 'diatonic' };
+		} else if (pattern.cadence === 'deceptive') {
+			degrees[degrees.length - 2] = { index: 4, source: 'diatonic' };
+			degrees[degrees.length - 1] = { index: 5, source: 'diatonic' };
+		} else if (pattern.cadence === 'half') {
+			degrees[degrees.length - 1] = { index: 4, source: 'diatonic' };
+		}
+	}
+
+	function matchesCadence(block, cadence) {
+		return block.cadence === cadence || (cadence === 'mixed-plagal' && block.cadence === 'plagal');
+	}
+
+	function isAuthenticCadence(cadence) {
+		return cadence === 'authentic';
+	}
+
+	function isModernStyle(progressionState) {
+		return progressionState && progressionState.style === 'modern';
+	}
+
+	global.CodaProgressionCadencePlanner = {
+		chooseIntermediateCadence: chooseIntermediateCadence,
+		finalCadenceForPattern: finalCadenceForPattern,
+		forceCadentialEnding: forceCadentialEnding,
+		isAuthenticCadence: isAuthenticCadence,
+		matchesCadence: matchesCadence
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-planner-service.js */
+// Harmonic phrase and cadence planner for generated progressions.
+(function (global) {
+	'use strict';
+
+	var cadencePlanner = global.CodaProgressionCadencePlanner;
+
+	function createPlan(options) {
+		var progressionState = options.progressionState;
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var mode = progressionMode(options.report);
+		var pattern = choosePattern({
+			mode: mode,
+			progressionState: progressionState,
+			rng: rng,
+			rules: options.rules
+		});
+		var degrees = progressionState.bars >= 8 ?
+			composePhraseBlocks({
+				mode: mode,
+				pattern: pattern,
+				progressionState: progressionState,
+				rng: rng,
+				rules: options.rules
+			}) :
+			fitDegreesToBars(pattern, progressionState.bars);
+
+		return {
+			degrees: degrees,
+			pattern: pattern,
+			voiceLeading: voiceLeadingProfile(progressionState)
+		};
+	}
+
+	function choosePattern(options) {
+		var patterns = options.rules && options.rules.patterns ? options.rules.patterns : [];
+		var candidates = [];
+		var totalWeight = 0;
+		var selectedValue;
+
+		for (var i = 0; i < patterns.length; i++) {
+			var weight;
+
+			if (!matchesMode(patterns[i], options.mode)) {
+				continue;
+			}
+
+			weight = adjustedPatternWeight(patterns[i], options.progressionState, options.mode);
+			if (weight <= 0) {
+				continue;
+			}
+
+			candidates.push({
+				pattern: patterns[i],
+				weight: weight
+			});
+			totalWeight += candidates[candidates.length - 1].weight;
+		}
+
+		if (!candidates.length) {
+			return fallbackPatternForStyle(options.progressionState);
+		}
+
+		selectedValue = options.rng() * totalWeight;
+
+		for (var j = 0; j < candidates.length; j++) {
+			selectedValue -= candidates[j].weight;
+			if (selectedValue <= 0) {
+				return candidates[j].pattern;
+			}
+		}
+
+		return candidates[candidates.length - 1].pattern;
+	}
+
+	function adjustedPatternWeight(pattern, progressionState, mode) {
+		var weight = pattern.weight || 1;
+
+		if (isModernStyle(progressionState) && cadencePlanner.isAuthenticCadence(pattern.cadence)) {
+			return 0;
+		}
+
+		if (isClassicStyle(progressionState) && !cadencePlanner.isAuthenticCadence(pattern.cadence)) {
+			return 0;
+		}
+
+		weight += affinityScore(progressionState.counterpoint, pattern.counterpoint);
+		weight += affinityScore(progressionState.modalInterchange, pattern.modalColor);
+		weight += affinityScore(progressionState.tensions, pattern.tensionAffinity);
+		weight += commonToneDegreeScore(pattern.degrees, progressionState);
+		weight *= sensitiveDegreeFactor(pattern.degrees, mode, progressionState);
+
+		if (progressionState.articulation === 'arpeggio' && pattern.form === 'circle-of-fifths') {
+			weight += 8;
+		}
+
+		if (progressionState.articulation === 'legato' && pattern.cadence === 'authentic') {
+			weight += 5;
+		}
+
+		if (progressionState.articulation === 'staccato' && pattern.cadence === 'half') {
+			weight += 5;
+		}
+
+		return Math.max(1, weight);
+	}
+
+	function fallbackPatternForStyle(progressionState) {
+		if (isModernStyle(progressionState)) {
+			return {
+				cadence: 'half',
+				counterpoint: 70,
+				degrees: [0, 3, 1, 4],
+				form: 'fallback-modern',
+				id: 'fallback-modern-half',
+				weight: 1
+			};
+		}
+
+		return {
+			cadence: 'authentic',
+			counterpoint: 70,
+			degrees: [0, 3, 4, 0],
+			form: 'fallback-classic',
+			id: 'fallback-classic-authentic',
+			weight: 1
+		};
+	}
+
+	function affinityScore(value, target) {
+		return Math.max(0, 18 - Math.abs((Number(value) || 0) - (Number(target) || 0)) / 4);
+	}
+
+	function matchesMode(pattern, mode) {
+		return !pattern.modes || pattern.modes.indexOf(mode) > -1;
+	}
+
+	function progressionMode(report) {
+		return report && report.mode === 'M' ? 'major' : 'minor';
+	}
+
+	function fitDegreesToBars(pattern, bars) {
+		var fitted = [];
+		var sourceDegrees = pattern.degrees || [0, 3, 4, 0];
+		var normalizedBars = numberOrDefault(bars, sourceDegrees.length);
+		var borrowedIndexes = pattern.borrowed || [];
+
+		for (var i = 0; i < normalizedBars; i++) {
+			fitted.push({
+				index: sourceDegrees[i % sourceDegrees.length],
+				source: borrowedIndexes.indexOf(i % sourceDegrees.length) > -1 ? 'parallel' : 'diatonic'
+			});
+		}
+
+		cadencePlanner.forceCadentialEnding(fitted, pattern);
+
+		return fitted;
+	}
+
+	function composePhraseBlocks(options) {
+		var bars = numberOrDefault(options.progressionState.bars, 8);
+		var blockCount = Math.ceil(bars / 4);
+		var degrees = [];
+		var previousBlockId = '';
+
+		for (var blockIndex = 0; blockIndex < blockCount; blockIndex++) {
+			var remainingBars = bars - degrees.length;
+			var blockLength = Math.min(4, remainingBars);
+			var isFinalBlock = blockIndex === blockCount - 1;
+			var cadence = isFinalBlock ? cadencePlanner.finalCadenceForPattern(options.pattern, options.progressionState, options.rng) : cadencePlanner.chooseIntermediateCadence(options.rng);
+			var block = choosePhraseBlock({
+				cadence: cadence,
+				mode: options.mode,
+				previousBlockId: previousBlockId,
+				progressionState: options.progressionState,
+				rng: options.rng,
+				rules: options.rules
+			});
+
+			previousBlockId = block.id;
+			degrees = degrees.concat(fitBlockToBars(block, blockLength));
+		}
+
+		return degrees.slice(0, bars);
+	}
+
+	function choosePhraseBlock(options) {
+		var blocks = options.rules && options.rules.phraseBlocks ? options.rules.phraseBlocks : fallbackPhraseBlocks();
+		var candidates = [];
+		var totalWeight = 0;
+		var selectedValue;
+
+		for (var i = 0; i < blocks.length; i++) {
+			if (!matchesMode(blocks[i], options.mode) || !cadencePlanner.matchesCadence(blocks[i], options.cadence)) {
+				continue;
+			}
+
+			candidates.push({
+				block: blocks[i],
+				weight: adjustedBlockWeight(blocks[i], options.progressionState, options.previousBlockId, options.mode)
+			});
+			totalWeight += candidates[candidates.length - 1].weight;
+		}
+
+		if (candidates.length > 1) {
+			candidates = candidates.filter(function (candidate) {
+				return candidate.block.id !== options.previousBlockId;
+			});
+			totalWeight = sumCandidateWeights(candidates);
+		}
+
+		if (!candidates.length) {
+			return fallbackPhraseBlocks()[0];
+		}
+
+		selectedValue = options.rng() * totalWeight;
+
+		for (var j = 0; j < candidates.length; j++) {
+			selectedValue -= candidates[j].weight;
+			if (selectedValue <= 0) {
+				return candidates[j].block;
+			}
+		}
+
+		return candidates[candidates.length - 1].block;
+	}
+
+	function sumCandidateWeights(candidates) {
+		var totalWeight = 0;
+
+		for (var i = 0; i < candidates.length; i++) {
+			totalWeight += candidates[i].weight;
+		}
+
+		return totalWeight;
+	}
+
+	function adjustedBlockWeight(block, progressionState, previousBlockId, mode) {
+		var weight = block.weight || 1;
+
+		weight += affinityScore(progressionState.counterpoint, block.counterpoint);
+		weight += affinityScore(progressionState.modalInterchange, block.modalColor);
+		weight += affinityScore(progressionState.tensions, block.tensionAffinity);
+		weight += commonToneDegreeScore(block.degrees, progressionState);
+		weight *= sensitiveDegreeFactor(block.degrees, mode, progressionState);
+
+		if (block.id === previousBlockId) {
+			weight = Math.max(1, weight * 0.12);
+		}
+
+		return Math.max(1, weight);
+	}
+
+	function sensitiveDegreeFactor(degrees, mode, progressionState) {
+		var sensitiveDegree = mode === 'major' ? 6 : 1;
+		var factor = 1;
+
+		if (!isModernStyle(progressionState) || !degrees) {
+			return factor;
+		}
+
+		for (var i = 0; i < degrees.length; i++) {
+			if (degrees[i] === sensitiveDegree) {
+				factor *= 0.32;
+			}
+		}
+
+		return factor;
+	}
+
+	function commonToneDegreeScore(degrees, progressionState) {
+		var score = 0;
+		var affinity = 0.4 + numberOrDefault(progressionState.counterpoint, 0) / 160;
+
+		if (!degrees || degrees.length < 2) {
+			return 0;
+		}
+
+		for (var i = 1; i < degrees.length; i++) {
+			var distance = Math.abs((degrees[i] % 7) - (degrees[i - 1] % 7));
+			var circularDistance = Math.min(distance, 7 - distance);
+
+			if (circularDistance === 0) {
+				score += 3.5;
+			} else if (circularDistance === 2) {
+				score += 3;
+			} else if (circularDistance === 3) {
+				score += 2;
+			} else if (circularDistance === 4) {
+				score += 1.5;
+			}
+		}
+
+		return score * affinity;
+	}
+
+	function isModernStyle(progressionState) {
+		return progressionState && progressionState.style === 'modern';
+	}
+
+	function isClassicStyle(progressionState) {
+		return progressionState && progressionState.style === 'classic';
+	}
+
+	function fitBlockToBars(block, bars) {
+		var degrees = [];
+		var sourceDegrees = block.degrees || [0, 3, 4, 0];
+		var borrowedIndexes = block.borrowed || [];
+
+		for (var i = 0; i < bars; i++) {
+			degrees.push({
+				index: sourceDegrees[i % sourceDegrees.length],
+				source: borrowedIndexes.indexOf(i % sourceDegrees.length) > -1 ? 'parallel' : 'diatonic'
+			});
+		}
+
+		return degrees;
+	}
+
+	function fallbackPhraseBlocks() {
+		return [
+			{ cadence: 'half', degrees: [0, 1, 3, 4], id: 'fallback-half', modes: ['major', 'minor'], weight: 1 },
+			{ cadence: 'authentic', degrees: [0, 3, 4, 0], id: 'fallback-authentic', modes: ['major', 'minor'], weight: 1 }
+		];
+	}
+
+	function voiceLeadingProfile(progressionState) {
+		if (progressionState.counterpoint >= 70) {
+			return 'contrary-stepwise';
+		}
+
+		if (progressionState.counterpoint >= 35) {
+			return 'balanced';
+		}
+
+		return 'homophonic';
+	}
+
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
+	global.CodaProgressionPlanner = {
+		createPlan: createPlan,
+		fitDegreesToBars: fitDegreesToBars,
+		voiceLeadingProfile: voiceLeadingProfile
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-builder-service.js */
+// High-level progression builders used by the application facade.
+(function (global) {
+	'use strict';
+
+	var degreeResolver = global.CodaProgressionDegreeResolver;
+	var measureBuilderService = global.CodaProgressionMeasureBuilder;
+	var plannerService = global.CodaProgressionPlanner;
+	var resultService = global.CodaProgressionResult;
+	var stateNormalizer = global.CodaProgressionStateNormalizer;
+
+	function fromDegrees(options) {
+		return degreeResolver.fromDegreeNames(options);
+	}
+
+	function fromState(options) {
+		var progressionState = stateNormalizer.normalize(options.progressionState);
+		var degrees = options.domain.createDiatonicDegreePlan({
+			bars: progressionState.bars,
+			scaleNotes: options.report.scaleNotes
+		});
+		var resolvedDegrees = fromDegrees({
+			degrees: degrees,
+			domain: options.domain,
+			report: options.report
+		});
+		var secondsPerBeat = 60 / progressionState.bpm;
+
+		return resultService.build({
+			measures: measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
+				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
+				scaleDefinition: options.report.scaleDefinition
+			}),
+			progressionState: progressionState,
+			secondsPerBeat: secondsPerBeat
+		});
+	}
+
+	function generate(options) {
+		var progressionState = stateNormalizer.normalize(options.progressionState);
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var generationPlan = plannerService.createPlan({
+			progressionState: progressionState,
+			report: options.report,
+			rng: rng,
+			rules: options.rules || (options.data ? options.data.progressionRules : null)
+		});
+		var resolvedDegrees = degreeResolver.fromGeneratedPlan({
+			degrees: generationPlan.degrees,
+			report: options.report
+		});
+		var secondsPerBeat = 60 / progressionState.bpm;
+
+		return resultService.build({
+			generationPlan: generationPlan,
+			measures: measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
+				includeTensions: true,
+				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
+				rng: rng,
+				scaleDefinition: options.report.scaleDefinition,
+				scaleNotes: options.report.scaleNotes
+			}),
+			progressionState: progressionState,
+			secondsPerBeat: secondsPerBeat
+		});
+	}
+
+	global.CodaProgressionBuilder = {
+		fromDegrees: fromDegrees,
+		fromState: fromState,
+		generate: generate
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-chord-menu-service.js */
+// Construcción del menú de sustitución de acordes para el visualizador de progresiones.
+(function (global) {
+	'use strict';
+
+	function build(options) {
+		var report = options && options.report ? options.report : {};
+		var scaleChords = report.scaleChords || [];
+		var scaleNotes = report.scaleNotes || [];
+		var currentSegment = options ? options.currentSegment : null;
+		var currentFunction = currentSegment ? currentSegment.tonalFunction || '' : '';
+		var formatting = options.formatting || global.CodaProgressionFormatting;
+		var voicing = options.voicing || global.CodaProgressionVoicing;
+		var groups = [
+			{ id: 'sameFunction', items: [] },
+			{ id: 'commonNotes', items: [] },
+			{ id: 'remaining', items: [] }
+		];
+		var usedIndexes = {};
+
+		function pushToGroup(groupIndex, degreeIndex, metadata) {
+			var chord = scaleChords[degreeIndex];
+			var rawDegree = scaleNotes[degreeIndex] ? scaleNotes[degreeIndex].grado : '';
+
+			if (!chord || usedIndexes[degreeIndex]) {
+				return;
+			}
+
+			groups[groupIndex].items.push({
+				chordName: chord.nombre,
+				commonToneCount: metadata && metadata.commonToneCount ? metadata.commonToneCount : 0,
+				degree: formatting.formatDegreeForChord(rawDegree, chord.nombre),
+				degreeIndex: degreeIndex,
+				options: chordReplacementOptions(chord, scaleNotes[degreeIndex], degreeIndex, formatting)
+			});
+			usedIndexes[degreeIndex] = true;
+		}
+
+		for (var i = 0; i < scaleChords.length; i++) {
+			if (currentFunction && tonalFunctionForDegree(report.scaleDefinition, i) === currentFunction) {
+				pushToGroup(0, i);
+			}
+		}
+
+		for (var j = 0; j < scaleChords.length; j++) {
+			var commonToneCount = currentSegment ? voicing.commonPitchNames(currentSegment, { notes: chordNotes(scaleChords[j]) }).length : 0;
+
+			if (commonToneCount > 0) {
+				pushToGroup(1, j, {
+					commonToneCount: commonToneCount
+				});
+			}
+		}
+
+		groups[1].items.sort(function (a, b) {
+			if (a.commonToneCount !== b.commonToneCount) {
+				return b.commonToneCount - a.commonToneCount;
+			}
+
+			return a.degreeIndex - b.degreeIndex;
+		});
+
+		for (var k = 0; k < scaleChords.length; k++) {
+			pushToGroup(2, k);
+		}
+
+		return groups;
+	}
+
+	function chordReplacementOptions(chord, scaleNote, degreeIndex, formatting) {
+		var degree = scaleNote ? scaleNote.grado : '';
+		var triadLabels = ['', '6', '6/4'];
+		var seventhLabels = ['', '6/5', '4/3', '4/2'];
+		var options = [];
+
+		for (var i = 0; i < triadLabels.length; i++) {
+			options.push({
+				degree: formatting.displayDegree(formatting.formatTriadDegreeForChord(degree, chord.nombre), triadLabels[i], ''),
+				degreeIndex: degreeIndex,
+				displayName: formatting.displayName(formatting.triadName(chord), triadLabels[i], '', ''),
+				inversionIndex: i,
+				inversionLabel: triadLabels[i],
+				kind: 'triad'
+			});
+		}
+
+		for (var j = 0; j < seventhLabels.length; j++) {
+			options.push({
+				degree: formatting.displayDegree(formatting.formatDegreeForChord(degree, chord.nombre), seventhLabels[j], ''),
+				degreeIndex: degreeIndex,
+				displayName: formatting.displayName(chord.nombre, seventhLabels[j], '', ''),
+				inversionIndex: j,
+				inversionLabel: seventhLabels[j],
+				kind: 'seventh'
+			});
+		}
+
+		return options;
+	}
+
+	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
+		var functions;
+		var tonalFunction;
+
+		if (!scaleDefinition || scaleDefinition.tonal !== 'true' || !scaleDefinition.funciones || degreeIndex < 0) {
+			return '';
+		}
+
+		functions = scaleDefinition.funciones.split('-');
+		tonalFunction = functions[degreeIndex] || '';
+
+		return tonalFunction === '—' || tonalFunction === 'â€”' ? '' : tonalFunction;
+	}
+
+	function chordNotes(chord) {
+		if (!chord) {
+			return [];
+		}
+
+		return [chord.fundamental, chord.tercera, chord.quinta, chord.septima];
+	}
+
+	global.CodaProgressionChordMenu = {
+		build: build,
+		chordReplacementOptions: chordReplacementOptions
 	};
 })(window);
 
@@ -2410,6 +5968,1299 @@
 		mimeType: midiMimeType,
 		noteIndex: noteIndex,
 		variableLengthQuantity: variableLengthQuantity
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-midi-file-service.js */
+// Application adapter for exporting progressions as MIDI files.
+(function (global) {
+	'use strict';
+
+	function build(options) {
+		var midiExport = options.midiExport || global.CodaMidiExport;
+		var instrument = findInstrument(options.data, options.midiInstrument);
+
+		return midiExport.createProgressionMidiFile({
+			channel: options.data && options.data.midi ? options.data.midi.channel : 0,
+			fileName: options.fileName,
+			initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
+			instrument: instrument,
+			notes: options.data ? options.data.notes : [],
+			progression: options.progression,
+			ticksPerBeat: options.ticksPerBeat,
+			velocity: options.data && options.data.midi ? options.data.midi.velocity : 96
+		});
+	}
+
+	function findInstrument(data, instrumentId) {
+		var instruments = data && data.midiInstruments ? data.midiInstruments : [];
+
+		for (var i = 0; i < instruments.length; i++) {
+			if (instruments[i].id === instrumentId) {
+				return instruments[i];
+			}
+		}
+
+		return instruments.length ? instruments[0] : {};
+	}
+
+	global.CodaProgressionMidiFile = {
+		build: build,
+		findInstrument: findInstrument
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-midi-download-service.js */
+// Builds and downloads progression MIDI files from the current UI state.
+(function (global) {
+	'use strict';
+
+	function exportMidi(options) {
+		var selection;
+		var progression;
+		var midiFile;
+
+		options = options || {};
+		selection = options.uiState ? options.uiState.getSelection() : null;
+		progression = options.uiState ? options.uiState.getProgression() : null;
+
+		if (!progression || !options.application || typeof options.application.buildProgressionMidiFile !== 'function') {
+			return false;
+		}
+
+		midiFile = options.application.buildProgressionMidiFile({
+			data: options.data,
+			midiInstrument: selection ? selection.midiInstrument : null,
+			progression: progression
+		});
+
+		return download(midiFile);
+	}
+
+	function download(midiFile) {
+		var blob;
+		var link;
+		var url;
+
+		if (!midiFile || !midiFile.bytes || !global.document || typeof global.Blob !== 'function') {
+			return false;
+		}
+
+		blob = new global.Blob([midiFile.bytes], {
+			type: midiFile.mimeType || 'audio/midi'
+		});
+		url = global.URL && typeof global.URL.createObjectURL === 'function' ? global.URL.createObjectURL(blob) : '';
+		link = global.document.createElement('a');
+		link.href = url;
+		link.download = midiFile.fileName || 'coda-progression.mid';
+		link.style.display = 'none';
+		global.document.body.appendChild(link);
+		link.click();
+		global.document.body.removeChild(link);
+
+		if (url && global.URL && typeof global.URL.revokeObjectURL === 'function') {
+			global.URL.revokeObjectURL(url);
+		}
+
+		return true;
+	}
+
+	global.CodaProgressionMidiDownload = {
+		download: download,
+		exportMidi: exportMidi
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-playback-schedule-service.js */
+// Builds playback and metronome schedules for generated progressions.
+(function (global) {
+	'use strict';
+
+	function buildProgressionPlaybackSchedule(progression, options) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
+		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
+		var schedule = [];
+
+		for (var i = startIndex; i < measures.length; i++) {
+			schedule = schedule.concat(buildMeasurePlaybackEvents(measures[i], i, startOffset, options));
+		}
+
+		return schedule;
+	}
+
+	function buildProgressionMetronomeSchedule(progression, options) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
+		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
+		var secondsPerBeat = Number(progression && progression.secondsPerBeat) || secondsPerBeatFromProgression(progression);
+		var schedule = [];
+
+		for (var i = startIndex; i < measures.length; i++) {
+			var measure = measures[i];
+			var beats = Math.max(1, Math.round(Number(measure.durationBeats) || Number(progression.beatsPerBar) || 4));
+			var measureDelay = Math.max(0, (Number(measure.startSeconds) || 0) - startOffset);
+
+			for (var beat = 0; beat < beats; beat++) {
+				schedule.push({
+					accent: beat === 0,
+					bar: measure.bar || i + 1,
+					beat: beat + 1,
+					delay: measureDelay + (beat * secondsPerBeat)
+				});
+			}
+		}
+
+		return schedule;
+	}
+
+	function secondsPerBeatFromProgression(progression) {
+		var bpm = Number(progression && progression.bpm) || 120;
+
+		return 60 / Math.max(1, bpm);
+	}
+
+	function buildScheduledMeasures(progression, startIndex) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		startIndex = normalizeStartIndex(startIndex, progression);
+
+		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
+		var scheduledMeasures = [];
+
+		for (var i = startIndex; i < measures.length; i++) {
+			scheduledMeasures.push({
+				delay: Math.max(0, (Number(measures[i].startSeconds) || 0) - startOffset),
+				index: i,
+				measure: measures[i]
+			});
+		}
+
+		return scheduledMeasures;
+	}
+
+	function buildMeasurePlaybackEvents(measure, index, startOffset, options) {
+		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
+		var events = [];
+
+		for (var i = 0; i < chords.length; i++) {
+			events.push(buildMeasurePlaybackEvent(chords[i], index, startOffset, options, i));
+		}
+
+		return events;
+	}
+
+	function buildMeasurePlaybackEvent(measure, index, startOffset, options, chordIndex) {
+		var duration = playbackDuration(measure);
+		var notes = notesForVoices(measure.notes, measure.voices);
+		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
+		var midiNoteEvents = buildMidiNoteEvents(measure, duration, options);
+		var mode = measure.articulation === 'arpeggio' ? 'arpeggio' : 'chord';
+		var event = {
+			arpeggioStep: arpeggioStepSeconds(measure),
+			bar: measure.bar,
+			degree: measure.degree,
+			delay: Math.max(0, (measure.startSeconds || 0) - (startOffset || 0)),
+			duration: duration,
+			index: index,
+			mode: mode,
+			notes: notes
+		};
+
+		if (chordIndex) {
+			event.chordIndex = chordIndex;
+		}
+
+		if (midiNotes.length) {
+			event.midiNotes = midiNotes;
+		}
+
+		if (midiNoteEvents.length) {
+			event.midiNoteEvents = midiNoteEvents;
+		}
+
+		return event;
+	}
+
+	function buildMidiNoteEvents(measure, duration, options) {
+		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
+		var events = [];
+
+		if (!hasPedals(measure) || !supportsPedalHold(options ? options.instrument : null)) {
+			return events;
+		}
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			if (isPedalIn(midiNotes[i], measure)) {
+				continue;
+			}
+
+			events.push({
+				duration: duration + pedalOutDuration(midiNotes[i], measure),
+				midiNote: midiNotes[i]
+			});
+		}
+
+		return events;
+	}
+
+	function hasPedals(measure) {
+		return (measure.pedalsIn && measure.pedalsIn.length) || (measure.pedalsOut && measure.pedalsOut.length);
+	}
+
+	function supportsPedalHold(instrument) {
+		return instrument && (instrument.supportsPedalHold === true || instrument.sustained === true || instrument.pedalBehavior === 'sustain');
+	}
+
+	function isPedalIn(midiNote, measure) {
+		var pedals = measure.pedalsIn || [];
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (pedals[i].midiNote === midiNote) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function pedalOutDuration(midiNote, measure) {
+		var pedals = measure.pedalsOut || [];
+		var duration = 0;
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (pedals[i].midiNote === midiNote) {
+				duration = Math.max(duration, Number(pedals[i].durationSeconds) || 0);
+			}
+		}
+
+		return duration;
+	}
+
+	function playbackTotalSeconds(progression, scheduledMeasures) {
+		var lastMeasure;
+
+		if (!scheduledMeasures.length) {
+			return 0;
+		}
+
+		lastMeasure = scheduledMeasures[scheduledMeasures.length - 1].measure;
+
+		return scheduledMeasures[scheduledMeasures.length - 1].delay + (Number(lastMeasure.durationSeconds) || 0);
+	}
+
+	function normalizeStartIndex(startIndex, progression) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var numericIndex = parseInt(startIndex, 10);
+
+		if (!measures.length || isNaN(numericIndex)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(measures.length - 1, numericIndex));
+	}
+
+	function notesForVoices(notes, voices) {
+		var voiceCount = Math.max(1, Math.min(Number(voices) || 4, 6));
+
+		return (notes || []).slice(0, voiceCount);
+	}
+
+	function playbackDuration(measure) {
+		var duration = Number(measure && measure.durationSeconds) || 0;
+		var factor = articulationDurationFactor(measure ? measure.articulation : null);
+
+		return Math.max(0.1, duration * factor);
+	}
+
+	function articulationDurationFactor(articulation) {
+		if (articulation === 'staccato') {
+			return 0.45;
+		}
+
+		if (articulation === 'arpeggio') {
+			return 0.9;
+		}
+
+		if (articulation === 'legato') {
+			return 1;
+		}
+
+		return 0.95;
+	}
+
+	function arpeggioStepSeconds(measure) {
+		var duration = Number(measure && measure.durationSeconds) || 0;
+
+		return Math.max(0.05, Math.min(0.18, duration / 8));
+	}
+
+	global.CodaProgressionPlaybackSchedule = {
+		articulationDurationFactor: articulationDurationFactor,
+		buildProgressionMetronomeSchedule: buildProgressionMetronomeSchedule,
+		buildProgressionPlaybackSchedule: buildProgressionPlaybackSchedule,
+		buildScheduledMeasures: buildScheduledMeasures,
+		normalizeStartIndex: normalizeStartIndex,
+		notesForVoices: notesForVoices,
+		playbackTotalSeconds: playbackTotalSeconds
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-event-player-service.js */
+// Plays scheduled progression events through the active browser playback service.
+(function (global) {
+	'use strict';
+
+	function play(playbackService, event) {
+		if (!playbackService || !event) {
+			return false;
+		}
+
+		if (event.mode === 'arpeggio') {
+			playArpeggio(playbackService, event);
+			return true;
+		}
+
+		if (event.midiNoteEvents && event.midiNoteEvents.length) {
+			playMidiNoteEvents(playbackService, event);
+			return true;
+		}
+
+		if (event.midiNotes && event.midiNotes.length) {
+			playMidiChord(playbackService, event);
+			return true;
+		}
+
+		if (typeof playbackService.playChordFromNames === 'function') {
+			playbackService.playChordFromNames(event.notes, {
+				delay: event.delay,
+				duration: event.duration
+			});
+			return true;
+		}
+
+		return false;
+	}
+
+	function asImmediateEvent(event) {
+		var immediateEvent = {
+			arpeggioStep: event.arpeggioStep,
+			bar: event.bar,
+			degree: event.degree,
+			delay: 0,
+			duration: event.duration,
+			mode: event.mode,
+			notes: event.notes
+		};
+
+		if (event.midiNotes && event.midiNotes.length) {
+			immediateEvent.midiNotes = event.midiNotes;
+		}
+
+		if (event.midiNoteEvents && event.midiNoteEvents.length) {
+			immediateEvent.midiNoteEvents = event.midiNoteEvents;
+		}
+
+		return immediateEvent;
+	}
+
+	function playMidiChord(playbackService, event) {
+		if (typeof playbackService.playMidiChord === 'function') {
+			playbackService.playMidiChord(event.midiNotes, {
+				delay: event.delay,
+				duration: event.duration
+			});
+			return;
+		}
+
+		if (typeof playbackService.playMidiNote !== 'function') {
+			return;
+		}
+
+		for (var i = 0; i < event.midiNotes.length; i++) {
+			playbackService.playMidiNote(event.midiNotes[i], {
+				delay: event.delay,
+				duration: event.duration
+			});
+		}
+	}
+
+	function playMidiNoteEvents(playbackService, event) {
+		if (typeof playbackService.playMidiNote !== 'function') {
+			playMidiChord(playbackService, event);
+			return;
+		}
+
+		for (var i = 0; i < event.midiNoteEvents.length; i++) {
+			playbackService.playMidiNote(event.midiNoteEvents[i].midiNote, {
+				delay: event.delay,
+				duration: event.midiNoteEvents[i].duration
+			});
+		}
+	}
+
+	function playArpeggio(playbackService, event) {
+		var midiNotes;
+
+		if (event.midiNotes && event.midiNotes.length) {
+			midiNotes = event.midiNotes;
+		} else if (typeof playbackService.chordNamesToMidi === 'function') {
+			midiNotes = playbackService.chordNamesToMidi(event.notes, 0);
+		}
+
+		if (!midiNotes || !midiNotes.length || typeof playbackService.playMidiNote !== 'function') {
+			if (typeof playbackService.playChordFromNames === 'function') {
+				playbackService.playChordFromNames(event.notes, {
+					delay: event.delay,
+					duration: event.duration
+				});
+			}
+			return;
+		}
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			playbackService.playMidiNote(midiNotes[i], {
+				delay: event.delay + (event.arpeggioStep * i),
+				duration: Math.max(0.1, event.duration - (event.arpeggioStep * i))
+			});
+		}
+	}
+
+	global.CodaProgressionEventPlayer = {
+		asImmediateEvent: asImmediateEvent,
+		play: play
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-playback-callbacks-service.js */
+// Normalizes runtime callbacks used by progression playback.
+(function (global) {
+	'use strict';
+
+	function shouldLoop(callbacks) {
+		if (callbacks && typeof callbacks.shouldLoop === 'function') {
+			return callbacks.shouldLoop();
+		}
+
+		return callbacks && callbacks.loop === true;
+	}
+
+	function shouldPlayMetronome(callbacks) {
+		if (callbacks && typeof callbacks.shouldPlayMetronome === 'function') {
+			return callbacks.shouldPlayMetronome();
+		}
+
+		return callbacks && callbacks.metronome === true;
+	}
+
+	function extend(callbacks, values) {
+		var result = {};
+		var key;
+
+		callbacks = callbacks || {};
+		values = values || {};
+
+		for (key in callbacks) {
+			if (Object.prototype.hasOwnProperty.call(callbacks, key)) {
+				result[key] = callbacks[key];
+			}
+		}
+
+		for (key in values) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
+	function run(callback, value, index) {
+		if (typeof callback === 'function') {
+			callback(value, index);
+		}
+	}
+
+	global.CodaProgressionPlaybackCallbacks = {
+		extend: extend,
+		run: run,
+		shouldLoop: shouldLoop,
+		shouldPlayMetronome: shouldPlayMetronome
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-playback-timer-service.js */
+// Wraps timer scheduling for progression playback runs.
+(function (global) {
+	'use strict';
+
+	function create(timerApi) {
+		timerApi = timerApi || global;
+
+		function schedule(run, seconds, callback) {
+			var timerId;
+
+			if (!run || !run.timers || typeof timerApi.setTimeout !== 'function') {
+				return;
+			}
+
+			timerId = timerApi.setTimeout(callback, Math.max(0, seconds * 1000));
+			run.timers.push(timerId);
+		}
+
+		function clear(timers) {
+			if (!timers || typeof timerApi.clearTimeout !== 'function') {
+				return;
+			}
+
+			for (var i = 0; i < timers.length; i++) {
+				timerApi.clearTimeout(timers[i]);
+			}
+		}
+
+		return {
+			clear: clear,
+			schedule: schedule
+		};
+	}
+
+	global.CodaProgressionPlaybackTimers = {
+		create: create
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-shortcut-service.js */
+// Handles keyboard shortcuts for the progression transport.
+(function (global) {
+	'use strict';
+
+	function handle(event, options) {
+		options = options || {};
+
+		var progression = options.progression;
+		var key = event && event.key;
+		var targetIndex;
+
+		if (!event || isTextEntryTarget(event.target)) {
+			return false;
+		}
+
+		if (key === ' ' || key === 'Spacebar') {
+			preventDefault(event);
+			run(options.togglePreview, currentHeadIndex(options), options.setPlaybackHeadIndex);
+			return true;
+		}
+
+		if (!/^[0-9]$/.test(key || '') || !progression || !progression.measures) {
+			return false;
+		}
+
+		targetIndex = key === '0' ? 9 : Number(key) - 1;
+		if (targetIndex < 0 || targetIndex >= Math.min(10, progression.measures.length)) {
+			return false;
+		}
+
+		preventDefault(event);
+		run(options.stopPreview, currentHeadIndex(options));
+		run(options.setPlaybackHeadIndex, targetIndex);
+		run(options.setPlaybackHead, targetIndex, false);
+		return true;
+	}
+
+	function currentHeadIndex(options) {
+		if (typeof options.getPlaybackHeadIndex === 'function') {
+			return options.getPlaybackHeadIndex();
+		}
+
+		return 0;
+	}
+
+	function preventDefault(event) {
+		if (typeof event.preventDefault === 'function') {
+			event.preventDefault();
+		}
+	}
+
+	function run(callback, value, extraValue) {
+		if (typeof callback === 'function') {
+			callback(value, extraValue);
+		}
+	}
+
+	function isTextEntryTarget(target) {
+		var tagName = target && target.tagName ? String(target.tagName).toLowerCase() : '';
+		var inputType = target && target.type ? String(target.type).toLowerCase() : '';
+
+		return !!(target && (
+			target.isContentEditable ||
+			tagName === 'textarea' ||
+			(tagName === 'input' && isTextInputType(inputType))
+		));
+	}
+
+	function isTextInputType(inputType) {
+		return !inputType || [
+			'email',
+			'password',
+			'search',
+			'tel',
+			'text',
+			'url'
+		].indexOf(inputType) > -1;
+	}
+
+	global.CodaProgressionTransportShortcuts = {
+		handle: handle,
+		isTextEntryTarget: isTextEntryTarget
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-drag-service.js */
+// Encapsulates drag and drop interactions for progression measures and measure chords.
+(function (global) {
+	'use strict';
+
+	function initialize(options) {
+		options = options || {};
+
+		var root = options.root;
+		var draggedMeasureIndex = null;
+		var draggedMeasureChord = null;
+
+		if (!root || typeof root.addEventListener !== 'function') {
+			return null;
+		}
+
+		root.addEventListener('dragstart', function (event) {
+			var measure = closest(event.target, '.measure');
+			var chordHandle = closest(event.target, '.measureChordDragHandle');
+			var chordElement = closest(event.target, '.measureChord');
+			var sourceMeasureIndex;
+			var sourceChordIndex;
+
+			if (!measure || closest(event.target, '.measureSplitButton') || closest(event.target, '.measureChordMenuButton')) {
+				return;
+			}
+
+			if (chordHandle) {
+				sourceMeasureIndex = measureIndex(measure);
+				sourceChordIndex = chordIndex(chordElement);
+				if (sourceChordIndex <= 0) {
+					return;
+				}
+
+				draggedMeasureChord = {
+					chordIndex: sourceChordIndex,
+					measureIndex: sourceMeasureIndex
+				};
+				if (chordElement) {
+					chordElement.classList.add('isDragging');
+				}
+
+				if (event.dataTransfer) {
+					event.dataTransfer.effectAllowed = 'move';
+					event.dataTransfer.setData('text/coda-progression-chord', sourceMeasureIndex + ':' + sourceChordIndex);
+					event.dataTransfer.setData('text/plain', sourceMeasureIndex + ':' + sourceChordIndex);
+				}
+				return;
+			}
+
+			draggedMeasureIndex = measureIndex(measure);
+			measure.classList.add('isDragging');
+
+			if (event.dataTransfer) {
+				event.dataTransfer.effectAllowed = 'move';
+				event.dataTransfer.setData('text/plain', String(draggedMeasureIndex));
+			}
+		});
+
+		root.addEventListener('dragover', function (event) {
+			var measure = closest(event.target, '.measure');
+			var chordElement = closest(event.target, '.measureChord');
+			var targetChordIndex;
+
+			if (!measure) {
+				return;
+			}
+
+			if (draggedMeasureChord) {
+				targetChordIndex = chordIndex(chordElement);
+				if (measureIndex(measure) !== draggedMeasureChord.measureIndex || targetChordIndex <= 0) {
+					return;
+				}
+
+				preventDefault(event);
+				if (chordElement) {
+					chordElement.classList.add('isChordDropTarget');
+				}
+				setDropEffect(event);
+				return;
+			}
+
+			preventDefault(event);
+			measure.classList.add('isDropTarget');
+			setDropEffect(event);
+		});
+
+		root.addEventListener('dragleave', function (event) {
+			var measure = closest(event.target, '.measure');
+			var chordElement = closest(event.target, '.measureChord');
+
+			if (chordElement) {
+				chordElement.classList.remove('isChordDropTarget');
+			}
+			if (measure) {
+				measure.classList.remove('isDropTarget');
+			}
+		});
+
+		root.addEventListener('drop', function (event) {
+			var measure = closest(event.target, '.measure');
+			var chordElement = closest(event.target, '.measureChord');
+			var fromIndex = dragSourceIndex(event, draggedMeasureIndex);
+			var toIndex;
+			var targetChordIndex;
+			var sourceChordDrag;
+
+			if (!measure) {
+				return;
+			}
+
+			if (draggedMeasureChord) {
+				sourceChordDrag = draggedMeasureChord;
+				targetChordIndex = chordIndex(chordElement);
+				if (measureIndex(measure) !== sourceChordDrag.measureIndex || targetChordIndex <= 0) {
+					clearDragState();
+					return;
+				}
+
+				preventDefault(event);
+				clearDragState();
+				run(options.onMeasureChordDrop, sourceChordDrag.measureIndex, sourceChordDrag.chordIndex, targetChordIndex);
+				return;
+			}
+
+			preventDefault(event);
+			clearDragState();
+			toIndex = measureIndex(measure);
+			run(options.onMeasureDrop, fromIndex, toIndex);
+		});
+
+		root.addEventListener('dragend', clearDragState);
+
+		function clearDragState() {
+			draggedMeasureIndex = null;
+			draggedMeasureChord = null;
+			if (!global.document || typeof global.document.querySelectorAll !== 'function') {
+				return;
+			}
+
+			Array.prototype.forEach.call(global.document.querySelectorAll('.measure.isDragging, .measure.isDropTarget'), function (measure) {
+				measure.classList.remove('isDragging');
+				measure.classList.remove('isDropTarget');
+			});
+			Array.prototype.forEach.call(global.document.querySelectorAll('.measureChord.isDragging, .measureChord.isChordDropTarget'), function (chord) {
+				chord.classList.remove('isDragging');
+				chord.classList.remove('isChordDropTarget');
+			});
+		}
+
+		return {
+			clear: clearDragState
+		};
+	}
+
+	function preventDefault(event) {
+		if (typeof event.preventDefault === 'function') {
+			event.preventDefault();
+		}
+	}
+
+	function setDropEffect(event) {
+		if (event.dataTransfer) {
+			event.dataTransfer.dropEffect = 'move';
+		}
+	}
+
+	function run(callback, value, secondValue, thirdValue) {
+		if (typeof callback === 'function') {
+			callback(value, secondValue, thirdValue);
+		}
+	}
+
+	function dragSourceIndex(event, fallbackIndex) {
+		var dataIndex = event && event.dataTransfer ? event.dataTransfer.getData('text/plain') : '';
+		var numericIndex = parseInt(dataIndex, 10);
+
+		return isNaN(numericIndex) ? fallbackIndex : numericIndex;
+	}
+
+	function measureIndex(measure) {
+		var index = parseInt(measure.getAttribute('data-progression-index'), 10);
+
+		return isNaN(index) ? 0 : index;
+	}
+
+	function chordIndex(chordElement) {
+		var index = chordElement ? parseInt(chordElement.getAttribute('data-measure-chord-index'), 10) : 0;
+
+		return isNaN(index) ? 0 : index;
+	}
+
+	function closest(target, selector) {
+		return target && typeof target.closest === 'function' ? target.closest(selector) : null;
+	}
+
+	global.CodaProgressionTransportDrag = {
+		chordIndex: chordIndex,
+		dragSourceIndex: dragSourceIndex,
+		initialize: initialize,
+		measureIndex: measureIndex
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-view-service.js */
+// Updates visual transport state for progression playback.
+(function (global) {
+	'use strict';
+
+	function setPlayingState(button, playing, i18n) {
+		var icon;
+		var label;
+
+		if (!button) {
+			return;
+		}
+
+		button.classList.toggle('isPlaying', playing);
+		button.setAttribute('aria-pressed', playing ? 'true' : 'false');
+		icon = button.querySelector('.material-icons');
+		label = button.querySelector('span[data-i18n="progression.listen"]');
+
+		if (icon) {
+			icon.textContent = playing ? 'stop' : 'play_arrow';
+		}
+
+		if (label) {
+			label.textContent = playing ? translate(i18n, 'progression.stop') : translate(i18n, 'progression.listen');
+		}
+	}
+
+	function setActiveMeasure(bar) {
+		clearActiveMeasure();
+
+		var measure = query('.measure[data-progression-bar="' + bar + '"]');
+
+		if (measure) {
+			measure.classList.add('isPlaying');
+		}
+	}
+
+	function setPlaybackHead(index, playing) {
+		clearPlaybackHead();
+
+		var measure = query('.measure[data-progression-index="' + index + '"]');
+
+		if (measure) {
+			measure.classList.add('isPlaybackHead');
+			measure.classList.toggle('isPlaying', playing === true);
+		}
+
+		updateGoStartVisibility(index);
+	}
+
+	function clearActiveMeasure() {
+		var measures = global.document ? global.document.querySelectorAll('.measure.isPlaying') : [];
+
+		Array.prototype.forEach.call(measures, function (measure) {
+			measure.classList.remove('isPlaying');
+		});
+	}
+
+	function clearPlaybackHead() {
+		var measures = global.document ? global.document.querySelectorAll('.measure.isPlaybackHead, .measure.isPlaying') : [];
+
+		Array.prototype.forEach.call(measures, function (measure) {
+			measure.classList.remove('isPlaybackHead');
+			measure.classList.remove('isPlaying');
+		});
+	}
+
+	function updateGoStartVisibility(index) {
+		var button = query('.transportButton--goStart');
+
+		if (button) {
+			button.hidden = Number(index) <= 0;
+		}
+	}
+
+	function translate(i18n, key) {
+		return i18n && typeof i18n.t === 'function' ? i18n.t(key) : key;
+	}
+
+	function query(selector) {
+		return global.document ? global.document.querySelector(selector) : null;
+	}
+
+	global.CodaProgressionTransportView = {
+		clearActiveMeasure: clearActiveMeasure,
+		clearPlaybackHead: clearPlaybackHead,
+		setActiveMeasure: setActiveMeasure,
+		setPlaybackHead: setPlaybackHead,
+		setPlayingState: setPlayingState,
+		updateGoStartVisibility: updateGoStartVisibility
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-actions-service.js */
+// Applies progression transport actions and reports updated progressions back to the UI.
+(function (global) {
+	'use strict';
+
+	function reorderProgression(options, fromIndex, toIndex) {
+		var progression = currentProgression(options);
+		var reorderedProgression;
+
+		if (
+			!progression ||
+			!options.application ||
+			typeof options.application.reorderProgressionMeasures !== 'function'
+		) {
+			return;
+		}
+
+		reorderedProgression = options.application.reorderProgressionMeasures(progression, fromIndex, toIndex);
+		notifyProgressionChanged(options, reorderedProgression, toIndex);
+	}
+
+	function reorderMeasureChords(options, measureIndex, fromChordIndex, toChordIndex) {
+		var progression = currentProgression(options);
+		var reorderedProgression;
+
+		if (
+			!progression ||
+			!options.application ||
+			typeof options.application.reorderProgressionMeasureChords !== 'function'
+		) {
+			return;
+		}
+
+		reorderedProgression = options.application.reorderProgressionMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex);
+		notifyProgressionChanged(options, reorderedProgression, measureIndex);
+	}
+
+	function updateMeasureSplit(options, action, measureIndex, chordIndex) {
+		var progression = currentProgression(options);
+		var nextProgression = null;
+
+		if (!progression || !options.application) {
+			return;
+		}
+
+		if (action === 'remove' && typeof options.application.removeProgressionMeasureChord === 'function') {
+			nextProgression = options.application.removeProgressionMeasureChord(progression, measureIndex, chordIndex);
+		} else if (action === 'add' && typeof options.application.addProgressionMeasureChord === 'function') {
+			nextProgression = options.application.addProgressionMeasureChord(progression, measureIndex, {
+				chordIndex: chordIndex,
+				data: options.data,
+				progressionState: progressionState(options),
+				report: report(options)
+			});
+		}
+
+		notifyProgressionChanged(options, nextProgression, measureIndex);
+	}
+
+	function updateMeasureChordReplacement(options, measureIndex, chordIndex, replacement) {
+		var progression = currentProgression(options);
+		var nextProgression = null;
+
+		if (
+			!progression ||
+			!options.application ||
+			typeof options.application.replaceProgressionMeasureChord !== 'function'
+		) {
+			return;
+		}
+
+		nextProgression = options.application.replaceProgressionMeasureChord(progression, measureIndex, chordIndex, replacement, {
+			data: options.data,
+			progressionState: progressionState(options),
+			report: report(options)
+		});
+
+		notifyProgressionChanged(options, nextProgression, measureIndex);
+	}
+
+	function currentProgression(options) {
+		return options && options.uiState ? options.uiState.getProgression() : null;
+	}
+
+	function progressionState(options) {
+		return options.uiState && options.uiState.getProgressionState ? options.uiState.getProgressionState() : null;
+	}
+
+	function report(options) {
+		return options.uiState && options.uiState.getReport ? options.uiState.getReport() : null;
+	}
+
+	function notifyProgressionChanged(options, progression, playbackHeadIndex) {
+		if (options.onProgressionChanged && progression) {
+			options.onProgressionChanged(progression, {
+				playbackHeadIndex: playbackHeadIndex
+			});
+		}
+	}
+
+	global.CodaProgressionTransportActions = {
+		reorderMeasureChords: reorderMeasureChords,
+		reorderProgression: reorderProgression,
+		updateMeasureChordReplacement: updateMeasureChordReplacement,
+		updateMeasureSplit: updateMeasureSplit
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-menu-service.js */
+// Manages the contextual chord menu used by the progression transport.
+(function (global) {
+	'use strict';
+
+	var activeButton = null;
+
+	function open(options, button, measureIndex, chordIndex) {
+		var progression = options.uiState ? options.uiState.getProgression() : null;
+		var report = options.uiState && options.uiState.getReport ? options.uiState.getReport() : null;
+		var measure = progression && progression.measures ? progression.measures[measureIndex] : null;
+		var currentSegment = currentChordSegment(measure, chordIndex);
+		var chordMenuRenderer = options.renderers && options.renderers.progressionChordMenu ? options.renderers.progressionChordMenu : global.CodaRenderers.progressionChordMenu;
+		var menuData;
+		var menu;
+
+		if (!button || !measure || !chordMenuRenderer || !options.application || typeof options.application.buildProgressionChordMenu !== 'function') {
+			return false;
+		}
+
+		close();
+		menuData = options.application.buildProgressionChordMenu({
+			currentSegment: currentSegment,
+			report: report
+		});
+		menu = chordMenuRenderer.render(menuData, {
+			chordIndex: chordIndex,
+			i18n: options.i18n,
+			measureIndex: measureIndex
+		});
+
+		if (!menu) {
+			return false;
+		}
+
+		global.document.body.appendChild(menu);
+		position(menu, button);
+		activeButton = button;
+		button.setAttribute('aria-expanded', 'true');
+		return true;
+	}
+
+	function close() {
+		var menu = query('.progressionChordMenu');
+
+		if (menu && menu.parentNode) {
+			menu.parentNode.removeChild(menu);
+		}
+
+		if (activeButton) {
+			activeButton.setAttribute('aria-expanded', 'false');
+			activeButton = null;
+		}
+	}
+
+	function replacementFromItem(item) {
+		return {
+			degreeIndex: parseInt(item.getAttribute('data-degree-index'), 10),
+			inversionIndex: parseInt(item.getAttribute('data-inversion-index'), 10),
+			kind: item.getAttribute('data-chord-kind')
+		};
+	}
+
+	function currentChordSegment(measure, chordIndex) {
+		if (!measure) {
+			return null;
+		}
+
+		if (measure.chords && measure.chords.length) {
+			return measure.chords[Math.min(chordIndex, measure.chords.length - 1)];
+		}
+
+		return measure;
+	}
+
+	function position(menu, button) {
+		var bounds;
+		var menuWidth = 280;
+		var left;
+		var top;
+
+		if (!menu || !button || typeof button.getBoundingClientRect !== 'function') {
+			return;
+		}
+
+		bounds = button.getBoundingClientRect();
+		left = Math.max(8, Math.min(global.innerWidth - menuWidth - 8, bounds.left));
+		top = Math.max(8, bounds.bottom + 6);
+
+		menu.style.left = left + 'px';
+		menu.style.top = top + 'px';
+	}
+
+	function query(selector) {
+		return global.document ? global.document.querySelector(selector) : null;
+	}
+
+	global.CodaProgressionTransportMenu = {
+		close: close,
+		currentChordSegment: currentChordSegment,
+		open: open,
+		position: position,
+		replacementFromItem: replacementFromItem
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-playback-service.js */
+// Coordinates progression preview playback from the transport UI.
+(function (global) {
+	'use strict';
+
+	function toggle(options, listenButton, playbackHeadIndex, setPlaybackHeadIndex) {
+		var playback = options.progressionPlayback;
+		var progression = options.uiState ? options.uiState.getProgression() : null;
+
+		if (!playback) {
+			return;
+		}
+
+		if (playback.isPlaying && playback.isPlaying()) {
+			stop(options, listenButton, playbackHeadIndex);
+			return;
+		}
+
+		if (!progression) {
+			return;
+		}
+
+		play(options, listenButton, playbackHeadIndex, setPlaybackHeadIndex);
+	}
+
+	function play(options, listenButton, playbackHeadIndex, setPlaybackHeadIndex) {
+		var playback = options.progressionPlayback;
+		var progression = options.uiState ? options.uiState.getProgression() : null;
+
+		if (!playback || !progression) {
+			return false;
+		}
+
+		playbackHeadIndex = normalizeHeadIndex(playbackHeadIndex, progression);
+
+		return playback.play(progression, {
+			onComplete: function () {
+				global.CodaProgressionTransportView.setPlayingState(listenButton, false, options.i18n);
+				global.CodaProgressionTransportView.setPlaybackHead(playbackHeadIndex, false);
+			},
+			onCycleComplete: function () {
+				playbackHeadIndex = 0;
+				if (typeof setPlaybackHeadIndex === 'function') {
+					setPlaybackHeadIndex(playbackHeadIndex);
+				}
+				global.CodaProgressionTransportView.setPlaybackHead(playbackHeadIndex, true);
+			},
+			onMeasureStart: function (measure, index) {
+				playbackHeadIndex = index;
+				if (typeof setPlaybackHeadIndex === 'function') {
+					setPlaybackHeadIndex(index);
+				}
+				global.CodaProgressionTransportView.setPlaybackHead(index, true);
+			},
+			onStart: function () {
+				global.CodaProgressionTransportView.setPlayingState(listenButton, true, options.i18n);
+			},
+			onStop: function () {
+				global.CodaProgressionTransportView.setPlayingState(listenButton, false, options.i18n);
+				global.CodaProgressionTransportView.setPlaybackHead(playbackHeadIndex, false);
+			},
+			shouldLoop: function () {
+				return isLoopEnabled();
+			},
+			shouldPlayMetronome: function () {
+				return isMetronomeEnabled();
+			},
+			startIndex: playbackHeadIndex
+		});
+	}
+
+	function stop(options, listenButton, playbackHeadIndex) {
+		if (options.progressionPlayback && typeof options.progressionPlayback.stop === 'function') {
+			options.progressionPlayback.stop();
+		}
+
+		global.CodaProgressionTransportView.setPlayingState(listenButton, false, options.i18n);
+		global.CodaProgressionTransportView.setPlaybackHead(playbackHeadIndex || 0, false);
+	}
+
+	function normalizeHeadIndex(index, progression) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var numericIndex = parseInt(index, 10);
+
+		if (!measures.length || isNaN(numericIndex)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(measures.length - 1, numericIndex));
+	}
+
+	function isLoopEnabled() {
+		var checkbox = query('#progressionLoop');
+
+		return checkbox ? checkbox.checked === true : false;
+	}
+
+	function isMetronomeEnabled() {
+		var checkbox = query('#progressionMetronome');
+
+		return checkbox ? checkbox.checked === true : false;
+	}
+
+	function query(selector) {
+		return global.document ? global.document.querySelector(selector) : null;
+	}
+
+	global.CodaProgressionTransportPlayback = {
+		normalizeHeadIndex: normalizeHeadIndex,
+		play: play,
+		stop: stop,
+		toggle: toggle
 	};
 })(window);
 
@@ -3570,2457 +8421,79 @@
 (function (global) {
 	'use strict';
 
-	function buildProgressionFromDegrees(options) {
-		var resolvedDegrees = options.domain.resolveProgressionDegrees({
-			degrees: options.degrees,
-			scaleChords: options.report.scaleChords,
-			scaleNotes: options.report.scaleNotes
-		});
+	var measureTimelineService = global.CodaProgressionMeasureTimeline;
+	var formattingService = global.CodaProgressionFormatting;
+	var editingService = global.CodaProgressionEditing;
+	var chordPlanService = global.CodaProgressionChordPlan;
+	var chordMenuService = global.CodaProgressionChordMenu;
+	var stateNormalizer = global.CodaProgressionStateNormalizer;
+	var midiFileService = global.CodaProgressionMidiFile;
+	var progressionBuilder = global.CodaProgressionBuilder;
 
-		return attachDegreeIndexes(resolvedDegrees, options.report.scaleNotes);
+	function buildProgressionFromDegrees(options) {
+		return progressionBuilder.fromDegrees(options);
 	}
 
 	function buildProgressionFromState(options) {
-		var progressionState = normalizeProgressionState(options.progressionState);
-		var degrees = options.domain.createDiatonicDegreePlan({
-			bars: progressionState.bars,
-			scaleNotes: options.report.scaleNotes
-		});
-		var resolvedDegrees = buildProgressionFromDegrees({
-			degrees: degrees,
-			domain: options.domain,
-			report: options.report
-		});
-		var secondsPerBeat = 60 / progressionState.bpm;
-
-		return {
-			articulation: progressionState.articulation,
-			bars: progressionState.bars,
-			beatUnit: progressionState.beatUnit,
-			beatsPerBar: progressionState.beatsPerBar,
-			bpm: progressionState.bpm,
-			harmonicColor: {
-				counterpoint: progressionState.counterpoint,
-				modalInterchange: progressionState.modalInterchange,
-				tensions: progressionState.tensions
-			},
-			measures: buildMeasures(resolvedDegrees, progressionState, secondsPerBeat, {
-				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
-				scaleDefinition: options.report.scaleDefinition
-			}),
-			meter: progressionState.meter,
-			secondsPerBeat: secondsPerBeat,
-			style: progressionState.style,
-			totalBeats: progressionState.bars * progressionState.beatsPerBar,
-			totalSeconds: progressionState.bars * progressionState.beatsPerBar * secondsPerBeat,
-			voices: progressionState.voices
-		};
+		return progressionBuilder.fromState(options);
 	}
 
 	function generateProgressionFromState(options) {
-		var progressionState = normalizeProgressionState(options.progressionState);
-		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
-		var generationPlan = createGenerationPlan({
-			progressionState: progressionState,
-			report: options.report,
-			rng: rng,
-			rules: options.rules || (options.data ? options.data.progressionRules : null)
-		});
-		var resolvedDegrees = resolveGeneratedDegrees({
-			degrees: generationPlan.degrees,
-			report: options.report
-		});
-		var secondsPerBeat = 60 / progressionState.bpm;
-		var progression = {
-			articulation: progressionState.articulation,
-			bars: progressionState.bars,
-			beatUnit: progressionState.beatUnit,
-			beatsPerBar: progressionState.beatsPerBar,
-			bpm: progressionState.bpm,
-			generation: {
-				cadence: generationPlan.pattern.cadence,
-				form: generationPlan.pattern.form,
-				patternId: generationPlan.pattern.id,
-				style: progressionState.style,
-				voiceLeading: generationPlan.voiceLeading
-			},
-			harmonicColor: {
-				counterpoint: progressionState.counterpoint,
-				modalInterchange: progressionState.modalInterchange,
-				tensions: progressionState.tensions
-			},
-			measures: buildMeasures(resolvedDegrees, progressionState, secondsPerBeat, {
-				includeTensions: true,
-				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
-				rng: rng,
-				scaleDefinition: options.report.scaleDefinition,
-				scaleNotes: options.report.scaleNotes
-			}),
-			meter: progressionState.meter,
-			secondsPerBeat: secondsPerBeat,
-			style: progressionState.style,
-			totalBeats: progressionState.bars * progressionState.beatsPerBar,
-			totalSeconds: progressionState.bars * progressionState.beatsPerBar * secondsPerBeat,
-			voices: progressionState.voices
-		};
-
-		return progression;
+		return progressionBuilder.generate(options);
 	}
 
 	function buildProgressionMidiFile(options) {
-		var midiExport = options.midiExport || global.CodaMidiExport;
-		var instrument = findInstrument(options.data, options.midiInstrument);
-
-		return midiExport.createProgressionMidiFile({
-			channel: options.data && options.data.midi ? options.data.midi.channel : 0,
-			fileName: options.fileName,
-			initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
-			instrument: instrument,
-			notes: options.data ? options.data.notes : [],
-			progression: options.progression,
-			ticksPerBeat: options.ticksPerBeat,
-			velocity: options.data && options.data.midi ? options.data.midi.velocity : 96
-		});
+		return midiFileService.build(options);
 	}
 
 	function reorderProgressionMeasures(progression, fromIndex, toIndex) {
-		var measures = progression && progression.measures ? progression.measures.slice() : [];
-		var movedMeasure;
-
-		fromIndex = clampMeasureIndex(fromIndex, measures.length);
-		toIndex = clampMeasureIndex(toIndex, measures.length);
-
-		if (!progression || !measures.length || fromIndex === toIndex) {
-			return progression;
-		}
-
-		movedMeasure = measures.splice(fromIndex, 1)[0];
-		measures.splice(toIndex, 0, movedMeasure);
-
-		return rebuildProgressionTimeline(progression, measures);
+		return editingService.reorderMeasures(progression, fromIndex, toIndex);
 	}
 
 	function reorderProgressionMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex) {
-		var measures = progression && progression.measures ? progression.measures.slice() : [];
-		var index = clampMeasureIndex(measureIndex, measures.length);
-		var measure = measures[index];
-		var segments;
-		var movedSegment;
-
-		if (!progression || !measure || !measure.chords || measure.chords.length < 3) {
-			return progression;
-		}
-
-		segments = measureSegments(measure);
-		fromChordIndex = clampChordIndex(fromChordIndex, segments.length);
-		toChordIndex = clampChordIndex(toChordIndex, segments.length);
-
-		if (fromChordIndex === 0 || toChordIndex === 0 || fromChordIndex === toChordIndex) {
-			return progression;
-		}
-
-		movedSegment = segments.splice(fromChordIndex, 1)[0];
-		segments.splice(toChordIndex, 0, movedSegment);
-		measures[index] = measureWithSegments(measure, segments, progression);
-
-		return extendProgression(progression, {
-			measures: measures
-		});
+		return editingService.reorderMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex);
 	}
 
 	function addProgressionMeasureChord(progression, measureIndex, options) {
-		var measures = progression && progression.measures ? progression.measures.slice() : [];
-		var index = clampMeasureIndex(measureIndex, measures.length);
-		var measure = measures[index];
-		var segments;
-		var insertAfterIndex;
-		var additionalChord;
-		var additionalSegment;
-
-		options = options || {};
-		if (!progression || !measure) {
-			return progression;
-		}
-
-		segments = measureSegments(measure);
-		if (segments.length >= 4) {
-			return progression;
-		}
-
-		insertAfterIndex = clampChordIndex(options.chordIndex, segments.length);
-		additionalChord = chooseAdditionalChordForMeasure({
-			data: options.data,
-			measure: segments[insertAfterIndex],
-			nextMeasure: segments[insertAfterIndex + 1] || measures[index + 1] || null,
-			progression: progression,
-			progressionState: normalizeProgressionState(options.progressionState || progression),
-			report: options.report,
-			rng: options.rng
-		});
-
-		if (!additionalChord) {
-			return progression;
-		}
-
-		additionalSegment = segmentFromPlan(segments[insertAfterIndex], additionalChord, {
-			chordIndex: insertAfterIndex + 1,
-			durationBeats: Number(segments[insertAfterIndex].durationBeats) || Number(measure.durationBeats) || Number(progression.beatsPerBar) || 4,
-			durationSeconds: Number(segments[insertAfterIndex].durationSeconds) || Number(measure.durationSeconds) || 0,
-			startBeat: Number(segments[insertAfterIndex].endBeat) || Number(segments[insertAfterIndex].startBeat) || Number(measure.startBeat) || 0,
-			startSeconds: Number(segments[insertAfterIndex].endSeconds) || Number(segments[insertAfterIndex].startSeconds) || Number(measure.startSeconds) || 0
-		});
-		segments.splice(insertAfterIndex + 1, 0, additionalSegment);
-		measures[index] = measureWithSegments(measure, segments, progression);
-
-		return extendProgression(progression, {
-			measures: measures
+		return editingService.addMeasureChord(progression, measureIndex, options, {
+			buildChordPlan: buildChordPlan,
+			normalizeProgressionState: normalizeProgressionState
 		});
 	}
 
 	function removeProgressionMeasureChord(progression, measureIndex, chordIndex) {
-		var measures = progression && progression.measures ? progression.measures.slice() : [];
-		var index = clampMeasureIndex(measureIndex, measures.length);
-		var measure = measures[index];
-		var segments;
-		var normalizedChordIndex;
-
-		if (!progression || !measure || !measure.chords || measure.chords.length < 2) {
-			return progression;
-		}
-
-		segments = measureSegments(measure);
-		normalizedChordIndex = clampChordIndex(chordIndex, segments.length);
-		if (normalizedChordIndex === 0) {
-			return progression;
-		}
-
-		segments.splice(normalizedChordIndex, 1);
-		measures[index] = measureWithSegments(measure, segments, progression);
-
-		return extendProgression(progression, {
-			measures: measures
-		});
+		return editingService.removeMeasureChord(progression, measureIndex, chordIndex);
 	}
 
 	function replaceProgressionMeasureChord(progression, measureIndex, chordIndex, replacement, options) {
-		var measures = progression && progression.measures ? progression.measures.slice() : [];
-		var index = clampMeasureIndex(measureIndex, measures.length);
-		var measure = measures[index];
-		var normalizedChordIndex = Math.max(0, parseInt(chordIndex, 10) || 0);
-		var segment;
-		var nextMeasure;
-		var replacedSegment;
-
-		options = options || {};
-		replacement = replacement || {};
-		if (!progression || !measure || replacement.degreeIndex == null) {
-			return progression;
-		}
-
-		segment = measure.chords && measure.chords.length ? measure.chords[Math.min(normalizedChordIndex, measure.chords.length - 1)] : measure;
-		nextMeasure = measures[index + 1] || null;
-		replacedSegment = buildReplacementSegment({
-			chordIndex: normalizedChordIndex,
-			data: options.data,
-			measure: measure,
-			nextMeasure: nextMeasure,
-			progression: progression,
-			progressionState: normalizeProgressionState(options.progressionState || progression),
-			replacement: replacement,
-			report: options.report,
-			segment: segment
-		});
-
-		if (!replacedSegment) {
-			return progression;
-		}
-
-		if (measure.chords && measure.chords.length) {
-			measures[index] = replaceSplitMeasureSegment(measure, normalizedChordIndex, replacedSegment);
-		} else {
-			measures[index] = replaceWholeMeasure(measure, replacedSegment);
-		}
-
-		return extendProgression(progression, {
-			measures: measures
+		return editingService.replaceMeasureChord(progression, measureIndex, chordIndex, replacement, options, {
+			buildChordPlan: buildChordPlan,
+			normalizeProgressionState: normalizeProgressionState
 		});
 	}
 
 	function rebuildProgressionTimeline(progression, measures) {
-		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
-		var beatsPerBar = Number(progression.beatsPerBar) || 4;
-		var rebuiltMeasures = [];
-
-		for (var i = 0; i < measures.length; i++) {
-			var startBeat = i * beatsPerBar;
-			var durationBeats = Number(measures[i].durationBeats) || beatsPerBar;
-			var measure = cloneMeasure(measures[i]);
-
-			measure.bar = i + 1;
-			measure.startBeat = startBeat;
-			measure.endBeat = startBeat + durationBeats;
-			measure.durationBeats = durationBeats;
-			measure.durationSeconds = durationBeats * secondsPerBeat;
-			measure.startSeconds = startBeat * secondsPerBeat;
-			measure.endSeconds = measure.endBeat * secondsPerBeat;
-			if (measure.chords && measure.chords.length) {
-				measure.chords = retimeMeasureChords(measure, secondsPerBeat);
-			}
-			rebuiltMeasures.push(measure);
-		}
-
-		return extendProgression(progression, {
-			bars: rebuiltMeasures.length,
-			measures: rebuiltMeasures,
-			totalBeats: rebuiltMeasures.length * beatsPerBar,
-			totalSeconds: rebuiltMeasures.length * beatsPerBar * secondsPerBeat
-		});
-	}
-
-	function cloneMeasure(measure) {
-		var clone = {};
-
-		for (var key in measure) {
-			if (Object.prototype.hasOwnProperty.call(measure, key)) {
-				if ((key === 'notes' || key === 'midiNotes') && measure[key]) {
-					clone[key] = measure[key].slice();
-				} else if (key === 'chords' && measure[key]) {
-					clone[key] = measure[key].map(cloneMeasure);
-				} else if (key === 'voiceNotes' && measure[key]) {
-					clone[key] = cloneVoiceNotes(measure[key]);
-				} else {
-					clone[key] = measure[key];
-				}
-			}
-		}
-
-		return clone;
-	}
-
-	function chooseAdditionalChordForMeasure(options) {
-		var report = options.report || {};
-		var scaleChords = report.scaleChords || [];
-		var scaleNotes = report.scaleNotes || [];
-		var candidates = [];
-		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
-		var previousPlan = measurePlan(options.measure);
-		var nextPlan = options.nextMeasure ? measurePlan(options.nextMeasure) : null;
-		var progressionState = options.progressionState;
-		var initialMidiNote = options.data && options.data.midi ? options.data.midi.initialMidiNote : 60;
-		var suspensionResolution = chooseSuspensionResolutionForMeasure({
-			initialMidiNote: initialMidiNote,
-			measure: options.measure,
-			nextMeasure: options.nextMeasure,
-			nextPlan: nextPlan,
-			previousPlan: previousPlan,
-			progressionState: progressionState,
-			report: report,
-			rng: rng
-		});
-
-		if (suspensionResolution) {
-			return suspensionResolution;
-		}
-
-		for (var i = 0; i < scaleChords.length; i++) {
-			var resolvedDegree;
-			var chordPlan;
-			var score;
-
-			if (!scaleChords[i] || sameChordFamily(scaleChords[i], options.measure)) {
-				continue;
-			}
-
-			resolvedDegree = {
-				chord: scaleChords[i],
-				degree: scaleNotes[i] ? scaleNotes[i].grado : '',
-				degreeIndex: i,
-				source: 'diatonic'
-			};
-			chordPlan = buildChordPlan({
-				index: 1,
-				options: {
-					includeTensions: true,
-					initialMidiNote: initialMidiNote,
-					rng: rng,
-					scaleDefinition: report.scaleDefinition,
-					scaleNotes: scaleNotes
-				},
-				previousPlan: previousPlan,
-				progressionState: progressionState,
-				resolvedDegree: resolvedDegree,
-				resolvedDegrees: [
-					resolvedDegreeFromMeasure(options.measure, report) || resolvedDegree,
-					resolvedDegree,
-					resolvedDegreeFromMeasure(options.nextMeasure, report) || resolvedDegree
-				]
-			});
-			score = additionalChordScore({
-				chordPlan: chordPlan,
-				currentMeasure: options.measure,
-				nextMeasure: options.nextMeasure,
-				nextPlan: nextPlan,
-				progressionState: progressionState,
-				report: report,
-				resolvedDegree: resolvedDegree,
-				rng: rng
-			});
-
-			candidates.push({
-				chordPlan: chordPlan,
-				reportScaleDefinition: report.scaleDefinition,
-				resolvedDegree: resolvedDegree,
-				score: score
-			});
-		}
-
-		candidates.sort(function (a, b) {
-			return b.score - a.score;
-		});
-
-		return candidates.length ? candidates[0] : null;
-	}
-
-	function chooseSuspensionResolutionForMeasure(options) {
-		var measure = options.measure;
-		var resolvedDegree;
-		var candidates = [];
-		var kinds = ['triad', 'seventh'];
-
-		if (!measure || !measure.suspension) {
-			return null;
-		}
-
-		resolvedDegree = resolvedDegreeFromMeasure(measure, options.report);
-		if (!resolvedDegree || !resolvedDegree.chord) {
-			return null;
-		}
-
-		for (var i = 0; i < kinds.length; i++) {
-			var labels = kinds[i] === 'seventh' ? ['', '6/5', '4/3', '4/2'] : ['', '6', '6/4'];
-
-			for (var j = 0; j < labels.length; j++) {
-				var chordPlan = buildChordPlan({
-					index: 1,
-					options: {
-						forceInversionIndex: j,
-						forceKind: kinds[i],
-						includeTensions: false,
-						initialMidiNote: options.initialMidiNote,
-						preventSuspension: true,
-						scaleDefinition: options.report.scaleDefinition,
-						scaleNotes: options.report.scaleNotes
-					},
-					previousPlan: options.previousPlan,
-					progressionState: options.progressionState,
-					resolvedDegree: resolvedDegree,
-					resolvedDegrees: [
-						resolvedDegree,
-						resolvedDegree,
-						resolvedDegreeFromMeasure(options.nextMeasure, options.report) || resolvedDegree
-					]
-				});
-
-				candidates.push({
-					chordPlan: chordPlan,
-					reportScaleDefinition: options.report.scaleDefinition,
-					resolvedDegree: resolvedDegree,
-					score: suspensionResolutionScore({
-						chordPlan: chordPlan,
-						nextPlan: options.nextPlan,
-						previousPlan: options.previousPlan,
-						rng: options.rng
-					})
-				});
-			}
-		}
-
-		candidates.sort(function (a, b) {
-			return a.score - b.score;
-		});
-
-		return candidates.length ? candidates[0] : null;
-	}
-
-	function suspensionResolutionScore(options) {
-		var score = voiceLeadingTransitionScore(options.previousPlan, options.chordPlan);
-
-		if (options.nextPlan) {
-			score += voiceLeadingTransitionScore(options.chordPlan, options.nextPlan) * 0.25;
-		}
-
-		if (options.chordPlan.kind === 'seventh') {
-			score += 0.25;
-		}
-
-		return score + ((typeof options.rng === 'function' ? options.rng() : Math.random()) * 0.01);
+		return measureTimelineService.rebuildTimeline(progression, measures);
 	}
 
 	function buildProgressionChordMenu(options) {
-		var report = options && options.report ? options.report : {};
-		var scaleChords = report.scaleChords || [];
-		var scaleNotes = report.scaleNotes || [];
-		var currentSegment = options ? options.currentSegment : null;
-		var currentFunction = currentSegment ? currentSegment.tonalFunction || '' : '';
-		var groups = [
-			{ id: 'sameFunction', items: [] },
-			{ id: 'commonNotes', items: [] },
-			{ id: 'remaining', items: [] }
-		];
-		var usedIndexes = {};
-
-		function pushToGroup(groupIndex, degreeIndex, metadata) {
-			var chord = scaleChords[degreeIndex];
-			var rawDegree = scaleNotes[degreeIndex] ? scaleNotes[degreeIndex].grado : '';
-
-			if (!chord || usedIndexes[degreeIndex]) {
-				return;
-			}
-
-			groups[groupIndex].items.push({
-				chordName: chord.nombre,
-				commonToneCount: metadata && metadata.commonToneCount ? metadata.commonToneCount : 0,
-				degree: formatDegreeForChord(rawDegree, chord.nombre),
-				degreeIndex: degreeIndex,
-				options: chordReplacementOptions(chord, scaleNotes[degreeIndex], degreeIndex)
-			});
-			usedIndexes[degreeIndex] = true;
-		}
-
-		for (var i = 0; i < scaleChords.length; i++) {
-			if (currentFunction && tonalFunctionForDegree(report.scaleDefinition, i) === currentFunction) {
-				pushToGroup(0, i);
-			}
-		}
-
-		for (var j = 0; j < scaleChords.length; j++) {
-			var commonToneCount = currentSegment ? commonPitchNames(currentSegment, { notes: chordNotes(scaleChords[j]) }).length : 0;
-
-			if (commonToneCount > 0) {
-				pushToGroup(1, j, {
-					commonToneCount: commonToneCount
-				});
-			}
-		}
-
-		groups[1].items.sort(function (a, b) {
-			if (a.commonToneCount !== b.commonToneCount) {
-				return b.commonToneCount - a.commonToneCount;
-			}
-
-			return a.degreeIndex - b.degreeIndex;
-		});
-
-		for (var k = 0; k < scaleChords.length; k++) {
-			pushToGroup(2, k);
-		}
-
-		return groups;
-	}
-
-	function chordReplacementOptions(chord, scaleNote, degreeIndex) {
-		var degree = scaleNote ? scaleNote.grado : '';
-		var triadLabels = ['', '6', '6/4'];
-		var seventhLabels = ['', '6/5', '4/3', '4/2'];
-		var options = [];
-
-		for (var i = 0; i < triadLabels.length; i++) {
-			options.push({
-				degree: displayDegree(formatTriadDegreeForChord(degree, chord.nombre), triadLabels[i], ''),
-				degreeIndex: degreeIndex,
-				displayName: displayName(triadName(chord), triadLabels[i], '', ''),
-				inversionIndex: i,
-				inversionLabel: triadLabels[i],
-				kind: 'triad'
-			});
-		}
-
-		for (var j = 0; j < seventhLabels.length; j++) {
-			options.push({
-				degree: displayDegree(formatDegreeForChord(degree, chord.nombre), seventhLabels[j], ''),
-				degreeIndex: degreeIndex,
-				displayName: displayName(chord.nombre, seventhLabels[j], '', ''),
-				inversionIndex: j,
-				inversionLabel: seventhLabels[j],
-				kind: 'seventh'
-			});
-		}
-
-		return options;
-	}
-
-	function additionalChordScore(options) {
-		var currentCommon = commonPitchNames(options.currentMeasure, options.chordPlan).length;
-		var nextCommon = options.nextMeasure ? commonPitchNames(options.chordPlan, options.nextMeasure).length : 0;
-		var currentFunction = options.currentMeasure.tonalFunction || '';
-		var nextFunction = options.nextMeasure ? options.nextMeasure.tonalFunction || '' : '';
-		var candidateFunction = tonalFunctionForDegree(options.report.scaleDefinition, options.resolvedDegree.degreeIndex);
-		var score = 0;
-
-		score += currentCommon * 9;
-		score += nextCommon * 7;
-
-		if (currentCommon > 0 && (!options.nextMeasure || nextCommon > 0)) {
-			score += 10;
-		}
-
-		if (candidateFunction && candidateFunction === currentFunction) {
-			score += currentFunction === 'T' ? 18 : 8;
-		} else if (currentFunction && candidateFunction) {
-			score -= currentFunction === 'T' ? 8 : 4;
-		}
-
-		if (candidateFunction && candidateFunction === nextFunction) {
-			score += 4;
-		}
-
-		if (options.nextMeasure && sameChordFamily(options.resolvedDegree.chord, options.nextMeasure)) {
-			score -= 16;
-		}
-
-		score -= voiceLeadingTransitionScore(options.currentMeasure, options.chordPlan) * 0.45;
-
-		if (options.nextPlan) {
-			score -= voiceLeadingTransitionScore(options.chordPlan, options.nextPlan) * 0.35;
-		}
-
-		if (currentCommon === 0 && nextCommon === 0) {
-			score -= 24;
-		}
-
-		score += (typeof options.rng === 'function' ? options.rng() : Math.random()) * 2.5;
-
-		return score;
-	}
-
-	function splitMeasureWithAdditionalChord(measure, additionalChord, progression) {
-		var splitMeasure = cloneMeasure(measure);
-		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
-		var totalBeats = Number(measure.durationBeats) || Number(progression.beatsPerBar) || 4;
-		var halfBeats = totalBeats / 2;
-		var startBeat = Number(measure.startBeat) || 0;
-		var startSeconds = Number(measure.startSeconds) || 0;
-		var halfSeconds = halfBeats * secondsPerBeat;
-		var primaryChord = segmentFromMeasure(measure, {
-			chordIndex: 0,
-			durationBeats: halfBeats,
-			durationSeconds: halfSeconds,
-			startBeat: startBeat,
-			startSeconds: startSeconds
-		});
-		var extraChord = segmentFromPlan(measure, additionalChord, {
-			chordIndex: 1,
-			durationBeats: halfBeats,
-			durationSeconds: halfSeconds,
-			startBeat: startBeat + halfBeats,
-			startSeconds: startSeconds + halfSeconds
-		});
-
-		splitMeasure.chords = [primaryChord, extraChord];
-
-		return splitMeasure;
-	}
-
-	function measureSegments(measure) {
-		if (measure && measure.chords && measure.chords.length) {
-			return measure.chords.map(cloneMeasure);
-		}
-
-		return measure ? [segmentFromMeasure(measure, {
-			chordIndex: 0,
-			durationBeats: Number(measure.durationBeats) || 4,
-			durationSeconds: Number(measure.durationSeconds) || 0,
-			startBeat: Number(measure.startBeat) || 0,
-			startSeconds: Number(measure.startSeconds) || 0
-		})] : [];
-	}
-
-	function measureWithSegments(measure, segments, progression) {
-		var rebuiltMeasure = cloneMeasure(measure);
-		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
-
-		if (!segments.length) {
-			return rebuiltMeasure;
-		}
-
-		rebuiltMeasure = copySegmentToMeasure(rebuiltMeasure, segments[0]);
-		if (segments.length === 1) {
-			delete rebuiltMeasure.chords;
-			return rebuiltMeasure;
-		}
-
-		rebuiltMeasure.chords = retimeMeasureChordList(rebuiltMeasure, segments, secondsPerBeat);
-
-		return rebuiltMeasure;
-	}
-
-	function buildReplacementSegment(options) {
-		var report = options.report || {};
-		var scaleChords = report.scaleChords || [];
-		var scaleNotes = report.scaleNotes || [];
-		var degreeIndex = parseInt(options.replacement.degreeIndex, 10);
-		var resolvedDegree;
-		var chordPlan;
-		var previousPlan;
-
-		if (isNaN(degreeIndex) || !scaleChords[degreeIndex]) {
-			return null;
-		}
-
-		resolvedDegree = {
-			chord: scaleChords[degreeIndex],
-			degree: scaleNotes[degreeIndex] ? scaleNotes[degreeIndex].grado : '',
-			degreeIndex: degreeIndex,
-			source: 'diatonic'
-		};
-		previousPlan = previousSegmentPlan(options.progression, options.measure.bar, options.chordIndex);
-		chordPlan = buildChordPlan({
-			index: 1,
-			options: {
-				forceInversionIndex: parseInt(options.replacement.inversionIndex, 10) || 0,
-				forceKind: options.replacement.kind === 'seventh' ? 'seventh' : 'triad',
-				includeTensions: false,
-				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
-				preventSuspension: true,
-				scaleDefinition: report.scaleDefinition,
-				scaleNotes: scaleNotes
-			},
-			previousPlan: previousPlan,
-			progressionState: options.progressionState,
-			resolvedDegree: resolvedDegree,
-			resolvedDegrees: [
-				resolvedDegreeFromMeasure(options.segment, report) || resolvedDegree,
-				resolvedDegree,
-				resolvedDegreeFromMeasure(options.nextMeasure, report) || resolvedDegree
-			]
-		});
-
-		return segmentFromPlan(options.segment, {
-			chordPlan: chordPlan,
-			reportScaleDefinition: report.scaleDefinition,
-			resolvedDegree: resolvedDegree
-		}, {
-			chordIndex: options.chordIndex,
-			durationBeats: Number(options.segment.durationBeats) || Number(options.measure.durationBeats) || 4,
-			durationSeconds: Number(options.segment.durationSeconds) || Number(options.measure.durationSeconds) || 0,
-			startBeat: Number(options.segment.startBeat) || Number(options.measure.startBeat) || 0,
-			startSeconds: Number(options.segment.startSeconds) || Number(options.measure.startSeconds) || 0
-		});
-	}
-
-	function replaceSplitMeasureSegment(measure, chordIndex, segment) {
-		var replacedMeasure = cloneMeasure(measure);
-		var index = Math.min(chordIndex, replacedMeasure.chords.length - 1);
-
-		replacedMeasure.chords[index] = segment;
-		if (index === 0) {
-			replacedMeasure = copySegmentToMeasure(replacedMeasure, segment);
-		}
-
-		return replacedMeasure;
-	}
-
-	function replaceWholeMeasure(measure, segment) {
-		return copySegmentToMeasure(cloneMeasure(measure), segment);
-	}
-
-	function copySegmentToMeasure(measure, segment) {
-		var keys = [
-			'chord',
-			'chordKind',
-			'chordName',
-			'degree',
-			'displayName',
-			'inversion',
-			'inversionIndex',
-			'midiNotes',
-			'notes',
-			'source',
-			'suspension',
-			'tonalFunction',
-			'voiceNotes',
-			'voices'
-		];
-
-		for (var i = 0; i < keys.length; i++) {
-			measure[keys[i]] = segment[keys[i]];
-		}
-
-		measure.pedalsIn = [];
-		measure.pedalsOut = [];
-
-		return measure;
-	}
-
-	function previousSegmentPlan(progression, bar, chordIndex) {
-		var measures = progression && progression.measures ? progression.measures : [];
-		var measureIndex = Math.max(0, (Number(bar) || 1) - 1);
-		var currentMeasure = measures[measureIndex];
-		var previousMeasure;
-
-		if (chordIndex > 0 && currentMeasure && currentMeasure.chords && currentMeasure.chords[chordIndex - 1]) {
-			return measurePlan(currentMeasure.chords[chordIndex - 1]);
-		}
-
-		previousMeasure = measures[measureIndex - 1];
-		if (!previousMeasure) {
-			return null;
-		}
-
-		if (previousMeasure.chords && previousMeasure.chords.length) {
-			return measurePlan(previousMeasure.chords[previousMeasure.chords.length - 1]);
-		}
-
-		return measurePlan(previousMeasure);
-	}
-
-	function segmentFromMeasure(measure, timing) {
-		var segment = cloneMeasure(measure);
-
-		delete segment.chords;
-		return extendProgression(segment, {
-			chordIndex: timing.chordIndex,
-			durationBeats: timing.durationBeats,
-			durationSeconds: timing.durationSeconds,
-			endBeat: timing.startBeat + timing.durationBeats,
-			endSeconds: timing.startSeconds + timing.durationSeconds,
-			startBeat: timing.startBeat,
-			startSeconds: timing.startSeconds
-		});
-	}
-
-	function segmentFromPlan(measure, additionalChord, timing) {
-		var resolvedDegree = additionalChord.resolvedDegree;
-		var chordPlan = additionalChord.chordPlan;
-
-		return {
-			articulation: measure.articulation,
-			bar: measure.bar,
-			beatUnit: measure.beatUnit,
-			chord: resolvedDegree.chord,
-			chordIndex: timing.chordIndex,
-			chordKind: chordPlan.kind,
-			chordName: chordPlan.chordName,
-			degree: displayDegree(chordPlan.degree, chordPlan.inversionLabel, chordPlan.suspension),
-			displayName: displayName(chordPlan.chordName, chordPlan.inversionLabel, chordPlan.suspension, chordPlan.tensionLabel),
-			durationBeats: timing.durationBeats,
-			durationSeconds: timing.durationSeconds,
-			endBeat: timing.startBeat + timing.durationBeats,
-			endSeconds: timing.startSeconds + timing.durationSeconds,
-			inversion: chordPlan.inversionLabel,
-			inversionIndex: chordPlan.inversionIndex,
-			midiNotes: chordPlan.midiNotes,
-			notes: chordPlan.notes,
-			source: resolvedDegree.source || 'diatonic',
-			startBeat: timing.startBeat,
-			startSeconds: timing.startSeconds,
-			suspension: chordPlan.suspension,
-			tonalFunction: tonalFunctionForDegree(additionalChord.reportScaleDefinition, resolvedDegree.degreeIndex),
-			voiceNotes: chordPlan.voiceNotes,
-			voices: measure.voices
-		};
-	}
-
-	function retimeMeasureChords(measure, secondsPerBeat) {
-		var chords = measure.chords || [];
-
-		return retimeMeasureChordList(measure, chords, secondsPerBeat);
-	}
-
-	function retimeMeasureChordList(measure, chords, secondsPerBeat) {
-		var durationBeats = (Number(measure.durationBeats) || 4) / Math.max(1, chords.length);
-		var result = [];
-
-		for (var i = 0; i < chords.length; i++) {
-			result.push(segmentFromMeasure(chords[i], {
-				chordIndex: i,
-				durationBeats: durationBeats,
-				durationSeconds: durationBeats * secondsPerBeat,
-				startBeat: (Number(measure.startBeat) || 0) + (durationBeats * i),
-				startSeconds: (Number(measure.startSeconds) || 0) + (durationBeats * secondsPerBeat * i)
-			}));
-		}
-
-		return result;
-	}
-
-	function measurePlan(measure) {
-		if (!measure) {
-			return null;
-		}
-
-		return {
-			midiNotes: measure.midiNotes || [],
-			notes: measure.notes || [],
-			voiceNotes: measure.voiceNotes || []
-		};
-	}
-
-	function resolvedDegreeFromMeasure(measure, report) {
-		var scaleChords = report && report.scaleChords ? report.scaleChords : [];
-		var parallelChords = report && report.parallelScaleChords ? report.parallelScaleChords : [];
-		var scaleNotes = report && report.scaleNotes ? report.scaleNotes : [];
-		var chordName = measure ? measure.chordName : '';
-
-		if (!measure) {
-			return null;
-		}
-
-		for (var i = 0; i < scaleChords.length; i++) {
-			if (scaleChords[i] === measure.chord || triadName(scaleChords[i]) === chordName || scaleChords[i].nombre === chordName) {
-				return {
-					chord: scaleChords[i],
-					degree: scaleNotes[i] ? scaleNotes[i].grado : '',
-					degreeIndex: i,
-					source: measure.source || 'diatonic'
-				};
-			}
-		}
-
-		for (var j = 0; j < parallelChords.length; j++) {
-			if (parallelChords[j] === measure.chord || triadName(parallelChords[j]) === chordName || parallelChords[j].nombre === chordName) {
-				return {
-					chord: parallelChords[j],
-					degree: scaleNotes[j] ? scaleNotes[j].grado : '',
-					degreeIndex: j,
-					source: measure.source || 'parallel'
-				};
-			}
-		}
-
-		return null;
-	}
-
-	function sameChordFamily(chord, measure) {
-		return measure && (measure.chord === chord || measure.chordName === chord.nombre || measure.chordName === triadName(chord));
-	}
-
-	function cloneVoiceNotes(voiceNotes) {
-		var result = [];
-
-		for (var i = 0; i < voiceNotes.length; i++) {
-			result.push(extendProgression({}, voiceNotes[i]));
-		}
-
-		return result;
-	}
-
-	function extendProgression(progression, values) {
-		var result = {};
-
-		for (var key in progression) {
-			if (Object.prototype.hasOwnProperty.call(progression, key)) {
-				result[key] = progression[key];
-			}
-		}
-
-		for (var valueKey in values) {
-			if (Object.prototype.hasOwnProperty.call(values, valueKey)) {
-				result[valueKey] = values[valueKey];
-			}
-		}
-
-		return result;
-	}
-
-	function clampMeasureIndex(index, length) {
-		var numericIndex = parseInt(index, 10);
-
-		if (isNaN(numericIndex)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(length - 1, numericIndex));
-	}
-
-	function clampChordIndex(index, length) {
-		var numericIndex = parseInt(index, 10);
-
-		if (isNaN(numericIndex)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(Math.max(0, length - 1), numericIndex));
-	}
-
-	function buildMeasures(resolvedDegrees, progressionState, secondsPerBeat, options) {
-		var measures = [];
-		var previousPlan = null;
-
-		options = options || {};
-		for (var i = 0; i < resolvedDegrees.length; i++) {
-			var startBeat = i * progressionState.beatsPerBar;
-			var durationBeats = progressionState.beatsPerBar;
-			var chordPlan = buildChordPlan({
-				index: i,
-				options: options,
-				previousPlan: previousPlan,
-				progressionState: progressionState,
-				resolvedDegree: resolvedDegrees[i],
-				resolvedDegrees: resolvedDegrees
-			});
-
-			measures.push({
-				articulation: progressionState.articulation,
-				bar: i + 1,
-				beatUnit: progressionState.beatUnit,
-				chord: resolvedDegrees[i].chord,
-				chordKind: chordPlan.kind,
-				chordName: chordPlan.chordName,
-				degree: displayDegree(chordPlan.degree, chordPlan.inversionLabel, chordPlan.suspension),
-				displayName: displayName(chordPlan.chordName, chordPlan.inversionLabel, chordPlan.suspension, chordPlan.tensionLabel),
-				durationBeats: durationBeats,
-				durationSeconds: durationBeats * secondsPerBeat,
-				endBeat: startBeat + durationBeats,
-				endSeconds: (startBeat + durationBeats) * secondsPerBeat,
-				inversion: chordPlan.inversionLabel,
-				inversionIndex: chordPlan.inversionIndex,
-				midiNotes: chordPlan.midiNotes,
-				notes: chordPlan.notes,
-				source: resolvedDegrees[i].source || 'diatonic',
-				startBeat: startBeat,
-				startSeconds: startBeat * secondsPerBeat,
-				suspension: chordPlan.suspension,
-				tonalFunction: tonalFunctionForDegree(options.scaleDefinition, resolvedDegrees[i].degreeIndex),
-				voiceNotes: chordPlan.voiceNotes,
-				voices: progressionState.voices
-			});
-			previousPlan = chordPlan;
-		}
-
-		return annotateMeasureVoiceLeading(measures, progressionState);
-	}
-
-	function attachDegreeIndexes(resolvedDegrees, scaleNotes) {
-		var result = [];
-
-		for (var i = 0; i < resolvedDegrees.length; i++) {
-			result.push(extendProgression(resolvedDegrees[i], {
-				degreeIndex: resolvedDegrees[i].degreeIndex != null ? resolvedDegrees[i].degreeIndex : degreeIndexForDegree(scaleNotes, resolvedDegrees[i].degree)
-			}));
-		}
-
-		return result;
-	}
-
-	function degreeIndexForDegree(scaleNotes, degree) {
-		var normalizedDegree = normalizeDegreeName(degree);
-
-		scaleNotes = scaleNotes || [];
-		for (var i = 0; i < scaleNotes.length; i++) {
-			if (normalizeDegreeName(scaleNotes[i].grado) === normalizedDegree) {
-				return i;
-			}
-		}
-
-		return -1;
-	}
-
-	function normalizeDegreeName(degree) {
-		return String(degree || '').replace('J', '').replace('M', '').replace('m', '').toUpperCase();
-	}
-
-	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
-		var functions;
-		var tonalFunction;
-
-		if (!scaleDefinition || scaleDefinition.tonal !== 'true' || !scaleDefinition.funciones || degreeIndex < 0) {
-			return '';
-		}
-
-		functions = scaleDefinition.funciones.split('-');
-		tonalFunction = functions[degreeIndex] || '';
-
-		return tonalFunction === '—' ? '' : tonalFunction;
-	}
-
-	function chordNotes(chord) {
-		if (!chord) {
-			return [];
-		}
-
-		return [chord.fundamental, chord.tercera, chord.quinta, chord.septima];
-	}
-
-	function triadNotes(chord) {
-		if (!chord) {
-			return [];
-		}
-
-		return [chord.fundamental, chord.tercera, chord.quinta];
+		return chordMenuService.build(options);
 	}
 
 	function buildChordPlan(context) {
-		var resolvedDegree = context.resolvedDegree;
-		var chord = resolvedDegree.chord;
-		var useSeventh = context.options.forceKind ? context.options.forceKind === 'seventh' : shouldUseSeventh(context);
-		var baseNotes = useSeventh ? chordNotes(chord) : triadNotes(chord);
-		var suspension = context.options.preventSuspension ? null : chooseSuspension(context, baseNotes, useSeventh ? 'seventh' : 'triad');
-
-		if (suspension) {
-			baseNotes = suspendedNotes(baseNotes, suspension.note);
-		}
-
-		var tensionOptions = context.options.includeTensions ? addTensionsToNotes(baseNotes, {
-			degreeIndex: resolvedDegree.degreeIndex,
-			scaleNotes: context.options.scaleNotes,
-			tensions: context.progressionState.tensions,
-			voices: context.progressionState.voices
-		}) : {
-			label: '',
-			notes: baseNotes
-		};
-		var voicing = chooseVoicing({
-			baseNotes: baseNotes,
-			chordName: chord.nombre,
-			extraNotes: tensionOptions.notes.slice(baseNotes.length),
-			forceInversionIndex: context.options.forceInversionIndex,
-			initialMidiNote: context.options.initialMidiNote || 60,
-			kind: useSeventh ? 'seventh' : 'triad',
-			previousPlan: context.previousPlan,
-			voices: context.progressionState.voices
-		});
-		var chordName = useSeventh ? chord.nombre : triadName(chord);
-
-		return {
-			chordName: chordName,
-			degree: formatDegreeForMeasure(resolvedDegree.degree, chord, useSeventh),
-			inversionIndex: voicing.inversionIndex,
-			inversionLabel: voicing.inversionLabel,
-			kind: useSeventh ? 'seventh' : 'triad',
-			midiNotes: voicing.midiNotes,
-			notes: voicing.notes,
-			suspension: suspension ? suspension.label : '',
-			tensionLabel: tensionOptions.label,
-			voiceNotes: voicing.voiceNotes
-		};
-	}
-
-	function chooseSuspension(context, baseNotes, kind) {
-		var chord = context.resolvedDegree.chord;
-		var previousPlan = context.previousPlan;
-		var progressionState = context.progressionState;
-		var rng = typeof context.options.rng === 'function' ? context.options.rng : function () { return 1; };
-		var label;
-		var suspensionNote;
-		var originalVoicing;
-		var suspendedVoicing;
-		var probability;
-		var originalScore;
-		var suspendedScore;
-
-		if (!chord || !previousPlan || !chord.segunda || !chord.cuarta || baseNotes.length < 3) {
-			return null;
-		}
-
-		if (isTonicBoundary(context.index, context.resolvedDegrees.length, context.resolvedDegree.degreeIndex)) {
-			return null;
-		}
-
-		label = isMinorQuality(chord.nombre) ? 'sus2' : 'sus4';
-		suspensionNote = label === 'sus2' ? chord.segunda : chord.cuarta;
-		originalVoicing = chooseVoicing({
-			baseNotes: baseNotes,
-			chordName: chord.nombre,
-			extraNotes: [],
-			initialMidiNote: context.options.initialMidiNote || 60,
-			kind: kind,
-			previousPlan: previousPlan,
-			voices: progressionState.voices
-		});
-		suspendedVoicing = chooseVoicing({
-			baseNotes: suspendedNotes(baseNotes, suspensionNote),
-			chordName: chord.nombre,
-			extraNotes: [],
-			initialMidiNote: context.options.initialMidiNote || 60,
-			kind: kind,
-			previousPlan: previousPlan,
-			voices: progressionState.voices
-		});
-		originalScore = voiceLeadingTransitionScore(previousPlan, originalVoicing);
-		suspendedScore = voiceLeadingTransitionScore(previousPlan, suspendedVoicing);
-		probability = suspensionProbability({
-			originalScore: originalScore,
-			progressionState: progressionState,
-			suspendedScore: suspendedScore
-		});
-
-		if (!voiceMovesParsimoniouslyToNote(previousPlan.voiceNotes, suspensionNote, context.options.initialMidiNote || 60)) {
-			probability *= 0.5;
-		}
-
-		if (rng() >= Math.min(0.55, probability)) {
-			return null;
-		}
-
-		return {
-			label: label,
-			note: suspensionNote
-		};
-	}
-
-	function suspensionProbability(options) {
-		var progressionState = options.progressionState || {};
-		var probability = 0.045 +
-			Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 25) / 360 +
-			Math.max(0, numberOrDefault(progressionState.tensions, 0) - 30) / 430;
-
-		if (numberOrDefault(progressionState.voices, 4) >= 4) {
-			probability += 0.02;
-		}
-
-		if (progressionState.articulation === 'sustain' || progressionState.articulation === 'legato') {
-			probability += 0.02;
-		} else if (progressionState.articulation === 'staccato') {
-			probability -= 0.035;
-		}
-
-		if (numberOrDefault(progressionState.counterpoint, 0) >= 70 && numberOrDefault(progressionState.tensions, 0) >= 70) {
-			probability += 0.08;
-		}
-
-		if (options.suspendedScore <= options.originalScore) {
-			probability += 0.14;
-		} else if (options.suspendedScore <= options.originalScore + 2) {
-			probability += 0.09;
-		} else {
-			probability -= 0.05;
-		}
-
-		return Math.max(0.03, probability);
-	}
-
-	function suspendedNotes(baseNotes, suspensionNote) {
-		var result = baseNotes.slice();
-
-		if (result.length > 1) {
-			result[1] = suspensionNote;
-		}
-
-		return result;
-	}
-
-	function voiceMovesParsimoniouslyToNote(voiceNotes, noteName, initialMidiNote) {
-		var targetMidi = noteNameToMidi(noteName, initialMidiNote);
-
-		for (var i = 0; i < (voiceNotes || []).length; i++) {
-			if (targetMidi != null && Math.abs(nearestMidiTo(voiceNotes[i].midiNote, targetMidi) - voiceNotes[i].midiNote) <= 2) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	function shouldUseSeventh(context) {
-		var progressionState = context.progressionState;
-		var resolvedDegree = context.resolvedDegree;
-		var nextResolvedDegree = context.resolvedDegrees[context.index + 1];
-		var rng = typeof context.options.rng === 'function' ? context.options.rng : function () { return 1; };
-		var degreeIndex = resolvedDegree.degreeIndex;
-		var voices = Math.max(1, Math.min(numberOrDefault(progressionState.voices, 4), 6));
-		var probability = 0.08;
-
-		if (!resolvedDegree.chord || voices < 4) {
-			return false;
-		}
-
-		if (isTonicBoundary(context.index, context.resolvedDegrees.length, degreeIndex)) {
-			return false;
-		}
-
-		probability += Math.max(0, numberOrDefault(progressionState.tensions, 0) - 25) / 250;
-		probability += Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 35) / 350;
-
-		if (degreeIndex === 4 || degreeIndex === 1) {
-			probability += 0.14;
-		}
-
-		if (nextResolvedDegree && nextResolvedDegree.degreeIndex === 0) {
-			probability += 0.12;
-		}
-
-		if (seventhImprovesMovement(context)) {
-			probability += 0.22;
-		}
-
-		return rng() < Math.min(0.72, probability);
-	}
-
-	function seventhImprovesMovement(context) {
-		var previousPlan = context.previousPlan;
-		var chord = context.resolvedDegree.chord;
-		var initialMidiNote = context.options.initialMidiNote || 60;
-		var voices = context.progressionState.voices;
-		var triadVoicing;
-		var seventhVoicing;
-
-		if (!previousPlan || !chord) {
-			return false;
-		}
-
-		triadVoicing = chooseVoicing({
-			baseNotes: triadNotes(chord),
-			chordName: chord.nombre,
-			extraNotes: [],
-			initialMidiNote: initialMidiNote,
-			kind: 'triad',
-			previousPlan: previousPlan,
-			voices: voices
-		});
-		seventhVoicing = chooseVoicing({
-			baseNotes: chordNotes(chord),
-			chordName: chord.nombre,
-			extraNotes: [],
-			initialMidiNote: initialMidiNote,
-			kind: 'seventh',
-			previousPlan: previousPlan,
-			voices: voices
-		});
-
-		return voiceLeadingTransitionScore(previousPlan, seventhVoicing) + 2 <= voiceLeadingTransitionScore(previousPlan, triadVoicing);
-	}
-
-	function isTonicBoundary(index, length, degreeIndex) {
-		return degreeIndex === 0 && (index === 0 || index === length - 1);
-	}
-
-	function chooseVoicing(options) {
-		var labels = options.kind === 'seventh' ? ['', '6/5', '4/3', '4/2'] : ['', '6', '6/4'];
-		var maxInversions = Math.min(options.baseNotes.length, labels.length);
-		var bestVoicing = null;
-		var bestScore = Infinity;
-		var forcedInversionIndex = options.forceInversionIndex != null ? clampInversionIndex(options.forceInversionIndex, maxInversions) : null;
-
-		if (forcedInversionIndex != null) {
-			bestVoicing = createVoicing({
-				baseNotes: options.baseNotes,
-				chordName: options.chordName,
-				extraNotes: options.extraNotes,
-				initialMidiNote: options.initialMidiNote,
-				inversionIndex: forcedInversionIndex,
-				inversionLabel: labels[forcedInversionIndex],
-				kind: options.kind,
-				voices: options.voices
-			});
-
-			return options.previousPlan ? fitVoicingToPrevious(bestVoicing, options.previousPlan) : bestVoicing;
-		}
-
-		for (var i = 0; i < maxInversions; i++) {
-			var voicing = createVoicing({
-				baseNotes: options.baseNotes,
-				chordName: options.chordName,
-				extraNotes: options.extraNotes,
-				initialMidiNote: options.initialMidiNote,
-				inversionIndex: i,
-				inversionLabel: labels[i],
-				kind: options.kind,
-				voices: options.voices
-			});
-			if (options.previousPlan) {
-				voicing = fitVoicingToPrevious(voicing, options.previousPlan);
-			}
-			var score = options.previousPlan ? voiceLeadingTransitionScore(options.previousPlan, voicing) : firstVoicingScore(voicing);
-
-			if (score < bestScore) {
-				bestScore = score;
-				bestVoicing = voicing;
-			}
-		}
-
-		return bestVoicing || createVoicing({
-			baseNotes: options.baseNotes,
-			chordName: options.chordName,
-			extraNotes: options.extraNotes,
-			initialMidiNote: options.initialMidiNote,
-			inversionIndex: 0,
-			inversionLabel: '',
-			kind: options.kind,
-			voices: options.voices
-		});
-	}
-
-	function clampInversionIndex(value, maxInversions) {
-		var numericValue = parseInt(value, 10);
-
-		if (isNaN(numericValue)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(maxInversions - 1, numericValue));
-	}
-
-	function fitVoicingToPrevious(voicing, previousPlan) {
-		var fittedMidiNotes = [];
-		var fittedVoiceNotes = [];
-		var previousMidiNotes = previousPlan.midiNotes || [];
-
-		for (var i = 0; i < voicing.midiNotes.length; i++) {
-			var referenceNote = previousMidiNotes[Math.min(i, previousMidiNotes.length - 1)];
-			var midiNote = referenceNote != null ? nearestMidiTo(referenceNote, voicing.midiNotes[i]) : voicing.midiNotes[i];
-
-			if (i > 0) {
-				while (midiNote <= fittedMidiNotes[i - 1]) {
-					midiNote += 12;
-				}
-			}
-
-			fittedMidiNotes.push(midiNote);
-			fittedVoiceNotes.push(extendProgression(voicing.voiceNotes[i], {
-				midiNote: midiNote
-			}));
-		}
-
-		return extendProgression(voicing, {
-			midiNotes: fittedMidiNotes,
-			voiceNotes: fittedVoiceNotes
-		});
-	}
-
-	function annotateMeasureVoiceLeading(measures, progressionState) {
-		for (var i = 0; i < measures.length; i++) {
-			var previousMeasure = measures[i - 1] || null;
-			var nextMeasure = measures[i + 1] || null;
-
-			measures[i].pedalsIn = measures[i].pedalsIn || [];
-			measures[i].pedalsOut = measures[i].pedalsOut || [];
-			measures[i].voiceLeading = {
-				commonTones: previousMeasure ? commonVoiceLinks(previousMeasure, measures[i]).length : 0,
-				exteriorParallelPerfects: previousMeasure ? countParallelPerfects(previousMeasure.midiNotes, measures[i].midiNotes, true) : 0,
-				parallelPerfects: previousMeasure ? countParallelPerfects(previousMeasure.midiNotes, measures[i].midiNotes, false) : 0,
-				score: previousMeasure ? voiceLeadingTransitionScore(previousMeasure, measures[i]) : firstVoicingScore(measures[i])
-			};
-
-			if (nextMeasure) {
-				createPedalsBetween(measures[i], nextMeasure, progressionState);
-			}
-		}
-
-		return measures;
-	}
-
-	function createPedalsBetween(currentMeasure, nextMeasure, progressionState) {
-		var links = commonVoiceLinks(currentMeasure, nextMeasure);
-		var maxPedals = numberOrDefault(progressionState.counterpoint, 0) >= 70 ? 2 : 1;
-		var pedalProbability = 0.16 +
-			Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 20) / 180 +
-			Math.max(0, links.length - 1) * 0.12;
-		var selectedLinks = links.slice(0, Math.min(maxPedals, links.length));
-
-		if (!selectedLinks.length || pedalProbability < 0.25) {
-			return;
-		}
-
-		nextMeasure.pedalsIn = nextMeasure.pedalsIn || [];
-		nextMeasure.pedalsOut = nextMeasure.pedalsOut || [];
-
-		for (var i = 0; i < selectedLinks.length; i++) {
-			var link = selectedLinks[i];
-			var pedal = {
-				durationSeconds: nextMeasure.durationSeconds,
-				fromBar: currentMeasure.bar,
-				midiNote: link.midiNote,
-				note: link.note,
-				toBar: nextMeasure.bar
-			};
-
-			alignPedalVoice(nextMeasure, link);
-			currentMeasure.pedalsOut.push(pedal);
-			nextMeasure.pedalsIn.push(pedal);
-		}
-
-		nextMeasure.midiNotes = midiNotesFromVoiceNotes(nextMeasure.voiceNotes);
-	}
-
-	function alignPedalVoice(measure, link) {
-		for (var i = 0; i < measure.voiceNotes.length; i++) {
-			if (normalizePitchName(measure.voiceNotes[i].note) === normalizePitchName(link.note)) {
-				measure.voiceNotes[i] = extendProgression(measure.voiceNotes[i], {
-					midiNote: link.midiNote,
-					role: measure.voiceNotes[i].role + '-pedal'
-				});
-				return;
-			}
-		}
-	}
-
-	function commonVoiceLinks(firstMeasure, secondMeasure) {
-		var links = [];
-		var usedSecondVoices = {};
-
-		for (var i = 0; i < (firstMeasure.voiceNotes || []).length; i++) {
-			for (var j = 0; j < (secondMeasure.voiceNotes || []).length; j++) {
-				if (usedSecondVoices[j] || normalizePitchName(firstMeasure.voiceNotes[i].note) !== normalizePitchName(secondMeasure.voiceNotes[j].note)) {
-					continue;
-				}
-
-				links.push({
-					firstVoiceIndex: i,
-					midiNote: firstMeasure.voiceNotes[i].midiNote,
-					note: firstMeasure.voiceNotes[i].note,
-					secondVoiceIndex: j
-				});
-				usedSecondVoices[j] = true;
-				break;
-			}
-		}
-
-		return links.sort(function (a, b) {
-			return Math.abs(a.firstVoiceIndex - a.secondVoiceIndex) - Math.abs(b.firstVoiceIndex - b.secondVoiceIndex);
-		});
-	}
-
-	function midiNotesFromVoiceNotes(voiceNotes) {
-		var result = [];
-
-		for (var i = 0; i < (voiceNotes || []).length; i++) {
-			result.push(voiceNotes[i].midiNote);
-		}
-
-		return result;
-	}
-
-	function createVoicing(options) {
-		var voiceCount = Math.max(1, Math.min(numberOrDefault(options.voices, 4), 6));
-		var preparedBase = prepareBaseNotesForVoiceCount(options.baseNotes, options.kind, voiceCount, options.chordName);
-		var baseNotes = rotate(preparedBase.notes, options.inversionIndex);
-		var notes = baseNotes.slice();
-		var factorRoles = rotate(preparedBase.roles, options.inversionIndex);
-		var roles = factorRoles.slice();
-		var duplicateIndex = 0;
-		var duplicatePreference = options.kind === 'triad' ? ['root', 'third', 'fifth'] : ['root', 'third', 'seventh', 'fifth'];
-		var midiNotes;
-		var voiceNotes = [];
-
-		while (options.kind === 'triad' && notes.length < Math.min(voiceCount, 4) && notes.length > 0) {
-			var duplicate = duplicateFactor(options.baseNotes, duplicatePreference[duplicateIndex % duplicatePreference.length], options.kind);
-			notes.push(duplicate.note);
-			roles.push(duplicate.role + '-doubling');
-			duplicateIndex += 1;
-		}
-
-		for (var i = 0; i < options.extraNotes.length && notes.length < voiceCount; i++) {
-			notes.push(options.extraNotes[i]);
-			roles.push('tension');
-		}
-
-		while (notes.length < voiceCount && notes.length > 0) {
-			duplicate = duplicateFactor(options.baseNotes, duplicatePreference[duplicateIndex % duplicatePreference.length], options.kind);
-			notes.push(duplicate.note);
-			roles.push(duplicate.role + '-doubling');
-			duplicateIndex += 1;
-		}
-
-		notes = notes.slice(0, voiceCount);
-		roles = roles.slice(0, voiceCount);
-		midiNotes = notesToAscendingMidi(notes, options.initialMidiNote, options.inversionIndex);
-
-		for (var j = 0; j < notes.length; j++) {
-			voiceNotes.push({
-				midiNote: midiNotes[j],
-				note: notes[j],
-				role: roles[j]
-			});
-		}
-
-		return {
-			inversionIndex: options.inversionIndex,
-			inversionLabel: options.inversionLabel,
-			midiNotes: midiNotes,
-			notes: notes,
-			voiceNotes: voiceNotes
-		};
-	}
-
-	function prepareBaseNotesForVoiceCount(baseNotes, kind, voiceCount, chordName) {
-		var roles = factorRolesForKind(kind);
-		var selectedNotes = [];
-		var selectedRoles = [];
-		var allowedRoles;
-
-		if (kind !== 'seventh' || voiceCount !== 3 || baseNotes.length < 4) {
-			return {
-				notes: baseNotes.slice(),
-				roles: roles
-			};
-		}
-
-		allowedRoles = isDiminishedSeventhQuality(chordName) ?
-			{ fifth: true, root: true, third: true } :
-			{ root: true, seventh: true, third: true };
-
-		for (var i = 0; i < baseNotes.length; i++) {
-			if (allowedRoles[roles[i]]) {
-				selectedNotes.push(baseNotes[i]);
-				selectedRoles.push(roles[i]);
-			}
-		}
-
-		return {
-			notes: selectedNotes,
-			roles: selectedRoles
-		};
-	}
-
-	function rotate(values, startIndex) {
-		var result = [];
-
-		for (var i = 0; i < values.length; i++) {
-			result.push(values[(startIndex + i) % values.length]);
-		}
-
-		return result;
-	}
-
-	function factorRolesForKind(kind) {
-		return kind === 'seventh' ? ['root', 'third', 'fifth', 'seventh'] : ['root', 'third', 'fifth'];
-	}
-
-	function duplicateFactor(baseNotes, role, kind) {
-		var roleIndex = {
-			fifth: 2,
-			root: 0,
-			seventh: kind === 'seventh' ? 3 : 0,
-			third: 1
-		}[role];
-
-		return {
-			note: baseNotes[Math.min(roleIndex, baseNotes.length - 1)] || baseNotes[0],
-			role: role
-		};
-	}
-
-	function notesToAscendingMidi(notes, initialMidiNote, inversionIndex) {
-		var result = [];
-		var previousNote = null;
-
-		for (var i = 0; i < notes.length; i++) {
-			var midiNote = noteNameToMidi(notes[i], initialMidiNote);
-
-			if (midiNote == null) {
-				continue;
-			}
-
-			midiNote -= 12;
-
-			while (previousNote != null && midiNote <= previousNote) {
-				midiNote += 12;
-			}
-
-			result.push(midiNote);
-			previousNote = midiNote;
-		}
-
-		return result;
-	}
-
-	function noteNameToMidi(noteName, initialMidiNote) {
-		var index = noteIndex(noteName);
-
-		return index == null ? null : initialMidiNote + index;
-	}
-
-	function noteIndex(noteName) {
-		var indexes = {
-			C: 0,
-			'C#': 1,
-			Db: 1,
-			D: 2,
-			'D#': 3,
-			Eb: 3,
-			E: 4,
-			F: 5,
-			'F#': 6,
-			Gb: 6,
-			G: 7,
-			'G#': 8,
-			Ab: 8,
-			A: 9,
-			'A#': 10,
-			Bb: 10,
-			B: 11
-		};
-		var normalizedName = normalizePitchName(noteName);
-
-		return indexes[normalizedName] != null ? indexes[normalizedName] : null;
-	}
-
-	function normalizePitchName(noteName) {
-		var match = /^([A-G])([#b♯♭]?)/.exec(String(noteName || '').replace('♯', '#').replace('♭', 'b'));
-
-		return match ? match[1] + match[2] : '';
-	}
-
-	function transitionScore(previousMidiNotes, nextMidiNotes) {
-		var length = Math.min(previousMidiNotes.length, nextMidiNotes.length);
-		var score = Math.abs(previousMidiNotes.length - nextMidiNotes.length) * 4;
-
-		for (var i = 0; i < length; i++) {
-			score += Math.abs(nearestMidiTo(previousMidiNotes[i], nextMidiNotes[i]) - previousMidiNotes[i]);
-		}
-
-		return score;
-	}
-
-	function voiceLeadingTransitionScore(previousPlan, nextPlan) {
-		var score = transitionScore(previousPlan.midiNotes, nextPlan.midiNotes);
-		var commonTones = commonPitchNames(previousPlan.notes, nextPlan.notes).length;
-		var parallelPerfects = countParallelPerfects(previousPlan.midiNotes, nextPlan.midiNotes, false);
-		var exteriorParallelPerfects = countParallelPerfects(previousPlan.midiNotes, nextPlan.midiNotes, true);
-
-		score -= commonTones * 3;
-		score += parallelPerfects * 18;
-		score += exteriorParallelPerfects * 28;
-
-		return score;
-	}
-
-	function commonPitchNames(firstNotes, secondNotes) {
-		var common = [];
-		var firstNamesList = noteNamesFromValue(firstNotes);
-		var secondNamesList = noteNamesFromValue(secondNotes);
-		var secondNames = {};
-
-		for (var i = 0; i < secondNamesList.length; i++) {
-			secondNames[normalizePitchName(secondNamesList[i])] = true;
-		}
-
-		for (var j = 0; j < firstNamesList.length; j++) {
-			var name = normalizePitchName(firstNamesList[j]);
-
-			if (secondNames[name] && common.indexOf(name) === -1) {
-				common.push(name);
-			}
-		}
-
-		return common;
-	}
-
-	function noteNamesFromValue(value) {
-		var result = [];
-
-		if (!value) {
-			return result;
-		}
-
-		if (Object.prototype.toString.call(value) === '[object Array]') {
-			return value;
-		}
-
-		if (value.notes) {
-			return value.notes;
-		}
-
-		for (var i = 0; i < (value.voiceNotes || []).length; i++) {
-			result.push(value.voiceNotes[i].note);
-		}
-
-		return result;
-	}
-
-	function countParallelPerfects(previousMidiNotes, nextMidiNotes, exteriorOnly) {
-		var count = 0;
-		var length = Math.min((previousMidiNotes || []).length, (nextMidiNotes || []).length);
-
-		for (var i = 0; i < length; i++) {
-			for (var j = i + 1; j < length; j++) {
-				if (exteriorOnly && !(i === 0 && j === length - 1)) {
-					continue;
-				}
-
-				if (isParallelPerfect(previousMidiNotes, nextMidiNotes, i, j)) {
-					count += 1;
-				}
-			}
-		}
-
-		return count;
-	}
-
-	function isParallelPerfect(previousMidiNotes, nextMidiNotes, lowerIndex, upperIndex) {
-		var previousInterval = intervalClass(previousMidiNotes[upperIndex] - previousMidiNotes[lowerIndex]);
-		var nextInterval = intervalClass(nextMidiNotes[upperIndex] - nextMidiNotes[lowerIndex]);
-		var lowerMotion = nextMidiNotes[lowerIndex] - previousMidiNotes[lowerIndex];
-		var upperMotion = nextMidiNotes[upperIndex] - previousMidiNotes[upperIndex];
-
-		if (!isPerfectInterval(previousInterval) || previousInterval !== nextInterval) {
-			return false;
-		}
-
-		if (lowerMotion === 0 || upperMotion === 0) {
-			return false;
-		}
-
-		return (lowerMotion > 0 && upperMotion > 0) || (lowerMotion < 0 && upperMotion < 0);
-	}
-
-	function intervalClass(interval) {
-		return Math.abs(interval) % 12;
-	}
-
-	function isPerfectInterval(interval) {
-		return interval === 0 || interval === 7;
-	}
-
-	function nearestMidiTo(referenceNote, midiNote) {
-		var nearest = midiNote;
-
-		while (nearest - referenceNote > 6) {
-			nearest -= 12;
-		}
-
-		while (referenceNote - nearest > 6) {
-			nearest += 12;
-		}
-
-		return nearest;
-	}
-
-	function firstVoicingScore(voicing) {
-		return voicing.inversionIndex * 2 + voiceSpan(voicing.midiNotes) / 12;
-	}
-
-	function voiceSpan(midiNotes) {
-		if (!midiNotes.length) {
-			return 0;
-		}
-
-		return midiNotes[midiNotes.length - 1] - midiNotes[0];
-	}
-
-	function createGenerationPlan(options) {
-		var progressionState = options.progressionState;
-		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
-		var mode = progressionMode(options.report);
-		var pattern = choosePattern({
-			mode: mode,
-			progressionState: progressionState,
-			rng: rng,
-			rules: options.rules
-		});
-		var degrees = progressionState.bars >= 8 ?
-			composePhraseBlocks({
-				mode: mode,
-				pattern: pattern,
-				progressionState: progressionState,
-				rng: rng,
-				rules: options.rules
-			}) :
-			fitDegreesToBars(pattern, progressionState.bars);
-
-		return {
-			degrees: degrees,
-			pattern: pattern,
-			voiceLeading: voiceLeadingProfile(progressionState)
-		};
-	}
-
-	function choosePattern(options) {
-		var patterns = options.rules && options.rules.patterns ? options.rules.patterns : [];
-		var candidates = [];
-		var totalWeight = 0;
-		var selectedValue;
-
-		for (var i = 0; i < patterns.length; i++) {
-			var weight;
-
-			if (!matchesMode(patterns[i], options.mode)) {
-				continue;
-			}
-
-			weight = adjustedPatternWeight(patterns[i], options.progressionState, options.mode);
-			if (weight <= 0) {
-				continue;
-			}
-
-			candidates.push({
-				pattern: patterns[i],
-				weight: weight
-			});
-			totalWeight += candidates[candidates.length - 1].weight;
-		}
-
-		if (!candidates.length) {
-			return fallbackPatternForStyle(options.progressionState);
-		}
-
-		selectedValue = options.rng() * totalWeight;
-
-		for (var j = 0; j < candidates.length; j++) {
-			selectedValue -= candidates[j].weight;
-			if (selectedValue <= 0) {
-				return candidates[j].pattern;
-			}
-		}
-
-		return candidates[candidates.length - 1].pattern;
-	}
-
-	function adjustedPatternWeight(pattern, progressionState, mode) {
-		var weight = pattern.weight || 1;
-
-		if (isModernStyle(progressionState) && isAuthenticCadence(pattern.cadence)) {
-			return 0;
-		}
-
-		if (isClassicStyle(progressionState) && !isAuthenticCadence(pattern.cadence)) {
-			return 0;
-		}
-
-		weight += affinityScore(progressionState.counterpoint, pattern.counterpoint);
-		weight += affinityScore(progressionState.modalInterchange, pattern.modalColor);
-		weight += affinityScore(progressionState.tensions, pattern.tensionAffinity);
-		weight += commonToneDegreeScore(pattern.degrees, progressionState);
-		weight *= sensitiveDegreeFactor(pattern.degrees, mode, progressionState);
-
-		if (progressionState.articulation === 'arpeggio' && pattern.form === 'circle-of-fifths') {
-			weight += 8;
-		}
-
-		if (progressionState.articulation === 'legato' && pattern.cadence === 'authentic') {
-			weight += 5;
-		}
-
-		if (progressionState.articulation === 'staccato' && pattern.cadence === 'half') {
-			weight += 5;
-		}
-
-		return Math.max(1, weight);
-	}
-
-	function fallbackPatternForStyle(progressionState) {
-		if (isModernStyle(progressionState)) {
-			return {
-				cadence: 'half',
-				counterpoint: 70,
-				degrees: [0, 3, 1, 4],
-				form: 'fallback-modern',
-				id: 'fallback-modern-half',
-				weight: 1
-			};
-		}
-
-		return {
-			cadence: 'authentic',
-			counterpoint: 70,
-			degrees: [0, 3, 4, 0],
-			form: 'fallback-classic',
-			id: 'fallback-classic-authentic',
-			weight: 1
-		};
-	}
-
-	function affinityScore(value, target) {
-		return Math.max(0, 18 - Math.abs((Number(value) || 0) - (Number(target) || 0)) / 4);
-	}
-
-	function matchesMode(pattern, mode) {
-		return !pattern.modes || pattern.modes.indexOf(mode) > -1;
-	}
-
-	function progressionMode(report) {
-		return report && report.mode === 'M' ? 'major' : 'minor';
-	}
-
-	function fitDegreesToBars(pattern, bars) {
-		var fitted = [];
-		var sourceDegrees = pattern.degrees || [0, 3, 4, 0];
-		var normalizedBars = numberOrDefault(bars, sourceDegrees.length);
-		var borrowedIndexes = pattern.borrowed || [];
-
-		for (var i = 0; i < normalizedBars; i++) {
-			fitted.push({
-				index: sourceDegrees[i % sourceDegrees.length],
-				source: borrowedIndexes.indexOf(i % sourceDegrees.length) > -1 ? 'parallel' : 'diatonic'
-			});
-		}
-
-		forceCadentialEnding(fitted, pattern);
-
-		return fitted;
-	}
-
-	function composePhraseBlocks(options) {
-		var bars = numberOrDefault(options.progressionState.bars, 8);
-		var blockCount = Math.ceil(bars / 4);
-		var degrees = [];
-		var previousBlockId = '';
-
-		for (var blockIndex = 0; blockIndex < blockCount; blockIndex++) {
-			var remainingBars = bars - degrees.length;
-			var blockLength = Math.min(4, remainingBars);
-			var isFinalBlock = blockIndex === blockCount - 1;
-			var cadence = isFinalBlock ? finalCadenceForPattern(options.pattern, options.progressionState, options.rng) : chooseIntermediateCadence(options.rng);
-			var block = choosePhraseBlock({
-				cadence: cadence,
-				mode: options.mode,
-				previousBlockId: previousBlockId,
-				progressionState: options.progressionState,
-				rng: options.rng,
-				rules: options.rules
-			});
-
-			previousBlockId = block.id;
-			degrees = degrees.concat(fitBlockToBars(block, blockLength));
-		}
-
-		return degrees.slice(0, bars);
-	}
-
-	function finalCadenceForPattern(pattern, progressionState, rng) {
-		if (isModernStyle(progressionState)) {
-			return modernFinalCadence(pattern, rng);
-		}
-
-		if (pattern && (pattern.cadence === 'plagal' || pattern.cadence === 'mixed-plagal' || pattern.cadence === 'deceptive')) {
-			return pattern.cadence;
-		}
-
-		return 'authentic';
-	}
-
-	function modernFinalCadence(pattern, rng) {
-		var value;
-
-		if (pattern && !isAuthenticCadence(pattern.cadence)) {
-			return pattern.cadence === 'mixed-plagal' ? 'plagal' : pattern.cadence;
-		}
-
-		value = typeof rng === 'function' ? rng() : Math.random();
-
-		if (value < 0.34) {
-			return 'half';
-		}
-
-		if (value < 0.68) {
-			return 'plagal';
-		}
-
-		return 'deceptive';
-	}
-
-	function chooseIntermediateCadence(rng) {
-		var value = rng();
-
-		if (value < 0.42) {
-			return 'half';
-		}
-
-		if (value < 0.72) {
-			return 'plagal';
-		}
-
-		return 'deceptive';
-	}
-
-	function choosePhraseBlock(options) {
-		var blocks = options.rules && options.rules.phraseBlocks ? options.rules.phraseBlocks : fallbackPhraseBlocks();
-		var candidates = [];
-		var totalWeight = 0;
-		var selectedValue;
-
-		for (var i = 0; i < blocks.length; i++) {
-			if (!matchesMode(blocks[i], options.mode) || !matchesCadence(blocks[i], options.cadence)) {
-				continue;
-			}
-
-			candidates.push({
-				block: blocks[i],
-				weight: adjustedBlockWeight(blocks[i], options.progressionState, options.previousBlockId, options.mode)
-			});
-			totalWeight += candidates[candidates.length - 1].weight;
-		}
-
-		if (candidates.length > 1) {
-			candidates = candidates.filter(function (candidate) {
-				return candidate.block.id !== options.previousBlockId;
-			});
-			totalWeight = sumCandidateWeights(candidates);
-		}
-
-		if (!candidates.length) {
-			return fallbackPhraseBlocks()[0];
-		}
-
-		selectedValue = options.rng() * totalWeight;
-
-		for (var j = 0; j < candidates.length; j++) {
-			selectedValue -= candidates[j].weight;
-			if (selectedValue <= 0) {
-				return candidates[j].block;
-			}
-		}
-
-		return candidates[candidates.length - 1].block;
-	}
-
-	function sumCandidateWeights(candidates) {
-		var totalWeight = 0;
-
-		for (var i = 0; i < candidates.length; i++) {
-			totalWeight += candidates[i].weight;
-		}
-
-		return totalWeight;
-	}
-
-	function adjustedBlockWeight(block, progressionState, previousBlockId, mode) {
-		var weight = block.weight || 1;
-
-		weight += affinityScore(progressionState.counterpoint, block.counterpoint);
-		weight += affinityScore(progressionState.modalInterchange, block.modalColor);
-		weight += affinityScore(progressionState.tensions, block.tensionAffinity);
-		weight += commonToneDegreeScore(block.degrees, progressionState);
-		weight *= sensitiveDegreeFactor(block.degrees, mode, progressionState);
-
-		if (block.id === previousBlockId) {
-			weight = Math.max(1, weight * 0.12);
-		}
-
-		return Math.max(1, weight);
-	}
-
-	function sensitiveDegreeFactor(degrees, mode, progressionState) {
-		var sensitiveDegree = mode === 'major' ? 6 : 1;
-		var factor = 1;
-
-		if (!isModernStyle(progressionState) || !degrees) {
-			return factor;
-		}
-
-		for (var i = 0; i < degrees.length; i++) {
-			if (degrees[i] === sensitiveDegree) {
-				factor *= 0.32;
-			}
-		}
-
-		return factor;
-	}
-
-	function commonToneDegreeScore(degrees, progressionState) {
-		var score = 0;
-		var affinity = 0.4 + numberOrDefault(progressionState.counterpoint, 0) / 160;
-
-		if (!degrees || degrees.length < 2) {
-			return 0;
-		}
-
-		for (var i = 1; i < degrees.length; i++) {
-			var distance = Math.abs((degrees[i] % 7) - (degrees[i - 1] % 7));
-			var circularDistance = Math.min(distance, 7 - distance);
-
-			if (circularDistance === 0) {
-				score += 3.5;
-			} else if (circularDistance === 2) {
-				score += 3;
-			} else if (circularDistance === 3) {
-				score += 2;
-			} else if (circularDistance === 4) {
-				score += 1.5;
-			}
-		}
-
-		return score * affinity;
-	}
-
-	function isModernStyle(progressionState) {
-		return progressionState && progressionState.style === 'modern';
-	}
-
-	function isClassicStyle(progressionState) {
-		return progressionState && progressionState.style === 'classic';
-	}
-
-	function isAuthenticCadence(cadence) {
-		return cadence === 'authentic';
-	}
-
-	function matchesCadence(block, cadence) {
-		return block.cadence === cadence || (cadence === 'mixed-plagal' && block.cadence === 'plagal');
-	}
-
-	function fitBlockToBars(block, bars) {
-		var degrees = [];
-		var sourceDegrees = block.degrees || [0, 3, 4, 0];
-		var borrowedIndexes = block.borrowed || [];
-
-		for (var i = 0; i < bars; i++) {
-			degrees.push({
-				index: sourceDegrees[i % sourceDegrees.length],
-				source: borrowedIndexes.indexOf(i % sourceDegrees.length) > -1 ? 'parallel' : 'diatonic'
-			});
-		}
-
-		return degrees;
-	}
-
-	function fallbackPhraseBlocks() {
-		return [
-			{ cadence: 'half', degrees: [0, 1, 3, 4], id: 'fallback-half', modes: ['major', 'minor'], weight: 1 },
-			{ cadence: 'authentic', degrees: [0, 3, 4, 0], id: 'fallback-authentic', modes: ['major', 'minor'], weight: 1 }
-		];
-	}
-
-	function forceCadentialEnding(degrees, pattern) {
-		if (degrees.length < 2) {
-			return;
-		}
-
-		if (pattern.cadence === 'authentic') {
-			degrees[degrees.length - 2] = { index: 4, source: 'diatonic' };
-			degrees[degrees.length - 1] = { index: 0, source: 'diatonic' };
-		} else if (pattern.cadence === 'plagal' || pattern.cadence === 'mixed-plagal') {
-			degrees[degrees.length - 2] = { index: 3, source: pattern.cadence === 'mixed-plagal' ? 'parallel' : 'diatonic' };
-			degrees[degrees.length - 1] = { index: 0, source: 'diatonic' };
-		} else if (pattern.cadence === 'deceptive') {
-			degrees[degrees.length - 2] = { index: 4, source: 'diatonic' };
-			degrees[degrees.length - 1] = { index: 5, source: 'diatonic' };
-		} else if (pattern.cadence === 'half') {
-			degrees[degrees.length - 1] = { index: 4, source: 'diatonic' };
-		}
-	}
-
-	function resolveGeneratedDegrees(options) {
-		var resolved = [];
-		var degrees = options.degrees || [];
-		var scaleNotes = options.report.scaleNotes || [];
-		var scaleChords = options.report.scaleChords || [];
-		var parallelChords = options.report.parallelScaleChords || [];
-
-		for (var i = 0; i < degrees.length; i++) {
-			resolved.push({
-				chord: degrees[i].source === 'parallel' && parallelChords[degrees[i].index] ? parallelChords[degrees[i].index] : scaleChords[degrees[i].index],
-				degree: scaleNotes[degrees[i].index] ? scaleNotes[degrees[i].index].grado : '',
-				degreeIndex: degrees[i].index,
-				source: degrees[i].source || 'diatonic'
-			});
-		}
-
-		return resolved;
-	}
-
-	function addTensionsToNotes(notes, options) {
-		var result = notes.slice();
-		var labels = [];
-		var maxVoices = Math.max(1, Math.min(numberOrDefault(options.voices, 4), 6));
-
-		if ((Number(options.tensions) || 0) >= 40 && maxVoices >= 5) {
-			addScaleNote(result, options.scaleNotes, options.degreeIndex + 1);
-			labels.push('add9');
-		}
-
-		if ((Number(options.tensions) || 0) >= 70 && maxVoices >= 6) {
-			addScaleNote(result, options.scaleNotes, options.degreeIndex + 5);
-			labels.push('add13');
-		}
-
-		return {
-			label: labels.join(' '),
-			notes: result.slice(0, maxVoices)
-		};
-	}
-
-	function addScaleNote(notes, scaleNotes, degreeIndex) {
-		var scaleNote = scaleNotes && scaleNotes.length ? scaleNotes[degreeIndex % scaleNotes.length] : null;
-
-		if (scaleNote && notes.indexOf(scaleNote.nombre) === -1) {
-			notes.push(scaleNote.nombre);
-		}
-	}
-
-	function displayDegree(degree, inversionLabel, suspensionLabel) {
-		var name = degree || '';
-
-		if (inversionLabel) {
-			name += ' ' + inversionLabel;
-		}
-
-		return suspensionLabel ? name + ' ' + suspensionLabel : name;
-	}
-
-	function displayName(chordName, inversionLabel, suspensionLabel, tensionLabel) {
-		var name = chordName || '';
-
-		if (inversionLabel) {
-			name += ' ' + inversionLabel;
-		}
-
-		if (suspensionLabel) {
-			name += ' ' + suspensionLabel;
-		}
-
-		return tensionLabel ? name + ' ' + tensionLabel : name;
-	}
-
-	function triadName(chord) {
-		var chordName = chord ? chord.nombre : '';
-		var rootMatch = /^([A-G](#|b|♭)?)/.exec(chordName);
-		var root = rootMatch ? rootMatch[1].replace('b', '♭') : chordName;
-		var suffix = chordQualitySuffix(chordName);
-
-		if (!root) {
-			return '';
-		}
-
-		if (suffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
-			return root + 'º';
-		}
-
-		if (suffix.indexOf('mmaj7') >= 0 || suffix.indexOf('mMaj7') >= 0 || suffix.indexOf('m7') >= 0 || suffix === 'm') {
-			return root + 'm';
-		}
-
-		if (suffix.indexOf('aug') >= 0 || suffix.indexOf('+') >= 0) {
-			return root + '+';
-		}
-
-		return root;
-	}
-
-	function isMinorQuality(chordName) {
-		var suffix = chordQualitySuffix(chordName);
-		var lowerSuffix = suffix.toLowerCase();
-
-		if (lowerSuffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
-			return true;
-		}
-
-		if (lowerSuffix.indexOf('maj') === 0) {
-			return false;
-		}
-
-		return lowerSuffix.charAt(0) === 'm';
-	}
-
-	function isDiminishedSeventhQuality(chordName) {
-		var suffix = chordQualitySuffix(chordName);
-		var lowerSuffix = suffix.toLowerCase();
-
-		return lowerSuffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0 || suffix.indexOf('7â™­5') >= 0;
-	}
-
-	function formatDegreeForMeasure(degree, chord, useSeventh) {
-		if (useSeventh) {
-			return formatDegreeForChord(degree, chord ? chord.nombre : '');
-		}
-
-		return formatTriadDegreeForChord(degree, chord ? chord.nombre : '');
+		return chordPlanService.build(context);
 	}
 
 	function formatTriadDegreeForChord(degree, chordName) {
-		var cleanDegree = String(degree || '').replace('J', '').replace('M', '').replace('m', '');
-		var suffix = chordQualitySuffix(chordName);
-		var transformedDegree;
-
-		if (!cleanDegree) {
-			return '';
-		}
-
-		if (suffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
-			return cleanDegree.toLowerCase() + 'º';
-		}
-
-		if (suffix.indexOf('mmaj7') >= 0 || suffix.indexOf('mMaj7') >= 0 || suffix.indexOf('m7') >= 0 || suffix === 'm') {
-			transformedDegree = cleanDegree.toLowerCase();
-		} else {
-			transformedDegree = cleanDegree.toUpperCase();
-		}
-
-		if (suffix.indexOf('aug') >= 0 || suffix.indexOf('+') >= 0) {
-			transformedDegree += '+';
-		}
-
-		return transformedDegree;
+		return formattingService.formatTriadDegreeForChord(degree, chordName);
 	}
 
 	function formatDegreeForChord(degree, chordName) {
-		var transformedDegree = '';
-		var cleanDegree = String(degree || '').replace('J', '').replace('M', '').replace('m', '');
-		var chordQuality = chordQualitySuffix(chordName);
-
-		if (!cleanDegree) {
-			return '';
-		}
-
-		if (chordName.indexOf('mmaj7') >= 0) {
-			transformedDegree = cleanDegree.toLowerCase();
-		} else if (chordName.indexOf('maj7') >= 0) {
-			transformedDegree = cleanDegree.toUpperCase();
-		} else if (chordName.indexOf('m') >= 0) {
-			transformedDegree = cleanDegree.toLowerCase();
-		} else {
-			transformedDegree = cleanDegree.toUpperCase();
-		}
-
-		transformedDegree += chordQuality;
-
-		if (transformedDegree.indexOf('m7') >= 0 && transformedDegree.indexOf('dim7') === -1) {
-			transformedDegree = transformedDegree.replace('m', '');
-		}
-
-		return transformedDegree;
-	}
-
-	function chordQualitySuffix(chordName) {
-		return String(chordName || '')
-			.replace(/^[A-G](#|b|♭)?/, '')
-			.replace(/b5/g, '♭5');
-	}
-
-	function voiceLeadingProfile(progressionState) {
-		if (progressionState.counterpoint >= 70) {
-			return 'contrary-stepwise';
-		}
-
-		if (progressionState.counterpoint >= 35) {
-			return 'balanced';
-		}
-
-		return 'homophonic';
+		return formattingService.formatDegreeForChord(degree, chordName);
 	}
 
 	function normalizeProgressionState(progressionState) {
-		progressionState = progressionState || {};
-
-		return {
-			articulation: progressionState.articulation || 'sustain',
-			bars: numberOrDefault(progressionState.bars, 8),
-			beatUnit: numberOrDefault(progressionState.beatUnit, meterPart(progressionState.meter, 1, 4)),
-			beatsPerBar: numberOrDefault(progressionState.beatsPerBar, meterPart(progressionState.meter, 0, 4)),
-			bpm: numberOrDefault(progressionState.bpm, 120),
-			counterpoint: numberOrDefault(progressionState.counterpoint, 20),
-			meter: progressionState.meter || '4/4',
-			modalInterchange: numberOrDefault(progressionState.modalInterchange, 25),
-			style: progressionState.style === 'classic' ? 'classic' : 'modern',
-			tensions: numberOrDefault(progressionState.tensions, 35),
-			voices: numberOrDefault(progressionState.voices, 4)
-		};
-	}
-
-	function numberOrDefault(value, fallback) {
-		var number = Number(value);
-
-		return isFinite(number) ? number : fallback;
-	}
-
-	function meterPart(meter, partIndex, fallback) {
-		var parts = String(meter || '').split('/');
-		var number = Number(parts[partIndex]);
-
-		return isFinite(number) ? number : fallback;
-	}
-
-	function findInstrument(data, instrumentId) {
-		var instruments = data && data.midiInstruments ? data.midiInstruments : [];
-
-		for (var i = 0; i < instruments.length; i++) {
-			if (instruments[i].id === instrumentId) {
-				return instruments[i];
-			}
-		}
-
-		return instruments.length ? instruments[0] : {};
+		return stateNormalizer.normalize(progressionState);
 	}
 
 	global.CodaApplication = global.CodaApplication || {};
@@ -6049,18 +8522,21 @@
 		options = options || {};
 
 		var playbackService = options.playbackService;
-		var timerApi = options.timerApi || global;
+		var playbackSchedule = options.playbackSchedule || global.CodaProgressionPlaybackSchedule;
+		var eventPlayer = options.eventPlayer || global.CodaProgressionEventPlayer;
+		var playbackCallbacks = options.playbackCallbacks || global.CodaProgressionPlaybackCallbacks;
+		var playbackTimers = options.playbackTimers || global.CodaProgressionPlaybackTimers.create(options.timerApi || global);
 		var activeRun = null;
 
 		function play(progression, callbacks) {
 			callbacks = callbacks || {};
 
-			var startIndex = normalizeStartIndex(callbacks.startIndex, progression);
-			var schedule = buildProgressionPlaybackSchedule(progression, {
+			var startIndex = playbackSchedule.normalizeStartIndex(callbacks.startIndex, progression);
+			var schedule = playbackSchedule.buildProgressionPlaybackSchedule(progression, {
 				instrument: playbackInstrumentAttributes(),
 				startIndex: startIndex
 			});
-			var scheduledMeasures = buildScheduledMeasures(progression, startIndex);
+			var scheduledMeasures = playbackSchedule.buildScheduledMeasures(progression, startIndex);
 			var run;
 
 			if (!schedule.length || !playbackService) {
@@ -6073,7 +8549,7 @@
 				timers: []
 			};
 			activeRun = run;
-			runCallback(callbacks.onStart, progression, startIndex);
+			playbackCallbacks.run(callbacks.onStart, progression, startIndex);
 
 			if (shouldLoadBeforePlayback()) {
 				playbackService.load(function () {
@@ -6094,14 +8570,14 @@
 				return false;
 			}
 
-			clearTimers(run.timers);
+			playbackTimers.clear(run.timers);
 			activeRun = null;
 
 			if (playbackService && typeof playbackService.stopAllNotes === 'function') {
 				playbackService.stopAllNotes();
 			}
 
-			runCallback(run.callbacks.onStop);
+			playbackCallbacks.run(run.callbacks.onStop);
 			return true;
 		}
 
@@ -6136,29 +8612,29 @@
 
 		function schedulePlaybackEvents(run, schedule) {
 			for (var i = 0; i < schedule.length; i++) {
-				scheduleTimer(run, schedule[i].delay, createPlaybackCallback(run, schedule[i]));
+				playbackTimers.schedule(run, schedule[i].delay, createPlaybackCallback(run, schedule[i]));
 			}
 		}
 
 		function scheduleMetronomeEvents(run, progression, callbacks) {
 			var schedule;
 
-			if (!shouldPlayMetronome(callbacks) || !playbackService || typeof playbackService.playMetronomeClick !== 'function') {
+			if (!playbackService || typeof playbackService.playMetronomeClick !== 'function') {
 				return;
 			}
 
-			schedule = buildProgressionMetronomeSchedule(progression, {
+			schedule = playbackSchedule.buildProgressionMetronomeSchedule(progression, {
 				startIndex: callbacks.startIndex
 			});
 
 			for (var i = 0; i < schedule.length; i++) {
-				scheduleTimer(run, schedule[i].delay, createMetronomeCallback(run, schedule[i]));
+				playbackTimers.schedule(run, schedule[i].delay, createMetronomeCallback(run, schedule[i]));
 			}
 		}
 
 		function createMetronomeCallback(run, event) {
 			return function () {
-				if (activeRun === run) {
+				if (activeRun === run && playbackCallbacks.shouldPlayMetronome(run.callbacks)) {
 					playbackService.playMetronomeClick({
 						accent: event.accent,
 						bar: event.bar,
@@ -6172,172 +8648,43 @@
 		function createPlaybackCallback(run, event) {
 			return function () {
 				if (activeRun === run) {
-					playScheduledEvent(asImmediateEvent(event));
+					eventPlayer.play(playbackService, eventPlayer.asImmediateEvent(event));
 				}
 			};
-		}
-
-		function asImmediateEvent(event) {
-			var immediateEvent = {
-				arpeggioStep: event.arpeggioStep,
-				bar: event.bar,
-				degree: event.degree,
-				delay: 0,
-				duration: event.duration,
-				mode: event.mode,
-				notes: event.notes
-			};
-
-			if (event.midiNotes && event.midiNotes.length) {
-				immediateEvent.midiNotes = event.midiNotes;
-			}
-
-			if (event.midiNoteEvents && event.midiNoteEvents.length) {
-				immediateEvent.midiNoteEvents = event.midiNoteEvents;
-			}
-
-			return immediateEvent;
-		}
-
-		function playScheduledEvent(event) {
-			if (event.mode === 'arpeggio') {
-				playArpeggio(event);
-				return;
-			}
-
-			if (event.midiNoteEvents && event.midiNoteEvents.length) {
-				playMidiNoteEvents(event);
-				return;
-			}
-
-			if (event.midiNotes && event.midiNotes.length) {
-				playMidiChord(event);
-				return;
-			}
-
-			if (typeof playbackService.playChordFromNames === 'function') {
-				playbackService.playChordFromNames(event.notes, {
-					delay: event.delay,
-					duration: event.duration
-				});
-			}
-		}
-
-		function playMidiChord(event) {
-			if (typeof playbackService.playMidiChord === 'function') {
-				playbackService.playMidiChord(event.midiNotes, {
-					delay: event.delay,
-					duration: event.duration
-				});
-				return;
-			}
-
-			if (typeof playbackService.playMidiNote !== 'function') {
-				return;
-			}
-
-			for (var i = 0; i < event.midiNotes.length; i++) {
-				playbackService.playMidiNote(event.midiNotes[i], {
-					delay: event.delay,
-					duration: event.duration
-				});
-			}
-		}
-
-		function playMidiNoteEvents(event) {
-			if (typeof playbackService.playMidiNote !== 'function') {
-				playMidiChord(event);
-				return;
-			}
-
-			for (var i = 0; i < event.midiNoteEvents.length; i++) {
-				playbackService.playMidiNote(event.midiNoteEvents[i].midiNote, {
-					delay: event.delay,
-					duration: event.midiNoteEvents[i].duration
-				});
-			}
-		}
-
-		function playArpeggio(event) {
-			var midiNotes;
-
-			if (event.midiNotes && event.midiNotes.length) {
-				midiNotes = event.midiNotes;
-			} else if (typeof playbackService.chordNamesToMidi === 'function') {
-				midiNotes = playbackService.chordNamesToMidi(event.notes, 0);
-			}
-
-			if (!midiNotes || !midiNotes.length || typeof playbackService.playMidiNote !== 'function') {
-				if (typeof playbackService.playChordFromNames === 'function') {
-					playbackService.playChordFromNames(event.notes, {
-						delay: event.delay,
-						duration: event.duration
-					});
-				}
-				return;
-			}
-
-			for (var i = 0; i < midiNotes.length; i++) {
-				playbackService.playMidiNote(midiNotes[i], {
-					delay: event.delay + (event.arpeggioStep * i),
-					duration: Math.max(0.1, event.duration - (event.arpeggioStep * i))
-				});
-			}
 		}
 
 		function scheduleMeasureCallbacks(run, progression, scheduledMeasures) {
-			var totalSeconds = playbackTotalSeconds(progression, scheduledMeasures);
+			var totalSeconds = playbackSchedule.playbackTotalSeconds(progression, scheduledMeasures);
 
 			for (var i = 0; i < scheduledMeasures.length; i++) {
-				scheduleTimer(run, scheduledMeasures[i].delay, createMeasureStartCallback(run, scheduledMeasures[i].measure, scheduledMeasures[i].index));
+				playbackTimers.schedule(run, scheduledMeasures[i].delay, createMeasureStartCallback(run, scheduledMeasures[i].measure, scheduledMeasures[i].index));
 			}
 
-			scheduleTimer(run, totalSeconds, function () {
+			playbackTimers.schedule(run, totalSeconds, function () {
 				if (activeRun !== run) {
 					return;
 				}
 
 				activeRun = null;
 
-				if (shouldLoop(run.callbacks)) {
-					runCallback(run.callbacks.onCycleComplete, progression);
-					play(progression, extendCallbacks(run.callbacks, {
+				if (playbackCallbacks.shouldLoop(run.callbacks)) {
+					playbackCallbacks.run(run.callbacks.onCycleComplete, progression);
+					play(progression, playbackCallbacks.extend(run.callbacks, {
 						startIndex: 0
 					}));
 					return;
 				}
 
-				runCallback(run.callbacks.onComplete, progression);
+				playbackCallbacks.run(run.callbacks.onComplete, progression);
 			});
 		}
 
 		function createMeasureStartCallback(run, measure, index) {
 			return function () {
 				if (activeRun === run) {
-					runCallback(run.callbacks.onMeasureStart, measure, index);
+					playbackCallbacks.run(run.callbacks.onMeasureStart, measure, index);
 				}
 			};
-		}
-
-		function scheduleTimer(run, seconds, callback) {
-			var timerId;
-
-			if (typeof timerApi.setTimeout !== 'function') {
-				return;
-			}
-
-			timerId = timerApi.setTimeout(callback, Math.max(0, seconds * 1000));
-			run.timers.push(timerId);
-		}
-
-		function clearTimers(timers) {
-			if (typeof timerApi.clearTimeout !== 'function') {
-				return;
-			}
-
-			for (var i = 0; i < timers.length; i++) {
-				timerApi.clearTimeout(timers[i]);
-			}
 		}
 
 		return {
@@ -6347,273 +8694,13 @@
 		};
 	}
 
-	function buildProgressionPlaybackSchedule(progression, options) {
-		var measures = progression && progression.measures ? progression.measures : [];
-		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
-		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
-		var schedule = [];
-
-		for (var i = startIndex; i < measures.length; i++) {
-			schedule = schedule.concat(buildMeasurePlaybackEvents(measures[i], i, startOffset, options));
-		}
-
-		return schedule;
-	}
-
-	function buildProgressionMetronomeSchedule(progression, options) {
-		var measures = progression && progression.measures ? progression.measures : [];
-		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
-		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
-		var secondsPerBeat = Number(progression && progression.secondsPerBeat) || secondsPerBeatFromProgression(progression);
-		var schedule = [];
-
-		for (var i = startIndex; i < measures.length; i++) {
-			var measure = measures[i];
-			var beats = Math.max(1, Math.round(Number(measure.durationBeats) || Number(progression.beatsPerBar) || 4));
-			var measureDelay = Math.max(0, (Number(measure.startSeconds) || 0) - startOffset);
-
-			for (var beat = 0; beat < beats; beat++) {
-				schedule.push({
-					accent: beat === 0,
-					bar: measure.bar || i + 1,
-					beat: beat + 1,
-					delay: measureDelay + (beat * secondsPerBeat)
-				});
-			}
-		}
-
-		return schedule;
-	}
-
-	function secondsPerBeatFromProgression(progression) {
-		var bpm = Number(progression && progression.bpm) || 120;
-
-		return 60 / Math.max(1, bpm);
-	}
-
-	function buildScheduledMeasures(progression, startIndex) {
-		var measures = progression && progression.measures ? progression.measures : [];
-		startIndex = normalizeStartIndex(startIndex, progression);
-
-		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
-		var scheduledMeasures = [];
-
-		for (var i = startIndex; i < measures.length; i++) {
-			scheduledMeasures.push({
-				delay: Math.max(0, (Number(measures[i].startSeconds) || 0) - startOffset),
-				index: i,
-				measure: measures[i]
-			});
-		}
-
-		return scheduledMeasures;
-	}
-
-	function buildMeasurePlaybackEvents(measure, index, startOffset, options) {
-		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
-		var events = [];
-
-		for (var i = 0; i < chords.length; i++) {
-			events.push(buildMeasurePlaybackEvent(chords[i], index, startOffset, options, i));
-		}
-
-		return events;
-	}
-
-	function buildMeasurePlaybackEvent(measure, index, startOffset, options, chordIndex) {
-		var duration = playbackDuration(measure);
-		var notes = notesForVoices(measure.notes, measure.voices);
-		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
-		var midiNoteEvents = buildMidiNoteEvents(measure, duration, options);
-		var mode = measure.articulation === 'arpeggio' ? 'arpeggio' : 'chord';
-
-		var event = {
-			arpeggioStep: arpeggioStepSeconds(measure),
-			bar: measure.bar,
-			degree: measure.degree,
-			delay: Math.max(0, (measure.startSeconds || 0) - (startOffset || 0)),
-			duration: duration,
-			index: index,
-			mode: mode,
-			notes: notes
-		};
-
-		if (chordIndex) {
-			event.chordIndex = chordIndex;
-		}
-
-		if (midiNotes.length) {
-			event.midiNotes = midiNotes;
-		}
-
-		if (midiNoteEvents.length) {
-			event.midiNoteEvents = midiNoteEvents;
-		}
-
-		return event;
-	}
-
-	function buildMidiNoteEvents(measure, duration, options) {
-		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
-		var events = [];
-
-		if (!hasPedals(measure) || !supportsPedalHold(options ? options.instrument : null)) {
-			return events;
-		}
-
-		for (var i = 0; i < midiNotes.length; i++) {
-			if (isPedalIn(midiNotes[i], measure)) {
-				continue;
-			}
-
-			events.push({
-				duration: duration + pedalOutDuration(midiNotes[i], measure),
-				midiNote: midiNotes[i]
-			});
-		}
-
-		return events;
-	}
-
-	function hasPedals(measure) {
-		return (measure.pedalsIn && measure.pedalsIn.length) || (measure.pedalsOut && measure.pedalsOut.length);
-	}
-
-	function supportsPedalHold(instrument) {
-		return instrument && (instrument.supportsPedalHold === true || instrument.sustained === true || instrument.pedalBehavior === 'sustain');
-	}
-
-	function isPedalIn(midiNote, measure) {
-		var pedals = measure.pedalsIn || [];
-
-		for (var i = 0; i < pedals.length; i++) {
-			if (pedals[i].midiNote === midiNote) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	function pedalOutDuration(midiNote, measure) {
-		var pedals = measure.pedalsOut || [];
-		var duration = 0;
-
-		for (var i = 0; i < pedals.length; i++) {
-			if (pedals[i].midiNote === midiNote) {
-				duration = Math.max(duration, Number(pedals[i].durationSeconds) || 0);
-			}
-		}
-
-		return duration;
-	}
-
-	function playbackTotalSeconds(progression, scheduledMeasures) {
-		var lastMeasure;
-
-		if (!scheduledMeasures.length) {
-			return 0;
-		}
-
-		lastMeasure = scheduledMeasures[scheduledMeasures.length - 1].measure;
-
-		return scheduledMeasures[scheduledMeasures.length - 1].delay + (Number(lastMeasure.durationSeconds) || 0);
-	}
-
-	function normalizeStartIndex(startIndex, progression) {
-		var measures = progression && progression.measures ? progression.measures : [];
-		var numericIndex = parseInt(startIndex, 10);
-
-		if (!measures.length || isNaN(numericIndex)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(measures.length - 1, numericIndex));
-	}
-
-	function shouldLoop(callbacks) {
-		if (callbacks && typeof callbacks.shouldLoop === 'function') {
-			return callbacks.shouldLoop();
-		}
-
-		return callbacks && callbacks.loop === true;
-	}
-
-	function shouldPlayMetronome(callbacks) {
-		if (callbacks && typeof callbacks.shouldPlayMetronome === 'function') {
-			return callbacks.shouldPlayMetronome();
-		}
-
-		return callbacks && callbacks.metronome === true;
-	}
-
-	function extendCallbacks(callbacks, values) {
-		var result = {};
-		var key;
-
-		for (key in callbacks) {
-			if (Object.prototype.hasOwnProperty.call(callbacks, key)) {
-				result[key] = callbacks[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
-	}
-
-	function notesForVoices(notes, voices) {
-		var voiceCount = Math.max(1, Math.min(Number(voices) || 4, 6));
-
-		return (notes || []).slice(0, voiceCount);
-	}
-
-	function playbackDuration(measure) {
-		var duration = Number(measure && measure.durationSeconds) || 0;
-		var factor = articulationDurationFactor(measure ? measure.articulation : null);
-
-		return Math.max(0.1, duration * factor);
-	}
-
-	function articulationDurationFactor(articulation) {
-		if (articulation === 'staccato') {
-			return 0.45;
-		}
-
-		if (articulation === 'arpeggio') {
-			return 0.9;
-		}
-
-		if (articulation === 'legato') {
-			return 1;
-		}
-
-		return 0.95;
-	}
-
-	function arpeggioStepSeconds(measure) {
-		var duration = Number(measure && measure.durationSeconds) || 0;
-
-		return Math.max(0.05, Math.min(0.18, duration / 8));
-	}
-
-	function runCallback(callback, value, index) {
-		if (typeof callback === 'function') {
-			callback(value, index);
-		}
-	}
-
 	global.CodaApplication = global.CodaApplication || {};
-	global.CodaApplication.articulationDurationFactor = articulationDurationFactor;
-	global.CodaApplication.buildProgressionPlaybackSchedule = buildProgressionPlaybackSchedule;
-	global.CodaApplication.buildProgressionMetronomeSchedule = buildProgressionMetronomeSchedule;
-	global.CodaApplication.buildScheduledProgressionMeasures = buildScheduledMeasures;
+	global.CodaApplication.articulationDurationFactor = global.CodaProgressionPlaybackSchedule.articulationDurationFactor;
+	global.CodaApplication.buildProgressionPlaybackSchedule = global.CodaProgressionPlaybackSchedule.buildProgressionPlaybackSchedule;
+	global.CodaApplication.buildProgressionMetronomeSchedule = global.CodaProgressionPlaybackSchedule.buildProgressionMetronomeSchedule;
+	global.CodaApplication.buildScheduledProgressionMeasures = global.CodaProgressionPlaybackSchedule.buildScheduledMeasures;
 	global.CodaApplication.createProgressionPlayback = createProgressionPlayback;
-	global.CodaApplication.notesForVoices = notesForVoices;
+	global.CodaApplication.notesForVoices = global.CodaProgressionPlaybackSchedule.notesForVoices;
 })(window);
 
 ;
@@ -7608,9 +9695,9 @@
 		var html = '<fieldset class="workbenchPanel">';
 
 		html += '<legend><span data-i18n="progression.time"></span></legend>';
-		html += renderControl('progression.bars', '<select id="progressionBars"><option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="8" selected="selected">8</option><option value="12">12</option><option value="16">16</option><option value="32">32</option></select>', '#progressionBars');
-		html += renderControl('progression.meter', '<select id="progressionMeter"><option value="4/4">4/4</option><option value="3/4">3/4</option><option value="6/8">6/8</option></select>', '#progressionMeter');
-		html += renderControl(null, '<input id="progressionBpm" type="number" value="120" min="20" max="200" step="1" />', '#progressionBpm', 'BPM');
+		html += renderControl('progression.bars', '<select id="progressionBars"><option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="8" selected="selected">8</option><option value="12">12</option><option value="16">16</option><option value="32">32</option></select>', '#progressionBars', null, 'progression.help.bars');
+		html += renderControl('progression.meter', '<select id="progressionMeter"><option value="4/4">4/4</option><option value="3/4">3/4</option><option value="6/8">6/8</option></select>', '#progressionMeter', null, 'progression.help.meter');
+		html += renderControl(null, '<input id="progressionBpm" type="number" value="120" min="20" max="200" step="1" />', '#progressionBpm', 'BPM', 'progression.help.bpm');
 		html += '</fieldset>';
 
 		return html;
@@ -7620,9 +9707,10 @@
 		var html = '<fieldset class="workbenchPanel">';
 
 		html += '<legend><span data-i18n="progression.writing"></span></legend>';
-		html += renderControl('progression.voices', '<input id="progressionVoices" type="number" value="4" min="1" max="6" step="1" />', '#progressionVoices');
-		html += renderControl('progression.articulation', '<select id="progressionArticulation"><option value="sustain" data-i18n="progression.articulation.sustain"></option><option value="legato" data-i18n="progression.articulation.legato"></option><option value="staccato" data-i18n="progression.articulation.staccato"></option><option value="arpeggio" data-i18n="progression.articulation.arpeggio"></option></select>', '#progressionArticulation');
-		html += renderControl('progression.style', '<select id="progressionStyle"><option value="modern" selected="selected" data-i18n="progression.style.modern"></option><option value="classic" data-i18n="progression.style.classic"></option></select>', '#progressionStyle');
+		html += renderControl('progression.voices', '<input id="progressionVoices" type="number" value="4" min="1" max="6" step="1" />', '#progressionVoices', null, 'progression.help.voices');
+		html += renderControl('progression.voicing', '<select id="progressionVoicing"><option value="closed" selected="selected" data-i18n="progression.voicing.closed"></option><option value="open" data-i18n="progression.voicing.open"></option></select>', '#progressionVoicing', null, 'progression.help.voicing');
+		html += renderControl('progression.articulation', '<select id="progressionArticulation"><option value="sustain" data-i18n="progression.articulation.sustain"></option><option value="legato" data-i18n="progression.articulation.legato"></option><option value="staccato" data-i18n="progression.articulation.staccato"></option><option value="arpeggio" data-i18n="progression.articulation.arpeggio"></option></select>', '#progressionArticulation', null, 'progression.help.articulation');
+		html += renderControl('progression.style', '<select id="progressionStyle"><option value="modern" selected="selected" data-i18n="progression.style.modern"></option><option value="classic" data-i18n="progression.style.classic"></option></select>', '#progressionStyle', null, 'progression.help.style');
 		html += '</fieldset>';
 
 		return html;
@@ -7632,18 +9720,19 @@
 		var html = '<fieldset class="workbenchPanel">';
 
 		html += '<legend><span data-i18n="progression.harmonicColor"></span></legend>';
-		html += renderControl('progression.modalInterchange', '<input id="progressionModalInterchange" type="range" value="25" min="0" max="100" step="1" />', '#progressionModalInterchange');
-		html += renderControl('progression.tensions', '<input id="progressionTensions" type="range" value="35" min="0" max="100" step="1" />', '#progressionTensions');
-		html += renderControl('progression.counterpoint', '<input id="progressionCounterpoint" type="range" value="20" min="0" max="100" step="1" />', '#progressionCounterpoint');
+		html += renderControl('progression.modalInterchange', '<input id="progressionModalInterchange" type="range" value="25" min="0" max="100" step="1" />', '#progressionModalInterchange', null, 'progression.help.modalInterchange');
+		html += renderControl('progression.tensions', '<input id="progressionTensions" type="range" value="35" min="0" max="100" step="1" />', '#progressionTensions', null, 'progression.help.tensions');
+		html += renderControl('progression.counterpoint', '<input id="progressionCounterpoint" type="range" value="20" min="0" max="100" step="1" />', '#progressionCounterpoint', null, 'progression.help.counterpoint');
 		html += '</fieldset>';
 
 		return html;
 	}
 
-	function renderControl(labelKey, controlHtml, targetSelector, fallbackLabel) {
+	function renderControl(labelKey, controlHtml, targetSelector, fallbackLabel, helpKey) {
 		var labelHtml = labelKey ? '<span data-i18n="' + labelKey + '"></span>' : '<span>' + fallbackLabel + '</span>';
+		var helpAttribute = helpKey ? ' class="workbenchControl" data-help-i18n="' + helpKey + '" title=""' : '';
 
-		return '<label>' + labelHtml + controlHtml + renderRandomButton(targetSelector) + '</label>';
+		return '<label' + helpAttribute + '>' + labelHtml + controlHtml + renderRandomButton(targetSelector) + '</label>';
 	}
 
 	function renderRandomButton(targetSelector) {
@@ -7789,6 +9878,125 @@
 
 ;
 
+/* Source: js/renderers/progression-chord-menu-renderer.js */
+// Renderer for the contextual chord replacement menu.
+(function (global) {
+	'use strict';
+
+	function render(menuData, options) {
+		var doc = global.document;
+		var menu;
+		var hasItems = false;
+
+		options = options || {};
+
+		if (!doc || typeof doc.createElement !== 'function') {
+			return null;
+		}
+
+		menu = doc.createElement('div');
+		menu.className = 'progressionChordMenu';
+		menu.setAttribute('role', 'menu');
+
+		for (var i = 0; i < (menuData || []).length; i++) {
+			if (!menuData[i].items.length) {
+				continue;
+			}
+
+			hasItems = true;
+			menu.appendChild(renderGroup(menuData[i], options));
+		}
+
+		return hasItems ? menu : null;
+	}
+
+	function renderGroup(group, options) {
+		var doc = global.document;
+		var section = doc.createElement('section');
+		var title = doc.createElement('h3');
+
+		section.className = 'progressionChordMenu__group';
+		title.textContent = translate(options.i18n, 'progression.chordMenu.' + group.id);
+		section.appendChild(title);
+
+		for (var i = 0; i < group.items.length; i++) {
+			section.appendChild(renderChord(group.items[i], options));
+		}
+
+		return section;
+	}
+
+	function renderChord(item, options) {
+		var doc = global.document;
+		var details = doc.createElement('details');
+		var summary = doc.createElement('summary');
+		var optionsContainer = doc.createElement('div');
+
+		details.className = 'progressionChordMenu__chord';
+		summary.innerHTML = formatMusicalLabel(item.chordName) + (item.degree ? ' &middot; ' + formatMusicalLabel(item.degree) : '');
+		optionsContainer.className = 'progressionChordMenu__options';
+		details.appendChild(summary);
+		details.appendChild(optionsContainer);
+
+		for (var i = 0; i < item.options.length; i++) {
+			optionsContainer.appendChild(renderOption(item.options[i], options));
+		}
+
+		return details;
+	}
+
+	function renderOption(item, options) {
+		var doc = global.document;
+		var button = doc.createElement('button');
+		var kindLabel = item.kind === 'seventh' ? translate(options.i18n, 'progression.chordMenu.seventh') : translate(options.i18n, 'progression.chordMenu.triad');
+
+		button.type = 'button';
+		button.className = 'measureChordMenuItem';
+		button.setAttribute('data-progression-index', options.measureIndex);
+		button.setAttribute('data-measure-chord-index', options.chordIndex);
+		button.setAttribute('data-degree-index', item.degreeIndex);
+		button.setAttribute('data-chord-kind', item.kind);
+		button.setAttribute('data-inversion-index', item.inversionIndex);
+		button.innerHTML = escapeHtml(kindLabel + ': ') + formatMusicalLabel(item.displayName) + (item.degree ? ' &middot; ' + formatMusicalLabel(item.degree) : '');
+
+		return button;
+	}
+
+	function formatMusicalLabel(value) {
+		return String(value).split(/(\s+)/).map(function (part) {
+			if (isInversionLabel(part)) {
+				return '<sub class="musicInversion">' + escapeHtml(part) + '</sub>';
+			}
+
+			return escapeHtml(part);
+		}).join('');
+	}
+
+	function isInversionLabel(value) {
+		return /^(6|6\/4|6\/5|4\/3|4\/2)$/.test(value);
+	}
+
+	function escapeHtml(value) {
+		return String(value)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
+
+	function translate(i18n, key) {
+		return i18n && typeof i18n.t === 'function' ? i18n.t(key) : key;
+	}
+
+	global.CodaRenderers = global.CodaRenderers || {};
+	global.CodaRenderers.progressionChordMenu = {
+		render: render
+	};
+})(window);
+
+;
+
 /* Source: js/ui/ui-state.js */
 // Estado explícito de pantalla para desacoplar el controlador de variables en closures.
 (function (global) {
@@ -7897,6 +10105,7 @@
 	var allowedBars = [2, 4, 6, 8, 12, 16, 32];
 	var allowedMeters = ['4/4', '3/4', '6/8'];
 	var allowedStyles = ['modern', 'classic'];
+	var allowedVoicings = ['closed', 'open'];
 	var defaults = {
 		articulation: 'sustain',
 		bars: 8,
@@ -7906,6 +10115,7 @@
 		modalInterchange: 25,
 		style: 'modern',
 		tensions: 35,
+		voicing: 'closed',
 		voices: 4
 	};
 
@@ -7938,6 +10148,7 @@
 			modalInterchange: valueOf(root, 'progressionModalInterchange'),
 			style: valueOf(root, 'progressionStyle'),
 			tensions: valueOf(root, 'progressionTensions'),
+			voicing: valueOf(root, 'progressionVoicing'),
 			voices: valueOf(root, 'progressionVoices')
 		});
 	}
@@ -7957,6 +10168,7 @@
 			modalInterchange: clampInteger(values.modalInterchange, 0, 100, fallback.modalInterchange),
 			style: pick(values.style, allowedStyles, fallback.style),
 			tensions: clampInteger(values.tensions, 0, 100, fallback.tensions),
+			voicing: pick(values.voicing, allowedVoicings, fallback.voicing),
 			voices: clampInteger(values.voices, 1, 6, fallback.voices)
 		};
 	}
@@ -8007,6 +10219,7 @@
 			modalInterchange: value.modalInterchange,
 			style: value.style,
 			tensions: value.tensions,
+			voicing: value.voicing,
 			voices: value.voices
 		};
 	}
@@ -8016,6 +10229,7 @@
 		allowedBars: allowedBars.slice(),
 		allowedMeters: allowedMeters.slice(),
 		allowedStyles: allowedStyles.slice(),
+		allowedVoicings: allowedVoicings.slice(),
 		create: create,
 		defaults: clone(normalize(defaults)),
 		normalize: normalize,
@@ -8141,6 +10355,7 @@
 		setText(i18n, 'span[data-i18n="progression.bars"]', 'progression.bars');
 		setText(i18n, 'span[data-i18n="progression.meter"]', 'progression.meter');
 		setText(i18n, 'span[data-i18n="progression.voices"]', 'progression.voices');
+		setText(i18n, 'span[data-i18n="progression.voicing"]', 'progression.voicing');
 		setText(i18n, 'span[data-i18n="progression.writing"]', 'progression.writing');
 		setText(i18n, 'span[data-i18n="progression.articulation"]', 'progression.articulation');
 		setText(i18n, 'span[data-i18n="progression.style"]', 'progression.style');
@@ -8148,10 +10363,13 @@
 		setText(i18n, 'span[data-i18n="progression.modalInterchange"]', 'progression.modalInterchange');
 		setText(i18n, 'span[data-i18n="progression.tensions"]', 'progression.tensions');
 		setText(i18n, 'span[data-i18n="progression.counterpoint"]', 'progression.counterpoint');
+		applyProgressionHelpTooltips(i18n);
 		setText(i18n, 'option[data-i18n="progression.articulation.sustain"]', 'progression.articulation.sustain');
 		setText(i18n, 'option[data-i18n="progression.articulation.legato"]', 'progression.articulation.legato');
 		setText(i18n, 'option[data-i18n="progression.articulation.staccato"]', 'progression.articulation.staccato');
 		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio"]', 'progression.articulation.arpeggio');
+		setText(i18n, 'option[data-i18n="progression.voicing.closed"]', 'progression.voicing.closed');
+		setText(i18n, 'option[data-i18n="progression.voicing.open"]', 'progression.voicing.open');
 		setText(i18n, 'option[data-i18n="progression.style.modern"]', 'progression.style.modern');
 		setText(i18n, 'option[data-i18n="progression.style.classic"]', 'progression.style.classic');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
@@ -8171,6 +10389,15 @@
 		setTitleAndLabel(i18n, '.measureChordDragHandle[data-i18n-title="progression.dragMeasureChord"]', 'progression.dragMeasureChord');
 		setTitleAndLabel(i18n, '.measureSplitButton[data-i18n-title="progression.addMeasureChord"]', 'progression.addMeasureChord');
 		setTitleAndLabel(i18n, '.measureSplitButton[data-i18n-title="progression.removeMeasureChord"]', 'progression.removeMeasureChord');
+	}
+
+	function applyProgressionHelpTooltips(i18n) {
+		forEachElement('.workbenchControl[data-help-i18n]', function (element) {
+			var text = i18n.t(element.getAttribute('data-help-i18n'));
+
+			element.setAttribute('title', text);
+			element.setAttribute('aria-description', text);
+		});
 	}
 
 	function ensureProgressionWorkbench() {
@@ -9024,14 +11251,11 @@
 (function (global) {
 	'use strict';
 
-	var draggedMeasureIndex = null;
-	var draggedMeasureChord = null;
-	var activeChordMenuButton = null;
-
 	function initialize(options) {
 		options = options || {};
 
 		var root = query('#constructorProgresiones');
+		var transportView = global.CodaProgressionTransportView;
 		var goStartButton = query('.transportButton--goStart');
 		var listenButton = query('.transportButton--listen');
 		var exportButton = query('.transportButton--export');
@@ -9045,15 +11269,15 @@
 
 		if (goStartButton) {
 			goStartButton.addEventListener('click', function () {
-				stopPreview(options, listenButton, playbackHeadIndex);
+				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
 				playbackHeadIndex = 0;
-				setPlaybackHead(playbackHeadIndex, false);
+				transportView.setPlaybackHead(playbackHeadIndex, false);
 			});
 		}
 
 		if (listenButton) {
 			listenButton.addEventListener('click', function () {
-				togglePreview(options, listenButton, playbackHeadIndex, function (index) {
+				global.CodaProgressionTransportPlayback.toggle(options, listenButton, playbackHeadIndex, function (index) {
 					playbackHeadIndex = index;
 				});
 			});
@@ -9061,7 +11285,7 @@
 
 		if (exportButton) {
 			exportButton.addEventListener('click', function () {
-				exportMidi(options);
+				global.CodaProgressionMidiDownload.exportMidi(options);
 			});
 		}
 
@@ -9082,17 +11306,17 @@
 				if (typeof event.stopPropagation === 'function') {
 					event.stopPropagation();
 				}
-				openChordMenu(options, chordMenuButton, clickedIndex, chordIndex(chordElement));
+				global.CodaProgressionTransportMenu.open(options, chordMenuButton, clickedIndex, chordIndex(chordElement));
 				return;
 			}
 
 			if (splitButton) {
 				event.preventDefault();
-				stopPreview(options, listenButton, playbackHeadIndex);
-				closeChordMenu();
-				updateMeasureSplit(options, splitButton.getAttribute('data-progression-split-action'), clickedIndex, chordIndex(chordElement));
+				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
+				global.CodaProgressionTransportMenu.close();
+				global.CodaProgressionTransportActions.updateMeasureSplit(options, splitButton.getAttribute('data-progression-split-action'), clickedIndex, chordIndex(chordElement));
 				playbackHeadIndex = clickedIndex;
-				setPlaybackHead(playbackHeadIndex, false);
+				transportView.setPlaybackHead(playbackHeadIndex, false);
 				return;
 			}
 
@@ -9102,152 +11326,50 @@
 				options.progressionPlayback.isPlaying() &&
 				clickedIndex === playbackHeadIndex
 			) {
-				stopPreview(options, listenButton, playbackHeadIndex);
+				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
 				return;
 			}
 
 			playbackHeadIndex = clickedIndex;
-			setPlaybackHead(playbackHeadIndex, false);
-			playPreview(options, listenButton, playbackHeadIndex, function (index) {
+			transportView.setPlaybackHead(playbackHeadIndex, false);
+			global.CodaProgressionTransportPlayback.play(options, listenButton, playbackHeadIndex, function (index) {
 				playbackHeadIndex = index;
 			});
 		});
 
-		root.addEventListener('dragstart', function (event) {
-			var measure = closest(event.target, '.measure');
-			var chordHandle = closest(event.target, '.measureChordDragHandle');
-			var chordElement = closest(event.target, '.measureChord');
-			var sourceMeasureIndex;
-			var sourceChordIndex;
-
-			if (!measure || closest(event.target, '.measureSplitButton') || closest(event.target, '.measureChordMenuButton')) {
-				return;
-			}
-
-			if (chordHandle) {
-				sourceMeasureIndex = measureIndex(measure);
-				sourceChordIndex = chordIndex(chordElement);
-				if (sourceChordIndex <= 0) {
-					return;
-				}
-
-				draggedMeasureChord = {
-					chordIndex: sourceChordIndex,
-					measureIndex: sourceMeasureIndex
-				};
-				if (chordElement) {
-					chordElement.classList.add('isDragging');
-				}
-
-				if (event.dataTransfer) {
-					event.dataTransfer.effectAllowed = 'move';
-					event.dataTransfer.setData('text/coda-progression-chord', sourceMeasureIndex + ':' + sourceChordIndex);
-					event.dataTransfer.setData('text/plain', sourceMeasureIndex + ':' + sourceChordIndex);
-				}
-				return;
-			}
-
-			draggedMeasureIndex = measureIndex(measure);
-			measure.classList.add('isDragging');
-
-			if (event.dataTransfer) {
-				event.dataTransfer.effectAllowed = 'move';
-				event.dataTransfer.setData('text/plain', String(draggedMeasureIndex));
-			}
+		global.CodaProgressionTransportDrag.initialize({
+			onMeasureChordDrop: function (measureIndex, fromChordIndex, toChordIndex) {
+				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
+				global.CodaProgressionTransportActions.reorderMeasureChords(options, measureIndex, fromChordIndex, toChordIndex);
+				playbackHeadIndex = measureIndex;
+				transportView.setPlaybackHead(playbackHeadIndex, false);
+			},
+			onMeasureDrop: function (fromIndex, toIndex) {
+				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
+				global.CodaProgressionTransportActions.reorderProgression(options, fromIndex, toIndex);
+				playbackHeadIndex = toIndex;
+				transportView.setPlaybackHead(playbackHeadIndex, false);
+			},
+			root: root
 		});
-
-		root.addEventListener('dragover', function (event) {
-			var measure = closest(event.target, '.measure');
-			var chordElement = closest(event.target, '.measureChord');
-			var targetChordIndex;
-
-			if (!measure) {
-				return;
-			}
-
-			if (draggedMeasureChord) {
-				targetChordIndex = chordIndex(chordElement);
-				if (measureIndex(measure) !== draggedMeasureChord.measureIndex || targetChordIndex <= 0) {
-					return;
-				}
-
-				event.preventDefault();
-				if (chordElement) {
-					chordElement.classList.add('isChordDropTarget');
-				}
-
-				if (event.dataTransfer) {
-					event.dataTransfer.dropEffect = 'move';
-				}
-				return;
-			}
-
-			event.preventDefault();
-			measure.classList.add('isDropTarget');
-
-			if (event.dataTransfer) {
-				event.dataTransfer.dropEffect = 'move';
-			}
-		});
-
-		root.addEventListener('dragleave', function (event) {
-			var measure = closest(event.target, '.measure');
-			var chordElement = closest(event.target, '.measureChord');
-
-			if (chordElement) {
-				chordElement.classList.remove('isChordDropTarget');
-			}
-			if (measure) {
-				measure.classList.remove('isDropTarget');
-			}
-		});
-
-		root.addEventListener('drop', function (event) {
-			var measure = closest(event.target, '.measure');
-			var chordElement = closest(event.target, '.measureChord');
-			var fromIndex = dragSourceIndex(event, draggedMeasureIndex);
-			var toIndex;
-			var targetChordIndex;
-			var sourceChordDrag;
-
-			if (!measure) {
-				return;
-			}
-
-			if (draggedMeasureChord) {
-				sourceChordDrag = draggedMeasureChord;
-				targetChordIndex = chordIndex(chordElement);
-				if (measureIndex(measure) !== sourceChordDrag.measureIndex || targetChordIndex <= 0) {
-					clearDragState();
-					return;
-				}
-
-				event.preventDefault();
-				clearDragState();
-				stopPreview(options, listenButton, playbackHeadIndex);
-				reorderMeasureChords(options, sourceChordDrag.measureIndex, sourceChordDrag.chordIndex, targetChordIndex);
-				playbackHeadIndex = sourceChordDrag.measureIndex;
-				setPlaybackHead(playbackHeadIndex, false);
-				return;
-			}
-
-			event.preventDefault();
-			clearDragState();
-			stopPreview(options, listenButton, playbackHeadIndex);
-			toIndex = measureIndex(measure);
-			reorderProgression(options, fromIndex, toIndex);
-			playbackHeadIndex = toIndex;
-			setPlaybackHead(playbackHeadIndex, false);
-		});
-
-		root.addEventListener('dragend', clearDragState);
 
 		if (global.document && typeof global.document.addEventListener === 'function') {
 			global.document.addEventListener('keydown', function (event) {
-				handleTransportShortcut(event, options, listenButton, function () {
-					return playbackHeadIndex;
-				}, function (index) {
-					playbackHeadIndex = index;
+				global.CodaProgressionTransportShortcuts.handle(event, {
+					getPlaybackHeadIndex: function () {
+						return playbackHeadIndex;
+					},
+					progression: options.uiState ? options.uiState.getProgression() : null,
+					setPlaybackHead: transportView.setPlaybackHead,
+					setPlaybackHeadIndex: function (index) {
+						playbackHeadIndex = index;
+					},
+					stopPreview: function (index) {
+						global.CodaProgressionTransportPlayback.stop(options, listenButton, index);
+					},
+					togglePreview: function (index, setPlaybackHeadIndex) {
+						global.CodaProgressionTransportPlayback.toggle(options, listenButton, index, setPlaybackHeadIndex);
+					}
 				});
 			});
 
@@ -9256,569 +11378,41 @@
 				var menu = closest(event.target, '.progressionChordMenu');
 
 				if (menuItem) {
-					var replacement = replacementFromMenuItem(menuItem);
+					var replacement = global.CodaProgressionTransportMenu.replacementFromItem(menuItem);
 					var menuMeasureIndex = parseInt(menuItem.getAttribute('data-progression-index'), 10);
 					var menuChordIndex = parseInt(menuItem.getAttribute('data-measure-chord-index'), 10);
 
-					stopPreview(options, listenButton, playbackHeadIndex);
-					updateMeasureChordReplacement(options, menuMeasureIndex, menuChordIndex, replacement);
-					closeChordMenu();
+					global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
+					global.CodaProgressionTransportActions.updateMeasureChordReplacement(options, menuMeasureIndex, menuChordIndex, replacement);
+					global.CodaProgressionTransportMenu.close();
 					playbackHeadIndex = menuMeasureIndex;
-					setPlaybackHead(playbackHeadIndex, false);
+					transportView.setPlaybackHead(playbackHeadIndex, false);
 					return;
 				}
 
 				if (!menu && !closest(event.target, '.measureChordMenuButton')) {
-					closeChordMenu();
+					global.CodaProgressionTransportMenu.close();
 				}
 			});
 		}
 
 		return {
 			exportMidi: function () {
-				exportMidi(options);
+				global.CodaProgressionMidiDownload.exportMidi(options);
 			},
 			setPlaybackHead: function (index) {
-				playbackHeadIndex = normalizeHeadIndex(index, options.uiState ? options.uiState.getProgression() : null);
-				setPlaybackHead(playbackHeadIndex, false);
+				playbackHeadIndex = global.CodaProgressionTransportPlayback.normalizeHeadIndex(index, options.uiState ? options.uiState.getProgression() : null);
+				transportView.setPlaybackHead(playbackHeadIndex, false);
 			},
 			stop: function () {
-				stopPreview(options, listenButton, playbackHeadIndex);
+				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
 			},
 			togglePreview: function () {
-				togglePreview(options, listenButton, playbackHeadIndex, function (index) {
+				global.CodaProgressionTransportPlayback.toggle(options, listenButton, playbackHeadIndex, function (index) {
 					playbackHeadIndex = index;
 				});
 			}
 		};
-	}
-
-	function handleTransportShortcut(event, options, listenButton, getPlaybackHeadIndex, setPlaybackHeadIndex) {
-		var progression = options.uiState ? options.uiState.getProgression() : null;
-		var key = event && event.key;
-		var targetIndex;
-
-		if (!event || isEditableTarget(event.target)) {
-			return;
-		}
-
-		if (key === ' ' || key === 'Spacebar') {
-			if (typeof event.preventDefault === 'function') {
-				event.preventDefault();
-			}
-			togglePreview(options, listenButton, getPlaybackHeadIndex(), setPlaybackHeadIndex);
-			return;
-		}
-
-		if (!/^[0-9]$/.test(key || '') || !progression || !progression.measures) {
-			return;
-		}
-
-		targetIndex = key === '0' ? 9 : Number(key) - 1;
-		if (targetIndex < 0 || targetIndex >= Math.min(10, progression.measures.length)) {
-			return;
-		}
-
-		if (typeof event.preventDefault === 'function') {
-			event.preventDefault();
-		}
-		stopPreview(options, listenButton, getPlaybackHeadIndex());
-		setPlaybackHeadIndex(targetIndex);
-		setPlaybackHead(targetIndex, false);
-	}
-
-	function isEditableTarget(target) {
-		var tagName = target && target.tagName ? String(target.tagName).toLowerCase() : '';
-
-		return !!(target && (
-			target.isContentEditable ||
-			tagName === 'input' ||
-			tagName === 'select' ||
-			tagName === 'textarea' ||
-			tagName === 'button'
-		));
-	}
-
-	function togglePreview(options, listenButton, playbackHeadIndex, setPlaybackHeadIndex) {
-		var playback = options.progressionPlayback;
-		var progression = options.uiState ? options.uiState.getProgression() : null;
-
-		if (!playback) {
-			return;
-		}
-
-		if (playback.isPlaying && playback.isPlaying()) {
-			stopPreview(options, listenButton, playbackHeadIndex);
-			return;
-		}
-
-		if (!progression) {
-			return;
-		}
-
-		playPreview(options, listenButton, playbackHeadIndex, setPlaybackHeadIndex);
-	}
-
-	function playPreview(options, listenButton, playbackHeadIndex, setPlaybackHeadIndex) {
-		var playback = options.progressionPlayback;
-		var progression = options.uiState ? options.uiState.getProgression() : null;
-
-		if (!playback || !progression) {
-			return false;
-		}
-
-		playbackHeadIndex = normalizeHeadIndex(playbackHeadIndex, progression);
-
-		return playback.play(progression, {
-			onComplete: function () {
-				setPlayingState(listenButton, false, options.i18n);
-				setPlaybackHead(playbackHeadIndex, false);
-			},
-			onCycleComplete: function () {
-				playbackHeadIndex = 0;
-				if (typeof setPlaybackHeadIndex === 'function') {
-					setPlaybackHeadIndex(playbackHeadIndex);
-				}
-				setPlaybackHead(playbackHeadIndex, true);
-			},
-			onMeasureStart: function (measure, index) {
-				playbackHeadIndex = index;
-				if (typeof setPlaybackHeadIndex === 'function') {
-					setPlaybackHeadIndex(index);
-				}
-				setPlaybackHead(index, true);
-			},
-			onStart: function () {
-				setPlayingState(listenButton, true, options.i18n);
-			},
-			onStop: function () {
-				setPlayingState(listenButton, false, options.i18n);
-				setPlaybackHead(playbackHeadIndex, false);
-			},
-			shouldLoop: function () {
-				return isLoopEnabled();
-			},
-			shouldPlayMetronome: function () {
-				return isMetronomeEnabled();
-			},
-			startIndex: playbackHeadIndex
-		});
-	}
-
-	function stopPreview(options, listenButton, playbackHeadIndex) {
-		if (options.progressionPlayback && typeof options.progressionPlayback.stop === 'function') {
-			options.progressionPlayback.stop();
-		}
-
-		setPlayingState(listenButton, false, options.i18n);
-		setPlaybackHead(playbackHeadIndex || 0, false);
-	}
-
-	function reorderProgression(options, fromIndex, toIndex) {
-		var progression = options.uiState ? options.uiState.getProgression() : null;
-		var reorderedProgression;
-
-		if (
-			!progression ||
-			!options.application ||
-			typeof options.application.reorderProgressionMeasures !== 'function'
-		) {
-			return;
-		}
-
-		reorderedProgression = options.application.reorderProgressionMeasures(progression, fromIndex, toIndex);
-
-		if (options.onProgressionChanged && reorderedProgression) {
-			options.onProgressionChanged(reorderedProgression, {
-				playbackHeadIndex: toIndex
-			});
-		}
-	}
-
-	function reorderMeasureChords(options, measureIndex, fromChordIndex, toChordIndex) {
-		var progression = options.uiState ? options.uiState.getProgression() : null;
-		var reorderedProgression;
-
-		if (
-			!progression ||
-			!options.application ||
-			typeof options.application.reorderProgressionMeasureChords !== 'function'
-		) {
-			return;
-		}
-
-		reorderedProgression = options.application.reorderProgressionMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex);
-
-		if (options.onProgressionChanged && reorderedProgression) {
-			options.onProgressionChanged(reorderedProgression, {
-				playbackHeadIndex: measureIndex
-			});
-		}
-	}
-
-	function updateMeasureSplit(options, action, measureIndex, chordIndex) {
-		var progression = options.uiState ? options.uiState.getProgression() : null;
-		var nextProgression = null;
-
-		if (!progression || !options.application) {
-			return;
-		}
-
-		if (action === 'remove' && typeof options.application.removeProgressionMeasureChord === 'function') {
-			nextProgression = options.application.removeProgressionMeasureChord(progression, measureIndex, chordIndex);
-		} else if (action === 'add' && typeof options.application.addProgressionMeasureChord === 'function') {
-			nextProgression = options.application.addProgressionMeasureChord(progression, measureIndex, {
-				chordIndex: chordIndex,
-				data: options.data,
-				progressionState: options.uiState && options.uiState.getProgressionState ? options.uiState.getProgressionState() : null,
-				report: options.uiState && options.uiState.getReport ? options.uiState.getReport() : null
-			});
-		}
-
-		if (options.onProgressionChanged && nextProgression) {
-			options.onProgressionChanged(nextProgression, {
-				playbackHeadIndex: measureIndex
-			});
-		}
-	}
-
-	function updateMeasureChordReplacement(options, measureIndex, chordIndex, replacement) {
-		var progression = options.uiState ? options.uiState.getProgression() : null;
-		var nextProgression = null;
-
-		if (
-			!progression ||
-			!options.application ||
-			typeof options.application.replaceProgressionMeasureChord !== 'function'
-		) {
-			return;
-		}
-
-		nextProgression = options.application.replaceProgressionMeasureChord(progression, measureIndex, chordIndex, replacement, {
-			data: options.data,
-			progressionState: options.uiState && options.uiState.getProgressionState ? options.uiState.getProgressionState() : null,
-			report: options.uiState && options.uiState.getReport ? options.uiState.getReport() : null
-		});
-
-		if (options.onProgressionChanged && nextProgression) {
-			options.onProgressionChanged(nextProgression, {
-				playbackHeadIndex: measureIndex
-			});
-		}
-	}
-
-	function openChordMenu(options, button, measureIndex, chordIndex) {
-		var progression = options.uiState ? options.uiState.getProgression() : null;
-		var report = options.uiState && options.uiState.getReport ? options.uiState.getReport() : null;
-		var measure = progression && progression.measures ? progression.measures[measureIndex] : null;
-		var currentSegment = currentChordSegment(measure, chordIndex);
-		var menuData;
-		var menu;
-
-		if (!button || !measure || !options.application || typeof options.application.buildProgressionChordMenu !== 'function') {
-			return;
-		}
-
-		closeChordMenu();
-		menuData = options.application.buildProgressionChordMenu({
-			currentSegment: currentSegment,
-			report: report
-		});
-		menu = renderChordMenu(menuData, {
-			chordIndex: chordIndex,
-			i18n: options.i18n,
-			measureIndex: measureIndex
-		});
-
-		if (!menu) {
-			return;
-		}
-
-		global.document.body.appendChild(menu);
-		positionChordMenu(menu, button);
-		activeChordMenuButton = button;
-		button.setAttribute('aria-expanded', 'true');
-	}
-
-	function renderChordMenu(menuData, options) {
-		var doc = global.document;
-		var menu;
-		var hasItems = false;
-
-		if (!doc || typeof doc.createElement !== 'function') {
-			return null;
-		}
-
-		menu = doc.createElement('div');
-		menu.className = 'progressionChordMenu';
-		menu.setAttribute('role', 'menu');
-
-		for (var i = 0; i < (menuData || []).length; i++) {
-			if (!menuData[i].items.length) {
-				continue;
-			}
-
-			hasItems = true;
-			menu.appendChild(renderChordMenuGroup(menuData[i], options));
-		}
-
-		return hasItems ? menu : null;
-	}
-
-	function renderChordMenuGroup(group, options) {
-		var doc = global.document;
-		var section = doc.createElement('section');
-		var title = doc.createElement('h3');
-
-		section.className = 'progressionChordMenu__group';
-		title.textContent = translate(options.i18n, 'progression.chordMenu.' + group.id);
-		section.appendChild(title);
-
-		for (var i = 0; i < group.items.length; i++) {
-			section.appendChild(renderChordMenuChord(group.items[i], options));
-		}
-
-		return section;
-	}
-
-	function renderChordMenuChord(item, options) {
-		var doc = global.document;
-		var details = doc.createElement('details');
-		var summary = doc.createElement('summary');
-		var optionsContainer = doc.createElement('div');
-
-		details.className = 'progressionChordMenu__chord';
-		summary.innerHTML = formatMusicalLabel(item.chordName) + (item.degree ? ' &middot; ' + formatMusicalLabel(item.degree) : '');
-		optionsContainer.className = 'progressionChordMenu__options';
-		details.appendChild(summary);
-		details.appendChild(optionsContainer);
-
-		for (var i = 0; i < item.options.length; i++) {
-			optionsContainer.appendChild(renderChordMenuOption(item.options[i], options));
-		}
-
-		return details;
-	}
-
-	function renderChordMenuOption(item, options) {
-		var doc = global.document;
-		var button = doc.createElement('button');
-		var kindLabel = item.kind === 'seventh' ? translate(options.i18n, 'progression.chordMenu.seventh') : translate(options.i18n, 'progression.chordMenu.triad');
-
-		button.type = 'button';
-		button.className = 'measureChordMenuItem';
-		button.setAttribute('data-progression-index', options.measureIndex);
-		button.setAttribute('data-measure-chord-index', options.chordIndex);
-		button.setAttribute('data-degree-index', item.degreeIndex);
-		button.setAttribute('data-chord-kind', item.kind);
-		button.setAttribute('data-inversion-index', item.inversionIndex);
-		button.innerHTML = escapeHtml(kindLabel + ': ') + formatMusicalLabel(item.displayName) + (item.degree ? ' &middot; ' + formatMusicalLabel(item.degree) : '');
-
-		return button;
-	}
-
-	function formatMusicalLabel(value) {
-		return String(value).split(/(\s+)/).map(function (part) {
-			if (isInversionLabel(part)) {
-				return '<sub class="musicInversion">' + escapeHtml(part) + '</sub>';
-			}
-
-			return escapeHtml(part);
-		}).join('');
-	}
-
-	function isInversionLabel(value) {
-		return /^(6|6\/4|6\/5|4\/3|4\/2)$/.test(value);
-	}
-
-	function escapeHtml(value) {
-		return String(value)
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&#39;');
-	}
-
-	function closeChordMenu() {
-		var menu = query('.progressionChordMenu');
-
-		if (menu && menu.parentNode) {
-			menu.parentNode.removeChild(menu);
-		}
-
-		if (activeChordMenuButton) {
-			activeChordMenuButton.setAttribute('aria-expanded', 'false');
-			activeChordMenuButton = null;
-		}
-	}
-
-	function positionChordMenu(menu, button) {
-		var bounds;
-		var menuWidth = 280;
-		var left;
-		var top;
-
-		if (!menu || !button || typeof button.getBoundingClientRect !== 'function') {
-			return;
-		}
-
-		bounds = button.getBoundingClientRect();
-		left = Math.max(8, Math.min(global.innerWidth - menuWidth - 8, bounds.left));
-		top = Math.max(8, bounds.bottom + 6);
-
-		menu.style.left = left + 'px';
-		menu.style.top = top + 'px';
-	}
-
-	function currentChordSegment(measure, chordIndex) {
-		if (!measure) {
-			return null;
-		}
-
-		if (measure.chords && measure.chords.length) {
-			return measure.chords[Math.min(chordIndex, measure.chords.length - 1)];
-		}
-
-		return measure;
-	}
-
-	function replacementFromMenuItem(item) {
-		return {
-			degreeIndex: parseInt(item.getAttribute('data-degree-index'), 10),
-			inversionIndex: parseInt(item.getAttribute('data-inversion-index'), 10),
-			kind: item.getAttribute('data-chord-kind')
-		};
-	}
-
-	function exportMidi(options) {
-		var selection = options.uiState ? options.uiState.getSelection() : null;
-		var progression = options.uiState ? options.uiState.getProgression() : null;
-		var midiFile;
-
-		if (!progression || !options.application || typeof options.application.buildProgressionMidiFile !== 'function') {
-			return;
-		}
-
-		midiFile = options.application.buildProgressionMidiFile({
-			data: options.data,
-			midiInstrument: selection ? selection.midiInstrument : null,
-			progression: progression
-		});
-
-		downloadMidiFile(midiFile);
-	}
-
-	function downloadMidiFile(midiFile) {
-		var blob;
-		var link;
-		var url;
-
-		if (!midiFile || !midiFile.bytes || !global.document || typeof global.Blob !== 'function') {
-			return;
-		}
-
-		blob = new global.Blob([midiFile.bytes], {
-			type: midiFile.mimeType || 'audio/midi'
-		});
-		url = global.URL && typeof global.URL.createObjectURL === 'function' ? global.URL.createObjectURL(blob) : '';
-		link = global.document.createElement('a');
-		link.href = url;
-		link.download = midiFile.fileName || 'coda-progression.mid';
-		link.style.display = 'none';
-		global.document.body.appendChild(link);
-		link.click();
-		global.document.body.removeChild(link);
-
-		if (url && global.URL && typeof global.URL.revokeObjectURL === 'function') {
-			global.URL.revokeObjectURL(url);
-		}
-	}
-
-	function setPlayingState(button, playing, i18n) {
-		var icon;
-		var label;
-
-		if (!button) {
-			return;
-		}
-
-		button.classList.toggle('isPlaying', playing);
-		button.setAttribute('aria-pressed', playing ? 'true' : 'false');
-		icon = button.querySelector('.material-icons');
-		label = button.querySelector('span[data-i18n="progression.listen"]');
-
-		if (icon) {
-			icon.textContent = playing ? 'stop' : 'play_arrow';
-		}
-
-		if (label) {
-			label.textContent = playing ? translate(i18n, 'progression.stop') : translate(i18n, 'progression.listen');
-		}
-	}
-
-	function setActiveMeasure(bar) {
-		clearActiveMeasure();
-
-		var measure = query('.measure[data-progression-bar="' + bar + '"]');
-
-		if (measure) {
-			measure.classList.add('isPlaying');
-		}
-	}
-
-	function setPlaybackHead(index, playing) {
-		clearPlaybackHead();
-
-		var measure = query('.measure[data-progression-index="' + index + '"]');
-
-		if (measure) {
-			measure.classList.add('isPlaybackHead');
-			measure.classList.toggle('isPlaying', playing === true);
-		}
-
-		updateGoStartVisibility(index);
-	}
-
-	function clearActiveMeasure() {
-		var measures = global.document ? global.document.querySelectorAll('.measure.isPlaying') : [];
-
-		Array.prototype.forEach.call(measures, function (measure) {
-			measure.classList.remove('isPlaying');
-		});
-	}
-
-	function clearPlaybackHead() {
-		var measures = global.document ? global.document.querySelectorAll('.measure.isPlaybackHead, .measure.isPlaying') : [];
-
-		Array.prototype.forEach.call(measures, function (measure) {
-			measure.classList.remove('isPlaybackHead');
-			measure.classList.remove('isPlaying');
-		});
-	}
-
-	function clearDragState() {
-		draggedMeasureIndex = null;
-		draggedMeasureChord = null;
-		if (!global.document) {
-			return;
-		}
-
-		Array.prototype.forEach.call(global.document.querySelectorAll('.measure.isDragging, .measure.isDropTarget'), function (measure) {
-			measure.classList.remove('isDragging');
-			measure.classList.remove('isDropTarget');
-		});
-		Array.prototype.forEach.call(global.document.querySelectorAll('.measureChord.isDragging, .measureChord.isChordDropTarget'), function (chord) {
-			chord.classList.remove('isDragging');
-			chord.classList.remove('isChordDropTarget');
-		});
-	}
-
-	function dragSourceIndex(event, fallbackIndex) {
-		var dataIndex = event && event.dataTransfer ? event.dataTransfer.getData('text/plain') : '';
-		var numericIndex = parseInt(dataIndex, 10);
-
-		return isNaN(numericIndex) ? fallbackIndex : numericIndex;
 	}
 
 	function measureIndex(measure) {
@@ -9833,41 +11427,6 @@
 		return isNaN(index) ? 0 : index;
 	}
 
-	function normalizeHeadIndex(index, progression) {
-		var measures = progression && progression.measures ? progression.measures : [];
-		var numericIndex = parseInt(index, 10);
-
-		if (!measures.length || isNaN(numericIndex)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(measures.length - 1, numericIndex));
-	}
-
-	function isLoopEnabled() {
-		var checkbox = query('#progressionLoop');
-
-		return checkbox ? checkbox.checked === true : false;
-	}
-
-	function isMetronomeEnabled() {
-		var checkbox = query('#progressionMetronome');
-
-		return checkbox ? checkbox.checked === true : false;
-	}
-
-	function updateGoStartVisibility(index) {
-		var button = query('.transportButton--goStart');
-
-		if (button) {
-			button.hidden = Number(index) <= 0;
-		}
-	}
-
-	function translate(i18n, key) {
-		return i18n && typeof i18n.t === 'function' ? i18n.t(key) : key;
-	}
-
 	function query(selector) {
 		return global.document ? global.document.querySelector(selector) : null;
 	}
@@ -9877,13 +11436,13 @@
 	}
 
 	global.CodaProgressionTransport = {
-		clearPlaybackHead: clearPlaybackHead,
-		clearActiveMeasure: clearActiveMeasure,
-		downloadMidiFile: downloadMidiFile,
+		clearPlaybackHead: global.CodaProgressionTransportView.clearPlaybackHead,
+		clearActiveMeasure: global.CodaProgressionTransportView.clearActiveMeasure,
+		downloadMidiFile: global.CodaProgressionMidiDownload.download,
 		initialize: initialize,
-		setActiveMeasure: setActiveMeasure,
-		setPlaybackHead: setPlaybackHead,
-		setPlayingState: setPlayingState
+		setActiveMeasure: global.CodaProgressionTransportView.setActiveMeasure,
+		setPlaybackHead: global.CodaProgressionTransportView.setPlaybackHead,
+		setPlayingState: global.CodaProgressionTransportView.setPlayingState
 	};
 })(window);
 
@@ -10424,6 +11983,7 @@
 		});
 		var notation = options.notation;
 		var preferences = options.preferences;
+		var progressionPreferences = options.progressionPreferences || global.CodaProgressionPreferences;
 		var progressionTransport = options.progressionTransport || global.CodaProgressionTransport;
 		var progressionTransportController = null;
 		var progressionState = options.progressionState || global.CodaProgressionState;
@@ -10440,6 +12000,8 @@
 			limit: 11,
 			restoring: false
 		};
+		var progressionStateInputTimer = null;
+		var progressionStateInputDelay = 160;
 		uiState.setNotationStyle(notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon');
 		var initialForm = resolveInitialForm(options.data, options.initialForm);
 
@@ -10482,6 +12044,7 @@
 				i18n: i18n
 			});
 		}
+		restoreProgressionControls(normalizeInitialProgressionControls(options.initialProgressionState, progressionState, progressionPreferences));
 		syncProgressionState();
 		bindProgressionState();
 		bindProgressionTransport();
@@ -10716,9 +12279,12 @@
 			}
 
 			controls.setAttribute('data-coda-progression-state', 'true');
-			controls.addEventListener('input', syncProgressionState);
+			controls.addEventListener('input', function () {
+				scheduleProgressionStateUpdate();
+			});
 			controls.addEventListener('change', function () {
-				syncProgressionState();
+				cancelProgressionStateUpdate();
+				updateProgressionStateFromControls();
 				recordHistorySnapshot();
 			});
 		}
@@ -10741,7 +12307,8 @@
 
 		function bindProgressionGeneration() {
 			on(query('#generateProgression'), 'click', function () {
-				syncProgressionState();
+				cancelProgressionStateUpdate();
+				updateProgressionStateFromControls();
 				generateProgressionPlan();
 				recordHistorySnapshot();
 			});
@@ -10810,7 +12377,9 @@
 			on(query('#undoChange'), 'click', undoHistorySnapshot);
 			on(query('#redoChange'), 'click', redoHistorySnapshot);
 			on(global.document, 'keydown', function (event) {
-				if (!event.ctrlKey || event.key.toLowerCase() !== 'z' || isEditableTarget(event.target)) {
+				var key = event && event.key ? event.key.toLowerCase() : '';
+
+				if (!(event.ctrlKey || event.metaKey) || key !== 'z' || isTextEntryTarget(event.target)) {
 					return;
 				}
 
@@ -11139,6 +12708,7 @@
 					tensions: valueOf(query('#progressionTensions')),
 					tonic: valueOf(query('#tonica')),
 					tuning: valueOf(query('#selectorAfinaciones')),
+					voicing: valueOf(query('#progressionVoicing')),
 					voices: valueOf(query('#progressionVoices'))
 				},
 				progression: uiState.getProgression(),
@@ -11179,6 +12749,11 @@
 		}
 
 		function restoreProgressionControls(controls) {
+			if (progressionPreferences && typeof progressionPreferences.writeControls === 'function') {
+				progressionPreferences.writeControls(global.document, controls);
+				return;
+			}
+
 			setValue(query('#progressionArticulation'), controls.articulation);
 			setValue(query('#progressionBars'), controls.bars);
 			setValue(query('#progressionBpm'), controls.bpm);
@@ -11187,6 +12762,7 @@
 			setValue(query('#progressionModalInterchange'), controls.modalInterchange);
 			setValue(query('#progressionStyle'), controls.style);
 			setValue(query('#progressionTensions'), controls.tensions);
+			setValue(query('#progressionVoicing'), controls.voicing);
 			setValue(query('#progressionVoices'), controls.voices);
 		}
 
@@ -11206,6 +12782,33 @@
 				uiState.setProgressionState(progressionState.readFromControls(global.document));
 				syncProgressionPlan();
 			}
+		}
+
+		function updateProgressionStateFromControls() {
+			syncProgressionState();
+			saveProgressionPreferences(preferences, progressionPreferences);
+		}
+
+		function scheduleProgressionStateUpdate() {
+			cancelProgressionStateUpdate();
+
+			if (typeof global.setTimeout !== 'function') {
+				updateProgressionStateFromControls();
+				return;
+			}
+
+			progressionStateInputTimer = global.setTimeout(function () {
+				progressionStateInputTimer = null;
+				updateProgressionStateFromControls();
+			}, progressionStateInputDelay);
+		}
+
+		function cancelProgressionStateUpdate() {
+			if (progressionStateInputTimer && typeof global.clearTimeout === 'function') {
+				global.clearTimeout(progressionStateInputTimer);
+			}
+
+			progressionStateInputTimer = null;
 		}
 
 		function syncProgressionPlan() {
@@ -11476,6 +13079,51 @@
 		preferences.setValue('midiInstrument', valueOf(query('#instrumentoSonoro')));
 	}
 
+	function saveProgressionPreferences(preferences, progressionPreferences) {
+		if (progressionPreferences && typeof progressionPreferences.save === 'function') {
+			progressionPreferences.save(preferences, global.document);
+			return;
+		}
+
+		if (!preferences) {
+			return;
+		}
+
+		preferences.setValue('progressionArticulation', valueOf(query('#progressionArticulation')));
+		preferences.setValue('progressionBars', valueOf(query('#progressionBars')));
+		preferences.setValue('progressionBpm', valueOf(query('#progressionBpm')));
+		preferences.setValue('progressionCounterpoint', valueOf(query('#progressionCounterpoint')));
+		preferences.setValue('progressionMeter', valueOf(query('#progressionMeter')));
+		preferences.setValue('progressionModalInterchange', valueOf(query('#progressionModalInterchange')));
+		preferences.setValue('progressionStyle', valueOf(query('#progressionStyle')));
+		preferences.setValue('progressionTensions', valueOf(query('#progressionTensions')));
+		preferences.setValue('progressionVoicing', valueOf(query('#progressionVoicing')));
+		preferences.setValue('progressionVoices', valueOf(query('#progressionVoices')));
+	}
+
+	function normalizeInitialProgressionControls(initialProgressionState, progressionState, progressionPreferences) {
+		if (progressionPreferences && typeof progressionPreferences.normalizeControls === 'function') {
+			return progressionPreferences.normalizeControls(initialProgressionState, progressionState);
+		}
+
+		var state = progressionState && typeof progressionState.normalize === 'function' ?
+			progressionState.normalize(initialProgressionState || {}) :
+			initialProgressionState || {};
+
+		return {
+			articulation: state.articulation,
+			bars: state.bars,
+			bpm: state.bpm,
+			counterpoint: state.counterpoint,
+			meter: state.meter,
+			modalInterchange: state.modalInterchange,
+			style: state.style,
+			tensions: state.tensions,
+			voicing: state.voicing,
+			voices: state.voices
+		};
+	}
+
 	function resolveInitialForm(data, initialForm) {
 		initialForm = initialForm || {};
 
@@ -11604,15 +13252,26 @@
 		}
 	}
 
-	function isEditableTarget(target) {
+	function isTextEntryTarget(target) {
 		var tagName = target && target.tagName ? String(target.tagName).toLowerCase() : '';
+		var inputType = target && target.type ? String(target.type).toLowerCase() : '';
 
 		return !!(target && (
 			target.isContentEditable ||
-			tagName === 'input' ||
-			tagName === 'select' ||
-			tagName === 'textarea'
+			tagName === 'textarea' ||
+			(tagName === 'input' && isTextInputType(inputType))
 		));
+	}
+
+	function isTextInputType(inputType) {
+		return !inputType || [
+			'email',
+			'password',
+			'search',
+			'tel',
+			'text',
+			'url'
+		].indexOf(inputType) > -1;
 	}
 
 	function cloneJson(value) {
@@ -12134,6 +13793,7 @@
 			i18n: options.i18n,
 			initialForm: options.initialForm,
 			initialNotation: options.initialNotation,
+			initialProgressionState: options.initialProgressionState,
 			initialTheme: options.initialTheme,
 			initialVolume: options.initialVolume,
 			instrumentPlayback: instrumentPlayback,
@@ -12145,6 +13805,7 @@
 			notation: options.notation,
 			preferences: options.preferences,
 			playbackService: playbackService,
+			progressionPreferences: options.progressionPreferences || global.CodaProgressionPreferences,
 			progressionPlayback: progressionPlayback,
 			progressionState: options.progressionState || global.CodaProgressionState,
 			progressionTransport: options.progressionTransport || global.CodaProgressionTransport,
@@ -12222,6 +13883,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			tonicIndex: storedPreferences.tonicIndex
 		},
 		initialNotation: storedPreferences.notation,
+		initialProgressionState: CodaProgressionPreferences.fromPreferences(storedPreferences),
 		initialTheme: storedPreferences.theme,
 		initialVolume: storedPreferences.volume,
 		musicalContextFactory: CodaMusicalContext,
