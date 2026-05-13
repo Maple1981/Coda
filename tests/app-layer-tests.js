@@ -199,6 +199,42 @@ assert.ok(/^Am/.test(splitProgression.measures[0].chords[1].chordName));
 assert.equal(splitProgression.measures[0].chords[1].tonalFunction, 'T');
 assert.deepEqual(splitProgression.measures[0].chords.map(function (chord) { return chord.durationBeats; }), [1.5, 1.5]);
 assert.equal(splitProgression.measures[0].chords[1].startBeat, 1.5);
+
+const suspendedMeasureProgression = JSON.parse(JSON.stringify(cMajorProgressionPlan));
+suspendedMeasureProgression.measures[0].degree = 'I sus4';
+suspendedMeasureProgression.measures[0].displayName = 'C sus4';
+suspendedMeasureProgression.measures[0].midiNotes = [48, 53, 55, 60];
+suspendedMeasureProgression.measures[0].notes = ['C', 'F', 'G', 'C'];
+suspendedMeasureProgression.measures[0].suspension = 'sus4';
+suspendedMeasureProgression.measures[0].voiceNotes = [
+	{ midiNote: 48, note: 'C', role: 'root' },
+	{ midiNote: 53, note: 'F', role: 'fourth' },
+	{ midiNote: 55, note: 'G', role: 'fifth' },
+	{ midiNote: 60, note: 'C', role: 'root-doubling' }
+];
+const resolvedSuspensionProgression = app.addProgressionMeasureChord(suspendedMeasureProgression, 0, {
+	data: data,
+	progressionState: {
+		articulation: 'legato',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '3/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: function () { return 0; }
+});
+assert.equal(resolvedSuspensionProgression.measures[0].chords.length, 2);
+assert.equal(resolvedSuspensionProgression.measures[0].chords[1].suspension, '');
+assert.equal(resolvedSuspensionProgression.measures[0].chords[1].chord, cMajorReport.scaleChords[0]);
+assert.ok(['C', 'C 6', 'C 6/4', 'Cmaj7', 'Cmaj7 6/5', 'Cmaj7 4/3', 'Cmaj7 4/2'].indexOf(resolvedSuspensionProgression.measures[0].chords[1].displayName) > -1);
+assert.equal(resolvedSuspensionProgression.measures[0].chords[1].degree.indexOf('sus'), -1);
+
 const threeChordMeasureProgression = app.addProgressionMeasureChord(splitProgression, 0, {
 	chordIndex: 1,
 	data: data,
@@ -400,6 +436,74 @@ assert.equal(app.formatProgressionDegreeForChord('IVJ', 'Fm7'), 'iv7');
 assert.equal(app.formatProgressionDegreeForChord('VII', 'Bm7♭5'), 'vii7♭5');
 assert.equal(app.formatProgressionDegreeForChord('II', 'Db7♭5'), 'II7♭5');
 assert.equal(app.formatProgressionDegreeForChord('II', 'Db7b5'), 'II7♭5');
+
+const forcedSuspensionRules = {
+	patterns: [
+		{
+			cadence: 'plagal',
+			counterpoint: 40,
+			degrees: [0, 3, 4, 0],
+			form: 'forced-plagal-suspension',
+			id: 'forced-plagal-suspension',
+			modes: ['major'],
+			modalColor: 20,
+			tensionAffinity: 35,
+			weight: 100
+		}
+	]
+};
+
+const suspensionWeightedProgression = app.generateProgressionFromState({
+	data: data,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 40,
+		meter: '4/4',
+		modalInterchange: 20,
+		style: 'modern',
+		tensions: 35,
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0, 0.99, 0.18, 0.99, 0.99, 0.99]),
+	rules: forcedSuspensionRules
+});
+assert.ok(suspensionWeightedProgression.measures.some(function (measure) {
+	return measure.suspension === 'sus2' || measure.suspension === 'sus4';
+}));
+
+const originalMathRandom = vm.runInContext('Math.random', context);
+context.__codaTestRandom = sequenceRng([0, 0.99, 0.18, 0.99, 0.99, 0.99]);
+context.__codaOriginalRandom = originalMathRandom;
+vm.runInContext('Math.random = function () { return __codaTestRandom(); };', context);
+const suspensionWithDefaultRandom = app.generateProgressionFromState({
+	data: data,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 40,
+		meter: '4/4',
+		modalInterchange: 20,
+		style: 'modern',
+		tensions: 35,
+		voices: 4
+	},
+	report: cMajorReport,
+	rules: forcedSuspensionRules
+});
+vm.runInContext('Math.random = __codaOriginalRandom;', context);
+delete context.__codaTestRandom;
+delete context.__codaOriginalRandom;
+assert.ok(suspensionWithDefaultRandom.measures.some(function (measure) {
+	return measure.suspension === 'sus2' || measure.suspension === 'sus4';
+}));
 
 const generatedEightBarProgression = app.generateProgressionFromState({
 	data: data,

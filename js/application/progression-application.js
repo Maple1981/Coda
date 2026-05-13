@@ -51,10 +51,11 @@
 
 	function generateProgressionFromState(options) {
 		var progressionState = normalizeProgressionState(options.progressionState);
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
 		var generationPlan = createGenerationPlan({
 			progressionState: progressionState,
 			report: options.report,
-			rng: options.rng,
+			rng: rng,
 			rules: options.rules || (options.data ? options.data.progressionRules : null)
 		});
 		var resolvedDegrees = resolveGeneratedDegrees({
@@ -83,7 +84,7 @@
 			measures: buildMeasures(resolvedDegrees, progressionState, secondsPerBeat, {
 				includeTensions: true,
 				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
-				rng: options.rng,
+				rng: rng,
 				scaleDefinition: options.report.scaleDefinition,
 				scaleNotes: options.report.scaleNotes
 			}),
@@ -338,6 +339,20 @@
 		var nextPlan = options.nextMeasure ? measurePlan(options.nextMeasure) : null;
 		var progressionState = options.progressionState;
 		var initialMidiNote = options.data && options.data.midi ? options.data.midi.initialMidiNote : 60;
+		var suspensionResolution = chooseSuspensionResolutionForMeasure({
+			initialMidiNote: initialMidiNote,
+			measure: options.measure,
+			nextMeasure: options.nextMeasure,
+			nextPlan: nextPlan,
+			previousPlan: previousPlan,
+			progressionState: progressionState,
+			report: report,
+			rng: rng
+		});
+
+		if (suspensionResolution) {
+			return suspensionResolution;
+		}
 
 		for (var i = 0; i < scaleChords.length; i++) {
 			var resolvedDegree;
@@ -396,6 +411,81 @@
 		});
 
 		return candidates.length ? candidates[0] : null;
+	}
+
+	function chooseSuspensionResolutionForMeasure(options) {
+		var measure = options.measure;
+		var resolvedDegree;
+		var candidates = [];
+		var kinds = ['triad', 'seventh'];
+
+		if (!measure || !measure.suspension) {
+			return null;
+		}
+
+		resolvedDegree = resolvedDegreeFromMeasure(measure, options.report);
+		if (!resolvedDegree || !resolvedDegree.chord) {
+			return null;
+		}
+
+		for (var i = 0; i < kinds.length; i++) {
+			var labels = kinds[i] === 'seventh' ? ['', '6/5', '4/3', '4/2'] : ['', '6', '6/4'];
+
+			for (var j = 0; j < labels.length; j++) {
+				var chordPlan = buildChordPlan({
+					index: 1,
+					options: {
+						forceInversionIndex: j,
+						forceKind: kinds[i],
+						includeTensions: false,
+						initialMidiNote: options.initialMidiNote,
+						preventSuspension: true,
+						scaleDefinition: options.report.scaleDefinition,
+						scaleNotes: options.report.scaleNotes
+					},
+					previousPlan: options.previousPlan,
+					progressionState: options.progressionState,
+					resolvedDegree: resolvedDegree,
+					resolvedDegrees: [
+						resolvedDegree,
+						resolvedDegree,
+						resolvedDegreeFromMeasure(options.nextMeasure, options.report) || resolvedDegree
+					]
+				});
+
+				candidates.push({
+					chordPlan: chordPlan,
+					reportScaleDefinition: options.report.scaleDefinition,
+					resolvedDegree: resolvedDegree,
+					score: suspensionResolutionScore({
+						chordPlan: chordPlan,
+						nextPlan: options.nextPlan,
+						previousPlan: options.previousPlan,
+						rng: options.rng
+					})
+				});
+			}
+		}
+
+		candidates.sort(function (a, b) {
+			return a.score - b.score;
+		});
+
+		return candidates.length ? candidates[0] : null;
+	}
+
+	function suspensionResolutionScore(options) {
+		var score = voiceLeadingTransitionScore(options.previousPlan, options.chordPlan);
+
+		if (options.nextPlan) {
+			score += voiceLeadingTransitionScore(options.chordPlan, options.nextPlan) * 0.25;
+		}
+
+		if (options.chordPlan.kind === 'seventh') {
+			score += 0.25;
+		}
+
+		return score + ((typeof options.rng === 'function' ? options.rng() : Math.random()) * 0.01);
 	}
 
 	function buildProgressionChordMenu(options) {
@@ -800,6 +890,7 @@
 
 	function resolvedDegreeFromMeasure(measure, report) {
 		var scaleChords = report && report.scaleChords ? report.scaleChords : [];
+		var parallelChords = report && report.parallelScaleChords ? report.parallelScaleChords : [];
 		var scaleNotes = report && report.scaleNotes ? report.scaleNotes : [];
 		var chordName = measure ? measure.chordName : '';
 
@@ -814,6 +905,17 @@
 					degree: scaleNotes[i] ? scaleNotes[i].grado : '',
 					degreeIndex: i,
 					source: measure.source || 'diatonic'
+				};
+			}
+		}
+
+		for (var j = 0; j < parallelChords.length; j++) {
+			if (parallelChords[j] === measure.chord || triadName(parallelChords[j]) === chordName || parallelChords[j].nombre === chordName) {
+				return {
+					chord: parallelChords[j],
+					degree: scaleNotes[j] ? scaleNotes[j].grado : '',
+					degreeIndex: j,
+					source: measure.source || 'parallel'
 				};
 			}
 		}
@@ -1036,6 +1138,8 @@
 		var originalVoicing;
 		var suspendedVoicing;
 		var probability;
+		var originalScore;
+		var suspendedScore;
 
 		if (!chord || !previousPlan || !chord.segunda || !chord.cuarta || baseNotes.length < 3) {
 			return null;
@@ -1065,16 +1169,16 @@
 			previousPlan: previousPlan,
 			voices: progressionState.voices
 		});
-		probability = 0.04 +
-			Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 35) / 260 +
-			Math.max(0, numberOrDefault(progressionState.tensions, 0) - 30) / 320;
-
-		if (voiceLeadingTransitionScore(previousPlan, suspendedVoicing) <= voiceLeadingTransitionScore(previousPlan, originalVoicing) + 1) {
-			probability += 0.18;
-		}
+		originalScore = voiceLeadingTransitionScore(previousPlan, originalVoicing);
+		suspendedScore = voiceLeadingTransitionScore(previousPlan, suspendedVoicing);
+		probability = suspensionProbability({
+			originalScore: originalScore,
+			progressionState: progressionState,
+			suspendedScore: suspendedScore
+		});
 
 		if (!voiceMovesParsimoniouslyToNote(previousPlan.voiceNotes, suspensionNote, context.options.initialMidiNote || 60)) {
-			probability *= 0.35;
+			probability *= 0.5;
 		}
 
 		if (rng() >= Math.min(0.55, probability)) {
@@ -1085,6 +1189,37 @@
 			label: label,
 			note: suspensionNote
 		};
+	}
+
+	function suspensionProbability(options) {
+		var progressionState = options.progressionState || {};
+		var probability = 0.045 +
+			Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 25) / 360 +
+			Math.max(0, numberOrDefault(progressionState.tensions, 0) - 30) / 430;
+
+		if (numberOrDefault(progressionState.voices, 4) >= 4) {
+			probability += 0.02;
+		}
+
+		if (progressionState.articulation === 'sustain' || progressionState.articulation === 'legato') {
+			probability += 0.02;
+		} else if (progressionState.articulation === 'staccato') {
+			probability -= 0.035;
+		}
+
+		if (numberOrDefault(progressionState.counterpoint, 0) >= 70 && numberOrDefault(progressionState.tensions, 0) >= 70) {
+			probability += 0.08;
+		}
+
+		if (options.suspendedScore <= options.originalScore) {
+			probability += 0.14;
+		} else if (options.suspendedScore <= options.originalScore + 2) {
+			probability += 0.09;
+		} else {
+			probability -= 0.05;
+		}
+
+		return Math.max(0.03, probability);
 	}
 
 	function suspendedNotes(baseNotes, suspensionNote) {
