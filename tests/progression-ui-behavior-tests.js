@@ -144,6 +144,8 @@ assert.equal(changedState.articulation, 'staccato');
 assert.equal(changedState.style, 'classic');
 assert.equal(changedState.tensions, 60);
 assert.equal(changedProgression.bars, 4);
+assert.equal(document.getElementById('undoChange').disabled, false);
+assert.equal(document.getElementById('redoChange').disabled, true);
 assert.equal(changedProgression.meter, '3/4');
 assert.equal(changedProgression.totalBeats, 12);
 assert.equal(changedProgression.totalSeconds, 6);
@@ -201,6 +203,47 @@ assert.deepEqual(changedProgression.harmonicColor, {
 	tensions: 60
 });
 
+document.getElementById('undoChange').dispatchEvent({
+	target: document.getElementById('undoChange'),
+	type: 'click'
+});
+assert.equal(initialized.uiState.getProgressionState().bars, 8);
+assert.equal(initialized.uiState.getProgression().bars, 8);
+assert.equal(document.getElementById('undoChange').disabled, true);
+assert.equal(document.getElementById('redoChange').disabled, false);
+
+document.getElementById('redoChange').dispatchEvent({
+	target: document.getElementById('redoChange'),
+	type: 'click'
+});
+assert.equal(initialized.uiState.getProgressionState().bars, 4);
+assert.equal(initialized.uiState.getProgression().bars, 4);
+assert.equal(document.getElementById('undoChange').disabled, false);
+assert.equal(document.getElementById('redoChange').disabled, true);
+
+document.dispatchDocumentEvent({
+	ctrlKey: true,
+	key: 'z',
+	preventDefault: function () {
+		this.preventDefaultCalled = true;
+	},
+	target: document.body,
+	type: 'keydown'
+});
+assert.equal(initialized.uiState.getProgressionState().bars, 8);
+
+document.dispatchDocumentEvent({
+	ctrlKey: true,
+	key: 'z',
+	preventDefault: function () {
+		this.preventDefaultCalled = true;
+	},
+	shiftKey: true,
+	target: document.body,
+	type: 'keydown'
+});
+assert.equal(initialized.uiState.getProgressionState().bars, 4);
+
 console.log('Progression UI behavior tests passed');
 
 function createFakeUi(fakeDocument, renderedCounter) {
@@ -247,7 +290,18 @@ function createFakeUi(fakeDocument, renderedCounter) {
 function createFakeDocument() {
 	const elements = {};
 	const fakeDocument = createFakeElement('document');
+	const documentListeners = {};
 	fakeDocument.body = createFakeElement('body');
+	fakeDocument.addEventListener = function (eventName, handler) {
+		documentListeners[eventName] = documentListeners[eventName] || [];
+		documentListeners[eventName].push(handler);
+	};
+	fakeDocument.dispatchDocumentEvent = function (event) {
+		const handlers = documentListeners[event.type] || [];
+		handlers.forEach(function (handler) {
+			handler(event);
+		});
+	};
 	fakeDocument.getElementById = function (id) {
 		return elements[id] || null;
 	};
@@ -294,6 +348,8 @@ function createFakeDocument() {
 	addElement('progressionControls');
 	addElement('toggleTheoryControls');
 	addElement('toggleScaleTheoryDetails');
+	addElement('undoChange');
+	addElement('redoChange');
 	addElement('formatoLabel');
 	addElement('selectorIdioma', 'es');
 	addElement('selectorNotacion', 'anglosaxon');

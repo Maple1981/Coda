@@ -221,6 +221,14 @@
 		root.addEventListener('dragend', clearDragState);
 
 		if (global.document && typeof global.document.addEventListener === 'function') {
+			global.document.addEventListener('keydown', function (event) {
+				handleTransportShortcut(event, options, listenButton, function () {
+					return playbackHeadIndex;
+				}, function (index) {
+					playbackHeadIndex = index;
+				});
+			});
+
 			global.document.addEventListener('click', function (event) {
 				var menuItem = closest(event.target, '.measureChordMenuItem');
 				var menu = closest(event.target, '.progressionChordMenu');
@@ -261,6 +269,52 @@
 				});
 			}
 		};
+	}
+
+	function handleTransportShortcut(event, options, listenButton, getPlaybackHeadIndex, setPlaybackHeadIndex) {
+		var progression = options.uiState ? options.uiState.getProgression() : null;
+		var key = event && event.key;
+		var targetIndex;
+
+		if (!event || isEditableTarget(event.target)) {
+			return;
+		}
+
+		if (key === ' ' || key === 'Spacebar') {
+			if (typeof event.preventDefault === 'function') {
+				event.preventDefault();
+			}
+			togglePreview(options, listenButton, getPlaybackHeadIndex(), setPlaybackHeadIndex);
+			return;
+		}
+
+		if (!/^[0-9]$/.test(key || '') || !progression || !progression.measures) {
+			return;
+		}
+
+		targetIndex = key === '0' ? 9 : Number(key) - 1;
+		if (targetIndex < 0 || targetIndex >= Math.min(10, progression.measures.length)) {
+			return;
+		}
+
+		if (typeof event.preventDefault === 'function') {
+			event.preventDefault();
+		}
+		stopPreview(options, listenButton, getPlaybackHeadIndex());
+		setPlaybackHeadIndex(targetIndex);
+		setPlaybackHead(targetIndex, false);
+	}
+
+	function isEditableTarget(target) {
+		var tagName = target && target.tagName ? String(target.tagName).toLowerCase() : '';
+
+		return !!(target && (
+			target.isContentEditable ||
+			tagName === 'input' ||
+			tagName === 'select' ||
+			tagName === 'textarea' ||
+			tagName === 'button'
+		));
 	}
 
 	function togglePreview(options, listenButton, playbackHeadIndex, setPlaybackHeadIndex) {

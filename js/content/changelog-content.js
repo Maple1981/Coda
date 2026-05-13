@@ -5,7 +5,40 @@
 	global.CodaChangelogContent = {
 		es: [
 			{
-				title: 'Novedades de la versión actual beta 0.5',
+				title: 'Novedades de la versión actual beta 0.6',
+				items: [
+					{
+						term: 'Constructor de progresiones',
+						descriptions: [
+							'La aplicación incorpora un área de trabajo amplia para crear progresiones configurables por número de compases, compás, tempo, voces, articulación, estilo y color armónico.',
+							'El botón de generación crea progresiones aleatorias coherentes a partir de la tonalidad elegida y de los parámetros de escritura seleccionados.'
+						]
+					},
+					{
+						term: 'Preescucha y exportación',
+						descriptions: [
+							'Las progresiones pueden preescucharse desde cualquier compás, con cabezal de reproducción, opción de bucle y metrónomo.',
+							'Las progresiones generadas pueden exportarse a MIDI para continuar el trabajo en una DAW.'
+						]
+					},
+					{
+						term: 'Edición de compases y acordes',
+						descriptions: [
+							'Cada compás puede dividirse hasta en cuatro acordes, con opciones para añadir, quitar, reordenar y cambiar acordes dentro de la tonalidad.',
+							'Las cajas de progresión muestran el cifrado del acorde, su grado y, cuando procede, la función tonal.'
+						]
+					},
+					{
+						term: 'Área de trabajo más cómoda',
+						descriptions: [
+							'La interfaz se organiza como un panel de trabajo con la teoría a la izquierda y el constructor de progresiones en el área principal.',
+							'El círculo de quintas y el selector de instrumento están más accesibles desde la cabecera del área de progresiones.'
+						]
+					}
+				]
+			},
+			{
+				title: 'Novedades de la versión beta 0.5',
 				items: [
 					{
 						term: 'Interfaz más directa',
@@ -151,7 +184,40 @@
 		],
 		en: [
 			{
-				title: 'Current beta 0.5 release notes',
+				title: 'Current beta 0.6 release notes',
+				items: [
+					{
+						term: 'Progression builder',
+						descriptions: [
+							'The application now includes a larger workspace for creating progressions by choosing bar count, meter, tempo, voices, articulation, style and harmonic color.',
+							'The generation button creates coherent random progressions from the selected key and writing parameters.'
+						]
+					},
+					{
+						term: 'Preview and export',
+						descriptions: [
+							'Progressions can be previewed from any bar, with a playback head, loop option and metronome.',
+							'Generated progressions can be exported as MIDI files for further work in a DAW.'
+						]
+					},
+					{
+						term: 'Bar and chord editing',
+						descriptions: [
+							'Each bar can be split into up to four chords, with options to add, remove, reorder and change chords within the key.',
+							'Progression cards show the chord symbol, degree and, when applicable, tonal function.'
+						]
+					},
+					{
+						term: 'More comfortable workspace',
+						descriptions: [
+							'The interface is organized as a work panel with theory on the left and the progression builder in the main area.',
+							'The circle of fifths and instrument selector are easier to reach from the progression workspace header.'
+						]
+					}
+				]
+			},
+			{
+				title: 'Beta 0.5 release notes',
 				items: [
 					{
 						term: 'More direct interface',

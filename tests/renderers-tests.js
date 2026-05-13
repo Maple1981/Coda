@@ -349,13 +349,18 @@ assert.ok(html.indexOf('D-F#-A-C') > -1);
 assert.ok(html.indexOf('class="celdaAcorde" id="D-F#-A-C"') > -1);
 
 const changelogHtml = changelogRenderer.render(context.window.CodaChangelogContent.es);
-assert.ok(changelogHtml.indexOf('<h3>Novedades de la versión actual beta 0.5</h3>') > -1);
+assert.ok(changelogHtml.indexOf('<h3>Novedades de la versión actual beta 0.6</h3>') > -1);
+assert.ok(changelogHtml.indexOf('<dt>Constructor de progresiones</dt>') > -1);
+assert.ok(changelogHtml.indexOf('<dd>La aplicación incorpora un área de trabajo amplia') > -1);
+assert.ok(changelogHtml.indexOf('<h3>Novedades de la versión beta 0.5</h3>') > -1);
 assert.ok(changelogHtml.indexOf('<dt>Interfaz más directa</dt>') > -1);
 assert.ok(changelogHtml.indexOf('<dd>El formulario incorpora un selector de instrumento') > -1);
 assert.ok(changelogHtml.indexOf('<script>') === -1);
 
 const englishChangelogHtml = changelogRenderer.render(context.window.CodaChangelogContent.en);
-assert.ok(englishChangelogHtml.indexOf('<h3>Current beta 0.5 release notes</h3>') > -1);
+assert.ok(englishChangelogHtml.indexOf('<h3>Current beta 0.6 release notes</h3>') > -1);
+assert.ok(englishChangelogHtml.indexOf('<dt>Progression builder</dt>') > -1);
+assert.ok(englishChangelogHtml.indexOf('<h3>Beta 0.5 release notes</h3>') > -1);
 assert.ok(englishChangelogHtml.indexOf('<dt>More direct interface</dt>') > -1);
 
 const welcomeHtml = welcomeRenderer.render(context.window.CodaWelcomeContent.es);

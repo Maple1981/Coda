@@ -269,6 +269,7 @@ header {
   text-align: right;
 }
 
+.settingsButton,
 .iconHeaderButton {
   display: -webkit-inline-box;
   display: -ms-inline-flexbox;
@@ -289,11 +290,27 @@ header {
   cursor: pointer;
 }
 
+.settingsButton:hover,
 .iconHeaderButton:hover {
   border-color: #a622ae;
   color: #a3ffd9;
 }
 
+.settingsButton:disabled,
+.iconHeaderButton:disabled {
+  opacity: .42;
+  cursor: default;
+  border-color: #444;
+  color: #bbb;
+}
+
+.settingsButton:disabled:hover,
+.iconHeaderButton:disabled:hover {
+  border-color: #444;
+  color: #bbb;
+}
+
+.settingsButton .material-icons,
 .iconHeaderButton .material-icons {
   font-size: 18px;
   width: 1em;

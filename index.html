@@ -74,17 +74,6 @@
         </div>
         <div class="appHeader__actions">
           <button
-            id="randomizeAll"
-            class="iconHeaderButton randomMasterButton"
-            type="button"
-            data-random-master-groups="global"
-            data-random-i18n-key="randomSelect.master"
-            title="Aleatorizador maestro"
-            aria-label="Aleatorizador maestro"
-          >
-            <span class="material-icons" aria-hidden="true">casino</span>
-          </button>
-          <button
             id="toggleCircleOfFifths"
             class="iconHeaderButton circleToggleButton"
             type="button"
@@ -96,16 +85,45 @@
           >
             <span class="material-icons" aria-hidden="true">donut_large</span>
           </button>
-          <label
-            ><span data-i18n="ui.language">Idioma</span>
-            <select id="selectorIdioma">
+          <button
+            id="randomizeAll"
+            class="iconHeaderButton randomMasterButton"
+            type="button"
+            data-random-master-groups="global"
+            data-random-i18n-key="randomSelect.master"
+            title="Aleatorizador maestro"
+            aria-label="Aleatorizador maestro"
+          >
+            <span class="material-icons" aria-hidden="true">casino</span>
+          </button>
+          <button
+            id="undoChange"
+            class="iconHeaderButton historyButton"
+            type="button"
+            title="Deshacer"
+            aria-label="Deshacer"
+            disabled
+          >
+            <span class="material-icons" aria-hidden="true">undo</span>
+          </button>
+          <button
+            id="redoChange"
+            class="iconHeaderButton historyButton"
+            type="button"
+            title="Rehacer"
+            aria-label="Rehacer"
+            disabled
+          >
+            <span class="material-icons" aria-hidden="true">redo</span>
+          </button>
+          <label>
+            <select id="selectorIdioma" title="Idioma" aria-label="Idioma">
               <option value="es" selected>ES</option>
               <option value="en">EN</option>
             </select>
           </label>
-          <label
-            ><span data-i18n="ui.notation">Notación</span>
-            <select id="selectorNotacion">
+          <label>
+            <select id="selectorNotacion" title="Notación" aria-label="Notación">
               <option
                 value="anglosaxon"
                 data-i18n="notation.anglosaxon"

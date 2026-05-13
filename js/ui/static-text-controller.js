@@ -24,10 +24,18 @@
 		setText(i18n, 'span[data-i18n="ui.volume"]', 'ui.volume');
 		setText(i18n, 'option[data-i18n="notation.anglosaxon"]', 'notation.anglosaxon');
 		setText(i18n, 'option[data-i18n="notation.latin"]', 'notation.latin');
+		setAttribute(i18n, '#selectorIdioma', 'aria-label', 'ui.language');
+		setAttribute(i18n, '#selectorIdioma', 'title', 'ui.language');
+		setAttribute(i18n, '#selectorNotacion', 'aria-label', 'ui.notation');
+		setAttribute(i18n, '#selectorNotacion', 'title', 'ui.notation');
 		setAttribute(i18n, '#selectorVolumen', 'aria-label', 'ui.volumeTitle');
 		setAttribute(i18n, '#selectorVolumen', 'title', 'ui.volumeTitle');
 		setAttribute(i18n, '#randomizeAll', 'title', 'randomSelect.master');
 		setAttribute(i18n, '#randomizeAll', 'aria-label', 'randomSelect.master');
+		setAttribute(i18n, '#undoChange', 'title', 'ui.undo');
+		setAttribute(i18n, '#undoChange', 'aria-label', 'ui.undo');
+		setAttribute(i18n, '#redoChange', 'title', 'ui.redo');
+		setAttribute(i18n, '#redoChange', 'aria-label', 'ui.redo');
 		setText(i18n, '#circlePopoverTitle', 'circle.title');
 		setAttribute(i18n, '#toggleCircleOfFifths', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifths', 'aria-label', 'circle.open');

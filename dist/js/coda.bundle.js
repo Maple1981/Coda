@@ -693,7 +693,40 @@
 	global.CodaChangelogContent = {
 		es: [
 			{
-				title: 'Novedades de la versión actual beta 0.5',
+				title: 'Novedades de la versión actual beta 0.6',
+				items: [
+					{
+						term: 'Constructor de progresiones',
+						descriptions: [
+							'La aplicación incorpora un área de trabajo amplia para crear progresiones configurables por número de compases, compás, tempo, voces, articulación, estilo y color armónico.',
+							'El botón de generación crea progresiones aleatorias coherentes a partir de la tonalidad elegida y de los parámetros de escritura seleccionados.'
+						]
+					},
+					{
+						term: 'Preescucha y exportación',
+						descriptions: [
+							'Las progresiones pueden preescucharse desde cualquier compás, con cabezal de reproducción, opción de bucle y metrónomo.',
+							'Las progresiones generadas pueden exportarse a MIDI para continuar el trabajo en una DAW.'
+						]
+					},
+					{
+						term: 'Edición de compases y acordes',
+						descriptions: [
+							'Cada compás puede dividirse hasta en cuatro acordes, con opciones para añadir, quitar, reordenar y cambiar acordes dentro de la tonalidad.',
+							'Las cajas de progresión muestran el cifrado del acorde, su grado y, cuando procede, la función tonal.'
+						]
+					},
+					{
+						term: 'Área de trabajo más cómoda',
+						descriptions: [
+							'La interfaz se organiza como un panel de trabajo con la teoría a la izquierda y el constructor de progresiones en el área principal.',
+							'El círculo de quintas y el selector de instrumento están más accesibles desde la cabecera del área de progresiones.'
+						]
+					}
+				]
+			},
+			{
+				title: 'Novedades de la versión beta 0.5',
 				items: [
 					{
 						term: 'Interfaz más directa',
@@ -839,7 +872,40 @@
 		],
 		en: [
 			{
-				title: 'Current beta 0.5 release notes',
+				title: 'Current beta 0.6 release notes',
+				items: [
+					{
+						term: 'Progression builder',
+						descriptions: [
+							'The application now includes a larger workspace for creating progressions by choosing bar count, meter, tempo, voices, articulation, style and harmonic color.',
+							'The generation button creates coherent random progressions from the selected key and writing parameters.'
+						]
+					},
+					{
+						term: 'Preview and export',
+						descriptions: [
+							'Progressions can be previewed from any bar, with a playback head, loop option and metronome.',
+							'Generated progressions can be exported as MIDI files for further work in a DAW.'
+						]
+					},
+					{
+						term: 'Bar and chord editing',
+						descriptions: [
+							'Each bar can be split into up to four chords, with options to add, remove, reorder and change chords within the key.',
+							'Progression cards show the chord symbol, degree and, when applicable, tonal function.'
+						]
+					},
+					{
+						term: 'More comfortable workspace',
+						descriptions: [
+							'The interface is organized as a work panel with theory on the left and the progression builder in the main area.',
+							'The circle of fifths and instrument selector are easier to reach from the progression workspace header.'
+						]
+					}
+				]
+			},
+			{
+				title: 'Beta 0.5 release notes',
 				items: [
 					{
 						term: 'More direct interface',
@@ -1347,7 +1413,7 @@
 			'progression.dragMeasure': 'Reordenar compás',
 			'progression.dragMeasureChord': 'Reordenar acorde añadido dentro del compás',
 			'progression.exportMidi': 'Exportar MIDI',
-			'progression.generate': 'Generar progresión',
+			'progression.generate': 'Generar progresión aleatoria',
 			'progression.goStart': 'Inicio',
 			'progression.harmonicColor': 'Color armónico',
 			'progression.listen': 'Preescuchar',
@@ -1393,6 +1459,8 @@
 			'theme.switchToNight': 'Cambiar a modo noche',
 			'ui.language': 'Idioma',
 			'ui.notation': 'Notación',
+			'ui.redo': 'Rehacer',
+			'ui.undo': 'Deshacer',
 			'ui.volume': 'Volumen',
 			'ui.volumeTitle': 'Volumen general',
 			'notation.anglosaxon': 'C D E',
@@ -1515,7 +1583,7 @@
 			'progression.dragMeasure': 'Reorder bar',
 			'progression.dragMeasureChord': 'Reorder added chord inside bar',
 			'progression.exportMidi': 'Export MIDI',
-			'progression.generate': 'Generate progression',
+			'progression.generate': 'Generate random progression',
 			'progression.goStart': 'Start',
 			'progression.harmonicColor': 'Harmonic color',
 			'progression.listen': 'Preview',
@@ -1561,6 +1629,8 @@
 			'theme.switchToNight': 'Switch to night mode',
 			'ui.language': 'Language',
 			'ui.notation': 'Notation',
+			'ui.redo': 'Redo',
+			'ui.undo': 'Undo',
 			'ui.volume': 'Volume',
 			'ui.volumeTitle': 'Master volume',
 			'notation.anglosaxon': 'C D E',
@@ -7833,10 +7903,18 @@
 		setText(i18n, 'span[data-i18n="ui.volume"]', 'ui.volume');
 		setText(i18n, 'option[data-i18n="notation.anglosaxon"]', 'notation.anglosaxon');
 		setText(i18n, 'option[data-i18n="notation.latin"]', 'notation.latin');
+		setAttribute(i18n, '#selectorIdioma', 'aria-label', 'ui.language');
+		setAttribute(i18n, '#selectorIdioma', 'title', 'ui.language');
+		setAttribute(i18n, '#selectorNotacion', 'aria-label', 'ui.notation');
+		setAttribute(i18n, '#selectorNotacion', 'title', 'ui.notation');
 		setAttribute(i18n, '#selectorVolumen', 'aria-label', 'ui.volumeTitle');
 		setAttribute(i18n, '#selectorVolumen', 'title', 'ui.volumeTitle');
 		setAttribute(i18n, '#randomizeAll', 'title', 'randomSelect.master');
 		setAttribute(i18n, '#randomizeAll', 'aria-label', 'randomSelect.master');
+		setAttribute(i18n, '#undoChange', 'title', 'ui.undo');
+		setAttribute(i18n, '#undoChange', 'aria-label', 'ui.undo');
+		setAttribute(i18n, '#redoChange', 'title', 'ui.redo');
+		setAttribute(i18n, '#redoChange', 'aria-label', 'ui.redo');
 		setText(i18n, '#circlePopoverTitle', 'circle.title');
 		setAttribute(i18n, '#toggleCircleOfFifths', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifths', 'aria-label', 'circle.open');
@@ -9016,6 +9094,14 @@
 		root.addEventListener('dragend', clearDragState);
 
 		if (global.document && typeof global.document.addEventListener === 'function') {
+			global.document.addEventListener('keydown', function (event) {
+				handleTransportShortcut(event, options, listenButton, function () {
+					return playbackHeadIndex;
+				}, function (index) {
+					playbackHeadIndex = index;
+				});
+			});
+
 			global.document.addEventListener('click', function (event) {
 				var menuItem = closest(event.target, '.measureChordMenuItem');
 				var menu = closest(event.target, '.progressionChordMenu');
@@ -9056,6 +9142,52 @@
 				});
 			}
 		};
+	}
+
+	function handleTransportShortcut(event, options, listenButton, getPlaybackHeadIndex, setPlaybackHeadIndex) {
+		var progression = options.uiState ? options.uiState.getProgression() : null;
+		var key = event && event.key;
+		var targetIndex;
+
+		if (!event || isEditableTarget(event.target)) {
+			return;
+		}
+
+		if (key === ' ' || key === 'Spacebar') {
+			if (typeof event.preventDefault === 'function') {
+				event.preventDefault();
+			}
+			togglePreview(options, listenButton, getPlaybackHeadIndex(), setPlaybackHeadIndex);
+			return;
+		}
+
+		if (!/^[0-9]$/.test(key || '') || !progression || !progression.measures) {
+			return;
+		}
+
+		targetIndex = key === '0' ? 9 : Number(key) - 1;
+		if (targetIndex < 0 || targetIndex >= Math.min(10, progression.measures.length)) {
+			return;
+		}
+
+		if (typeof event.preventDefault === 'function') {
+			event.preventDefault();
+		}
+		stopPreview(options, listenButton, getPlaybackHeadIndex());
+		setPlaybackHeadIndex(targetIndex);
+		setPlaybackHead(targetIndex, false);
+	}
+
+	function isEditableTarget(target) {
+		var tagName = target && target.tagName ? String(target.tagName).toLowerCase() : '';
+
+		return !!(target && (
+			target.isContentEditable ||
+			tagName === 'input' ||
+			tagName === 'select' ||
+			tagName === 'textarea' ||
+			tagName === 'button'
+		));
 	}
 
 	function togglePreview(options, listenButton, playbackHeadIndex, setPlaybackHeadIndex) {
@@ -10130,6 +10262,12 @@
 		});
 		var circleOfFifthsAnchorId = '';
 		var circleOfFifthsDragged = false;
+		var history = {
+			index: -1,
+			items: [],
+			limit: 11,
+			restoring: false
+		};
 		uiState.setNotationStyle(notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon');
 		var initialForm = resolveInitialForm(options.data, options.initialForm);
 
@@ -10178,6 +10316,7 @@
 		bindProgressionGeneration();
 		bindCircleOfFifthsPopover();
 		bindWorkbenchInstrumentMenu();
+		bindHistoryControls();
 		updateCollapsiblePanelStates(i18n);
 		options.ui.scheduleDashboardWorkspaceHeight();
 
@@ -10215,6 +10354,7 @@
 				updateFormatLabelTarget();
 				saveFormPreferences(preferences);
 				renderReport();
+				recordHistorySnapshot();
 			});
 		});
 
@@ -10225,6 +10365,7 @@
 				updateFormatLabelTarget();
 				saveFormPreferences(preferences);
 				renderReport();
+				recordHistorySnapshot();
 			});
 		});
 
@@ -10253,6 +10394,7 @@
 
 			if (options.ui.hasRenderedResults()) {
 				renderReport();
+				recordHistorySnapshot();
 			}
 
 			options.ui.scheduleInstrumentScale();
@@ -10274,6 +10416,7 @@
 
 			if (options.ui.hasRenderedResults()) {
 				renderReport();
+				recordHistorySnapshot();
 			}
 
 			options.ui.scheduleInstrumentScale();
@@ -10291,6 +10434,7 @@
 			keyNavigation.applyRecommendedNotation(options, fillSelectHashTable);
 			saveFormPreferences(preferences);
 			renderReport();
+			recordHistorySnapshot();
 		});
 
 		on(global.document, 'change', function (event) {
@@ -10301,6 +10445,7 @@
 			uiState.setSelectedTuningIndex(Number(event.target.value));
 			if (uiState.getSelectedTuningIndex() >= 0) {
 				renderInstrument(false);
+				recordHistorySnapshot();
 			}
 		});
 
@@ -10400,7 +10545,10 @@
 
 			controls.setAttribute('data-coda-progression-state', 'true');
 			controls.addEventListener('input', syncProgressionState);
-			controls.addEventListener('change', syncProgressionState);
+			controls.addEventListener('change', function () {
+				syncProgressionState();
+				recordHistorySnapshot();
+			});
 		}
 
 		function bindProgressionTransport() {
@@ -10409,7 +10557,10 @@
 					application: options.application,
 					data: options.data,
 					i18n: i18n,
-					onProgressionChanged: setProgression,
+					onProgressionChanged: function (progression, renderOptions) {
+						setProgression(progression, renderOptions);
+						recordHistorySnapshot();
+					},
 					progressionPlayback: options.progressionPlayback,
 					uiState: uiState
 				});
@@ -10420,6 +10571,7 @@
 			on(query('#generateProgression'), 'click', function () {
 				syncProgressionState();
 				generateProgressionPlan();
+				recordHistorySnapshot();
 			});
 		}
 
@@ -10478,6 +10630,23 @@
 			on(global.document, 'keydown', function (event) {
 				if (event.key === 'Escape') {
 					closeWorkbenchInstrumentMenu();
+				}
+			});
+		}
+
+		function bindHistoryControls() {
+			on(query('#undoChange'), 'click', undoHistorySnapshot);
+			on(query('#redoChange'), 'click', redoHistorySnapshot);
+			on(global.document, 'keydown', function (event) {
+				if (!event.ctrlKey || event.key.toLowerCase() !== 'z' || isEditableTarget(event.target)) {
+					return;
+				}
+
+				event.preventDefault();
+				if (event.shiftKey) {
+					redoHistorySnapshot();
+				} else {
+					undoHistorySnapshot();
 				}
 			});
 		}
@@ -10729,6 +10898,135 @@
 			setPlaybackInstrument(options, instrumentId);
 			saveFormPreferences(preferences);
 			renderReport();
+			recordHistorySnapshot();
+		}
+
+		function recordHistorySnapshot() {
+			var snapshot;
+			var serialized;
+
+			if (history.restoring) {
+				updateHistoryButtons();
+				return;
+			}
+
+			snapshot = createHistorySnapshot();
+			serialized = JSON.stringify(snapshot);
+
+			if (history.items[history.index] && history.items[history.index].serialized === serialized) {
+				updateHistoryButtons();
+				return;
+			}
+
+			history.items = history.items.slice(0, history.index + 1);
+			history.items.push({
+				serialized: serialized,
+				snapshot: snapshot
+			});
+
+			if (history.items.length > history.limit) {
+				history.items.shift();
+			}
+
+			history.index = history.items.length - 1;
+			updateHistoryButtons();
+		}
+
+		function undoHistorySnapshot() {
+			if (history.index <= 0) {
+				return;
+			}
+
+			history.index -= 1;
+			restoreHistorySnapshot(history.items[history.index].snapshot);
+		}
+
+		function redoHistorySnapshot() {
+			if (history.index >= history.items.length - 1) {
+				return;
+			}
+
+			history.index += 1;
+			restoreHistorySnapshot(history.items[history.index].snapshot);
+		}
+
+		function createHistorySnapshot() {
+			return cloneJson({
+				controls: {
+					articulation: valueOf(query('#progressionArticulation')),
+					bars: valueOf(query('#progressionBars')),
+					bpm: valueOf(query('#progressionBpm')),
+					counterpoint: valueOf(query('#progressionCounterpoint')),
+					format: valueOf(query('#interface input[type="radio"][name="formato"]:checked')),
+					instrument: valueOf(query('#instrumentoSonoro')),
+					meter: valueOf(query('#progressionMeter')),
+					modalInterchange: valueOf(query('#progressionModalInterchange')),
+					notacion: valueOf(query('#selectorNotacion')),
+					scale: valueOf(query('#escala')),
+					style: valueOf(query('#progressionStyle')),
+					tensions: valueOf(query('#progressionTensions')),
+					tonic: valueOf(query('#tonica')),
+					tuning: valueOf(query('#selectorAfinaciones')),
+					voices: valueOf(query('#progressionVoices'))
+				},
+				progression: uiState.getProgression(),
+				progressionState: uiState.getProgressionState(),
+				selectedTuningIndex: uiState.getSelectedTuningIndex()
+			});
+		}
+
+		function restoreHistorySnapshot(snapshot) {
+			var controls = snapshot && snapshot.controls ? snapshot.controls : {};
+
+			if (!snapshot) {
+				return;
+			}
+
+			history.restoring = true;
+			setValue(query('#selectorNotacion'), controls.notacion);
+			uiState.setNotationStyle(notation ? notation.normalizeStyle(controls.notacion) : controls.notacion);
+			setRadioValue('#interface input[type="radio"][name="formato"]', controls.format);
+			fillSelectHashTable(query('#tonica'), options.data.notes, controls.format === '1', null, 'notes', notation, uiState.getNotationStyle());
+			setValue(query('#tonica'), controls.tonic);
+			setValue(query('#escala'), controls.scale);
+			setValue(query('#instrumentoSonoro'), controls.instrument);
+			restoreProgressionControls(controls);
+			uiState.setSelectedTuningIndex(normalizeHistoryTuningIndex(snapshot.selectedTuningIndex));
+			renderReport();
+			uiState.setProgressionState(cloneJson(snapshot.progressionState));
+			setProgression(cloneJson(snapshot.progression), {
+				playbackHeadIndex: 0
+			});
+			setValue(query('#selectorAfinaciones'), controls.tuning);
+			if (controls.tuning !== '') {
+				uiState.setSelectedTuningIndex(normalizeHistoryTuningIndex(controls.tuning));
+				renderInstrument(false);
+			}
+			history.restoring = false;
+			updateHistoryButtons();
+		}
+
+		function restoreProgressionControls(controls) {
+			setValue(query('#progressionArticulation'), controls.articulation);
+			setValue(query('#progressionBars'), controls.bars);
+			setValue(query('#progressionBpm'), controls.bpm);
+			setValue(query('#progressionCounterpoint'), controls.counterpoint);
+			setValue(query('#progressionMeter'), controls.meter);
+			setValue(query('#progressionModalInterchange'), controls.modalInterchange);
+			setValue(query('#progressionStyle'), controls.style);
+			setValue(query('#progressionTensions'), controls.tensions);
+			setValue(query('#progressionVoices'), controls.voices);
+		}
+
+		function updateHistoryButtons() {
+			setDisabled(query('#undoChange'), history.index <= 0);
+			setDisabled(query('#redoChange'), history.index >= history.items.length - 1);
+		}
+
+		function normalizeHistoryTuningIndex(value) {
+			var index = Number(value);
+
+			return isNaN(index) || index < 0 ? 0 : index;
 		}
 
 		function syncProgressionState() {
@@ -10872,6 +11170,7 @@
 		}
 
 		renderReport();
+		recordHistorySnapshot();
 
 		return {
 			renderInstrument: renderInstrument,
@@ -11118,6 +11417,34 @@
 		if (input) {
 			input.checked = true;
 		}
+	}
+
+	function setRadioValue(selector, value) {
+		forEachElement(selector, function (input) {
+			input.checked = input.value === value;
+		});
+	}
+
+	function setDisabled(element, disabled) {
+		if (element) {
+			element.disabled = disabled === true;
+			element.setAttribute('aria-disabled', disabled === true ? 'true' : 'false');
+		}
+	}
+
+	function isEditableTarget(target) {
+		var tagName = target && target.tagName ? String(target.tagName).toLowerCase() : '';
+
+		return !!(target && (
+			target.isContentEditable ||
+			tagName === 'input' ||
+			tagName === 'select' ||
+			tagName === 'textarea'
+		));
+	}
+
+	function cloneJson(value) {
+		return value == null ? null : JSON.parse(JSON.stringify(value));
 	}
 
 	function closest(target, selector) {

@@ -165,6 +165,21 @@ document.goStart.dispatchEvent({ type: 'click', target: document.goStart });
 assert.equal(document.measures[0].classList.contains('isPlaybackHead'), true);
 assert.equal(document.goStart.hidden, true);
 
+document.dispatchKeydown('2');
+assert.equal(document.measures[1].classList.contains('isPlaybackHead'), true);
+assert.equal(document.goStart.hidden, false);
+
+playCalls = 0;
+playing = false;
+document.dispatchKeydown(' ');
+assert.equal(playCalls, 1);
+assert.equal(lastStartIndex, 1);
+document.dispatchKeydown(' ');
+assert.equal(playing, false);
+
+document.dispatchKeydown('0');
+assert.equal(document.measures[1].classList.contains('isPlaybackHead'), true);
+
 document.measures[1].dispatchSplitClick('add');
 assert.equal(splitRequest.measureIndex, 1);
 assert.equal(splitRequest.options.chordIndex, 0);
@@ -239,6 +254,7 @@ function createFakeDocument(measureCount) {
 	const metronome = createFakeElement('progressionMetronome');
 	const measures = [];
 	const chordElements = [];
+	const listeners = {};
 
 	for (let i = 0; i < measureCount; i++) {
 		measures.push(createFakeMeasure(i, rootElement, chordElements));
@@ -252,6 +268,25 @@ function createFakeDocument(measureCount) {
 		loop,
 		metronome,
 		measures,
+		addEventListener: function (eventName, handler) {
+			listeners[eventName] = listeners[eventName] || [];
+			listeners[eventName].push(handler);
+		},
+		dispatchKeydown: function (key, target) {
+			const event = {
+				key: key,
+				preventDefaultCalled: false,
+				preventDefault: function () {
+					this.preventDefaultCalled = true;
+				},
+				target: target || createFakeElement('shortcut-target'),
+				type: 'keydown'
+			};
+			(listeners.keydown || []).forEach(function (handler) {
+				handler(event);
+			});
+			return event;
+		},
 		querySelector: function (selector) {
 			if (selector === '#constructorProgresiones') {
 				return rootElement;
