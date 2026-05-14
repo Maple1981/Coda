@@ -55,6 +55,8 @@
 		setAttribute(i18n, '#themeToggleButton', 'aria-label', 'theme.switchToDay');
 		setAttribute(i18n, '#settingsButton', 'title', 'settings.label');
 		setAttribute(i18n, '#settingsButton', 'aria-label', 'settings.label');
+		setAttribute(i18n, '#dashboardColumnResizer', 'title', 'dashboard.resizeTheory');
+		setAttribute(i18n, '#dashboardColumnResizer', 'aria-label', 'dashboard.resizeTheory');
 
 		setText(i18n, 'span[data-i18n="form.tonic"]', 'form.tonic');
 		setText(i18n, 'span[data-i18n="form.scale"]', 'form.scale');

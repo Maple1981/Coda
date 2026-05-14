@@ -57,6 +57,7 @@
 				value = String(value);
 				return value === '0' || value === '1' ? value : undefined;
 			},
+			dashboardSidebarWidth: integerRange(320, 760),
 			language: allowList(['es', 'en']),
 			midiInstrument: allowList(['acoustic_grand_piano', 'acoustic_guitar_nylon', 'drawbar_organ', 'string_ensemble_1']),
 			notation: allowList(['anglosaxon', 'latin']),

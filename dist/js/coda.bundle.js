@@ -1303,6 +1303,7 @@
 			'circle.close': 'Cerrar círculo de quintas',
 			'circle.open': 'Abrir círculo de quintas',
 			'circle.title': 'Círculo de quintas',
+			'dashboard.resizeTheory': 'Ajustar anchura del panel teórico',
 			'data.scales.0': 'Mayor',
 			'data.scales.1': 'Mayor artificial',
 			'data.scales.2': 'Menor natural',
@@ -1407,6 +1408,7 @@
 			'progression.chordMenu.remaining': 'Resto de acordes',
 			'progression.chordMenu.sameFunction': 'Misma función tonal',
 			'progression.chordMenu.seventh': 'Cuatríada',
+			'progression.chordMenu.silence': 'Silencio',
 			'progression.chordMenu.triad': 'Tríada',
 			'progression.counterpoint': 'Contrapunto',
 			'progression.addMeasureChord': 'Añadir acorde al compás',
@@ -1486,6 +1488,7 @@
 			'circle.close': 'Close circle of fifths',
 			'circle.open': 'Open circle of fifths',
 			'circle.title': 'Circle of fifths',
+			'dashboard.resizeTheory': 'Resize theory panel',
 			'data.scales.0': 'Major',
 			'data.scales.1': 'Artificial major',
 			'data.scales.2': 'Natural minor',
@@ -1590,6 +1593,7 @@
 			'progression.chordMenu.remaining': 'Other chords',
 			'progression.chordMenu.sameFunction': 'Same tonal function',
 			'progression.chordMenu.seventh': 'Seventh chord',
+			'progression.chordMenu.silence': 'Silence',
 			'progression.chordMenu.triad': 'Triad',
 			'progression.counterpoint': 'Counterpoint',
 			'progression.addMeasureChord': 'Add chord to bar',
@@ -1939,6 +1943,7 @@
 				value = String(value);
 				return value === '0' || value === '1' ? value : undefined;
 			},
+			dashboardSidebarWidth: integerRange(320, 760),
 			language: allowList(['es', 'en']),
 			midiInstrument: allowList(['acoustic_grand_piano', 'acoustic_guitar_nylon', 'drawbar_organ', 'string_ensemble_1']),
 			notation: allowList(['anglosaxon', 'latin']),
@@ -4250,6 +4255,7 @@
 			'displayName',
 			'inversion',
 			'inversionIndex',
+			'isSilence',
 			'midiNotes',
 			'notes',
 			'source',
@@ -4346,8 +4352,39 @@
 		});
 	}
 
+	function buildSilenceSegment(segment, measure, chordIndex) {
+		return {
+			articulation: measure.articulation,
+			bar: measure.bar,
+			beatUnit: measure.beatUnit,
+			chord: null,
+			chordIndex: chordIndex,
+			chordKind: 'silence',
+			chordName: '',
+			degree: '',
+			displayName: '',
+			durationBeats: Number(segment.durationBeats) || Number(measure.durationBeats) || 4,
+			durationSeconds: Number(segment.durationSeconds) || Number(measure.durationSeconds) || 0,
+			endBeat: Number(segment.endBeat) || (Number(segment.startBeat) || Number(measure.startBeat) || 0) + (Number(segment.durationBeats) || Number(measure.durationBeats) || 4),
+			endSeconds: Number(segment.endSeconds) || (Number(segment.startSeconds) || Number(measure.startSeconds) || 0) + (Number(segment.durationSeconds) || Number(measure.durationSeconds) || 0),
+			inversion: '',
+			inversionIndex: 0,
+			isSilence: true,
+			midiNotes: [],
+			notes: [],
+			source: 'silence',
+			startBeat: Number(segment.startBeat) || Number(measure.startBeat) || 0,
+			startSeconds: Number(segment.startSeconds) || Number(measure.startSeconds) || 0,
+			suspension: '',
+			tonalFunction: '',
+			voiceNotes: [],
+			voices: measure.voices
+		};
+	}
+
 	global.CodaProgressionReplacementChord = {
-		buildSegment: buildSegment
+		buildSegment: buildSegment,
+		buildSilenceSegment: buildSilenceSegment
 	};
 })(window);
 
@@ -4454,24 +4491,26 @@
 		options = options || {};
 		replacement = replacement || {};
 		dependencies = dependencies || {};
-		if (!progression || !measure || replacement.degreeIndex == null) {
+		if (!progression || !measure || (replacement.degreeIndex == null && replacement.kind !== 'silence')) {
 			return progression;
 		}
 
 		segment = measure.chords && measure.chords.length ? measure.chords[Math.min(normalizedChordIndex, measure.chords.length - 1)] : measure;
 		nextMeasure = measures[index + 1] || null;
-		replacedSegment = replacementChordService.buildSegment({
-			buildChordPlan: dependencies.buildChordPlan,
-			chordIndex: normalizedChordIndex,
-			data: options.data,
-			measure: measure,
-			nextMeasure: nextMeasure,
-			progression: progression,
-			progressionState: dependencies.normalizeProgressionState(options.progressionState || progression),
-			replacement: replacement,
-			report: options.report,
-			segment: segment
-		});
+		replacedSegment = replacement.kind === 'silence' ?
+			replacementChordService.buildSilenceSegment(segment, measure, normalizedChordIndex) :
+			replacementChordService.buildSegment({
+				buildChordPlan: dependencies.buildChordPlan,
+				chordIndex: normalizedChordIndex,
+				data: options.data,
+				measure: measure,
+				nextMeasure: nextMeasure,
+				progression: progression,
+				progressionState: dependencies.normalizeProgressionState(options.progressionState || progression),
+				replacement: replacement,
+				report: options.report,
+				segment: segment
+			});
 
 		if (!replacedSegment) {
 			return progression;
@@ -7873,6 +7912,12 @@
 	}
 
 	function replacementFromItem(item) {
+		if (item && item.getAttribute('data-chord-kind') === 'silence') {
+			return {
+				kind: 'silence'
+			};
+		}
+
 		return {
 			degreeIndex: parseInt(item.getAttribute('data-degree-index'), 10),
 			inversionIndex: parseInt(item.getAttribute('data-inversion-index'), 10),
@@ -10721,6 +10766,10 @@
 				return true;
 			}
 
+			if (measures[i].isSilence) {
+				return true;
+			}
+
 			if (measures[i].chords && hasRenderableMeasures(measures[i].chords)) {
 				return true;
 			}
@@ -10897,6 +10946,9 @@
 			menu.appendChild(renderGroup(menuData[i], options));
 		}
 
+		menu.appendChild(renderSilenceOption(options));
+		hasItems = true;
+
 		return hasItems ? menu : null;
 	}
 
@@ -10950,6 +11002,23 @@
 		button.innerHTML = labels.escapeHtml(kindLabel + ': ') + labels.formatMusicalLabel(item.displayName) + (item.degree ? ' &middot; ' + labels.formatMusicalLabel(item.degree) : '');
 
 		return button;
+	}
+
+	function renderSilenceOption(options) {
+		var doc = global.document;
+		var section = doc.createElement('section');
+		var button = doc.createElement('button');
+
+		section.className = 'progressionChordMenu__group progressionChordMenu__group--silence';
+		button.type = 'button';
+		button.className = 'measureChordMenuItem';
+		button.setAttribute('data-progression-index', options.measureIndex);
+		button.setAttribute('data-measure-chord-index', options.chordIndex);
+		button.setAttribute('data-chord-kind', 'silence');
+		button.innerHTML = labels.escapeHtml(translate(options.i18n, 'progression.chordMenu.silence'));
+		section.appendChild(button);
+
+		return section;
 	}
 
 	function translate(i18n, key) {
@@ -11293,6 +11362,8 @@
 		setAttribute(i18n, '#themeToggleButton', 'aria-label', 'theme.switchToDay');
 		setAttribute(i18n, '#settingsButton', 'title', 'settings.label');
 		setAttribute(i18n, '#settingsButton', 'aria-label', 'settings.label');
+		setAttribute(i18n, '#dashboardColumnResizer', 'title', 'dashboard.resizeTheory');
+		setAttribute(i18n, '#dashboardColumnResizer', 'aria-label', 'dashboard.resizeTheory');
 
 		setText(i18n, 'span[data-i18n="form.tonic"]', 'form.tonic');
 		setText(i18n, 'span[data-i18n="form.scale"]', 'form.scale');
@@ -12254,6 +12325,182 @@
 
 ;
 
+/* Source: js/ui/dashboard-resizer-controller.js */
+// Arrastre de la divisoria entre teoría y área de progresiones.
+(function (global) {
+	'use strict';
+
+	var minWidth = 320;
+	var maxWidth = 760;
+	var minMainWidth = 520;
+	var responsiveBreakpoint = 980;
+	var step = 24;
+
+	function initialize(options) {
+		var doc = global.document;
+		var container = doc ? doc.getElementById('container') : null;
+		var sidebar = doc ? doc.getElementById('panelTeorico') : null;
+		var resizer = doc ? doc.getElementById('dashboardColumnResizer') : null;
+		var preferences = options ? options.preferences : null;
+		var ui = options ? options.ui : null;
+		var drag = null;
+
+		if (!doc || !container || !sidebar || !resizer) {
+			return null;
+		}
+
+		applyWidth(container, resizer, initialWidth(preferences, sidebar, container));
+		bindStart(resizer, doc, function (event) {
+			if (event.button != null && event.button !== 0) {
+				return;
+			}
+
+			drag = {
+				startX: pointerX(event),
+				startWidth: sidebar.getBoundingClientRect().width
+			};
+			resizer.classList.add('isDragging');
+			doc.body.classList.add('dashboardResizing');
+			preventDefault(event);
+		});
+		bindMove(doc, function (event) {
+			if (!drag) {
+				return;
+			}
+
+			applyWidth(container, resizer, drag.startWidth + pointerX(event) - drag.startX);
+			scheduleAfterResize(ui);
+			preventDefault(event);
+		});
+		bindEnd(doc, function () {
+			if (!drag) {
+				return;
+			}
+
+			drag = null;
+			resizer.classList.remove('isDragging');
+			doc.body.classList.remove('dashboardResizing');
+			saveWidth(preferences, container);
+			scheduleAfterResize(ui);
+		});
+		resizer.addEventListener('keydown', function (event) {
+			var direction = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0;
+
+			if (!direction) {
+				return;
+			}
+
+			applyWidth(container, resizer, sidebar.getBoundingClientRect().width + (direction * step));
+			saveWidth(preferences, container);
+			scheduleAfterResize(ui);
+			preventDefault(event);
+		});
+		global.addEventListener('resize', function () {
+			applyWidth(container, resizer, currentWidth(container, sidebar));
+		});
+
+		return {
+			applyWidth: function (width) {
+				applyWidth(container, resizer, width);
+			}
+		};
+	}
+
+	function bindStart(resizer, doc, callback) {
+		resizer.addEventListener(global.PointerEvent ? 'pointerdown' : 'mousedown', callback);
+	}
+
+	function bindMove(doc, callback) {
+		doc.addEventListener(global.PointerEvent ? 'pointermove' : 'mousemove', callback);
+	}
+
+	function bindEnd(doc, callback) {
+		doc.addEventListener(global.PointerEvent ? 'pointerup' : 'mouseup', callback);
+		doc.addEventListener('mouseleave', callback);
+	}
+
+	function initialWidth(preferences, sidebar, container) {
+		var storedWidth = preferences && typeof preferences.getValue === 'function' ?
+			preferences.getValue('dashboardSidebarWidth', null) :
+			null;
+
+		return storedWidth || currentWidth(container, sidebar);
+	}
+
+	function currentWidth(container, sidebar) {
+		var computedWidth = parseInt(container.style.getPropertyValue('--dashboard-sidebar-width'), 10);
+
+		return isFinite(computedWidth) ? computedWidth : sidebar.getBoundingClientRect().width;
+	}
+
+	function applyWidth(container, resizer, width) {
+		var normalizedWidth = clampWidth(width, container);
+
+		if (global.innerWidth <= responsiveBreakpoint) {
+			return;
+		}
+
+		container.style.setProperty('--dashboard-sidebar-width', normalizedWidth + 'px');
+		resizer.setAttribute('aria-valuemin', String(minWidth));
+		resizer.setAttribute('aria-valuemax', String(maxForContainer(container)));
+		resizer.setAttribute('aria-valuenow', String(normalizedWidth));
+	}
+
+	function saveWidth(preferences, container) {
+		var width = parseInt(container.style.getPropertyValue('--dashboard-sidebar-width'), 10);
+
+		if (preferences && typeof preferences.setValue === 'function' && isFinite(width)) {
+			preferences.setValue('dashboardSidebarWidth', width);
+		}
+	}
+
+	function clampWidth(width, container) {
+		var numericWidth = Math.round(Number(width));
+		var max = maxForContainer(container);
+
+		if (!isFinite(numericWidth)) {
+			numericWidth = minWidth;
+		}
+
+		return Math.max(minWidth, Math.min(max, numericWidth));
+	}
+
+	function maxForContainer(container) {
+		var availableWidth = container ? container.clientWidth : 0;
+		var dynamicMax = availableWidth ? availableWidth - minMainWidth : maxWidth;
+
+		return Math.max(minWidth, Math.min(maxWidth, dynamicMax));
+	}
+
+	function pointerX(event) {
+		return Number(event.clientX) || 0;
+	}
+
+	function preventDefault(event) {
+		if (event && typeof event.preventDefault === 'function') {
+			event.preventDefault();
+		}
+	}
+
+	function scheduleAfterResize(ui) {
+		if (ui && typeof ui.scheduleInstrumentScale === 'function') {
+			ui.scheduleInstrumentScale();
+		}
+		if (ui && typeof ui.scheduleSidebarPanelViewport === 'function') {
+			ui.scheduleSidebarPanelViewport();
+		}
+		if (ui && typeof ui.scheduleDashboardWorkspaceHeight === 'function') {
+			ui.scheduleDashboardWorkspaceHeight();
+		}
+	}
+
+	global.CodaDashboardResizer = {
+		initialize: initialize
+	};
+})(window);
+
+;
+
 /* Source: js/ui/progression-transport-controller.js */
 // Transport controls for progression preview and MIDI export.
 (function (global) {
@@ -12961,6 +13208,12 @@
 		if (options.randomSelectControl) {
 			options.randomSelectControl.initialize({
 				i18n: i18n
+			});
+		}
+		if (options.dashboardResizer) {
+			options.dashboardResizer.initialize({
+				preferences: preferences,
+				ui: options.ui
 			});
 		}
 		restoreProgressionControls(normalizeInitialProgressionControls(options.initialProgressionState, progressionState, progressionPreferences));
@@ -14721,6 +14974,7 @@
 			application: options.application,
 			chordPlayback: chordPlayback,
 			data: data,
+			dashboardResizer: options.dashboardResizer || global.CodaDashboardResizer,
 			domain: options.domain,
 			i18n: options.i18n,
 			initialForm: options.initialForm,

@@ -519,5 +519,8 @@ assert.ok(chordMenu.children[0].children[1].children[0].innerHTML.indexOf('<sub 
 assert.equal(chordMenu.children[0].children[1].children[1].children[0].getAttribute('data-progression-index'), '4');
 assert.equal(chordMenu.children[0].children[1].children[1].children[0].getAttribute('data-measure-chord-index'), '2');
 assert.ok(chordMenu.children[0].children[1].children[1].children[0].innerHTML.indexOf('<sub class="musicInversion">6</sub>') > -1);
+assert.equal(chordMenu.children[1].className, 'progressionChordMenu__group progressionChordMenu__group--silence');
+assert.equal(chordMenu.children[1].children[0].getAttribute('data-chord-kind'), 'silence');
+assert.equal(chordMenu.children[1].children[0].innerHTML, 'Silence');
 
 console.log('Renderer tests passed');

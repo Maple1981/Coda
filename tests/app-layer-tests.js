@@ -329,6 +329,27 @@ assert.ok(chordMenu[0].items[0].options.some(function (item) {
 	return item.kind === 'seventh' && item.displayName === 'Cmaj7 4/2';
 }));
 
+const silentProgression = app.replaceProgressionMeasureChord(cMajorProgressionPlan, 0, 0, {
+	kind: 'silence'
+}, {
+	data: data,
+	progressionState: {
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		meter: '4/4',
+		voices: 4
+	},
+	report: cMajorReport
+});
+assert.equal(silentProgression.measures[0].isSilence, true);
+assert.equal(silentProgression.measures[0].displayName, '');
+assert.equal(silentProgression.measures[0].degree, '');
+assert.deepEqual(silentProgression.measures[0].notes, []);
+assert.deepEqual(silentProgression.measures[0].midiNotes, []);
+assert.equal(silentProgression.measures[0].tonalFunction, '');
+
 const eMinorReport = app.buildScaleReport({
 	data: data,
 	domain: domain,

@@ -163,6 +163,7 @@ assert.ok(global.CodaUi.attachInstrumentEvents);
 assert.ok(global.CodaUi.scheduleDashboardWorkspaceHeight);
 assert.ok(global.CodaUi.scheduleInstrumentScale);
 assert.ok(global.CodaUi.scheduleSidebarPanelViewport);
+assert.ok(global.CodaDashboardResizer.initialize);
 assert.ok(global.CodaScaleReportController.initialize);
 assert.ok(global.CodaPlayback.create);
 assert.ok(global.CodaBootstrap.start);
@@ -191,6 +192,7 @@ assert.ok(manifestScripts.indexOf('js/ui/theme-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/random-select-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/key-navigation-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/changelog-dialog-controller.js') > -1);
+assert.ok(manifestScripts.indexOf('js/ui/dashboard-resizer-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/progression-transport-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/domain/progression-domain.js') > -1);
 assert.ok(manifestScripts.indexOf('js/application/progression-application.js') > -1);
@@ -322,6 +324,8 @@ assert.ok(indexHtml.indexOf('<span data-i18n="ui.notation">') === -1);
 assert.ok(indexHtml.indexOf('<select id="selectorIdioma" title="Idioma" aria-label="Idioma">') > -1);
 assert.ok(indexHtml.indexOf('<select id="selectorNotacion" title="Notación" aria-label="Notación">') > -1);
 assert.ok(indexHtml.indexOf('id="toggleCircleOfFifthsFromForm"') > -1);
+assert.ok(indexHtml.indexOf('id="dashboardColumnResizer"') > -1);
+assert.ok(indexHtml.indexOf('role="separator"') > -1);
 assert.ok(indexHtml.indexOf('id="circleOfFifthsPopover"') > -1);
 assert.ok(indexHtml.indexOf('<section id="circuloQuintas"></section>') > -1);
 assert.ok(indexHtml.indexOf('id="toggleTheoryControls"') > -1);
@@ -351,6 +355,7 @@ assert.equal(global.CodaTranslations.en['welcome.main1'], undefined);
 assert.ok(global.CodaTranslations.es['footer.soundfonts'].indexOf('MIDI.js Soundfonts') > -1);
 assert.ok(global.CodaTranslations.en['footer.soundfonts'].indexOf('Creative Commons Attribution 3.0') > -1);
 assert.deepEqual(global.CodaPreferences.sanitizeValues({
+	dashboardSidebarWidth: '512',
 	format: '1',
 	language: 'en',
 	midiInstrument: 'drawbar_organ',
@@ -371,6 +376,7 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	unknown: '<script>',
 	volume: '73'
 }), {
+	dashboardSidebarWidth: 512,
 	format: '1',
 	language: 'en',
 	midiInstrument: 'drawbar_organ',
@@ -391,6 +397,7 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	volume: 73
 });
 assert.deepEqual(global.CodaPreferences.sanitizeValues({
+	dashboardSidebarWidth: 9999,
 	format: '9',
 	language: 'fr',
 	midiInstrument: '../bad',
@@ -801,6 +808,7 @@ assert.ok(global.CodaData.progressionRules.patterns.length > 0);
 assert.equal(controllerOptions.application, global.CodaApplication);
 assert.equal(controllerOptions.changelogDialog.initialize != null, true);
 assert.equal(controllerOptions.chordPlayback, startResult.chordPlayback);
+assert.equal(controllerOptions.dashboardResizer, global.CodaDashboardResizer);
 assert.equal(controllerOptions.domain, global.CodaDomain);
 assert.equal(controllerOptions.i18n, i18n);
 assert.deepEqual(controllerOptions.initialForm, {

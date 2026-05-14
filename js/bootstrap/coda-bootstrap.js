@@ -38,6 +38,7 @@
 			application: options.application,
 			chordPlayback: chordPlayback,
 			data: data,
+			dashboardResizer: options.dashboardResizer || global.CodaDashboardResizer,
 			domain: options.domain,
 			i18n: options.i18n,
 			initialForm: options.initialForm,

@@ -35,6 +35,10 @@
 				return true;
 			}
 
+			if (measures[i].isSilence) {
+				return true;
+			}
+
 			if (measures[i].chords && hasRenderableMeasures(measures[i].chords)) {
 				return true;
 			}

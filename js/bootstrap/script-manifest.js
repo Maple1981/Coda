@@ -134,6 +134,7 @@
 			'js/ui/random-select-controller.js',
 			'js/ui/key-navigation-controller.js',
 			'js/ui/changelog-dialog-controller.js',
+			'js/ui/dashboard-resizer-controller.js',
 			'js/ui/progression-transport-controller.js',
 			'js/ui/scale-report-ui.js',
 			'js/ui/scale-report-controller.js',

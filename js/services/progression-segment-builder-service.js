@@ -63,6 +63,7 @@
 			'displayName',
 			'inversion',
 			'inversionIndex',
+			'isSilence',
 			'midiNotes',
 			'notes',
 			'source',

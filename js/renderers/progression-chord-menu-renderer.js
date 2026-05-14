@@ -28,6 +28,9 @@
 			menu.appendChild(renderGroup(menuData[i], options));
 		}
 
+		menu.appendChild(renderSilenceOption(options));
+		hasItems = true;
+
 		return hasItems ? menu : null;
 	}
 
@@ -81,6 +84,23 @@
 		button.innerHTML = labels.escapeHtml(kindLabel + ': ') + labels.formatMusicalLabel(item.displayName) + (item.degree ? ' &middot; ' + labels.formatMusicalLabel(item.degree) : '');
 
 		return button;
+	}
+
+	function renderSilenceOption(options) {
+		var doc = global.document;
+		var section = doc.createElement('section');
+		var button = doc.createElement('button');
+
+		section.className = 'progressionChordMenu__group progressionChordMenu__group--silence';
+		button.type = 'button';
+		button.className = 'measureChordMenuItem';
+		button.setAttribute('data-progression-index', options.measureIndex);
+		button.setAttribute('data-measure-chord-index', options.chordIndex);
+		button.setAttribute('data-chord-kind', 'silence');
+		button.innerHTML = labels.escapeHtml(translate(options.i18n, 'progression.chordMenu.silence'));
+		section.appendChild(button);
+
+		return section;
 	}
 
 	function translate(i18n, key) {

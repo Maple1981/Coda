@@ -135,13 +135,13 @@ strong{
 div#container{
 	box-sizing:border-box;
 	display:grid;
-	grid-template-columns:minmax(420px, 32vw) minmax(0, 1fr);
+	grid-template-columns:minmax(340px, var(--dashboard-sidebar-width, 32vw)) 6px minmax(0, 1fr);
 	grid-template-rows:auto minmax(var(--dashboard-workspace-height, calc(100vh - 5.4em)), auto) auto;
 	grid-template-areas:
-		"appHeader appHeader"
-		"sidebar main"
-		"footer footer";
-	gap:1.2em;
+		"appHeader appHeader appHeader"
+		"sidebar resizer main"
+		"footer footer footer";
+	gap:1.2em .65em;
 	width:100%;
 	min-height:100vh;
 	padding:.55em 1.2em 1.2em 1.2em;
@@ -378,6 +378,47 @@ header{
 	background:$corporative_complementary_color;
 	border:3px solid $basic_filldarkgrad_color;
 	border-radius:8px;
+}
+
+.dashboard__resizer{
+	grid-area:resizer;
+	position:relative;
+	align-self:stretch;
+	min-height:280px;
+	border:0;
+	background:transparent;
+	cursor:col-resize;
+	touch-action:none;
+}
+
+.dashboard__resizer::before{
+	content:"";
+	position:absolute;
+	top:0;
+	bottom:0;
+	left:50%;
+	width:1px;
+	border-radius:2px;
+	background:$basic_fillbrightgrad_color;
+	transform:translateX(-50%);
+	transition:background-color .16s ease, box-shadow .16s ease, width .16s ease;
+}
+
+.dashboard__resizer:hover::before,
+.dashboard__resizer:focus::before,
+.dashboard__resizer.isDragging::before{
+	width:2px;
+	background:$corporative_complementary_color;
+	box-shadow:0 0 12px rgba($corporative_complementary_color, .55);
+}
+
+.dashboard__resizer:focus{
+	outline:none;
+}
+
+body.dashboardResizing{
+	cursor:col-resize;
+	user-select:none;
 }
 
 .dashboard__main{
@@ -620,6 +661,12 @@ section#notacion{
 
 	table.acordesEscala tr td:first-child{
 		text-align:left;
+	}
+
+	table.acordesEscala tr td.cabecera,
+	table.acordesEscala thead tr td{
+		font-size:.88em;
+		white-space:nowrap;
 	}
 
 	div.leyendaAcordesModales{
@@ -1761,7 +1808,7 @@ footer{
 
 @media (max-width:1280px){
 	div#container{
-		grid-template-columns:minmax(390px, 36vw) minmax(0, 1fr);
+		grid-template-columns:minmax(320px, var(--dashboard-sidebar-width, 36vw)) 6px minmax(0, 1fr);
 	}
 
 	.progressionControls{
@@ -1778,6 +1825,11 @@ footer{
 			"sidebar"
 			"main"
 			"footer";
+	}
+
+	.dashboard__resizer{
+		display:none;
+		grid-area:auto;
 	}
 
 	.appHeader{

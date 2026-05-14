@@ -59,7 +59,38 @@
 		});
 	}
 
+	function buildSilenceSegment(segment, measure, chordIndex) {
+		return {
+			articulation: measure.articulation,
+			bar: measure.bar,
+			beatUnit: measure.beatUnit,
+			chord: null,
+			chordIndex: chordIndex,
+			chordKind: 'silence',
+			chordName: '',
+			degree: '',
+			displayName: '',
+			durationBeats: Number(segment.durationBeats) || Number(measure.durationBeats) || 4,
+			durationSeconds: Number(segment.durationSeconds) || Number(measure.durationSeconds) || 0,
+			endBeat: Number(segment.endBeat) || (Number(segment.startBeat) || Number(measure.startBeat) || 0) + (Number(segment.durationBeats) || Number(measure.durationBeats) || 4),
+			endSeconds: Number(segment.endSeconds) || (Number(segment.startSeconds) || Number(measure.startSeconds) || 0) + (Number(segment.durationSeconds) || Number(measure.durationSeconds) || 0),
+			inversion: '',
+			inversionIndex: 0,
+			isSilence: true,
+			midiNotes: [],
+			notes: [],
+			source: 'silence',
+			startBeat: Number(segment.startBeat) || Number(measure.startBeat) || 0,
+			startSeconds: Number(segment.startSeconds) || Number(measure.startSeconds) || 0,
+			suspension: '',
+			tonalFunction: '',
+			voiceNotes: [],
+			voices: measure.voices
+		};
+	}
+
 	global.CodaProgressionReplacementChord = {
-		buildSegment: buildSegment
+		buildSegment: buildSegment,
+		buildSilenceSegment: buildSilenceSegment
 	};
 })(window);

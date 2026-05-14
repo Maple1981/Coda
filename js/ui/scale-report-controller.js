@@ -71,6 +71,12 @@
 				i18n: i18n
 			});
 		}
+		if (options.dashboardResizer) {
+			options.dashboardResizer.initialize({
+				preferences: preferences,
+				ui: options.ui
+			});
+		}
 		restoreProgressionControls(normalizeInitialProgressionControls(options.initialProgressionState, progressionState, progressionPreferences));
 		syncProgressionState();
 		bindProgressionState();

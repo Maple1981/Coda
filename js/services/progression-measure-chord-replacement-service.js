@@ -18,24 +18,26 @@
 		options = options || {};
 		replacement = replacement || {};
 		dependencies = dependencies || {};
-		if (!progression || !measure || replacement.degreeIndex == null) {
+		if (!progression || !measure || (replacement.degreeIndex == null && replacement.kind !== 'silence')) {
 			return progression;
 		}
 
 		segment = measure.chords && measure.chords.length ? measure.chords[Math.min(normalizedChordIndex, measure.chords.length - 1)] : measure;
 		nextMeasure = measures[index + 1] || null;
-		replacedSegment = replacementChordService.buildSegment({
-			buildChordPlan: dependencies.buildChordPlan,
-			chordIndex: normalizedChordIndex,
-			data: options.data,
-			measure: measure,
-			nextMeasure: nextMeasure,
-			progression: progression,
-			progressionState: dependencies.normalizeProgressionState(options.progressionState || progression),
-			replacement: replacement,
-			report: options.report,
-			segment: segment
-		});
+		replacedSegment = replacement.kind === 'silence' ?
+			replacementChordService.buildSilenceSegment(segment, measure, normalizedChordIndex) :
+			replacementChordService.buildSegment({
+				buildChordPlan: dependencies.buildChordPlan,
+				chordIndex: normalizedChordIndex,
+				data: options.data,
+				measure: measure,
+				nextMeasure: nextMeasure,
+				progression: progression,
+				progressionState: dependencies.normalizeProgressionState(options.progressionState || progression),
+				replacement: replacement,
+				report: options.report,
+				segment: segment
+			});
 
 		if (!replacedSegment) {
 			return progression;

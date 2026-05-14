@@ -53,6 +53,12 @@
 	}
 
 	function replacementFromItem(item) {
+		if (item && item.getAttribute('data-chord-kind') === 'silence') {
+			return {
+				kind: 'silence'
+			};
+		}
+
 		return {
 			degreeIndex: parseInt(item.getAttribute('data-degree-index'), 10),
 			inversionIndex: parseInt(item.getAttribute('data-inversion-index'), 10),

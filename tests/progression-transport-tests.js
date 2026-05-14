@@ -305,6 +305,12 @@ assert.deepEqual(midiBuildRequest, {
 assert.equal(document.lastDownload.download, 'test-progression.mid');
 assert.equal(midiDownloads, 1);
 
+const silenceMenuItem = createFakeElement('silence-menu-item');
+silenceMenuItem.setAttribute('data-chord-kind', 'silence');
+assert.deepEqual(context.window.CodaProgressionTransportMenu.replacementFromItem(silenceMenuItem), {
+	kind: 'silence'
+});
+
 console.log('Progression transport tests passed');
 
 function createFakeDocument(measureCount) {
