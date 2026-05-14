@@ -53,6 +53,7 @@ assert.ok(global.CodaProgressionVoicingSelection.chooseVoicing);
 assert.ok(global.CodaProgressionVoicing.chooseVoicing);
 assert.ok(global.CodaProgressionPedalLinks.commonVoiceLinks);
 assert.ok(global.CodaProgressionVoiceLeading.annotateMeasures);
+assert.ok(global.CodaProgressionMelodicCounterpoint.annotateMeasures);
 assert.ok(global.CodaProgressionMeasureClone.cloneMeasure);
 assert.ok(global.CodaProgressionMeasureSegments.measureSegments);
 assert.ok(global.CodaProgressionMeasureTimeline.rebuildTimeline);
@@ -217,6 +218,7 @@ assert.ok(manifestScripts.indexOf('js/services/progression-voicing-selection-ser
 assert.ok(manifestScripts.indexOf('js/services/progression-voicing-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-pedal-link-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-voice-leading-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-melodic-counterpoint-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-measure-clone-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-measure-segment-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-measure-timeline-service.js') > -1);
@@ -542,6 +544,39 @@ const voiceLeadingPedalMeasures = global.CodaProgressionVoiceLeading.annotateMea
 ], { counterpoint: 80 });
 assert.deepEqual(voiceLeadingPedalMeasures[0].pedalsOut.map(function (pedal) { return pedal.note; }), ['C']);
 assert.equal(voiceLeadingPedalMeasures[1].voiceNotes[0].role, 'root-pedal');
+const melodicCounterpointMeasures = global.CodaProgressionMelodicCounterpoint.annotateMeasures([
+	{
+		bar: 1,
+		durationSeconds: 2,
+		midiNotes: [48, 52, 55, 60],
+		notes: ['C', 'E', 'G'],
+		voiceNotes: [
+			{ midiNote: 48, note: 'C', role: 'root' },
+			{ midiNote: 52, note: 'E', role: 'third' },
+			{ midiNote: 55, note: 'G', role: 'fifth' },
+			{ midiNote: 60, note: 'C', role: 'root' }
+		]
+	},
+	{
+		bar: 2,
+		durationSeconds: 2,
+		midiNotes: [55, 59, 62, 67],
+		notes: ['G', 'B', 'D'],
+		voiceNotes: [
+			{ midiNote: 55, note: 'G', role: 'root' },
+			{ midiNote: 59, note: 'B', role: 'third' },
+			{ midiNote: 62, note: 'D', role: 'fifth' },
+			{ midiNote: 67, note: 'G', role: 'root' }
+		]
+	}
+], { counterpoint: 90, voices: 4 }, {
+	initialMidiNote: 60,
+	rng: sequenceRng([0.1, 0]),
+	scaleNotes: [{ nombre: 'C' }, { nombre: 'D' }, { nombre: 'E' }, { nombre: 'F' }, { nombre: 'G' }, { nombre: 'A' }, { nombre: 'B' }]
+});
+assert.equal(melodicCounterpointMeasures[0].melodicVoiceIndex, 3);
+assert.equal(melodicCounterpointMeasures[0].passingNotes[0].note, 'D');
+assert.equal(melodicCounterpointMeasures[0].passingNotes[0].delaySeconds, 1);
 const timelineProgression = global.CodaProgressionMeasureTimeline.rebuildTimeline({
 	beatsPerBar: 4,
 	bpm: 120,
@@ -683,6 +718,16 @@ assert.deepEqual(global.CodaProgressionPlanner.createPlan({
 	{ index: 4, source: 'diatonic' },
 	{ index: 0, source: 'diatonic' }
 ]);
+const variedTonicBlock = global.CodaProgressionPlanner.varyBlockOpening([
+	{ index: 0, source: 'diatonic' },
+	{ index: 3, source: 'diatonic' }
+], 1, 'major', sequenceRng([0.7, 0]));
+assert.equal(variedTonicBlock[0].index, 5);
+const variedSubdominantBlock = global.CodaProgressionPlanner.varyBlockOpening([
+	{ index: 0, source: 'diatonic' },
+	{ index: 4, source: 'diatonic' }
+], 2, 'minor', sequenceRng([0.95, 0]));
+assert.equal(variedSubdominantBlock[0].index, 3);
 const chordMenuServiceGroups = global.CodaProgressionChordMenu.build({
 	currentSegment: {
 		notes: ['C', 'E', 'G'],
@@ -1037,5 +1082,16 @@ global.CodaData.midiInstruments.forEach(function (instrument, index) {
 	assert.ok(global.CodaTranslations.en['data.midiInstruments.' + index] != null);
 });
 assert.equal(englishI18n.dataLabel('midiInstruments', 1, 'Guitarra clásica'), 'Classical guitar');
+
+function sequenceRng(values) {
+	let index = 0;
+
+	return function () {
+		const value = values[Math.min(index, values.length - 1)];
+		index += 1;
+
+		return value;
+	};
+}
 
 console.log('Architecture tests passed');

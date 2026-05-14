@@ -28,7 +28,9 @@
 		return resultService.build({
 			measures: measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
 				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
-				scaleDefinition: options.report.scaleDefinition
+				interchangeSources: options.report.modalInterchangeSources || [],
+				scaleDefinition: options.report.scaleDefinition,
+				scaleNotes: options.report.scaleNotes
 			}),
 			progressionState: progressionState,
 			secondsPerBeat: secondsPerBeat
@@ -55,6 +57,7 @@
 			measures: measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
 				includeTensions: true,
 				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
+				interchangeSources: options.report.modalInterchangeSources || [],
 				rng: rng,
 				scaleDefinition: options.report.scaleDefinition,
 				scaleNotes: options.report.scaleNotes

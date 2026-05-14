@@ -1340,7 +1340,9 @@ section#bienvenida .columnata article{
 	z-index:70;
 	width:min(280px, calc(100vw - 16px));
 	max-height:min(520px, calc(100vh - 24px));
-	overflow:auto;
+	overflow-x:hidden;
+	overflow-y:auto;
+	overscroll-behavior:contain;
 	padding:.55em;
 	border:1px solid $basic_fillbrightgrad_color;
 	border-radius:6px;
@@ -1348,7 +1350,27 @@ section#bienvenida .columnata article{
 	color:$basic_front_color;
 	box-shadow:0 14px 40px rgba(0, 0, 0, .5);
 	scrollbar-color:$corporative_complementary_color $basic_fill_color;
+	scrollbar-gutter:stable;
 	scrollbar-width:thin;
+}
+
+.progressionChordMenu::-webkit-scrollbar{
+	width:10px;
+}
+
+.progressionChordMenu::-webkit-scrollbar-track{
+	background:$basic_fill_color;
+	border-radius:999px;
+}
+
+.progressionChordMenu::-webkit-scrollbar-thumb{
+	border:2px solid $basic_fill_color;
+	border-radius:999px;
+	background:$corporative_complementary_color;
+}
+
+.progressionChordMenu::-webkit-scrollbar-thumb:hover{
+	background:$corporative_complementarybright_color;
 }
 
 .progressionChordMenu h3{
@@ -1780,6 +1802,19 @@ body[data-theme="day"] .progressionChordMenu{
 	border-color:#b7c3ca;
 	box-shadow:0 14px 32px rgba(25, 36, 42, .24);
 	scrollbar-color:#7d2785 #dfe5e9;
+}
+
+body[data-theme="day"] .progressionChordMenu::-webkit-scrollbar-track{
+	background:#dfe5e9;
+}
+
+body[data-theme="day"] .progressionChordMenu::-webkit-scrollbar-thumb{
+	border-color:#dfe5e9;
+	background:#7d2785;
+}
+
+body[data-theme="day"] .progressionChordMenu::-webkit-scrollbar-thumb:hover{
+	background:#5f1f66;
 }
 
 body[data-theme="day"] .progressionChordMenu h3{

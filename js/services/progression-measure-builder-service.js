@@ -4,6 +4,7 @@
 
 	var chordPlanService = global.CodaProgressionChordPlan;
 	var formattingService = global.CodaProgressionFormatting;
+	var melodicCounterpointService = global.CodaProgressionMelodicCounterpoint;
 	var tonalFunctionService = global.CodaProgressionTonalFunction;
 	var voiceLeadingService = global.CodaProgressionVoiceLeading;
 
@@ -60,7 +61,24 @@
 			previousPlan = chordPlan;
 		}
 
-		return voiceLeadingService.annotateMeasures(measures, progressionState);
+		measures = voiceLeadingService.annotateMeasures(measures, progressionState);
+
+		return melodicCounterpointService.annotateMeasures(measures, progressionState, {
+			initialMidiNote: options.initialMidiNote,
+			rng: options.rng,
+			scaleNotes: options.scaleNotes,
+			sourceScaleNotesByIndex: sourceScaleNotesByIndex(options.interchangeSources)
+		});
+	}
+
+	function sourceScaleNotesByIndex(sources) {
+		var result = {};
+
+		for (var i = 0; i < (sources || []).length; i++) {
+			result[sources[i].scaleIndex] = sources[i].scaleNotes || [];
+		}
+
+		return result;
 	}
 
 	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
@@ -69,6 +87,7 @@
 
 	global.CodaProgressionMeasureBuilder = {
 		build: build,
+		sourceScaleNotesByIndex: sourceScaleNotesByIndex,
 		tonalFunctionForDegree: tonalFunctionForDegree
 	};
 })(window);

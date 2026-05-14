@@ -230,6 +230,40 @@ assert.deepEqual(pedalSchedule[1].midiNoteEvents, [
 	{ duration: 1.9, midiNote: 60 },
 	{ duration: 1.9, midiNote: 65 }
 ]);
+const passingSchedule = app.buildProgressionPlaybackSchedule({
+	measures: [
+		{
+			articulation: 'sustain',
+			bar: 1,
+			degree: 'I',
+			durationSeconds: 2,
+			midiNotes: [48, 52, 55, 60],
+			notes: ['C', 'E', 'G'],
+			passingNotes: [{ delaySeconds: 1, durationSeconds: 0.25, midiNote: 62, note: 'D' }],
+			startSeconds: 0,
+			voices: 4
+		}
+	]
+});
+assert.deepEqual(passingSchedule[0].midiNoteEvents, [
+	{ duration: 1.9, midiNote: 48 },
+	{ duration: 1.9, midiNote: 52 },
+	{ duration: 1.9, midiNote: 55 },
+	{ duration: 1.9, midiNote: 60 },
+	{ delay: 1, duration: 0.25, kind: 'passing', midiNote: 62 }
+]);
+const passingPlaybackCalls = [];
+context.window.CodaProgressionMidiEventPlayer.playMidiNoteEvents({
+	playMidiNote: function (note, options) {
+		passingPlaybackCalls.push({ note: note, options: options });
+	}
+}, {
+	delay: 2,
+	midiNoteEvents: passingSchedule[0].midiNoteEvents.slice(4)
+});
+assert.deepEqual(passingPlaybackCalls, [
+	{ note: 62, options: { delay: 3, duration: 0.25 } }
+]);
 
 const partialSchedule = app.buildProgressionPlaybackSchedule(progression, { startIndex: 1 });
 assert.deepEqual(partialSchedule.map(function (event) { return event.bar; }), [2, 3]);

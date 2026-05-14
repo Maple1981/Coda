@@ -40,6 +40,7 @@
 			'js/services/progression-voicing-service.js',
 			'js/services/progression-pedal-link-service.js',
 			'js/services/progression-voice-leading-service.js',
+			'js/services/progression-melodic-counterpoint-service.js',
 			'js/services/progression-measure-clone-service.js',
 			'js/services/progression-measure-segment-service.js',
 			'js/services/progression-measure-timeline-service.js',

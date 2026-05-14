@@ -32,7 +32,7 @@
 
 		for (var i = 0; i < event.midiNoteEvents.length; i++) {
 			playbackService.playMidiNote(event.midiNoteEvents[i].midiNote, {
-				delay: event.delay,
+				delay: event.delay + (event.midiNoteEvents[i].delay || 0),
 				duration: event.midiNoteEvents[i].duration
 			});
 		}

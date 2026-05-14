@@ -5,9 +5,10 @@
 	function build(measure, duration, options) {
 		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
 		var events = [];
+		var melodicEvents = passingNoteEvents(measure);
 
 		if (!hasPedals(measure) || !supportsPedalHold(options ? options.instrument : null)) {
-			return events;
+			return melodicEvents.length ? chordNoteEvents(midiNotes, duration).concat(melodicEvents) : [];
 		}
 
 		for (var i = 0; i < midiNotes.length; i++) {
@@ -18,6 +19,35 @@
 			events.push({
 				duration: duration + pedalOutDuration(midiNotes[i], measure),
 				midiNote: midiNotes[i]
+			});
+		}
+
+		return events.concat(melodicEvents);
+	}
+
+	function chordNoteEvents(midiNotes, duration) {
+		var events = [];
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			events.push({
+				duration: duration,
+				midiNote: midiNotes[i]
+			});
+		}
+
+		return events;
+	}
+
+	function passingNoteEvents(measure) {
+		var events = [];
+		var passingNotes = measure.passingNotes || [];
+
+		for (var i = 0; i < passingNotes.length; i++) {
+			events.push({
+				delay: Math.max(0, Number(passingNotes[i].delaySeconds) || 0),
+				duration: Math.max(0.05, Number(passingNotes[i].durationSeconds) || 0.12),
+				kind: 'passing',
+				midiNote: passingNotes[i].midiNote
 			});
 		}
 
@@ -65,6 +95,8 @@
 
 	global.CodaProgressionPlaybackNoteEvents = {
 		build: build,
+		chordNoteEvents: chordNoteEvents,
+		passingNoteEvents: passingNoteEvents,
 		supportsPedalHold: supportsPedalHold
 	};
 })(window);

@@ -310,6 +310,20 @@ silenceMenuItem.setAttribute('data-chord-kind', 'silence');
 assert.deepEqual(context.window.CodaProgressionTransportMenu.replacementFromItem(silenceMenuItem), {
 	kind: 'silence'
 });
+context.window.innerWidth = 320;
+context.window.innerHeight = 240;
+const tallMenu = createFakeElement('tall-menu');
+const lowButton = createFakeElement('low-button');
+tallMenu.getBoundingClientRect = function () {
+	return { height: 500, width: 280 };
+};
+lowButton.getBoundingClientRect = function () {
+	return { bottom: 230, left: 260, top: 210 };
+};
+context.window.CodaProgressionTransportMenu.position(tallMenu, lowButton);
+assert.equal(tallMenu.style.left, '32px');
+assert.equal(tallMenu.style.top, '8px');
+assert.equal(tallMenu.style.maxHeight, '196px');
 
 console.log('Progression transport tests passed');
 

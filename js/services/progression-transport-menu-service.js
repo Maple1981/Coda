@@ -84,7 +84,16 @@
 
 	function position(menu, button) {
 		var bounds;
-		var menuWidth = 280;
+		var viewport = viewportSize();
+		var margin = 8;
+		var gap = 6;
+		var menuBounds;
+		var menuHeight;
+		var menuWidth;
+		var availableAbove;
+		var availableBelow;
+		var openAbove;
+		var maxHeight;
 		var left;
 		var top;
 
@@ -93,11 +102,33 @@
 		}
 
 		bounds = button.getBoundingClientRect();
-		left = Math.max(8, Math.min(global.innerWidth - menuWidth - 8, bounds.left));
-		top = Math.max(8, bounds.bottom + 6);
+		menu.style.maxHeight = Math.max(48, viewport.height - (margin * 2)) + 'px';
+		menuBounds = typeof menu.getBoundingClientRect === 'function' ? menu.getBoundingClientRect() : {};
+		menuWidth = menuBounds.width || 280;
+		menuHeight = menuBounds.height || 0;
+		availableAbove = Math.max(0, bounds.top - margin - gap);
+		availableBelow = Math.max(0, viewport.height - bounds.bottom - margin - gap);
+		openAbove = availableBelow < Math.min(menuHeight, 260) && availableAbove > availableBelow;
+		maxHeight = Math.max(48, openAbove ? availableAbove : availableBelow);
+
+		menu.style.maxHeight = maxHeight + 'px';
+		menuBounds = typeof menu.getBoundingClientRect === 'function' ? menu.getBoundingClientRect() : menuBounds;
+		menuHeight = Math.min(menuBounds.height || maxHeight, maxHeight);
+		left = Math.max(margin, Math.min(viewport.width - menuWidth - margin, bounds.left));
+		top = openAbove ? bounds.top - gap - menuHeight : bounds.bottom + gap;
+		top = Math.max(margin, Math.min(viewport.height - menuHeight - margin, top));
 
 		menu.style.left = left + 'px';
 		menu.style.top = top + 'px';
+	}
+
+	function viewportSize() {
+		var doc = global.document && global.document.documentElement ? global.document.documentElement : {};
+
+		return {
+			height: global.innerHeight || doc.clientHeight || 768,
+			width: global.innerWidth || doc.clientWidth || 1024
+		};
 	}
 
 	function query(selector) {

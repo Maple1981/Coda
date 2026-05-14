@@ -715,6 +715,19 @@ body[data-theme="day"] .progressionChordMenu {
   scrollbar-color: #7d2785 #dfe5e9;
 }
 
+body[data-theme="day"] .progressionChordMenu::-webkit-scrollbar-track {
+  background: #dfe5e9;
+}
+
+body[data-theme="day"] .progressionChordMenu::-webkit-scrollbar-thumb {
+  border-color: #dfe5e9;
+  background: #7d2785;
+}
+
+body[data-theme="day"] .progressionChordMenu::-webkit-scrollbar-thumb:hover {
+  background: #5f1f66;
+}
+
 body[data-theme="day"] .progressionChordMenu h3 {
   color: #006e58;
 }
@@ -1979,7 +1992,9 @@ section#bienvenida .columnata article {
   z-index: 70;
   width: min(280px, calc(100vw - 16px));
   max-height: min(520px, calc(100vh - 24px));
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: .55em;
   border: 1px solid #444;
   border-radius: 6px;
@@ -1988,7 +2003,27 @@ section#bienvenida .columnata article {
   -webkit-box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
           box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
   scrollbar-color: #a622ae #111;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
+}
+
+.progressionChordMenu::-webkit-scrollbar {
+  width: 10px;
+}
+
+.progressionChordMenu::-webkit-scrollbar-track {
+  background: #111;
+  border-radius: 999px;
+}
+
+.progressionChordMenu::-webkit-scrollbar-thumb {
+  border: 2px solid #111;
+  border-radius: 999px;
+  background: #a622ae;
+}
+
+.progressionChordMenu::-webkit-scrollbar-thumb:hover {
+  background: #d85ee0;
 }
 
 .progressionChordMenu h3 {

@@ -207,6 +207,36 @@ const sustainedPedalOff = sustainedPedalEvents.filter(function (event) {
 assert.equal(sustainedPedalNoteOns.length, 5);
 assert.equal(sustainedPedalOff.tick, 3840);
 
+const passingNoteEvents = midiExport.createProgressionMidiEvents({
+	initialMidiNote: 60,
+	progression: {
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		measures: [
+			{
+				articulation: 'sustain',
+				bar: 1,
+				degree: 'I',
+				durationBeats: 4,
+				durationSeconds: 2,
+				midiNotes: [48, 52, 55, 60],
+				passingNotes: [{ delaySeconds: 1, durationSeconds: 0.25, midiNote: 62, note: 'D' }],
+				startBeat: 0
+			}
+		]
+	}
+});
+const passingNoteOn = passingNoteEvents.filter(function (event) {
+	return event.type === 'noteOn' && event.note === 62;
+})[0];
+const passingNoteOff = passingNoteEvents.filter(function (event) {
+	return event.type === 'noteOff' && event.note === 62;
+})[0];
+assert.equal(passingNoteOn.tick, 960);
+assert.equal(passingNoteOff.tick, 1200);
+assert.ok(passingNoteOn.velocity < 96);
+
 const staccatoEvents = midiExport.createProgressionMidiEvents({
 	initialMidiNote: 60,
 	progression: app.buildProgressionFromState({

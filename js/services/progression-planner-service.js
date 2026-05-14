@@ -121,10 +121,45 @@
 			});
 
 			previousBlockId = block.id;
-			degrees = degrees.concat(phraseBlockSelector.fitBlockToBars(block, blockLength));
+			degrees = degrees.concat(varyBlockOpening(
+				phraseBlockSelector.fitBlockToBars(block, blockLength),
+				blockIndex,
+				options.mode,
+				options.rng
+			));
 		}
 
 		return degrees.slice(0, bars);
+	}
+
+	function varyBlockOpening(blockDegrees, blockIndex, mode, rng) {
+		var roll;
+		var candidates;
+
+		if (!blockDegrees || !blockDegrees.length || blockIndex === 0 || blockDegrees[0].index !== 0) {
+			return blockDegrees;
+		}
+
+		roll = rng();
+		if (roll < 0.52) {
+			return blockDegrees;
+		}
+
+		candidates = roll < 0.9 ? tonicAlternatives(mode) : subdominantAlternatives(mode);
+		blockDegrees[0] = extendObject(blockDegrees[0], {
+			index: candidates[Math.floor(rng() * candidates.length) % candidates.length],
+			source: 'diatonic'
+		});
+
+		return blockDegrees;
+	}
+
+	function tonicAlternatives(mode) {
+		return mode === 'major' ? [5, 2] : [2, 5];
+	}
+
+	function subdominantAlternatives() {
+		return [3, 1];
 	}
 
 	function voiceLeadingProfile(progressionState) {
@@ -170,6 +205,7 @@
 		chooseInterchangeSource: chooseInterchangeSource,
 		createPlan: createPlan,
 		fitDegreesToBars: fitDegreesToBars,
+		varyBlockOpening: varyBlockOpening,
 		voiceLeadingProfile: voiceLeadingProfile
 	};
 })(window);

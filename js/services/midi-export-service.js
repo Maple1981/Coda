@@ -120,6 +120,46 @@
 				velocity: 0
 			});
 		}
+
+		appendPassingNoteEvents(events, measure, options, startTick);
+	}
+
+	function appendPassingNoteEvents(events, measure, options, startTick) {
+		var passingNotes = measure.passingNotes || [];
+		var secondsPerBeat = secondsPerBeatForMeasure(measure);
+
+		for (var i = 0; i < passingNotes.length; i++) {
+			var delayTicks = Math.round((Math.max(0, Number(passingNotes[i].delaySeconds) || 0) / secondsPerBeat) * options.ticksPerBeat);
+			var durationTicks = Math.max(1, Math.round((Math.max(0.05, Number(passingNotes[i].durationSeconds) || 0.12) / secondsPerBeat) * options.ticksPerBeat));
+			var noteStart = startTick + delayTicks;
+			var noteEnd = noteStart + durationTicks;
+
+			events.push({
+				bar: measure.bar,
+				channel: options.channel,
+				degree: measure.degree,
+				note: passingNotes[i].midiNote,
+				tick: noteStart,
+				type: 'noteOn',
+				velocity: Math.max(1, Math.round(options.velocity * 0.82))
+			});
+			events.push({
+				bar: measure.bar,
+				channel: options.channel,
+				degree: measure.degree,
+				note: passingNotes[i].midiNote,
+				tick: noteEnd,
+				type: 'noteOff',
+				velocity: 0
+			});
+		}
+	}
+
+	function secondsPerBeatForMeasure(measure) {
+		var durationSeconds = Number(measure.durationSeconds) || 0;
+		var durationBeats = Number(measure.durationBeats) || 0;
+
+		return durationSeconds > 0 && durationBeats > 0 ? durationSeconds / durationBeats : 0.5;
 	}
 
 	function isPedalIn(midiNote, measure) {
@@ -375,6 +415,7 @@
 		encodeMidiFile: encodeMidiFile,
 		mimeType: midiMimeType,
 		noteIndex: noteIndex,
+		secondsPerBeatForMeasure: secondsPerBeatForMeasure,
 		variableLengthQuantity: variableLengthQuantity
 	};
 })(window);

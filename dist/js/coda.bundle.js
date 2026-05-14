@@ -1422,7 +1422,7 @@
 			'progression.help.articulation': 'Define cómo se atacan y enlazan los acordes durante la preescucha.',
 			'progression.help.bars': 'Longitud total de la progresión generada.',
 			'progression.help.bpm': 'Velocidad de reproducción y exportación MIDI, entre 20 y 200 BPM.',
-			'progression.help.counterpoint': 'Controla el movimiento parsimonioso de voces y la adhesión a reglas clásicas de contrapunto, evitando quintas y octavas paralelas.',
+			'progression.help.counterpoint': 'Controla el movimiento parsimonioso de voces, su independencia melódica, y el grado de adhesión a las reglas clásicas de contrapunto, como la evitación de quintas y octavas paralelas.',
 			'progression.help.meter': 'Organización rítmica de cada compás.',
 			'progression.help.modalInterchange': 'Controla la frecuencia de acordes préstamo por intercambio modal de escalas, tonalidades o modos relacionados.',
 			'progression.help.style': 'El estilo moderno evita cadencias auténticas; el clásico favorece su aparición al final de bloques de secuencia.',
@@ -1608,7 +1608,7 @@
 			'progression.help.articulation': 'Sets how chords are attacked and connected during preview.',
 			'progression.help.bars': 'Total length of the generated progression.',
 			'progression.help.bpm': 'Playback and MIDI export tempo, from 20 to 200 BPM.',
-			'progression.help.counterpoint': 'Controls parsimonious voice leading and adherence to classical counterpoint rules, avoiding parallel fifths and octaves.',
+			'progression.help.counterpoint': 'Controls parsimonious voice movement, melodic independence, and adherence to classical counterpoint rules, such as avoiding parallel fifths and octaves.',
 			'progression.help.meter': 'Rhythmic organization of each bar.',
 			'progression.help.modalInterchange': 'Controls how often borrowed chords appear through modal interchange from related scales, keys or modes.',
 			'progression.help.style': 'Modern style avoids authentic cadences; classical style favors them at the end of sequence blocks.',
@@ -3358,6 +3358,158 @@
 		annotateMeasures: annotateMeasures,
 		commonVoiceLinks: pedalLinkService.commonVoiceLinks,
 		midiNotesFromVoiceNotes: pedalLinkService.midiNotesFromVoiceNotes
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-melodic-counterpoint-service.js */
+// Adds weak-beat passing notes to one melodic voice when counterpoint is high.
+(function (global) {
+	'use strict';
+
+	var pitchService = global.CodaProgressionPitch;
+
+	function annotateMeasures(measures, progressionState, options) {
+		var counterpoint = numberOrDefault(progressionState.counterpoint, 0);
+		var rng;
+		var melodicVoiceIndex;
+
+		options = options || {};
+		rng = typeof options.rng === 'function' ? options.rng : function () { return 0.5; };
+		if (!measures || measures.length < 2 || counterpoint < 55) {
+			return measures;
+		}
+
+		melodicVoiceIndex = chooseMelodicVoiceIndex(progressionState.voices, rng);
+		for (var i = 0; i < measures.length - 1; i++) {
+			addPassingNote(measures[i], measures[i + 1], melodicVoiceIndex, counterpoint, rng, options);
+		}
+
+		return measures;
+	}
+
+	function chooseMelodicVoiceIndex(voices, rng) {
+		var voiceCount = Math.max(1, Math.min(Number(voices) || 4, 6));
+		var roll = rng();
+
+		if (voiceCount < 3) {
+			return voiceCount - 1;
+		}
+
+		if (roll < 0.72) {
+			return voiceCount - 1;
+		}
+
+		if (roll < 0.84) {
+			return 0;
+		}
+
+		return Math.max(1, Math.min(voiceCount - 2, Math.floor(rng() * voiceCount)));
+	}
+
+	function addPassingNote(measure, nextMeasure, voiceIndex, counterpoint, rng, options) {
+		var currentNote = voiceNoteAt(measure, voiceIndex);
+		var nextNote = voiceNoteAt(nextMeasure, voiceIndex);
+		var scaleNotes = scaleNotesForMeasure(measure, options);
+		var passingNote;
+		var durationSeconds;
+
+		if (!currentNote || !nextNote || !scaleNotes.length || Math.abs(nextNote.midiNote - currentNote.midiNote) < 3) {
+			return;
+		}
+
+		if (rng() > Math.min(0.82, 0.18 + counterpoint / 125)) {
+			return;
+		}
+
+		passingNote = choosePassingNote(currentNote, nextNote, scaleNotes, measure.notes || [], options.initialMidiNote || 60);
+		if (!passingNote) {
+			return;
+		}
+
+		durationSeconds = Math.max(0.08, (Number(measure.durationSeconds) || 0.5) * 0.22);
+		measure.melodicVoiceIndex = voiceIndex;
+		measure.passingNotes = (measure.passingNotes || []).concat([{
+			delaySeconds: (Number(measure.durationSeconds) || 0) * 0.5,
+			durationSeconds: durationSeconds,
+			midiNote: passingNote.midiNote,
+			note: passingNote.note,
+			voiceIndex: voiceIndex
+		}]);
+	}
+
+	function choosePassingNote(currentNote, nextNote, scaleNotes, chordNotes, initialMidiNote) {
+		var currentMidi = currentNote.midiNote;
+		var nextMidi = nextNote.midiNote;
+		var low = Math.min(currentMidi, nextMidi);
+		var high = Math.max(currentMidi, nextMidi);
+		var direction = nextMidi > currentMidi ? 1 : -1;
+		var candidates = [];
+
+		for (var i = 0; i < scaleNotes.length; i++) {
+			var noteName = scaleNotes[i].nombre || scaleNotes[i];
+			var midiNote = pitchService.noteNameToMidi(noteName, initialMidiNote);
+
+			if (midiNote == null || isChordTone(noteName, chordNotes)) {
+				continue;
+			}
+
+			midiNote = pitchService.nearestMidiTo(currentMidi + direction * 2, midiNote);
+			if (midiNote > low && midiNote < high) {
+				candidates.push({
+					midiNote: midiNote,
+					note: noteName,
+					score: Math.abs((currentMidi + nextMidi) / 2 - midiNote)
+				});
+			}
+		}
+
+		candidates.sort(function (a, b) {
+			return a.score - b.score;
+		});
+
+		return candidates[0] || null;
+	}
+
+	function scaleNotesForMeasure(measure, options) {
+		var sourceScales = options && options.sourceScaleNotesByIndex ? options.sourceScaleNotesByIndex : {};
+
+		if (measure.sourceScaleIndex != null && sourceScales[measure.sourceScaleIndex]) {
+			return sourceScales[measure.sourceScaleIndex];
+		}
+
+		return options && options.scaleNotes ? options.scaleNotes : [];
+	}
+
+	function voiceNoteAt(measure, voiceIndex) {
+		var voiceNotes = measure && measure.voiceNotes ? measure.voiceNotes : [];
+
+		return voiceNotes[Math.min(voiceIndex, voiceNotes.length - 1)];
+	}
+
+	function isChordTone(noteName, chordNotes) {
+		var normalized = pitchService.normalizePitchName(noteName);
+
+		for (var i = 0; i < (chordNotes || []).length; i++) {
+			if (pitchService.normalizePitchName(chordNotes[i]) === normalized) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
+	global.CodaProgressionMelodicCounterpoint = {
+		annotateMeasures: annotateMeasures,
+		chooseMelodicVoiceIndex: chooseMelodicVoiceIndex,
+		choosePassingNote: choosePassingNote
 	};
 })(window);
 
@@ -5132,6 +5284,7 @@
 
 	var chordPlanService = global.CodaProgressionChordPlan;
 	var formattingService = global.CodaProgressionFormatting;
+	var melodicCounterpointService = global.CodaProgressionMelodicCounterpoint;
 	var tonalFunctionService = global.CodaProgressionTonalFunction;
 	var voiceLeadingService = global.CodaProgressionVoiceLeading;
 
@@ -5188,7 +5341,24 @@
 			previousPlan = chordPlan;
 		}
 
-		return voiceLeadingService.annotateMeasures(measures, progressionState);
+		measures = voiceLeadingService.annotateMeasures(measures, progressionState);
+
+		return melodicCounterpointService.annotateMeasures(measures, progressionState, {
+			initialMidiNote: options.initialMidiNote,
+			rng: options.rng,
+			scaleNotes: options.scaleNotes,
+			sourceScaleNotesByIndex: sourceScaleNotesByIndex(options.interchangeSources)
+		});
+	}
+
+	function sourceScaleNotesByIndex(sources) {
+		var result = {};
+
+		for (var i = 0; i < (sources || []).length; i++) {
+			result[sources[i].scaleIndex] = sources[i].scaleNotes || [];
+		}
+
+		return result;
 	}
 
 	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
@@ -5197,6 +5367,7 @@
 
 	global.CodaProgressionMeasureBuilder = {
 		build: build,
+		sourceScaleNotesByIndex: sourceScaleNotesByIndex,
 		tonalFunctionForDegree: tonalFunctionForDegree
 	};
 })(window);
@@ -5786,10 +5957,45 @@
 			});
 
 			previousBlockId = block.id;
-			degrees = degrees.concat(phraseBlockSelector.fitBlockToBars(block, blockLength));
+			degrees = degrees.concat(varyBlockOpening(
+				phraseBlockSelector.fitBlockToBars(block, blockLength),
+				blockIndex,
+				options.mode,
+				options.rng
+			));
 		}
 
 		return degrees.slice(0, bars);
+	}
+
+	function varyBlockOpening(blockDegrees, blockIndex, mode, rng) {
+		var roll;
+		var candidates;
+
+		if (!blockDegrees || !blockDegrees.length || blockIndex === 0 || blockDegrees[0].index !== 0) {
+			return blockDegrees;
+		}
+
+		roll = rng();
+		if (roll < 0.52) {
+			return blockDegrees;
+		}
+
+		candidates = roll < 0.9 ? tonicAlternatives(mode) : subdominantAlternatives(mode);
+		blockDegrees[0] = extendObject(blockDegrees[0], {
+			index: candidates[Math.floor(rng() * candidates.length) % candidates.length],
+			source: 'diatonic'
+		});
+
+		return blockDegrees;
+	}
+
+	function tonicAlternatives(mode) {
+		return mode === 'major' ? [5, 2] : [2, 5];
+	}
+
+	function subdominantAlternatives() {
+		return [3, 1];
 	}
 
 	function voiceLeadingProfile(progressionState) {
@@ -5835,6 +6041,7 @@
 		chooseInterchangeSource: chooseInterchangeSource,
 		createPlan: createPlan,
 		fitDegreesToBars: fitDegreesToBars,
+		varyBlockOpening: varyBlockOpening,
 		voiceLeadingProfile: voiceLeadingProfile
 	};
 })(window);
@@ -5872,7 +6079,9 @@
 		return resultService.build({
 			measures: measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
 				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
-				scaleDefinition: options.report.scaleDefinition
+				interchangeSources: options.report.modalInterchangeSources || [],
+				scaleDefinition: options.report.scaleDefinition,
+				scaleNotes: options.report.scaleNotes
 			}),
 			progressionState: progressionState,
 			secondsPerBeat: secondsPerBeat
@@ -5899,6 +6108,7 @@
 			measures: measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
 				includeTensions: true,
 				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
+				interchangeSources: options.report.modalInterchangeSources || [],
 				rng: rng,
 				scaleDefinition: options.report.scaleDefinition,
 				scaleNotes: options.report.scaleNotes
@@ -6240,6 +6450,46 @@
 				velocity: 0
 			});
 		}
+
+		appendPassingNoteEvents(events, measure, options, startTick);
+	}
+
+	function appendPassingNoteEvents(events, measure, options, startTick) {
+		var passingNotes = measure.passingNotes || [];
+		var secondsPerBeat = secondsPerBeatForMeasure(measure);
+
+		for (var i = 0; i < passingNotes.length; i++) {
+			var delayTicks = Math.round((Math.max(0, Number(passingNotes[i].delaySeconds) || 0) / secondsPerBeat) * options.ticksPerBeat);
+			var durationTicks = Math.max(1, Math.round((Math.max(0.05, Number(passingNotes[i].durationSeconds) || 0.12) / secondsPerBeat) * options.ticksPerBeat));
+			var noteStart = startTick + delayTicks;
+			var noteEnd = noteStart + durationTicks;
+
+			events.push({
+				bar: measure.bar,
+				channel: options.channel,
+				degree: measure.degree,
+				note: passingNotes[i].midiNote,
+				tick: noteStart,
+				type: 'noteOn',
+				velocity: Math.max(1, Math.round(options.velocity * 0.82))
+			});
+			events.push({
+				bar: measure.bar,
+				channel: options.channel,
+				degree: measure.degree,
+				note: passingNotes[i].midiNote,
+				tick: noteEnd,
+				type: 'noteOff',
+				velocity: 0
+			});
+		}
+	}
+
+	function secondsPerBeatForMeasure(measure) {
+		var durationSeconds = Number(measure.durationSeconds) || 0;
+		var durationBeats = Number(measure.durationBeats) || 0;
+
+		return durationSeconds > 0 && durationBeats > 0 ? durationSeconds / durationBeats : 0.5;
 	}
 
 	function isPedalIn(midiNote, measure) {
@@ -6495,6 +6745,7 @@
 		encodeMidiFile: encodeMidiFile,
 		mimeType: midiMimeType,
 		noteIndex: noteIndex,
+		secondsPerBeatForMeasure: secondsPerBeatForMeasure,
 		variableLengthQuantity: variableLengthQuantity
 	};
 })(window);
@@ -6667,9 +6918,10 @@
 	function build(measure, duration, options) {
 		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
 		var events = [];
+		var melodicEvents = passingNoteEvents(measure);
 
 		if (!hasPedals(measure) || !supportsPedalHold(options ? options.instrument : null)) {
-			return events;
+			return melodicEvents.length ? chordNoteEvents(midiNotes, duration).concat(melodicEvents) : [];
 		}
 
 		for (var i = 0; i < midiNotes.length; i++) {
@@ -6680,6 +6932,35 @@
 			events.push({
 				duration: duration + pedalOutDuration(midiNotes[i], measure),
 				midiNote: midiNotes[i]
+			});
+		}
+
+		return events.concat(melodicEvents);
+	}
+
+	function chordNoteEvents(midiNotes, duration) {
+		var events = [];
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			events.push({
+				duration: duration,
+				midiNote: midiNotes[i]
+			});
+		}
+
+		return events;
+	}
+
+	function passingNoteEvents(measure) {
+		var events = [];
+		var passingNotes = measure.passingNotes || [];
+
+		for (var i = 0; i < passingNotes.length; i++) {
+			events.push({
+				delay: Math.max(0, Number(passingNotes[i].delaySeconds) || 0),
+				duration: Math.max(0.05, Number(passingNotes[i].durationSeconds) || 0.12),
+				kind: 'passing',
+				midiNote: passingNotes[i].midiNote
 			});
 		}
 
@@ -6727,6 +7008,8 @@
 
 	global.CodaProgressionPlaybackNoteEvents = {
 		build: build,
+		chordNoteEvents: chordNoteEvents,
+		passingNoteEvents: passingNoteEvents,
 		supportsPedalHold: supportsPedalHold
 	};
 })(window);
@@ -7008,7 +7291,7 @@
 
 		for (var i = 0; i < event.midiNoteEvents.length; i++) {
 			playbackService.playMidiNote(event.midiNoteEvents[i].midiNote, {
-				delay: event.delay,
+				delay: event.delay + (event.midiNoteEvents[i].delay || 0),
 				duration: event.midiNoteEvents[i].duration
 			});
 		}
@@ -8123,7 +8406,16 @@
 
 	function position(menu, button) {
 		var bounds;
-		var menuWidth = 280;
+		var viewport = viewportSize();
+		var margin = 8;
+		var gap = 6;
+		var menuBounds;
+		var menuHeight;
+		var menuWidth;
+		var availableAbove;
+		var availableBelow;
+		var openAbove;
+		var maxHeight;
 		var left;
 		var top;
 
@@ -8132,11 +8424,33 @@
 		}
 
 		bounds = button.getBoundingClientRect();
-		left = Math.max(8, Math.min(global.innerWidth - menuWidth - 8, bounds.left));
-		top = Math.max(8, bounds.bottom + 6);
+		menu.style.maxHeight = Math.max(48, viewport.height - (margin * 2)) + 'px';
+		menuBounds = typeof menu.getBoundingClientRect === 'function' ? menu.getBoundingClientRect() : {};
+		menuWidth = menuBounds.width || 280;
+		menuHeight = menuBounds.height || 0;
+		availableAbove = Math.max(0, bounds.top - margin - gap);
+		availableBelow = Math.max(0, viewport.height - bounds.bottom - margin - gap);
+		openAbove = availableBelow < Math.min(menuHeight, 260) && availableAbove > availableBelow;
+		maxHeight = Math.max(48, openAbove ? availableAbove : availableBelow);
+
+		menu.style.maxHeight = maxHeight + 'px';
+		menuBounds = typeof menu.getBoundingClientRect === 'function' ? menu.getBoundingClientRect() : menuBounds;
+		menuHeight = Math.min(menuBounds.height || maxHeight, maxHeight);
+		left = Math.max(margin, Math.min(viewport.width - menuWidth - margin, bounds.left));
+		top = openAbove ? bounds.top - gap - menuHeight : bounds.bottom + gap;
+		top = Math.max(margin, Math.min(viewport.height - menuHeight - margin, top));
 
 		menu.style.left = left + 'px';
 		menu.style.top = top + 'px';
+	}
+
+	function viewportSize() {
+		var doc = global.document && global.document.documentElement ? global.document.documentElement : {};
+
+		return {
+			height: global.innerHeight || doc.clientHeight || 768,
+			width: global.innerWidth || doc.clientWidth || 1024
+		};
 	}
 
 	function query(selector) {
