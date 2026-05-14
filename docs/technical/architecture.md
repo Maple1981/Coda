@@ -18,6 +18,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/ui/`: coordinación de interfaz con DOM nativo. Lee selección del DOM, monta vistas y conecta eventos de pantalla.
 - `js/ui/ui-state.js`: estado explícito de pantalla. Conserva selección actual, informe renderizado, instrumento, afinación, idioma y notación sin dispersarlos en closures del controlador.
 - `js/ui/progression-state.js`: estado normalizado del constructor de progresiones: compases, compás, BPM, voces, articulación, intercambio modal, tensiones y contrapunto.
+- `js/ui/progression-state-schema.js`: contrato de valores permitidos, valores por defecto y normalización del estado de progresiones. `progression-state.js` lo usa para no duplicar reglas de validación.
 - `js/i18n/`: traducciones de interfaz y servicio ligero de internacionalización.
 - `js/services/`: infraestructura de navegador y servicios técnicos puros, como playback y exportación MIDI.
 - `js/bootstrap/`: composition root y manifest de carga de scripts.
@@ -58,6 +59,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/renderers/welcome-renderer.js`: renderizado del contenido de bienvenida.
 - `js/renderers/progression-workbench-renderer.js`: renderizado inicial del área de progresiones.
 - `js/ui/ui-state.js`: factoría `CodaUiState.create(...)` para el estado mutable de pantalla.
+- `js/ui/progression-state-schema.js`: esquema estable de los controles del constructor de progresiones.
 - `js/ui/progression-state.js`: factoría y normalizador `CodaProgressionState` para leer los controles actuales de progresiones y producir un objeto estable.
 - `js/ui/static-text-controller.js`: aplicación de textos estáticos y contenido largo traducido sobre el DOM.
 - `js/ui/volume-controller.js`: fader de volumen maestro de la cabecera. Ajusta el porcentaje global de preescucha sin cambiar las reglas musicales ni la exportación MIDI.
@@ -76,6 +78,9 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - La interacción con el DOM debe quedarse en `js/ui/`.
 - El estado mutable de pantalla debe vivir en `CodaUiState`; el controlador puede orquestar eventos, pero no debe acumular nuevos valores de sesión como variables sueltas en closures.
 - El estado de progresiones debe leerse desde `CodaProgressionState` y guardarse en `CodaUiState`; los casos de uso posteriores deben recibir ese objeto normalizado, no leer directamente controles de formulario.
+- Las reglas de validación y valores permitidos del estado de progresiones deben vivir en `CodaProgressionStateSchema`; si se añade un control nuevo al constructor, debe actualizarse ese esquema, la cookie funcional y las traducciones de interfaz.
+- El transporte de progresiones debe componerse mediante servicios pequeños: botones, clicks de compases, eventos de documento, drag and drop, acciones, playback y menú contextual. `js/ui/progression-transport-controller.js` debe limitarse a inicializar y cablear esas piezas.
+- La reproducción de progresiones debe mantener separadas la agenda musical, la normalización de eventos, las estrategias MIDI/arpegio y el runner de una ejecución. El caso de uso `createProgressionPlayback` no debe acumular nuevas reglas de secuenciación internas.
 - La selección de tónica, escala, formato e instrumento sonoro debe transformarse en un contexto musical explícito mediante `CodaMusicalContext` antes de alimentar casos de uso de aplicación. El instrumento sonoro se conserva como identificador General MIDI y la vista gráfica se resuelve mediante `viewInstrument`.
 - Las búsquedas repetidas en catálogos deben usar `CodaData.indexes` o los índices no enumerables generados por `js/services/data-index-service.js`; conservar siempre fallback lineal si una función acepta colecciones externas.
 - Los textos visibles nuevos deben pasar por `js/i18n/` cuando formen parte de la interfaz.

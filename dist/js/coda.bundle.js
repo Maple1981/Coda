@@ -4567,25 +4567,7 @@
 (function (global) {
 	'use strict';
 
-	var NOTE_INDEXES = {
-		C: 0,
-		'C#': 1,
-		Db: 1,
-		D: 2,
-		'D#': 3,
-		Eb: 3,
-		E: 4,
-		F: 5,
-		'F#': 6,
-		Gb: 6,
-		G: 7,
-		'G#': 8,
-		Ab: 8,
-		A: 9,
-		'A#': 10,
-		Bb: 10,
-		B: 11
-	};
+	var pitchService = global.CodaProgressionPitch;
 
 	function addToNotes(notes, options) {
 		var result = notes.slice();
@@ -4685,13 +4667,11 @@
 	}
 
 	function noteIndex(noteName) {
-		var normalized = normalizePitchName(noteName);
-
-		return Object.prototype.hasOwnProperty.call(NOTE_INDEXES, normalized) ? NOTE_INDEXES[normalized] : null;
+		return pitchService.noteIndex(noteName);
 	}
 
 	function normalizePitchName(noteName) {
-		return String(noteName || '').replace('♭', 'b');
+		return pitchService.normalizePitchName(noteName);
 	}
 
 	function numberOrDefault(value, fallback) {
@@ -6759,41 +6739,10 @@
 
 ;
 
-/* Source: js/services/progression-event-player-service.js */
-// Plays scheduled progression events through the active browser playback service.
+/* Source: js/services/progression-playback-event-normalizer-service.js */
+// Normalizes scheduled progression playback events for immediate execution.
 (function (global) {
 	'use strict';
-
-	function play(playbackService, event) {
-		if (!playbackService || !event) {
-			return false;
-		}
-
-		if (event.mode === 'arpeggio') {
-			playArpeggio(playbackService, event);
-			return true;
-		}
-
-		if (event.midiNoteEvents && event.midiNoteEvents.length) {
-			playMidiNoteEvents(playbackService, event);
-			return true;
-		}
-
-		if (event.midiNotes && event.midiNotes.length) {
-			playMidiChord(playbackService, event);
-			return true;
-		}
-
-		if (typeof playbackService.playChordFromNames === 'function') {
-			playbackService.playChordFromNames(event.notes, {
-				delay: event.delay,
-				duration: event.duration
-			});
-			return true;
-		}
-
-		return false;
-	}
 
 	function asImmediateEvent(event) {
 		var immediateEvent = {
@@ -6817,17 +6766,29 @@
 		return immediateEvent;
 	}
 
+	global.CodaProgressionPlaybackEventNormalizer = {
+		asImmediateEvent: asImmediateEvent
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-midi-event-player-service.js */
+// MIDI playback strategies for progression chord and arpeggio events.
+(function (global) {
+	'use strict';
+
 	function playMidiChord(playbackService, event) {
 		if (typeof playbackService.playMidiChord === 'function') {
 			playbackService.playMidiChord(event.midiNotes, {
 				delay: event.delay,
 				duration: event.duration
 			});
-			return;
+			return true;
 		}
 
 		if (typeof playbackService.playMidiNote !== 'function') {
-			return;
+			return false;
 		}
 
 		for (var i = 0; i < event.midiNotes.length; i++) {
@@ -6836,12 +6797,13 @@
 				duration: event.duration
 			});
 		}
+
+		return true;
 	}
 
 	function playMidiNoteEvents(playbackService, event) {
 		if (typeof playbackService.playMidiNote !== 'function') {
-			playMidiChord(playbackService, event);
-			return;
+			return playMidiChord(playbackService, event);
 		}
 
 		for (var i = 0; i < event.midiNoteEvents.length; i++) {
@@ -6850,6 +6812,8 @@
 				duration: event.midiNoteEvents[i].duration
 			});
 		}
+
+		return true;
 	}
 
 	function playArpeggio(playbackService, event) {
@@ -6862,13 +6826,7 @@
 		}
 
 		if (!midiNotes || !midiNotes.length || typeof playbackService.playMidiNote !== 'function') {
-			if (typeof playbackService.playChordFromNames === 'function') {
-				playbackService.playChordFromNames(event.notes, {
-					delay: event.delay,
-					duration: event.duration
-				});
-			}
-			return;
+			return playChordFallback(playbackService, event);
 		}
 
 		for (var i = 0; i < midiNotes.length; i++) {
@@ -6877,6 +6835,63 @@
 				duration: Math.max(0.1, event.duration - (event.arpeggioStep * i))
 			});
 		}
+
+		return true;
+	}
+
+	function playChordFallback(playbackService, event) {
+		if (typeof playbackService.playChordFromNames !== 'function') {
+			return false;
+		}
+
+		playbackService.playChordFromNames(event.notes, {
+			delay: event.delay,
+			duration: event.duration
+		});
+
+		return true;
+	}
+
+	global.CodaProgressionMidiEventPlayer = {
+		playArpeggio: playArpeggio,
+		playChordFallback: playChordFallback,
+		playMidiChord: playMidiChord,
+		playMidiNoteEvents: playMidiNoteEvents
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-event-player-service.js */
+// Plays scheduled progression events through the active browser playback service.
+(function (global) {
+	'use strict';
+
+	var eventNormalizer = global.CodaProgressionPlaybackEventNormalizer;
+	var midiEventPlayer = global.CodaProgressionMidiEventPlayer;
+
+	function play(playbackService, event) {
+		if (!playbackService || !event) {
+			return false;
+		}
+
+		if (event.mode === 'arpeggio') {
+			return midiEventPlayer.playArpeggio(playbackService, event);
+		}
+
+		if (event.midiNoteEvents && event.midiNoteEvents.length) {
+			return midiEventPlayer.playMidiNoteEvents(playbackService, event);
+		}
+
+		if (event.midiNotes && event.midiNotes.length) {
+			return midiEventPlayer.playMidiChord(playbackService, event);
+		}
+
+		return midiEventPlayer.playChordFallback(playbackService, event);
+	}
+
+	function asImmediateEvent(event) {
+		return eventNormalizer.asImmediateEvent(event);
 	}
 
 	global.CodaProgressionEventPlayer = {
@@ -6983,6 +6998,105 @@
 
 	global.CodaProgressionPlaybackTimers = {
 		create: create
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-playback-runner-service.js */
+// Schedules and runs a single progression playback pass.
+(function (global) {
+	'use strict';
+
+	function start(args) {
+		if (args.getActiveRun() !== args.run) {
+			return;
+		}
+
+		schedulePlaybackEvents(args);
+		scheduleMetronomeEvents(args);
+		scheduleMeasureCallbacks(args);
+	}
+
+	function schedulePlaybackEvents(args) {
+		for (var i = 0; i < args.schedule.length; i++) {
+			args.playbackTimers.schedule(args.run, args.schedule[i].delay, createPlaybackCallback(args, args.schedule[i]));
+		}
+	}
+
+	function scheduleMetronomeEvents(args) {
+		var schedule;
+
+		if (!args.playbackService || typeof args.playbackService.playMetronomeClick !== 'function') {
+			return;
+		}
+
+		schedule = args.playbackSchedule.buildProgressionMetronomeSchedule(args.progression, {
+			startIndex: args.run.callbacks.startIndex
+		});
+
+		for (var i = 0; i < schedule.length; i++) {
+			args.playbackTimers.schedule(args.run, schedule[i].delay, createMetronomeCallback(args, schedule[i]));
+		}
+	}
+
+	function scheduleMeasureCallbacks(args) {
+		var totalSeconds = args.playbackSchedule.playbackTotalSeconds(args.progression, args.scheduledMeasures);
+
+		for (var i = 0; i < args.scheduledMeasures.length; i++) {
+			args.playbackTimers.schedule(args.run, args.scheduledMeasures[i].delay, createMeasureStartCallback(args, args.scheduledMeasures[i].measure, args.scheduledMeasures[i].index));
+		}
+
+		args.playbackTimers.schedule(args.run, totalSeconds, function () {
+			if (args.getActiveRun() !== args.run) {
+				return;
+			}
+
+			args.setActiveRun(null);
+
+			if (args.playbackCallbacks.shouldLoop(args.run.callbacks)) {
+				args.playbackCallbacks.run(args.run.callbacks.onCycleComplete, args.progression);
+				args.playAgain(args.progression, args.playbackCallbacks.extend(args.run.callbacks, {
+					startIndex: 0
+				}));
+				return;
+			}
+
+			args.playbackCallbacks.run(args.run.callbacks.onComplete, args.progression);
+		});
+	}
+
+	function createPlaybackCallback(args, event) {
+		return function () {
+			if (args.getActiveRun() === args.run) {
+				args.eventPlayer.play(args.playbackService, args.eventPlayer.asImmediateEvent(event));
+			}
+		};
+	}
+
+	function createMetronomeCallback(args, event) {
+		return function () {
+			if (args.getActiveRun() === args.run && args.playbackCallbacks.shouldPlayMetronome(args.run.callbacks)) {
+				args.playbackService.playMetronomeClick({
+					accent: event.accent,
+					bar: event.bar,
+					beat: event.beat,
+					delay: 0
+				});
+			}
+		};
+	}
+
+	function createMeasureStartCallback(args, measure, index) {
+		return function () {
+			if (args.getActiveRun() === args.run) {
+				args.playbackCallbacks.run(args.run.callbacks.onMeasureStart, measure, index);
+			}
+		};
+	}
+
+	global.CodaProgressionPlaybackRunner = {
+		start: start
 	};
 })(window);
 
@@ -7244,6 +7358,41 @@
 
 ;
 
+/* Source: js/services/progression-transport-drag-data-service.js */
+// DataTransfer helpers for progression drag and drop.
+(function (global) {
+	'use strict';
+
+	function setChordDragData(event, measureIndexValue, chordIndexValue) {
+		if (event.dataTransfer) {
+			event.dataTransfer.effectAllowed = 'move';
+			event.dataTransfer.setData('text/coda-progression-chord', measureIndexValue + ':' + chordIndexValue);
+			event.dataTransfer.setData('text/plain', measureIndexValue + ':' + chordIndexValue);
+		}
+	}
+
+	function setMeasureDragData(event, measureIndexValue) {
+		if (event.dataTransfer) {
+			event.dataTransfer.effectAllowed = 'move';
+			event.dataTransfer.setData('text/plain', String(measureIndexValue));
+		}
+	}
+
+	function run(callback, value, secondValue, thirdValue) {
+		if (typeof callback === 'function') {
+			callback(value, secondValue, thirdValue);
+		}
+	}
+
+	global.CodaProgressionTransportDragData = {
+		run: run,
+		setChordDragData: setChordDragData,
+		setMeasureDragData: setMeasureDragData
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-transport-drag-handler-service.js */
 // Event handlers for progression drag and drop interactions.
 (function (global) {
@@ -7251,6 +7400,7 @@
 
 	var dragDom = global.CodaProgressionTransportDom;
 	var dragClasses = global.CodaProgressionTransportDragClasses;
+	var dragData = global.CodaProgressionTransportDragData;
 
 	function create(options, state, clearDragState) {
 		options = options || {};
@@ -7309,13 +7459,13 @@
 
 					state.setMeasureChord(sourceMeasureIndex, sourceChordIndex);
 					dragClasses.markChordDragging(chordElement);
-					setChordDragData(event, sourceMeasureIndex, sourceChordIndex);
+					dragData.setChordDragData(event, sourceMeasureIndex, sourceChordIndex);
 					return;
 				}
 
 				state.setMeasureIndex(measureIndex(measure));
 				dragClasses.markMeasureDragging(measure);
-				setMeasureDragData(event, state.measureIndex());
+				dragData.setMeasureDragData(event, state.measureIndex());
 			},
 			drop: function (event) {
 				var measure = dragDom.closest(event.target, '.measure');
@@ -7338,36 +7488,15 @@
 
 					dragDom.preventDefault(event);
 					clearDragState();
-					run(options.onMeasureChordDrop, sourceChordDrag.measureIndex, sourceChordDrag.chordIndex, targetChordIndex);
+					dragData.run(options.onMeasureChordDrop, sourceChordDrag.measureIndex, sourceChordDrag.chordIndex, targetChordIndex);
 					return;
 				}
 
 				dragDom.preventDefault(event);
 				clearDragState();
-				run(options.onMeasureDrop, fromIndex, measureIndex(measure));
+				dragData.run(options.onMeasureDrop, fromIndex, measureIndex(measure));
 			}
 		};
-	}
-
-	function setChordDragData(event, measureIndexValue, chordIndexValue) {
-		if (event.dataTransfer) {
-			event.dataTransfer.effectAllowed = 'move';
-			event.dataTransfer.setData('text/coda-progression-chord', measureIndexValue + ':' + chordIndexValue);
-			event.dataTransfer.setData('text/plain', measureIndexValue + ':' + chordIndexValue);
-		}
-	}
-
-	function setMeasureDragData(event, measureIndexValue) {
-		if (event.dataTransfer) {
-			event.dataTransfer.effectAllowed = 'move';
-			event.dataTransfer.setData('text/plain', String(measureIndexValue));
-		}
-	}
-
-	function run(callback, value, secondValue, thirdValue) {
-		if (typeof callback === 'function') {
-			callback(value, secondValue, thirdValue);
-		}
 	}
 
 	function dragSourceIndex(event, fallbackIndex) {
@@ -7877,6 +8006,208 @@
 		play: play,
 		stop: stop,
 		toggle: toggle
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-buttons-service.js */
+// Wires fixed progression transport buttons to transport services.
+(function (global) {
+	'use strict';
+
+	function bind(options) {
+		options = options || {};
+
+		if (options.goStartButton) {
+			options.goStartButton.addEventListener('click', function () {
+				global.CodaProgressionTransportPlayback.stop(options.transportOptions, options.listenButton, options.getPlaybackHeadIndex());
+				options.setPlaybackHeadIndex(0);
+				options.transportView.setPlaybackHead(0, false);
+			});
+		}
+
+		if (options.listenButton) {
+			options.listenButton.addEventListener('click', function () {
+				global.CodaProgressionTransportPlayback.toggle(options.transportOptions, options.listenButton, options.getPlaybackHeadIndex(), options.setPlaybackHeadIndex);
+			});
+		}
+
+		if (options.exportButton) {
+			options.exportButton.addEventListener('click', function () {
+				global.CodaProgressionMidiDownload.exportMidi(options.transportOptions);
+			});
+		}
+	}
+
+	global.CodaProgressionTransportButtons = {
+		bind: bind
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-measure-click-service.js */
+// Handles clicks on progression measures and measure chords.
+(function (global) {
+	'use strict';
+
+	function bind(options) {
+		options.root.addEventListener('click', function (event) {
+			var transportDom = global.CodaProgressionTransportDom;
+			var chordMenuButton = transportDom.closest(event.target, '.measureChordMenuButton');
+			var chordElement = transportDom.closest(event.target, '.measureChord');
+			var splitButton = transportDom.closest(event.target, '.measureSplitButton');
+			var measure = transportDom.closest(event.target, '.measure');
+			var clickedIndex;
+
+			if (!measure || transportDom.closest(event.target, '.measureDragHandle')) {
+				return;
+			}
+
+			clickedIndex = transportDom.measureIndex(measure);
+			if (chordMenuButton) {
+				preventAndStop(event);
+				global.CodaProgressionTransportMenu.open(options.transportOptions, chordMenuButton, clickedIndex, transportDom.chordIndex(chordElement));
+				return;
+			}
+
+			if (splitButton) {
+				prevent(event);
+				global.CodaProgressionTransportPlayback.stop(options.transportOptions, options.listenButton, options.getPlaybackHeadIndex());
+				global.CodaProgressionTransportMenu.close();
+				global.CodaProgressionTransportActions.updateMeasureSplit(options.transportOptions, splitButton.getAttribute('data-progression-split-action'), clickedIndex, transportDom.chordIndex(chordElement));
+				options.setPlaybackHeadIndex(clickedIndex);
+				options.transportView.setPlaybackHead(clickedIndex, false);
+				return;
+			}
+
+			if (isSamePlayingMeasure(options, clickedIndex)) {
+				global.CodaProgressionTransportPlayback.stop(options.transportOptions, options.listenButton, options.getPlaybackHeadIndex());
+				return;
+			}
+
+			options.setPlaybackHeadIndex(clickedIndex);
+			options.transportView.setPlaybackHead(clickedIndex, false);
+			global.CodaProgressionTransportPlayback.play(options.transportOptions, options.listenButton, clickedIndex, options.setPlaybackHeadIndex);
+		});
+	}
+
+	function isSamePlayingMeasure(options, clickedIndex) {
+		return options.transportOptions.progressionPlayback &&
+			typeof options.transportOptions.progressionPlayback.isPlaying === 'function' &&
+			options.transportOptions.progressionPlayback.isPlaying() &&
+			clickedIndex === options.getPlaybackHeadIndex();
+	}
+
+	function prevent(event) {
+		if (event && typeof event.preventDefault === 'function') {
+			event.preventDefault();
+		}
+	}
+
+	function preventAndStop(event) {
+		prevent(event);
+		if (event && typeof event.stopPropagation === 'function') {
+			event.stopPropagation();
+		}
+	}
+
+	global.CodaProgressionTransportMeasureClick = {
+		bind: bind
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-document-events-service.js */
+// Document-level progression transport events: shortcuts and chord menu clicks.
+(function (global) {
+	'use strict';
+
+	function bind(options) {
+		var documentRef = global.document;
+
+		if (!documentRef || typeof documentRef.addEventListener !== 'function') {
+			return;
+		}
+
+		documentRef.addEventListener('keydown', function (event) {
+			global.CodaProgressionTransportShortcuts.handle(event, {
+				getPlaybackHeadIndex: options.getPlaybackHeadIndex,
+				progression: options.transportOptions.uiState ? options.transportOptions.uiState.getProgression() : null,
+				setPlaybackHead: options.transportView.setPlaybackHead,
+				setPlaybackHeadIndex: options.setPlaybackHeadIndex,
+				stopPreview: function (index) {
+					global.CodaProgressionTransportPlayback.stop(options.transportOptions, options.listenButton, index);
+				},
+				togglePreview: function (index, setPlaybackHeadIndex) {
+					global.CodaProgressionTransportPlayback.toggle(options.transportOptions, options.listenButton, index, setPlaybackHeadIndex);
+				}
+			});
+		});
+
+		documentRef.addEventListener('click', function (event) {
+			var transportDom = global.CodaProgressionTransportDom;
+			var menuItem = transportDom.closest(event.target, '.measureChordMenuItem');
+			var menu = transportDom.closest(event.target, '.progressionChordMenu');
+
+			if (menuItem) {
+				replaceFromMenuItem(options, menuItem);
+				return;
+			}
+
+			if (!menu && !transportDom.closest(event.target, '.measureChordMenuButton')) {
+				global.CodaProgressionTransportMenu.close();
+			}
+		});
+	}
+
+	function replaceFromMenuItem(options, menuItem) {
+		var transportDom = global.CodaProgressionTransportDom;
+		var replacement = global.CodaProgressionTransportMenu.replacementFromItem(menuItem);
+		var menuMeasureIndex = transportDom.measureIndex(menuItem);
+		var menuChordIndex = transportDom.chordIndex(menuItem);
+
+		global.CodaProgressionTransportPlayback.stop(options.transportOptions, options.listenButton, options.getPlaybackHeadIndex());
+		global.CodaProgressionTransportActions.updateMeasureChordReplacement(options.transportOptions, menuMeasureIndex, menuChordIndex, replacement);
+		global.CodaProgressionTransportMenu.close();
+		options.setPlaybackHeadIndex(menuMeasureIndex);
+		options.transportView.setPlaybackHead(menuMeasureIndex, false);
+	}
+
+	global.CodaProgressionTransportDocumentEvents = {
+		bind: bind
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-drag-actions-service.js */
+// Wires progression drag and drop callbacks to editing actions and playback head updates.
+(function (global) {
+	'use strict';
+
+	function bind(options) {
+		global.CodaProgressionTransportDrag.initialize({
+			onMeasureChordDrop: function (measureIndex, fromChordIndex, toChordIndex) {
+				global.CodaProgressionTransportPlayback.stop(options.transportOptions, options.listenButton, options.getPlaybackHeadIndex());
+				global.CodaProgressionTransportActions.reorderMeasureChords(options.transportOptions, measureIndex, fromChordIndex, toChordIndex);
+				options.setPlaybackHeadIndex(measureIndex);
+				options.transportView.setPlaybackHead(measureIndex, false);
+			},
+			onMeasureDrop: function (fromIndex, toIndex) {
+				global.CodaProgressionTransportPlayback.stop(options.transportOptions, options.listenButton, options.getPlaybackHeadIndex());
+				global.CodaProgressionTransportActions.reorderProgression(options.transportOptions, fromIndex, toIndex);
+				options.setPlaybackHeadIndex(toIndex);
+				options.transportView.setPlaybackHead(toIndex, false);
+			},
+			root: options.root
+		});
+	}
+
+	global.CodaProgressionTransportDragActions = {
+		bind: bind
 	};
 })(window);
 
@@ -9142,6 +9473,7 @@
 		var eventPlayer = options.eventPlayer || global.CodaProgressionEventPlayer;
 		var playbackCallbacks = options.playbackCallbacks || global.CodaProgressionPlaybackCallbacks;
 		var playbackTimers = options.playbackTimers || global.CodaProgressionPlaybackTimers.create(options.timerApi || global);
+		var playbackRunner = options.playbackRunner || global.CodaProgressionPlaybackRunner;
 		var activeRun = null;
 
 		function play(progression, callbacks) {
@@ -9217,90 +9549,24 @@
 		}
 
 		function startRunPlayback(run, progression, schedule, scheduledMeasures) {
-			if (activeRun !== run) {
-				return;
-			}
-
-			schedulePlaybackEvents(run, schedule);
-			scheduleMetronomeEvents(run, progression, run.callbacks);
-			scheduleMeasureCallbacks(run, progression, scheduledMeasures);
-		}
-
-		function schedulePlaybackEvents(run, schedule) {
-			for (var i = 0; i < schedule.length; i++) {
-				playbackTimers.schedule(run, schedule[i].delay, createPlaybackCallback(run, schedule[i]));
-			}
-		}
-
-		function scheduleMetronomeEvents(run, progression, callbacks) {
-			var schedule;
-
-			if (!playbackService || typeof playbackService.playMetronomeClick !== 'function') {
-				return;
-			}
-
-			schedule = playbackSchedule.buildProgressionMetronomeSchedule(progression, {
-				startIndex: callbacks.startIndex
+			playbackRunner.start({
+				eventPlayer: eventPlayer,
+				getActiveRun: function () {
+					return activeRun;
+				},
+				playAgain: play,
+				playbackCallbacks: playbackCallbacks,
+				playbackSchedule: playbackSchedule,
+				playbackService: playbackService,
+				playbackTimers: playbackTimers,
+				progression: progression,
+				run: run,
+				schedule: schedule,
+				scheduledMeasures: scheduledMeasures,
+				setActiveRun: function (nextRun) {
+					activeRun = nextRun;
+				}
 			});
-
-			for (var i = 0; i < schedule.length; i++) {
-				playbackTimers.schedule(run, schedule[i].delay, createMetronomeCallback(run, schedule[i]));
-			}
-		}
-
-		function createMetronomeCallback(run, event) {
-			return function () {
-				if (activeRun === run && playbackCallbacks.shouldPlayMetronome(run.callbacks)) {
-					playbackService.playMetronomeClick({
-						accent: event.accent,
-						bar: event.bar,
-						beat: event.beat,
-						delay: 0
-					});
-				}
-			};
-		}
-
-		function createPlaybackCallback(run, event) {
-			return function () {
-				if (activeRun === run) {
-					eventPlayer.play(playbackService, eventPlayer.asImmediateEvent(event));
-				}
-			};
-		}
-
-		function scheduleMeasureCallbacks(run, progression, scheduledMeasures) {
-			var totalSeconds = playbackSchedule.playbackTotalSeconds(progression, scheduledMeasures);
-
-			for (var i = 0; i < scheduledMeasures.length; i++) {
-				playbackTimers.schedule(run, scheduledMeasures[i].delay, createMeasureStartCallback(run, scheduledMeasures[i].measure, scheduledMeasures[i].index));
-			}
-
-			playbackTimers.schedule(run, totalSeconds, function () {
-				if (activeRun !== run) {
-					return;
-				}
-
-				activeRun = null;
-
-				if (playbackCallbacks.shouldLoop(run.callbacks)) {
-					playbackCallbacks.run(run.callbacks.onCycleComplete, progression);
-					play(progression, playbackCallbacks.extend(run.callbacks, {
-						startIndex: 0
-					}));
-					return;
-				}
-
-				playbackCallbacks.run(run.callbacks.onComplete, progression);
-			});
-		}
-
-		function createMeasureStartCallback(run, measure, index) {
-			return function () {
-				if (activeRun === run) {
-					playbackCallbacks.run(run.callbacks.onMeasureStart, measure, index);
-				}
-			};
 		}
 
 		return {
@@ -10712,8 +10978,8 @@
 
 ;
 
-/* Source: js/ui/progression-state.js */
-// Estado normalizado de los controles del constructor de progresiones.
+/* Source: js/ui/progression-state-schema.js */
+// Schema and normalization rules for progression workbench controls.
 (function (global) {
 	'use strict';
 
@@ -10734,6 +11000,92 @@
 		voicing: 'closed',
 		voices: 4
 	};
+
+	function normalize(values, fallback) {
+		values = values || {};
+		fallback = fallback || defaults;
+
+		return {
+			articulation: pick(values.articulation, allowedArticulations, fallback.articulation),
+			bars: pickNumber(values.bars, allowedBars, fallback.bars),
+			beatsPerBar: meterBeats(pick(values.meter, allowedMeters, fallback.meter)),
+			beatUnit: meterUnit(pick(values.meter, allowedMeters, fallback.meter)),
+			bpm: clampInteger(values.bpm, 20, 200, fallback.bpm),
+			counterpoint: clampInteger(values.counterpoint, 0, 100, fallback.counterpoint),
+			meter: pick(values.meter, allowedMeters, fallback.meter),
+			modalInterchange: clampInteger(values.modalInterchange, 0, 100, fallback.modalInterchange),
+			style: pick(values.style, allowedStyles, fallback.style),
+			tensions: clampInteger(values.tensions, 0, 100, fallback.tensions),
+			voicing: pick(values.voicing, allowedVoicings, fallback.voicing),
+			voices: clampInteger(values.voices, 1, 6, fallback.voices)
+		};
+	}
+
+	function clone(value) {
+		return {
+			articulation: value.articulation,
+			bars: value.bars,
+			beatsPerBar: value.beatsPerBar,
+			beatUnit: value.beatUnit,
+			bpm: value.bpm,
+			counterpoint: value.counterpoint,
+			meter: value.meter,
+			modalInterchange: value.modalInterchange,
+			style: value.style,
+			tensions: value.tensions,
+			voicing: value.voicing,
+			voices: value.voices
+		};
+	}
+
+	function pick(value, allowedValues, fallback) {
+		return allowedValues.indexOf(value) > -1 ? value : fallback;
+	}
+
+	function pickNumber(value, allowedValues, fallback) {
+		var numericValue = parseInt(value, 10);
+
+		return allowedValues.indexOf(numericValue) > -1 ? numericValue : fallback;
+	}
+
+	function clampInteger(value, min, max, fallback) {
+		var numericValue = parseInt(value, 10);
+
+		if (isNaN(numericValue)) {
+			return fallback;
+		}
+
+		return Math.max(min, Math.min(max, numericValue));
+	}
+
+	function meterBeats(meter) {
+		return parseInt(String(meter).split('/')[0], 10);
+	}
+
+	function meterUnit(meter) {
+		return parseInt(String(meter).split('/')[1], 10);
+	}
+
+	global.CodaProgressionStateSchema = {
+		allowedArticulations: allowedArticulations.slice(),
+		allowedBars: allowedBars.slice(),
+		allowedMeters: allowedMeters.slice(),
+		allowedStyles: allowedStyles.slice(),
+		allowedVoicings: allowedVoicings.slice(),
+		clone: clone,
+		defaults: clone(normalize(defaults)),
+		normalize: normalize
+	};
+})(window);
+
+;
+
+/* Source: js/ui/progression-state.js */
+// Estado normalizado de los controles del constructor de progresiones.
+(function (global) {
+	'use strict';
+
+	var schema = global.CodaProgressionStateSchema;
 
 	function create(values) {
 		var state = normalize(values);
@@ -10770,51 +11122,7 @@
 	}
 
 	function normalize(values, fallback) {
-		values = values || {};
-		fallback = fallback || defaults;
-
-		return {
-			articulation: pick(values.articulation, allowedArticulations, fallback.articulation),
-			bars: pickNumber(values.bars, allowedBars, fallback.bars),
-			beatsPerBar: meterBeats(pick(values.meter, allowedMeters, fallback.meter)),
-			beatUnit: meterUnit(pick(values.meter, allowedMeters, fallback.meter)),
-			bpm: clampInteger(values.bpm, 20, 200, fallback.bpm),
-			counterpoint: clampInteger(values.counterpoint, 0, 100, fallback.counterpoint),
-			meter: pick(values.meter, allowedMeters, fallback.meter),
-			modalInterchange: clampInteger(values.modalInterchange, 0, 100, fallback.modalInterchange),
-			style: pick(values.style, allowedStyles, fallback.style),
-			tensions: clampInteger(values.tensions, 0, 100, fallback.tensions),
-			voicing: pick(values.voicing, allowedVoicings, fallback.voicing),
-			voices: clampInteger(values.voices, 1, 6, fallback.voices)
-		};
-	}
-
-	function pick(value, allowedValues, fallback) {
-		return allowedValues.indexOf(value) > -1 ? value : fallback;
-	}
-
-	function pickNumber(value, allowedValues, fallback) {
-		var numericValue = parseInt(value, 10);
-
-		return allowedValues.indexOf(numericValue) > -1 ? numericValue : fallback;
-	}
-
-	function clampInteger(value, min, max, fallback) {
-		var numericValue = parseInt(value, 10);
-
-		if (isNaN(numericValue)) {
-			return fallback;
-		}
-
-		return Math.max(min, Math.min(max, numericValue));
-	}
-
-	function meterBeats(meter) {
-		return parseInt(String(meter).split('/')[0], 10);
-	}
-
-	function meterUnit(meter) {
-		return parseInt(String(meter).split('/')[1], 10);
+		return schema.normalize(values, fallback);
 	}
 
 	function valueOf(root, id) {
@@ -10824,30 +11132,17 @@
 	}
 
 	function clone(value) {
-		return {
-			articulation: value.articulation,
-			bars: value.bars,
-			beatsPerBar: value.beatsPerBar,
-			beatUnit: value.beatUnit,
-			bpm: value.bpm,
-			counterpoint: value.counterpoint,
-			meter: value.meter,
-			modalInterchange: value.modalInterchange,
-			style: value.style,
-			tensions: value.tensions,
-			voicing: value.voicing,
-			voices: value.voices
-		};
+		return schema.clone(value);
 	}
 
 	global.CodaProgressionState = {
-		allowedArticulations: allowedArticulations.slice(),
-		allowedBars: allowedBars.slice(),
-		allowedMeters: allowedMeters.slice(),
-		allowedStyles: allowedStyles.slice(),
-		allowedVoicings: allowedVoicings.slice(),
+		allowedArticulations: schema.allowedArticulations.slice(),
+		allowedBars: schema.allowedBars.slice(),
+		allowedMeters: schema.allowedMeters.slice(),
+		allowedStyles: schema.allowedStyles.slice(),
+		allowedVoicings: schema.allowedVoicings.slice(),
 		create: create,
-		defaults: clone(normalize(defaults)),
+		defaults: clone(schema.defaults),
 		normalize: normalize,
 		readFromControls: readFromControls
 	};
@@ -11872,10 +12167,13 @@
 
 		var root = query('#constructorProgresiones');
 		var transportView = global.CodaProgressionTransportView;
+		var transportButtons = global.CodaProgressionTransportButtons;
+		var transportMeasureClick = global.CodaProgressionTransportMeasureClick;
+		var transportDocumentEvents = global.CodaProgressionTransportDocumentEvents;
+		var transportDragActions = global.CodaProgressionTransportDragActions;
 		var goStartButton = query('.transportButton--goStart');
 		var listenButton = query('.transportButton--listen');
 		var exportButton = query('.transportButton--export');
-		var transportDom = global.CodaProgressionTransportDom;
 		var playbackHeadIndex = 0;
 
 		if (!root || root.getAttribute('data-coda-progression-transport') === 'true') {
@@ -11884,134 +12182,57 @@
 
 		root.setAttribute('data-coda-progression-transport', 'true');
 
-		if (goStartButton) {
-			goStartButton.addEventListener('click', function () {
-				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
-				playbackHeadIndex = 0;
-				transportView.setPlaybackHead(playbackHeadIndex, false);
-			});
-		}
-
-		if (listenButton) {
-			listenButton.addEventListener('click', function () {
-				global.CodaProgressionTransportPlayback.toggle(options, listenButton, playbackHeadIndex, function (index) {
-					playbackHeadIndex = index;
-				});
-			});
-		}
-
-		if (exportButton) {
-			exportButton.addEventListener('click', function () {
-				global.CodaProgressionMidiDownload.exportMidi(options);
-			});
-		}
-
-		root.addEventListener('click', function (event) {
-			var chordMenuButton = transportDom.closest(event.target, '.measureChordMenuButton');
-			var chordElement = transportDom.closest(event.target, '.measureChord');
-			var splitButton = transportDom.closest(event.target, '.measureSplitButton');
-			var measure = transportDom.closest(event.target, '.measure');
-			var clickedIndex;
-
-			if (!measure || transportDom.closest(event.target, '.measureDragHandle')) {
-				return;
-			}
-
-			clickedIndex = transportDom.measureIndex(measure);
-			if (chordMenuButton) {
-				event.preventDefault();
-				if (typeof event.stopPropagation === 'function') {
-					event.stopPropagation();
-				}
-				global.CodaProgressionTransportMenu.open(options, chordMenuButton, clickedIndex, transportDom.chordIndex(chordElement));
-				return;
-			}
-
-			if (splitButton) {
-				event.preventDefault();
-				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
-				global.CodaProgressionTransportMenu.close();
-				global.CodaProgressionTransportActions.updateMeasureSplit(options, splitButton.getAttribute('data-progression-split-action'), clickedIndex, transportDom.chordIndex(chordElement));
-				playbackHeadIndex = clickedIndex;
-				transportView.setPlaybackHead(playbackHeadIndex, false);
-				return;
-			}
-
-			if (
-				options.progressionPlayback &&
-				typeof options.progressionPlayback.isPlaying === 'function' &&
-				options.progressionPlayback.isPlaying() &&
-				clickedIndex === playbackHeadIndex
-			) {
-				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
-				return;
-			}
-
-			playbackHeadIndex = clickedIndex;
-			transportView.setPlaybackHead(playbackHeadIndex, false);
-			global.CodaProgressionTransportPlayback.play(options, listenButton, playbackHeadIndex, function (index) {
+		transportButtons.bind({
+			exportButton: exportButton,
+			getPlaybackHeadIndex: function () {
+				return playbackHeadIndex;
+			},
+			goStartButton: goStartButton,
+			listenButton: listenButton,
+			setPlaybackHeadIndex: function (index) {
 				playbackHeadIndex = index;
-			});
+			},
+			transportOptions: options,
+			transportView: transportView
 		});
 
-		global.CodaProgressionTransportDrag.initialize({
-			onMeasureChordDrop: function (measureIndex, fromChordIndex, toChordIndex) {
-				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
-				global.CodaProgressionTransportActions.reorderMeasureChords(options, measureIndex, fromChordIndex, toChordIndex);
-				playbackHeadIndex = measureIndex;
-				transportView.setPlaybackHead(playbackHeadIndex, false);
+		transportMeasureClick.bind({
+			getPlaybackHeadIndex: function () {
+				return playbackHeadIndex;
 			},
-			onMeasureDrop: function (fromIndex, toIndex) {
-				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
-				global.CodaProgressionTransportActions.reorderProgression(options, fromIndex, toIndex);
-				playbackHeadIndex = toIndex;
-				transportView.setPlaybackHead(playbackHeadIndex, false);
+			listenButton: listenButton,
+			root: root,
+			setPlaybackHeadIndex: function (index) {
+				playbackHeadIndex = index;
 			},
-			root: root
+			transportOptions: options,
+			transportView: transportView
 		});
 
-		if (global.document && typeof global.document.addEventListener === 'function') {
-			global.document.addEventListener('keydown', function (event) {
-				global.CodaProgressionTransportShortcuts.handle(event, {
-					getPlaybackHeadIndex: function () {
-						return playbackHeadIndex;
-					},
-					progression: options.uiState ? options.uiState.getProgression() : null,
-					setPlaybackHead: transportView.setPlaybackHead,
-					setPlaybackHeadIndex: function (index) {
-						playbackHeadIndex = index;
-					},
-					stopPreview: function (index) {
-						global.CodaProgressionTransportPlayback.stop(options, listenButton, index);
-					},
-					togglePreview: function (index, setPlaybackHeadIndex) {
-						global.CodaProgressionTransportPlayback.toggle(options, listenButton, index, setPlaybackHeadIndex);
-					}
-				});
-			});
+		transportDragActions.bind({
+			getPlaybackHeadIndex: function () {
+				return playbackHeadIndex;
+			},
+			listenButton: listenButton,
+			root: root,
+			setPlaybackHeadIndex: function (index) {
+				playbackHeadIndex = index;
+			},
+			transportOptions: options,
+			transportView: transportView
+		});
 
-			global.document.addEventListener('click', function (event) {
-				var menuItem = transportDom.closest(event.target, '.measureChordMenuItem');
-				var menu = transportDom.closest(event.target, '.progressionChordMenu');
-
-				if (menuItem) {
-					var replacement = global.CodaProgressionTransportMenu.replacementFromItem(menuItem);
-					var menuMeasureIndex = transportDom.measureIndex(menuItem);
-					var menuChordIndex = transportDom.chordIndex(menuItem);
-
-					global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
-					global.CodaProgressionTransportActions.updateMeasureChordReplacement(options, menuMeasureIndex, menuChordIndex, replacement);
-					global.CodaProgressionTransportMenu.close();
-					playbackHeadIndex = menuMeasureIndex;
-					transportView.setPlaybackHead(playbackHeadIndex, false);
-					return;
-				}
-
-				if (!menu && !transportDom.closest(event.target, '.measureChordMenuButton')) {
-					global.CodaProgressionTransportMenu.close();
-				}
-			});
-		}
+		transportDocumentEvents.bind({
+			getPlaybackHeadIndex: function () {
+				return playbackHeadIndex;
+			},
+			listenButton: listenButton,
+			setPlaybackHeadIndex: function (index) {
+				playbackHeadIndex = index;
+			},
+			transportOptions: options,
+			transportView: transportView
+		});
 
 		return {
 			exportMidi: function () {

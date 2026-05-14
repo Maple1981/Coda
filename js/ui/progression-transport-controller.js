@@ -7,10 +7,13 @@
 
 		var root = query('#constructorProgresiones');
 		var transportView = global.CodaProgressionTransportView;
+		var transportButtons = global.CodaProgressionTransportButtons;
+		var transportMeasureClick = global.CodaProgressionTransportMeasureClick;
+		var transportDocumentEvents = global.CodaProgressionTransportDocumentEvents;
+		var transportDragActions = global.CodaProgressionTransportDragActions;
 		var goStartButton = query('.transportButton--goStart');
 		var listenButton = query('.transportButton--listen');
 		var exportButton = query('.transportButton--export');
-		var transportDom = global.CodaProgressionTransportDom;
 		var playbackHeadIndex = 0;
 
 		if (!root || root.getAttribute('data-coda-progression-transport') === 'true') {
@@ -19,134 +22,57 @@
 
 		root.setAttribute('data-coda-progression-transport', 'true');
 
-		if (goStartButton) {
-			goStartButton.addEventListener('click', function () {
-				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
-				playbackHeadIndex = 0;
-				transportView.setPlaybackHead(playbackHeadIndex, false);
-			});
-		}
-
-		if (listenButton) {
-			listenButton.addEventListener('click', function () {
-				global.CodaProgressionTransportPlayback.toggle(options, listenButton, playbackHeadIndex, function (index) {
-					playbackHeadIndex = index;
-				});
-			});
-		}
-
-		if (exportButton) {
-			exportButton.addEventListener('click', function () {
-				global.CodaProgressionMidiDownload.exportMidi(options);
-			});
-		}
-
-		root.addEventListener('click', function (event) {
-			var chordMenuButton = transportDom.closest(event.target, '.measureChordMenuButton');
-			var chordElement = transportDom.closest(event.target, '.measureChord');
-			var splitButton = transportDom.closest(event.target, '.measureSplitButton');
-			var measure = transportDom.closest(event.target, '.measure');
-			var clickedIndex;
-
-			if (!measure || transportDom.closest(event.target, '.measureDragHandle')) {
-				return;
-			}
-
-			clickedIndex = transportDom.measureIndex(measure);
-			if (chordMenuButton) {
-				event.preventDefault();
-				if (typeof event.stopPropagation === 'function') {
-					event.stopPropagation();
-				}
-				global.CodaProgressionTransportMenu.open(options, chordMenuButton, clickedIndex, transportDom.chordIndex(chordElement));
-				return;
-			}
-
-			if (splitButton) {
-				event.preventDefault();
-				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
-				global.CodaProgressionTransportMenu.close();
-				global.CodaProgressionTransportActions.updateMeasureSplit(options, splitButton.getAttribute('data-progression-split-action'), clickedIndex, transportDom.chordIndex(chordElement));
-				playbackHeadIndex = clickedIndex;
-				transportView.setPlaybackHead(playbackHeadIndex, false);
-				return;
-			}
-
-			if (
-				options.progressionPlayback &&
-				typeof options.progressionPlayback.isPlaying === 'function' &&
-				options.progressionPlayback.isPlaying() &&
-				clickedIndex === playbackHeadIndex
-			) {
-				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
-				return;
-			}
-
-			playbackHeadIndex = clickedIndex;
-			transportView.setPlaybackHead(playbackHeadIndex, false);
-			global.CodaProgressionTransportPlayback.play(options, listenButton, playbackHeadIndex, function (index) {
+		transportButtons.bind({
+			exportButton: exportButton,
+			getPlaybackHeadIndex: function () {
+				return playbackHeadIndex;
+			},
+			goStartButton: goStartButton,
+			listenButton: listenButton,
+			setPlaybackHeadIndex: function (index) {
 				playbackHeadIndex = index;
-			});
+			},
+			transportOptions: options,
+			transportView: transportView
 		});
 
-		global.CodaProgressionTransportDrag.initialize({
-			onMeasureChordDrop: function (measureIndex, fromChordIndex, toChordIndex) {
-				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
-				global.CodaProgressionTransportActions.reorderMeasureChords(options, measureIndex, fromChordIndex, toChordIndex);
-				playbackHeadIndex = measureIndex;
-				transportView.setPlaybackHead(playbackHeadIndex, false);
+		transportMeasureClick.bind({
+			getPlaybackHeadIndex: function () {
+				return playbackHeadIndex;
 			},
-			onMeasureDrop: function (fromIndex, toIndex) {
-				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
-				global.CodaProgressionTransportActions.reorderProgression(options, fromIndex, toIndex);
-				playbackHeadIndex = toIndex;
-				transportView.setPlaybackHead(playbackHeadIndex, false);
+			listenButton: listenButton,
+			root: root,
+			setPlaybackHeadIndex: function (index) {
+				playbackHeadIndex = index;
 			},
-			root: root
+			transportOptions: options,
+			transportView: transportView
 		});
 
-		if (global.document && typeof global.document.addEventListener === 'function') {
-			global.document.addEventListener('keydown', function (event) {
-				global.CodaProgressionTransportShortcuts.handle(event, {
-					getPlaybackHeadIndex: function () {
-						return playbackHeadIndex;
-					},
-					progression: options.uiState ? options.uiState.getProgression() : null,
-					setPlaybackHead: transportView.setPlaybackHead,
-					setPlaybackHeadIndex: function (index) {
-						playbackHeadIndex = index;
-					},
-					stopPreview: function (index) {
-						global.CodaProgressionTransportPlayback.stop(options, listenButton, index);
-					},
-					togglePreview: function (index, setPlaybackHeadIndex) {
-						global.CodaProgressionTransportPlayback.toggle(options, listenButton, index, setPlaybackHeadIndex);
-					}
-				});
-			});
+		transportDragActions.bind({
+			getPlaybackHeadIndex: function () {
+				return playbackHeadIndex;
+			},
+			listenButton: listenButton,
+			root: root,
+			setPlaybackHeadIndex: function (index) {
+				playbackHeadIndex = index;
+			},
+			transportOptions: options,
+			transportView: transportView
+		});
 
-			global.document.addEventListener('click', function (event) {
-				var menuItem = transportDom.closest(event.target, '.measureChordMenuItem');
-				var menu = transportDom.closest(event.target, '.progressionChordMenu');
-
-				if (menuItem) {
-					var replacement = global.CodaProgressionTransportMenu.replacementFromItem(menuItem);
-					var menuMeasureIndex = transportDom.measureIndex(menuItem);
-					var menuChordIndex = transportDom.chordIndex(menuItem);
-
-					global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
-					global.CodaProgressionTransportActions.updateMeasureChordReplacement(options, menuMeasureIndex, menuChordIndex, replacement);
-					global.CodaProgressionTransportMenu.close();
-					playbackHeadIndex = menuMeasureIndex;
-					transportView.setPlaybackHead(playbackHeadIndex, false);
-					return;
-				}
-
-				if (!menu && !transportDom.closest(event.target, '.measureChordMenuButton')) {
-					global.CodaProgressionTransportMenu.close();
-				}
-			});
-		}
+		transportDocumentEvents.bind({
+			getPlaybackHeadIndex: function () {
+				return playbackHeadIndex;
+			},
+			listenButton: listenButton,
+			setPlaybackHeadIndex: function (index) {
+				playbackHeadIndex = index;
+			},
+			transportOptions: options,
+			transportView: transportView
+		});
 
 		return {
 			exportMidi: function () {

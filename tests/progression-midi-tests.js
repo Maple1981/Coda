@@ -75,6 +75,7 @@ function runScript(relativePath) {
 	'js/services/progression-builder-service.js',
 	'js/services/progression-chord-menu-option-service.js',
 	'js/services/progression-chord-menu-service.js',
+	'js/ui/progression-state-schema.js',
 	'js/ui/progression-state.js',
 	'js/domain/music-utils.js',
 	'js/domain/scale-domain.js',

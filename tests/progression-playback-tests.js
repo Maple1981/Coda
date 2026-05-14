@@ -21,9 +21,12 @@ runScript('js/services/progression-playback-note-event-service.js');
 runScript('js/services/progression-playback-timing-service.js');
 runScript('js/services/progression-playback-event-builder-service.js');
 runScript('js/services/progression-playback-schedule-service.js');
+runScript('js/services/progression-playback-event-normalizer-service.js');
+runScript('js/services/progression-midi-event-player-service.js');
 runScript('js/services/progression-event-player-service.js');
 runScript('js/services/progression-playback-callbacks-service.js');
 runScript('js/services/progression-playback-timer-service.js');
+runScript('js/services/progression-playback-runner-service.js');
 runScript('js/application/progression-playback-application.js');
 
 const app = context.window.CodaApplication;

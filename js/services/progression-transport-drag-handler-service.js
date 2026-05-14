@@ -4,6 +4,7 @@
 
 	var dragDom = global.CodaProgressionTransportDom;
 	var dragClasses = global.CodaProgressionTransportDragClasses;
+	var dragData = global.CodaProgressionTransportDragData;
 
 	function create(options, state, clearDragState) {
 		options = options || {};
@@ -62,13 +63,13 @@
 
 					state.setMeasureChord(sourceMeasureIndex, sourceChordIndex);
 					dragClasses.markChordDragging(chordElement);
-					setChordDragData(event, sourceMeasureIndex, sourceChordIndex);
+					dragData.setChordDragData(event, sourceMeasureIndex, sourceChordIndex);
 					return;
 				}
 
 				state.setMeasureIndex(measureIndex(measure));
 				dragClasses.markMeasureDragging(measure);
-				setMeasureDragData(event, state.measureIndex());
+				dragData.setMeasureDragData(event, state.measureIndex());
 			},
 			drop: function (event) {
 				var measure = dragDom.closest(event.target, '.measure');
@@ -91,36 +92,15 @@
 
 					dragDom.preventDefault(event);
 					clearDragState();
-					run(options.onMeasureChordDrop, sourceChordDrag.measureIndex, sourceChordDrag.chordIndex, targetChordIndex);
+					dragData.run(options.onMeasureChordDrop, sourceChordDrag.measureIndex, sourceChordDrag.chordIndex, targetChordIndex);
 					return;
 				}
 
 				dragDom.preventDefault(event);
 				clearDragState();
-				run(options.onMeasureDrop, fromIndex, measureIndex(measure));
+				dragData.run(options.onMeasureDrop, fromIndex, measureIndex(measure));
 			}
 		};
-	}
-
-	function setChordDragData(event, measureIndexValue, chordIndexValue) {
-		if (event.dataTransfer) {
-			event.dataTransfer.effectAllowed = 'move';
-			event.dataTransfer.setData('text/coda-progression-chord', measureIndexValue + ':' + chordIndexValue);
-			event.dataTransfer.setData('text/plain', measureIndexValue + ':' + chordIndexValue);
-		}
-	}
-
-	function setMeasureDragData(event, measureIndexValue) {
-		if (event.dataTransfer) {
-			event.dataTransfer.effectAllowed = 'move';
-			event.dataTransfer.setData('text/plain', String(measureIndexValue));
-		}
-	}
-
-	function run(callback, value, secondValue, thirdValue) {
-		if (typeof callback === 'function') {
-			callback(value, secondValue, thirdValue);
-		}
 	}
 
 	function dragSourceIndex(event, fallbackIndex) {

@@ -104,6 +104,7 @@ function runScript(relativePath) {
 	'js/application/scale-report-application.js',
 	'js/application/progression-application.js',
 	'js/ui/ui-state.js',
+	'js/ui/progression-state-schema.js',
 	'js/ui/progression-state.js',
 	'js/ui/scale-report-controller.js'
 ].forEach(runScript);

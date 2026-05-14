@@ -10,6 +10,7 @@
 		var eventPlayer = options.eventPlayer || global.CodaProgressionEventPlayer;
 		var playbackCallbacks = options.playbackCallbacks || global.CodaProgressionPlaybackCallbacks;
 		var playbackTimers = options.playbackTimers || global.CodaProgressionPlaybackTimers.create(options.timerApi || global);
+		var playbackRunner = options.playbackRunner || global.CodaProgressionPlaybackRunner;
 		var activeRun = null;
 
 		function play(progression, callbacks) {
@@ -85,90 +86,24 @@
 		}
 
 		function startRunPlayback(run, progression, schedule, scheduledMeasures) {
-			if (activeRun !== run) {
-				return;
-			}
-
-			schedulePlaybackEvents(run, schedule);
-			scheduleMetronomeEvents(run, progression, run.callbacks);
-			scheduleMeasureCallbacks(run, progression, scheduledMeasures);
-		}
-
-		function schedulePlaybackEvents(run, schedule) {
-			for (var i = 0; i < schedule.length; i++) {
-				playbackTimers.schedule(run, schedule[i].delay, createPlaybackCallback(run, schedule[i]));
-			}
-		}
-
-		function scheduleMetronomeEvents(run, progression, callbacks) {
-			var schedule;
-
-			if (!playbackService || typeof playbackService.playMetronomeClick !== 'function') {
-				return;
-			}
-
-			schedule = playbackSchedule.buildProgressionMetronomeSchedule(progression, {
-				startIndex: callbacks.startIndex
+			playbackRunner.start({
+				eventPlayer: eventPlayer,
+				getActiveRun: function () {
+					return activeRun;
+				},
+				playAgain: play,
+				playbackCallbacks: playbackCallbacks,
+				playbackSchedule: playbackSchedule,
+				playbackService: playbackService,
+				playbackTimers: playbackTimers,
+				progression: progression,
+				run: run,
+				schedule: schedule,
+				scheduledMeasures: scheduledMeasures,
+				setActiveRun: function (nextRun) {
+					activeRun = nextRun;
+				}
 			});
-
-			for (var i = 0; i < schedule.length; i++) {
-				playbackTimers.schedule(run, schedule[i].delay, createMetronomeCallback(run, schedule[i]));
-			}
-		}
-
-		function createMetronomeCallback(run, event) {
-			return function () {
-				if (activeRun === run && playbackCallbacks.shouldPlayMetronome(run.callbacks)) {
-					playbackService.playMetronomeClick({
-						accent: event.accent,
-						bar: event.bar,
-						beat: event.beat,
-						delay: 0
-					});
-				}
-			};
-		}
-
-		function createPlaybackCallback(run, event) {
-			return function () {
-				if (activeRun === run) {
-					eventPlayer.play(playbackService, eventPlayer.asImmediateEvent(event));
-				}
-			};
-		}
-
-		function scheduleMeasureCallbacks(run, progression, scheduledMeasures) {
-			var totalSeconds = playbackSchedule.playbackTotalSeconds(progression, scheduledMeasures);
-
-			for (var i = 0; i < scheduledMeasures.length; i++) {
-				playbackTimers.schedule(run, scheduledMeasures[i].delay, createMeasureStartCallback(run, scheduledMeasures[i].measure, scheduledMeasures[i].index));
-			}
-
-			playbackTimers.schedule(run, totalSeconds, function () {
-				if (activeRun !== run) {
-					return;
-				}
-
-				activeRun = null;
-
-				if (playbackCallbacks.shouldLoop(run.callbacks)) {
-					playbackCallbacks.run(run.callbacks.onCycleComplete, progression);
-					play(progression, playbackCallbacks.extend(run.callbacks, {
-						startIndex: 0
-					}));
-					return;
-				}
-
-				playbackCallbacks.run(run.callbacks.onComplete, progression);
-			});
-		}
-
-		function createMeasureStartCallback(run, measure, index) {
-			return function () {
-				if (activeRun === run) {
-					playbackCallbacks.run(run.callbacks.onMeasureStart, measure, index);
-				}
-			};
 		}
 
 		return {

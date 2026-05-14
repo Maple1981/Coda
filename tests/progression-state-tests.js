@@ -16,8 +16,9 @@ function runScript(relativePath) {
 	vm.runInContext(source, context, { filename: relativePath });
 }
 
-runScript('js/ui/progression-state.js');
 runScript('js/ui/ui-state.js');
+runScript('js/ui/progression-state-schema.js');
+runScript('js/ui/progression-state.js');
 
 const progressionState = context.window.CodaProgressionState;
 const uiStateFactory = context.window.CodaUiState;
