@@ -41,6 +41,7 @@
 		var progressionState = stateNormalizer.normalize(options.progressionState);
 		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
 		var generationPlan = plannerService.createPlan({
+			openingFunction: options.openingFunction,
 			progressionState: progressionState,
 			report: options.report,
 			rng: rng,

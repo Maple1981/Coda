@@ -10,6 +10,7 @@
 	var stateNormalizer = global.CodaProgressionStateNormalizer;
 	var midiFileService = global.CodaProgressionMidiFile;
 	var progressionBuilder = global.CodaProgressionBuilder;
+	var sectionContrastService = global.CodaProgressionSectionContrast;
 
 	function buildProgressionFromDegrees(options) {
 		return progressionBuilder.fromDegrees(options);
@@ -21,6 +22,14 @@
 
 	function generateProgressionFromState(options) {
 		return progressionBuilder.generate(options);
+	}
+
+	function generateContrastingProgressionSection(options) {
+		return sectionContrastService.generate(options, {
+			buildScaleReport: global.CodaApplication.buildScaleReport,
+			generateProgressionFromState: generateProgressionFromState,
+			rebuildProgressionTimeline: rebuildProgressionTimeline
+		});
 	}
 
 	function buildProgressionMidiFile(options) {
@@ -84,6 +93,7 @@
 	global.CodaApplication.buildProgressionFromDegrees = buildProgressionFromDegrees;
 	global.CodaApplication.buildProgressionFromState = buildProgressionFromState;
 	global.CodaApplication.generateProgressionFromState = generateProgressionFromState;
+	global.CodaApplication.generateContrastingProgressionSection = generateContrastingProgressionSection;
 	global.CodaApplication.formatProgressionDegreeForChord = formatDegreeForChord;
 	global.CodaApplication.rebuildProgressionTimeline = rebuildProgressionTimeline;
 	global.CodaApplication.removeProgressionMeasureChord = removeProgressionMeasureChord;

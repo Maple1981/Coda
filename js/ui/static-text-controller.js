@@ -155,6 +155,9 @@
 		setText(i18n, '.transportButton--export span[data-i18n="progression.exportMidi"]', 'progression.exportMidi');
 		setText(i18n, '.metronomeControl span[data-i18n="progression.metronome"]', 'progression.metronome');
 		setText(i18n, '.loopControl span[data-i18n="progression.loop"]', 'progression.loop');
+		setText(i18n, '.progressionSectionHeader h3[data-i18n="progression.sectionA"]', 'progression.sectionA');
+		setText(i18n, '.progressionSectionHeader h3[data-i18n="progression.sectionB"]', 'progression.sectionB');
+		setTitleAndLabel(i18n, '#generateProgressionSectionB[data-i18n-title="progression.generateSectionB"]', 'progression.generateSectionB');
 		setTitleAndLabel(i18n, '.measureChordMenuButton[data-i18n-title="progression.changeMeasureChord"]', 'progression.changeMeasureChord');
 		setTitleAndLabel(i18n, '.measureDragHandle[data-i18n-title="progression.dragMeasure"]', 'progression.dragMeasure');
 		setTitleAndLabel(i18n, '.measureChordDragHandle[data-i18n-title="progression.dragMeasureChord"]', 'progression.dragMeasureChord');

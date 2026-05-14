@@ -70,6 +70,7 @@
 			'js/services/progression-phrase-block-selector-service.js',
 			'js/services/progression-planner-service.js',
 			'js/services/progression-builder-service.js',
+			'js/services/progression-section-contrast-service.js',
 			'js/services/progression-chord-menu-option-service.js',
 			'js/services/progression-chord-menu-service.js',
 			'js/services/midi-export-service.js',

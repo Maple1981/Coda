@@ -410,6 +410,10 @@ assert.ok(progressionWorkbenchHtml.indexOf('ios_share') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="progressionMetronome"') < progressionWorkbenchHtml.indexOf('id="progressionLoop"'));
 assert.ok(progressionWorkbenchHtml.indexOf('id="progressionLoop"') < progressionWorkbenchHtml.indexOf('transportButton--goStart'));
 assert.ok(progressionWorkbenchHtml.indexOf('transportButton--goStart') < progressionWorkbenchHtml.indexOf('transportButton--listen'));
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.sectionA"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.sectionB"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="generateProgressionSectionB"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('casino') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<strong>Imaj7</strong>') > -1);
 
 const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
@@ -428,6 +432,8 @@ const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineM
 	]
 });
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-bar="1"') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('data-progression-section="A"') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('data-progression-section="B"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-index="0"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('measureDragHandle') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-split-action="add"') > -1);

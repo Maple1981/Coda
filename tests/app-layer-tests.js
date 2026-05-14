@@ -107,6 +107,33 @@ assert.equal(cMajorProgressionPlan.voicing, 'closed');
 assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.degree; }), ['I', 'IV 6/4', 'V 6', 'I']);
 assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.chordName; }), ['C', 'F', 'G', 'C']);
 assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'SD', 'D', 'T']);
+const contrastingSectionProgression = app.generateContrastingProgressionSection({
+	data: data,
+	domain: domain,
+	progression: cMajorProgressionPlan,
+	progressionState: {
+		articulation: 'legato',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '3/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 3
+	},
+	report: cMajorReport,
+	rng: function () { return 0; },
+	selection: { preferFlats: false }
+});
+assert.equal(contrastingSectionProgression.measures.length, 8);
+assert.deepEqual(contrastingSectionProgression.sections.map(function (section) { return section.id; }), ['A', 'B']);
+assert.equal(contrastingSectionProgression.sections[0].length, 4);
+assert.equal(contrastingSectionProgression.sections[1].length, 4);
+assert.equal(contrastingSectionProgression.measures[4].bar, 5);
+assert.equal(contrastingSectionProgression.measures[4].sectionId, 'B');
+assert.equal(contrastingSectionProgression.measures[4].tonalFunction, 'SD');
 assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	articulation: 'legato',
 	bar: 2,

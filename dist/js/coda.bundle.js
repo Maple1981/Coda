@@ -1417,6 +1417,7 @@
 			'progression.dragMeasureChord': 'Reordenar acorde añadido dentro del compás',
 			'progression.exportMidi': 'Exportar MIDI',
 			'progression.generate': 'Generar progresión aleatoria',
+			'progression.generateSectionB': 'Generar Sección B contrastante',
 			'progression.goStart': 'Inicio',
 			'progression.harmonicColor': 'Color armónico',
 			'progression.help.articulation': 'Define cómo se atacan y enlazan los acordes durante la preescucha.',
@@ -1435,6 +1436,8 @@
 			'progression.meter': 'Compás',
 			'progression.modalInterchange': 'Intercambio',
 			'progression.removeMeasureChord': 'Quitar acorde añadido',
+			'progression.sectionA': 'Sección A',
+			'progression.sectionB': 'Sección B',
 			'progression.style': 'Estilo',
 			'progression.style.classic': 'Clásico',
 			'progression.style.modern': 'Moderno',
@@ -1603,6 +1606,7 @@
 			'progression.dragMeasureChord': 'Reorder added chord inside bar',
 			'progression.exportMidi': 'Export MIDI',
 			'progression.generate': 'Generate random progression',
+			'progression.generateSectionB': 'Generate contrasting Section B',
 			'progression.goStart': 'Start',
 			'progression.harmonicColor': 'Harmonic color',
 			'progression.help.articulation': 'Sets how chords are attacked and connected during preview.',
@@ -1621,6 +1625,8 @@
 			'progression.meter': 'Meter',
 			'progression.modalInterchange': 'Interchange',
 			'progression.removeMeasureChord': 'Remove added chord',
+			'progression.sectionA': 'Section A',
+			'progression.sectionB': 'Section B',
 			'progression.style': 'Style',
 			'progression.style.classic': 'Classical',
 			'progression.style.modern': 'Modern',
@@ -5862,12 +5868,46 @@
 			}) :
 			fitDegreesToBars(pattern, progressionState.bars);
 		degrees = applyModalInterchangeSources(degrees, options.report, progressionState, rng);
+		degrees = applyOpeningFunction(degrees, options.report, options.openingFunction, rng);
 
 		return {
 			degrees: degrees,
 			pattern: pattern,
 			voiceLeading: voiceLeadingProfile(progressionState)
 		};
+	}
+
+	function applyOpeningFunction(degrees, report, openingFunction, rng) {
+		var candidates;
+
+		if (!degrees || !degrees.length || !openingFunction) {
+			return degrees;
+		}
+
+		candidates = degreeIndexesForFunction(report, openingFunction);
+		if (!candidates.length) {
+			return degrees;
+		}
+
+		degrees[0] = extendObject(degrees[0], {
+			index: candidates[Math.floor(rng() * candidates.length) % candidates.length],
+			source: 'diatonic'
+		});
+
+		return degrees;
+	}
+
+	function degreeIndexesForFunction(report, functionName) {
+		var functions = report && report.scaleDefinition && report.scaleDefinition.funciones ? report.scaleDefinition.funciones.split('-') : [];
+		var indexes = [];
+
+		for (var i = 0; i < functions.length; i++) {
+			if (functions[i] === functionName && i !== 0) {
+				indexes.push(i);
+			}
+		}
+
+		return indexes;
 	}
 
 	function applyModalInterchangeSources(degrees, report, progressionState, rng) {
@@ -6038,8 +6078,10 @@
 
 	global.CodaProgressionPlanner = {
 		applyModalInterchangeSources: applyModalInterchangeSources,
+		applyOpeningFunction: applyOpeningFunction,
 		chooseInterchangeSource: chooseInterchangeSource,
 		createPlan: createPlan,
+		degreeIndexesForFunction: degreeIndexesForFunction,
 		fitDegreesToBars: fitDegreesToBars,
 		varyBlockOpening: varyBlockOpening,
 		voiceLeadingProfile: voiceLeadingProfile
@@ -6092,6 +6134,7 @@
 		var progressionState = stateNormalizer.normalize(options.progressionState);
 		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
 		var generationPlan = plannerService.createPlan({
+			openingFunction: options.openingFunction,
 			progressionState: progressionState,
 			report: options.report,
 			rng: rng,
@@ -6122,6 +6165,277 @@
 		fromDegrees: fromDegrees,
 		fromState: fromState,
 		generate: generate
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-section-contrast-service.js */
+// Builds a contrasting B section while preserving the A section timeline.
+(function (global) {
+	'use strict';
+
+	var cloneService = global.CodaProgressionMeasureClone;
+
+	function generate(options, dependencies) {
+		var progression = options.progression || {};
+		var progressionState = cloneObject(options.progressionState || {});
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var sectionAMeasures = measuresForSectionA(progression, progressionState);
+		var candidate = chooseContrastCandidate(options, rng);
+		var targetReport = candidate.report || options.report;
+		var sectionState = cloneObject(progressionState);
+		var sectionB;
+		var combined;
+		var rebuilt;
+
+		options.buildScaleReport = dependencies.buildScaleReport;
+		sectionState.bars = sectionAMeasures.length || progressionState.bars || 8;
+		sectionB = dependencies.generateProgressionFromState({
+			data: options.data,
+			domain: options.domain,
+			openingFunction: candidate.openingFunction,
+			progressionState: sectionState,
+			report: targetReport,
+			rng: rng
+		});
+
+		combined = cloneMeasures(sectionAMeasures).concat(cloneMeasures(sectionB.measures || []));
+		rebuilt = dependencies.rebuildProgressionTimeline(progression, combined);
+		rebuilt.sections = [
+			{
+				id: 'A',
+				labelKey: 'progression.sectionA',
+				length: sectionAMeasures.length,
+				startIndex: 0
+			},
+			{
+				contrast: candidate.id,
+				contextLabel: candidate.label,
+				id: 'B',
+				labelKey: 'progression.sectionB',
+				length: sectionB.measures ? sectionB.measures.length : 0,
+				startIndex: sectionAMeasures.length
+			}
+		];
+		annotateSectionMeasures(rebuilt.measures, rebuilt.sections);
+		rebuilt.sectionContrast = candidate.id;
+
+		return rebuilt;
+	}
+
+	function measuresForSectionA(progression, progressionState) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var section = findSection(progression, 'A');
+		var length = section ? section.length : Number(progressionState.bars) || measures.length;
+		var startIndex = section ? section.startIndex : 0;
+
+		return measures.slice(startIndex, startIndex + Math.min(length, measures.length));
+	}
+
+	function chooseContrastCandidate(options, rng) {
+		var roll = rng();
+		var target;
+
+		if (roll < 0.42) {
+			return sameKeySubdominant(options);
+		}
+
+		if (roll < 0.67) {
+			target = relativeKey(options);
+			return target || sameKeySubdominant(options);
+		}
+
+		if (roll < 0.87) {
+			target = parallelKey(options);
+			return target || sameKeySubdominant(options);
+		}
+
+		target = circleNeighborKey(options, rng);
+		return target || sameKeySubdominant(options);
+	}
+
+	function sameKeySubdominant(options) {
+		return {
+			id: 'same-sd',
+			label: '',
+			openingFunction: 'SD',
+			report: options.report
+		};
+	}
+
+	function relativeKey(options) {
+		var isMajor = isMajorReport(options.report);
+		var tonicIndex = isMajor ? transposeIndex(options.report.tonicIndex, -3) : transposeIndex(options.report.tonicIndex, 3);
+		var scaleIndex = isMajor ? 2 : 0;
+
+		return buildCandidate('relative', tonicIndex, scaleIndex, options);
+	}
+
+	function parallelKey(options) {
+		var scaleIndex = isMajorReport(options.report) ? 2 : 0;
+
+		return buildCandidate('parallel', options.report.tonicIndex, scaleIndex, options);
+	}
+
+	function circleNeighborKey(options, rng) {
+		var candidates = circleNeighborCandidates(options);
+
+		if (!candidates.length) {
+			return null;
+		}
+
+		return candidates[Math.floor(rng() * candidates.length) % candidates.length];
+	}
+
+	function circleNeighborCandidates(options) {
+		var isMajor = isMajorReport(options.report);
+		var result = [];
+		var offsets = [7, -7];
+
+		for (var i = 0; i < offsets.length; i++) {
+			var neighborIndex = transposeIndex(options.report.tonicIndex, offsets[i]);
+			var sameModeScaleIndex = isMajor ? 0 : 2;
+			var relatedScaleIndex = isMajor ? 2 : 0;
+			var relatedTonicIndex = isMajor ? transposeIndex(neighborIndex, -3) : transposeIndex(neighborIndex, 3);
+			var sameMode = buildCandidate('circle-neighbor', neighborIndex, sameModeScaleIndex, options);
+			var related = buildCandidate('circle-neighbor', relatedTonicIndex, relatedScaleIndex, options);
+
+			if (sameMode) {
+				result.push(sameMode);
+			}
+
+			if (related) {
+				result.push(related);
+			}
+		}
+
+		return result;
+	}
+
+	function buildCandidate(id, tonicIndex, scaleIndex, options) {
+		var data = options.data || {};
+		var scaleDefinition = data.scales ? data.scales[scaleIndex] : null;
+		var tonicName;
+		var preferFlats;
+		var report;
+
+		if (!scaleDefinition || !data.notes || !data.notes[tonicIndex]) {
+			return null;
+		}
+
+		preferFlats = preferFlatsForCandidate(options, tonicIndex, scaleIndex, scaleDefinition);
+		tonicName = noteNameForIndex(data.notes, tonicIndex, preferFlats);
+		report = options.buildScaleReport({
+			data: data,
+			domain: options.domain,
+			preferFlats: preferFlats,
+			scaleIndex: scaleIndex,
+			scaleName: scaleDefinition.nombre,
+			tonicIndex: tonicIndex,
+			tonicName: tonicName
+		});
+
+		if (!report) {
+			return null;
+		}
+
+		return {
+			id: id,
+			label: tonicName + ' ' + scaleDefinition.nombre,
+			report: report
+		};
+	}
+
+	function preferFlatsForCandidate(options, tonicIndex, scaleIndex, scaleDefinition) {
+		var data = options.data || {};
+		var tonicName = noteNameForIndex(data.notes || [], tonicIndex, false);
+		var preferFlats = options.domain && typeof options.domain.shouldPreferFlatsForKeySignature === 'function' ?
+			options.domain.shouldPreferFlatsForKeySignature({
+				scaleDefinition: scaleDefinition,
+				selectedScaleIndex: scaleIndex,
+				tonicName: tonicName
+			}) :
+			null;
+
+		return preferFlats == null ? !!(options.selection && options.selection.preferFlats) : preferFlats;
+	}
+
+	function annotateSectionMeasures(measures, sections) {
+		for (var i = 0; i < sections.length; i++) {
+			var section = sections[i];
+
+			for (var j = section.startIndex; j < section.startIndex + section.length && j < measures.length; j++) {
+				measures[j].sectionId = section.id;
+				measures[j].sectionLabelKey = section.labelKey;
+			}
+		}
+	}
+
+	function findSection(progression, id) {
+		var sections = progression && progression.sections ? progression.sections : [];
+
+		for (var i = 0; i < sections.length; i++) {
+			if (sections[i].id === id) {
+				return sections[i];
+			}
+		}
+
+		return null;
+	}
+
+	function cloneMeasures(measures) {
+		var result = [];
+
+		for (var i = 0; i < (measures || []).length; i++) {
+			result.push(cloneService.cloneMeasure(measures[i]));
+		}
+
+		return result;
+	}
+
+	function cloneObject(value) {
+		var result = {};
+
+		for (var key in value || {}) {
+			if (Object.prototype.hasOwnProperty.call(value, key)) {
+				result[key] = value[key];
+			}
+		}
+
+		return result;
+	}
+
+	function isMajorReport(report) {
+		return report && report.mode === 'M';
+	}
+
+	function noteNameForIndex(notes, index, preferFlats) {
+		var note = notes[normalizeIndex(index)];
+
+		return preferFlats && note.enarmonica ? note.enarmonica : note.nombre;
+	}
+
+	function normalizeIndex(index) {
+		var normalized = Number(index) % 12;
+
+		return normalized < 0 ? normalized + 12 : normalized;
+	}
+
+	function transposeIndex(index, semitones) {
+		return normalizeIndex(Number(index) + semitones);
+	}
+
+	global.CodaProgressionSectionContrast = {
+		annotateSectionMeasures: annotateSectionMeasures,
+		circleNeighborCandidates: circleNeighborCandidates,
+		chooseContrastCandidate: chooseContrastCandidate,
+		generate: generate,
+		measuresForSectionA: measuresForSectionA,
+		parallelKey: parallelKey,
+		relativeKey: relativeKey,
+		sameKeySubdominant: sameKeySubdominant,
+		transposeIndex: transposeIndex
 	};
 })(window);
 
@@ -10020,6 +10334,7 @@
 	var stateNormalizer = global.CodaProgressionStateNormalizer;
 	var midiFileService = global.CodaProgressionMidiFile;
 	var progressionBuilder = global.CodaProgressionBuilder;
+	var sectionContrastService = global.CodaProgressionSectionContrast;
 
 	function buildProgressionFromDegrees(options) {
 		return progressionBuilder.fromDegrees(options);
@@ -10031,6 +10346,14 @@
 
 	function generateProgressionFromState(options) {
 		return progressionBuilder.generate(options);
+	}
+
+	function generateContrastingProgressionSection(options) {
+		return sectionContrastService.generate(options, {
+			buildScaleReport: global.CodaApplication.buildScaleReport,
+			generateProgressionFromState: generateProgressionFromState,
+			rebuildProgressionTimeline: rebuildProgressionTimeline
+		});
 	}
 
 	function buildProgressionMidiFile(options) {
@@ -10094,6 +10417,7 @@
 	global.CodaApplication.buildProgressionFromDegrees = buildProgressionFromDegrees;
 	global.CodaApplication.buildProgressionFromState = buildProgressionFromState;
 	global.CodaApplication.generateProgressionFromState = generateProgressionFromState;
+	global.CodaApplication.generateContrastingProgressionSection = generateContrastingProgressionSection;
 	global.CodaApplication.formatProgressionDegreeForChord = formatDegreeForChord;
 	global.CodaApplication.rebuildProgressionTimeline = rebuildProgressionTimeline;
 	global.CodaApplication.removeProgressionMeasureChord = removeProgressionMeasureChord;
@@ -11315,11 +11639,66 @@
 	function renderTimelineMeasures(progression, options) {
 		var progressionMeasures = progression && progression.measures ? progression.measures : null;
 		var measures = hasRenderableMeasures(progressionMeasures) ? progressionMeasures : fallbackMeasures();
+		var sections = timelineSections(progression, measures);
 		var html = '';
 
-		for (var i = 0; i < measures.length; i++) {
-			html += renderMeasure(measures[i], i, options);
+		for (var i = 0; i < sections.length; i++) {
+			html += renderSectionHeader(sections[i]);
+			for (var j = sections[i].startIndex; j < sections[i].startIndex + sections[i].length && j < measures.length; j++) {
+				html += renderMeasure(measures[j], j, options);
+			}
 		}
+
+		if (!hasSection(sections, 'B')) {
+			html += renderSectionHeader({
+				id: 'B',
+				labelKey: 'progression.sectionB',
+				length: 0,
+				startIndex: measures.length
+			});
+		}
+
+		return html;
+	}
+
+	function timelineSections(progression, measures) {
+		var sections = progression && progression.sections ? progression.sections : null;
+
+		if (sections && sections.length) {
+			return sections;
+		}
+
+		return [
+			{
+				id: 'A',
+				labelKey: 'progression.sectionA',
+				length: measures.length,
+				startIndex: 0
+			}
+		];
+	}
+
+	function hasSection(sections, id) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (sections[i].id === id) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function renderSectionHeader(section) {
+		var html = '<div class="progressionSectionHeader" data-progression-section="' + labels.escapeHtml(section.id) + '">';
+
+		html += '<h3 data-i18n="' + labels.escapeHtml(section.labelKey) + '"></h3>';
+		if (section.id === 'B') {
+			html += '<button id="generateProgressionSectionB" class="progressionSectionRandomButton" type="button" title="" aria-label="" data-i18n-title="progression.generateSectionB"><span class="material-icons" aria-hidden="true">casino</span></button>';
+		}
+		if (section.contextLabel) {
+			html += '<span class="progressionSectionContext">' + labels.escapeHtml(section.contextLabel) + '</span>';
+		}
+		html += '</div>';
 
 		return html;
 	}
@@ -11432,9 +11811,11 @@
 		hasRenderableMeasures: hasRenderableMeasures,
 		renderMeasure: renderMeasure,
 		renderMeasureChord: renderMeasureChord,
+		renderSectionHeader: renderSectionHeader,
 		sourceLabel: sourceLabel,
 		renderTimeline: renderTimeline,
-		renderTimelineMeasures: renderTimelineMeasures
+		renderTimelineMeasures: renderTimelineMeasures,
+		timelineSections: timelineSections
 	};
 })(window);
 
@@ -12074,6 +12455,9 @@
 		setText(i18n, '.transportButton--export span[data-i18n="progression.exportMidi"]', 'progression.exportMidi');
 		setText(i18n, '.metronomeControl span[data-i18n="progression.metronome"]', 'progression.metronome');
 		setText(i18n, '.loopControl span[data-i18n="progression.loop"]', 'progression.loop');
+		setText(i18n, '.progressionSectionHeader h3[data-i18n="progression.sectionA"]', 'progression.sectionA');
+		setText(i18n, '.progressionSectionHeader h3[data-i18n="progression.sectionB"]', 'progression.sectionB');
+		setTitleAndLabel(i18n, '#generateProgressionSectionB[data-i18n-title="progression.generateSectionB"]', 'progression.generateSectionB');
 		setTitleAndLabel(i18n, '.measureChordMenuButton[data-i18n-title="progression.changeMeasureChord"]', 'progression.changeMeasureChord');
 		setTitleAndLabel(i18n, '.measureDragHandle[data-i18n-title="progression.dragMeasure"]', 'progression.dragMeasure');
 		setTitleAndLabel(i18n, '.measureChordDragHandle[data-i18n-title="progression.dragMeasureChord"]', 'progression.dragMeasureChord');
@@ -14101,6 +14485,17 @@
 				generateProgressionPlan();
 				recordHistorySnapshot();
 			});
+
+			on(query('#constructorProgresiones'), 'click', function (event) {
+				if (!closest(event.target, '#generateProgressionSectionB')) {
+					return;
+				}
+
+				cancelProgressionStateUpdate();
+				updateProgressionStateFromControls();
+				generateProgressionSectionB();
+				recordHistorySnapshot();
+			});
 		}
 
 		function bindCircleOfFifthsPopover() {
@@ -14639,6 +15034,25 @@
 					data: options.data,
 					progressionState: uiState.getProgressionState(),
 					report: uiState.getReport()
+				}));
+			}
+		}
+
+		function generateProgressionSectionB() {
+			if (
+				options.application &&
+				typeof options.application.generateContrastingProgressionSection === 'function' &&
+				uiState.getProgression() &&
+				uiState.getReport() &&
+				uiState.getProgressionState()
+			) {
+				setProgression(options.application.generateContrastingProgressionSection({
+					data: options.data,
+					domain: options.domain,
+					progression: uiState.getProgression(),
+					progressionState: uiState.getProgressionState(),
+					report: uiState.getReport(),
+					selection: uiState.getSelection()
 				}));
 			}
 		}

@@ -728,6 +728,30 @@ body[data-theme="day"] .progressionChordMenu::-webkit-scrollbar-thumb:hover {
   background: #5f1f66;
 }
 
+body[data-theme="day"] .progressionSectionHeader {
+  color: #1f2528;
+}
+
+body[data-theme="day"] .progressionSectionHeader h3 {
+  color: #006e58;
+}
+
+body[data-theme="day"] .progressionSectionRandomButton {
+  background: #ffffff;
+  border-color: #b7c3ca;
+  color: #7d2785;
+}
+
+body[data-theme="day"] .progressionSectionRandomButton:hover,
+body[data-theme="day"] .progressionSectionRandomButton:focus {
+  border-color: #7d2785;
+  color: #006e58;
+}
+
+body[data-theme="day"] .progressionSectionContext {
+  color: #59656b;
+}
+
 body[data-theme="day"] .progressionChordMenu h3 {
   color: #006e58;
 }
@@ -2024,6 +2048,68 @@ section#bienvenida .columnata article {
 
 .progressionChordMenu::-webkit-scrollbar-thumb:hover {
   background: #d85ee0;
+}
+
+.progressionSectionHeader {
+  grid-column: 1 / -1;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  gap: .45em;
+  min-height: 2em;
+  margin: .2em 0 .1em 0;
+  padding: .2em .1em;
+  color: #eee;
+}
+
+.progressionSectionHeader h3 {
+  margin: 0;
+  border: 0;
+  color: #a3ffd9;
+  font-size: .95em;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.progressionSectionRandomButton {
+  width: 2em;
+  height: 2em;
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  border: 1px solid #444;
+  border-radius: 5px;
+  background: #151515;
+  color: #d85ee0;
+  cursor: pointer;
+}
+
+.progressionSectionRandomButton:hover,
+.progressionSectionRandomButton:focus {
+  border-color: #a622ae;
+  color: #a3ffd9;
+  outline: none;
+}
+
+.progressionSectionRandomButton .material-icons {
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+.progressionSectionContext {
+  color: #bbb;
+  font-size: .82em;
+  font-weight: 600;
 }
 
 .progressionChordMenu h3 {

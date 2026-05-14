@@ -346,6 +346,17 @@
 				generateProgressionPlan();
 				recordHistorySnapshot();
 			});
+
+			on(query('#constructorProgresiones'), 'click', function (event) {
+				if (!closest(event.target, '#generateProgressionSectionB')) {
+					return;
+				}
+
+				cancelProgressionStateUpdate();
+				updateProgressionStateFromControls();
+				generateProgressionSectionB();
+				recordHistorySnapshot();
+			});
 		}
 
 		function bindCircleOfFifthsPopover() {
@@ -884,6 +895,25 @@
 					data: options.data,
 					progressionState: uiState.getProgressionState(),
 					report: uiState.getReport()
+				}));
+			}
+		}
+
+		function generateProgressionSectionB() {
+			if (
+				options.application &&
+				typeof options.application.generateContrastingProgressionSection === 'function' &&
+				uiState.getProgression() &&
+				uiState.getReport() &&
+				uiState.getProgressionState()
+			) {
+				setProgression(options.application.generateContrastingProgressionSection({
+					data: options.data,
+					domain: options.domain,
+					progression: uiState.getProgression(),
+					progressionState: uiState.getProgressionState(),
+					report: uiState.getReport(),
+					selection: uiState.getSelection()
 				}));
 			}
 		}

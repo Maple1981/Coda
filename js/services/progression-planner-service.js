@@ -26,12 +26,46 @@
 			}) :
 			fitDegreesToBars(pattern, progressionState.bars);
 		degrees = applyModalInterchangeSources(degrees, options.report, progressionState, rng);
+		degrees = applyOpeningFunction(degrees, options.report, options.openingFunction, rng);
 
 		return {
 			degrees: degrees,
 			pattern: pattern,
 			voiceLeading: voiceLeadingProfile(progressionState)
 		};
+	}
+
+	function applyOpeningFunction(degrees, report, openingFunction, rng) {
+		var candidates;
+
+		if (!degrees || !degrees.length || !openingFunction) {
+			return degrees;
+		}
+
+		candidates = degreeIndexesForFunction(report, openingFunction);
+		if (!candidates.length) {
+			return degrees;
+		}
+
+		degrees[0] = extendObject(degrees[0], {
+			index: candidates[Math.floor(rng() * candidates.length) % candidates.length],
+			source: 'diatonic'
+		});
+
+		return degrees;
+	}
+
+	function degreeIndexesForFunction(report, functionName) {
+		var functions = report && report.scaleDefinition && report.scaleDefinition.funciones ? report.scaleDefinition.funciones.split('-') : [];
+		var indexes = [];
+
+		for (var i = 0; i < functions.length; i++) {
+			if (functions[i] === functionName && i !== 0) {
+				indexes.push(i);
+			}
+		}
+
+		return indexes;
 	}
 
 	function applyModalInterchangeSources(degrees, report, progressionState, rng) {
@@ -202,8 +236,10 @@
 
 	global.CodaProgressionPlanner = {
 		applyModalInterchangeSources: applyModalInterchangeSources,
+		applyOpeningFunction: applyOpeningFunction,
 		chooseInterchangeSource: chooseInterchangeSource,
 		createPlan: createPlan,
+		degreeIndexesForFunction: degreeIndexesForFunction,
 		fitDegreesToBars: fitDegreesToBars,
 		varyBlockOpening: varyBlockOpening,
 		voiceLeadingProfile: voiceLeadingProfile

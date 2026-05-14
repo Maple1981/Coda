@@ -16,11 +16,66 @@
 	function renderTimelineMeasures(progression, options) {
 		var progressionMeasures = progression && progression.measures ? progression.measures : null;
 		var measures = hasRenderableMeasures(progressionMeasures) ? progressionMeasures : fallbackMeasures();
+		var sections = timelineSections(progression, measures);
 		var html = '';
 
-		for (var i = 0; i < measures.length; i++) {
-			html += renderMeasure(measures[i], i, options);
+		for (var i = 0; i < sections.length; i++) {
+			html += renderSectionHeader(sections[i]);
+			for (var j = sections[i].startIndex; j < sections[i].startIndex + sections[i].length && j < measures.length; j++) {
+				html += renderMeasure(measures[j], j, options);
+			}
 		}
+
+		if (!hasSection(sections, 'B')) {
+			html += renderSectionHeader({
+				id: 'B',
+				labelKey: 'progression.sectionB',
+				length: 0,
+				startIndex: measures.length
+			});
+		}
+
+		return html;
+	}
+
+	function timelineSections(progression, measures) {
+		var sections = progression && progression.sections ? progression.sections : null;
+
+		if (sections && sections.length) {
+			return sections;
+		}
+
+		return [
+			{
+				id: 'A',
+				labelKey: 'progression.sectionA',
+				length: measures.length,
+				startIndex: 0
+			}
+		];
+	}
+
+	function hasSection(sections, id) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (sections[i].id === id) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function renderSectionHeader(section) {
+		var html = '<div class="progressionSectionHeader" data-progression-section="' + labels.escapeHtml(section.id) + '">';
+
+		html += '<h3 data-i18n="' + labels.escapeHtml(section.labelKey) + '"></h3>';
+		if (section.id === 'B') {
+			html += '<button id="generateProgressionSectionB" class="progressionSectionRandomButton" type="button" title="" aria-label="" data-i18n-title="progression.generateSectionB"><span class="material-icons" aria-hidden="true">casino</span></button>';
+		}
+		if (section.contextLabel) {
+			html += '<span class="progressionSectionContext">' + labels.escapeHtml(section.contextLabel) + '</span>';
+		}
+		html += '</div>';
 
 		return html;
 	}
@@ -133,8 +188,10 @@
 		hasRenderableMeasures: hasRenderableMeasures,
 		renderMeasure: renderMeasure,
 		renderMeasureChord: renderMeasureChord,
+		renderSectionHeader: renderSectionHeader,
 		sourceLabel: sourceLabel,
 		renderTimeline: renderTimeline,
-		renderTimelineMeasures: renderTimelineMeasures
+		renderTimelineMeasures: renderTimelineMeasures,
+		timelineSections: timelineSections
 	};
 })(window);
