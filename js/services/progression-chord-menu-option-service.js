@@ -2,11 +2,12 @@
 (function (global) {
 	'use strict';
 
-	function chordReplacementOptions(chord, scaleNote, degreeIndex, formatting) {
+	function chordReplacementOptions(chord, scaleNote, degreeIndex, formatting, metadata) {
 		var degree = scaleNote ? scaleNote.grado : '';
 		var triadLabels = ['', '6', '6/4'];
 		var seventhLabels = ['', '6/5', '4/3', '4/2'];
 		var options = [];
+		metadata = metadata || {};
 
 		pushOptions(options, {
 			chord: chord,
@@ -14,7 +15,9 @@
 			degreeIndex: degreeIndex,
 			formatting: formatting,
 			kind: 'triad',
-			labels: triadLabels
+			labels: triadLabels,
+			source: metadata.source,
+			sourceScaleIndex: metadata.sourceScaleIndex
 		});
 		pushOptions(options, {
 			chord: chord,
@@ -22,7 +25,9 @@
 			degreeIndex: degreeIndex,
 			formatting: formatting,
 			kind: 'seventh',
-			labels: seventhLabels
+			labels: seventhLabels,
+			source: metadata.source,
+			sourceScaleIndex: metadata.sourceScaleIndex
 		});
 
 		return options;
@@ -47,7 +52,9 @@
 			displayName: config.formatting.displayName(chordName, inversionLabel, '', ''),
 			inversionIndex: inversionIndex,
 			inversionLabel: inversionLabel,
-			kind: config.kind
+			kind: config.kind,
+			source: config.source || 'diatonic',
+			sourceScaleIndex: config.sourceScaleIndex
 		};
 	}
 

@@ -10,19 +10,23 @@
 		var scaleChords = report.scaleChords || [];
 		var scaleNotes = report.scaleNotes || [];
 		var degreeIndex = parseInt(options.replacement.degreeIndex, 10);
+		var source = interchangeSourceForReplacement(report, options.replacement);
 		var resolvedDegree;
 		var chordPlan;
 		var previousPlan;
 
-		if (isNaN(degreeIndex) || !scaleChords[degreeIndex]) {
+		if (isNaN(degreeIndex) || !(source ? source.scaleChords[degreeIndex] : scaleChords[degreeIndex])) {
 			return null;
 		}
 
 		resolvedDegree = {
-			chord: scaleChords[degreeIndex],
+			chord: source ? source.scaleChords[degreeIndex] : scaleChords[degreeIndex],
 			degree: scaleNotes[degreeIndex] ? scaleNotes[degreeIndex].grado : '',
 			degreeIndex: degreeIndex,
-			source: 'diatonic'
+			source: source ? 'interchange' : 'diatonic',
+			sourceId: source ? source.id : '',
+			sourceScaleIndex: source ? source.scaleIndex : null,
+			sourceTonicName: source ? source.tonicName : ''
 		};
 		previousPlan = measureContext.previousSegmentPlan(options.progression, options.measure.bar, options.chordIndex);
 		chordPlan = options.buildChordPlan({
@@ -68,6 +72,7 @@
 			chordIndex: chordIndex,
 			chordKind: 'silence',
 			chordName: '',
+			degreeIndex: null,
 			degree: '',
 			displayName: '',
 			durationBeats: Number(segment.durationBeats) || Number(measure.durationBeats) || 4,
@@ -80,6 +85,8 @@
 			midiNotes: [],
 			notes: [],
 			source: 'silence',
+			sourceScaleIndex: null,
+			sourceTonicName: '',
 			startBeat: Number(segment.startBeat) || Number(measure.startBeat) || 0,
 			startSeconds: Number(segment.startSeconds) || Number(measure.startSeconds) || 0,
 			suspension: '',
@@ -89,8 +96,25 @@
 		};
 	}
 
+	function interchangeSourceForReplacement(report, replacement) {
+		var sources = report && report.modalInterchangeSources ? report.modalInterchangeSources : [];
+
+		if (!replacement || replacement.source !== 'interchange') {
+			return null;
+		}
+
+		for (var i = 0; i < sources.length; i++) {
+			if (Number(sources[i].scaleIndex) === Number(replacement.sourceScaleIndex)) {
+				return sources[i];
+			}
+		}
+
+		return null;
+	}
+
 	global.CodaProgressionReplacementChord = {
 		buildSegment: buildSegment,
-		buildSilenceSegment: buildSilenceSegment
+		buildSilenceSegment: buildSilenceSegment,
+		interchangeSourceForReplacement: interchangeSourceForReplacement
 	};
 })(window);

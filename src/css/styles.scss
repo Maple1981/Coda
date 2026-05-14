@@ -1377,6 +1377,14 @@ section#bienvenida .columnata article{
 	list-style-position:inside;
 }
 
+.progressionChordMenu__source{
+	display:block;
+	margin:.2em 0 0 1.25em;
+	color:$neutral_color;
+	font-size:.82em;
+	font-weight:600;
+}
+
 .progressionChordMenu__options{
 	display:flex;
 	flex-direction:column;
@@ -1427,6 +1435,14 @@ section#bienvenida .columnata article{
 	font-size:.78em;
 	font-weight:700;
 	margin-top:.15em;
+}
+
+.measureSource{
+	color:$neutral_color;
+	font-size:.74em;
+	font-weight:600;
+	line-height:1.25;
+	margin-top:.18em;
 }
 
 .measureDragHandle{

@@ -332,6 +332,7 @@
 						setProgression(progression, renderOptions);
 						recordHistorySnapshot();
 					},
+					notation: notation,
 					progressionPlayback: options.progressionPlayback,
 					uiState: uiState
 				});
@@ -897,6 +898,9 @@
 
 			if (options.ui && typeof options.ui.renderProgression === 'function') {
 				options.ui.renderProgression({
+					i18n: i18n,
+					notation: notation,
+					notationStyle: uiState.getNotationStyle(),
 					progression: uiState.getProgression(),
 					renderers: options.renderers
 				});

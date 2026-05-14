@@ -57,7 +57,7 @@
 		var optionsContainer = doc.createElement('div');
 
 		details.className = 'progressionChordMenu__chord';
-		summary.innerHTML = labels.formatMusicalLabel(item.chordName) + (item.degree ? ' &middot; ' + labels.formatMusicalLabel(item.degree) : '');
+		summary.innerHTML = labels.formatMusicalLabel(item.chordName) + (item.degree ? ' &middot; ' + labels.formatMusicalLabel(item.degree) : '') + sourceLabel(item, options);
 		optionsContainer.className = 'progressionChordMenu__options';
 		details.appendChild(summary);
 		details.appendChild(optionsContainer);
@@ -81,9 +81,34 @@
 		button.setAttribute('data-degree-index', item.degreeIndex);
 		button.setAttribute('data-chord-kind', item.kind);
 		button.setAttribute('data-inversion-index', item.inversionIndex);
+		button.setAttribute('data-chord-source', item.source || 'diatonic');
+		if (item.sourceScaleIndex != null) {
+			button.setAttribute('data-source-scale-index', item.sourceScaleIndex);
+		}
 		button.innerHTML = labels.escapeHtml(kindLabel + ': ') + labels.formatMusicalLabel(item.displayName) + (item.degree ? ' &middot; ' + labels.formatMusicalLabel(item.degree) : '');
 
 		return button;
+	}
+
+	function sourceLabel(item, options) {
+		var sourceTonicName = item.sourceTonicName || '';
+		var scaleKey = item.sourceScaleIndex != null ? 'data.scales.' + item.sourceScaleIndex : '';
+		var scaleName = scaleKey ? translate(options.i18n, scaleKey) : '';
+		var tonicName = formatNote(options, sourceTonicName);
+
+		if (!scaleName) {
+			return '';
+		}
+
+		return ' <span class="progressionChordMenu__source">' + labels.escapeHtml(tonicName + ' ' + scaleName) + '</span>';
+	}
+
+	function formatNote(options, noteName) {
+		if (noteName && options.notation && typeof options.notation.formatNoteName === 'function') {
+			return options.notation.formatNoteName(noteName, options.notationStyle);
+		}
+
+		return noteName;
 	}
 
 	function renderSilenceOption(options) {

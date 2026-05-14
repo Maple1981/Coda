@@ -29,6 +29,20 @@ El control **Estilo** distingue dos enfoques iniciales:
 
 Esta distinción afecta a la selección de patrones completos y a los bloques de frase usados en progresiones largas. No cambia la escala ni los acordes disponibles; solo modifica la probabilidad y el tipo de cierre armónico elegido por el generador.
 
+## Intercambio modal
+
+El control **Intercambio** regula la probabilidad de usar acordes préstamo. El reemplazo se hace siempre sobre el mismo grado armónico: si el plan contiene un IV, el préstamo busca otros acordes construidos sobre el IV de una escala fuente relacionada.
+
+Las fuentes disponibles son:
+
+- La tonalidad paralela, por ejemplo `C menor natural` desde `C mayor` o `E mayor` desde `E menor`.
+- La escala menor armónica sobre la misma tónica.
+- Los modos griegos sobre la misma tónica: jónico, dórico, frigio, lidio, mixolidio, eólico y locrio.
+
+El acorde inicial de la progresión queda excluido del intercambio para conservar una referencia tonal clara al comienzo. Cuando un acorde se genera por intercambio, la tarjeta de progresión conserva el grado funcional, pero muestra también la escala o tonalidad fuente de la que procede.
+
+El menú contextual de cada acorde incluye una sección **Intercambio** con acordes del mismo grado tomados de esas mismas fuentes. Cada entrada permite elegir tríada o cuatríada y sus inversiones, igual que los acordes diatónicos.
+
 ## Densidad armónica y conducción de voces
 
 Las progresiones se construyen por defecto con tríadas. Las cuatríadas con séptima se añaden de forma ocasional y ponderada cuando el nivel de tensiones, el contrapunto o el movimiento parsimonioso entre acordes lo justifican. El primer acorde no añade séptima si es una tónica, y el último acorde tampoco la añade cuando cierra en tónica.

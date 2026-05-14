@@ -24,6 +24,7 @@
 			extendedHarmonyEnabled: false,
 			isDegreeSuppressed: isDegreeSuppressed,
 			mode: String(options.scaleIndex) === '0' ? 'M' : 'm',
+			modalInterchangeSources: [],
 			parallelScaleChords: [],
 			parallelScaleDefinition: null,
 			parallelScaleNotes: [],
@@ -46,6 +47,7 @@
 			});
 
 			addParallelScale(report, options);
+			addModalInterchangeSources(report, options);
 			report.extendedHarmonyEnabled = scaleDefinition.tonal != null && (Number(options.scaleIndex) === 0 || Number(options.scaleIndex) === 2);
 		}
 
@@ -87,6 +89,73 @@
 			octaveSemitones: options.data.constants.octaveSemitones,
 			isDegreeSuppressed: isParallelDegreeSuppressed
 		});
+	}
+
+	function addModalInterchangeSources(report, options) {
+		var sourceIndexes = [];
+		var parallelScaleIndex = findParallelScaleIndex(options.scaleIndex);
+
+		pushUnique(sourceIndexes, parallelScaleIndex);
+		pushUnique(sourceIndexes, 3);
+		for (var i = 13; i <= 19; i++) {
+			pushUnique(sourceIndexes, i);
+		}
+
+		for (var j = 0; j < sourceIndexes.length; j++) {
+			var source = buildInterchangeSource(sourceIndexes[j], report, options);
+
+			if (source) {
+				report.modalInterchangeSources.push(source);
+			}
+		}
+	}
+
+	function buildInterchangeSource(scaleIndex, report, options) {
+		var scaleDefinition;
+		var scaleNotes;
+		var isDegreeSuppressed;
+
+		if (scaleIndex == null || Number(scaleIndex) === Number(options.scaleIndex) || !options.data.scales[scaleIndex]) {
+			return null;
+		}
+
+		scaleDefinition = options.data.scales[scaleIndex];
+		scaleNotes = options.domain.buildScale({
+			tonicIndex: options.tonicIndex,
+			scaleDefinition: scaleDefinition,
+			notes: options.data.notes,
+			intervals: options.data.intervals,
+			octaveSemitones: options.data.constants.octaveSemitones,
+			preferFlats: options.preferFlats
+		});
+
+		if (scaleNotes.length !== report.scaleNotes.length) {
+			return null;
+		}
+
+		isDegreeSuppressed = createIsDegreeSuppressed(scaleDefinition, scaleNotes);
+
+		return {
+			id: 'scale-' + scaleIndex,
+			scaleChords: options.domain.buildScaleChords({
+				scaleNotes: scaleNotes,
+				scaleDefinition: scaleDefinition,
+				chordDefinitions: options.data.chords,
+				octaveSemitones: options.data.constants.octaveSemitones,
+				isDegreeSuppressed: isDegreeSuppressed
+			}),
+			scaleDefinition: scaleDefinition,
+			scaleIndex: scaleIndex,
+			scaleName: scaleDefinition.nombre,
+			scaleNotes: scaleNotes,
+			tonicName: report.tonicName
+		};
+	}
+
+	function pushUnique(values, value) {
+		if (value != null && values.indexOf(value) === -1) {
+			values.push(value);
+		}
 	}
 
 	function buildInstrumentView(options) {
@@ -155,6 +224,7 @@
 	global.CodaApplication = {
 		buildInstrumentView: buildInstrumentView,
 		buildScaleReport: buildScaleReport,
+		buildInterchangeSource: buildInterchangeSource,
 		createIsDegreeSuppressed: createIsDegreeSuppressed,
 		findParallelScaleIndex: findParallelScaleIndex
 	};

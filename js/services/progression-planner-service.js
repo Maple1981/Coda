@@ -25,12 +25,57 @@
 				rules: options.rules
 			}) :
 			fitDegreesToBars(pattern, progressionState.bars);
+		degrees = applyModalInterchangeSources(degrees, options.report, progressionState, rng);
 
 		return {
 			degrees: degrees,
 			pattern: pattern,
 			voiceLeading: voiceLeadingProfile(progressionState)
 		};
+	}
+
+	function applyModalInterchangeSources(degrees, report, progressionState, rng) {
+		var result = [];
+		var chance = Math.max(0, (numberOrDefault(progressionState.modalInterchange, 0) - 55) / 120);
+
+		for (var i = 0; i < (degrees || []).length; i++) {
+			var degree = extendObject(degrees[i], {});
+			var isBorrowedMarker = degree.source === 'parallel';
+			var shouldTryInterchange = i > 0 && (isBorrowedMarker || (chance > 0 && rng() < chance));
+			var source = shouldTryInterchange ? chooseInterchangeSource(report, degree.index, rng) : null;
+
+			if (source) {
+				degree.source = 'interchange';
+				degree.sourceId = source.id;
+				degree.sourceScaleIndex = source.scaleIndex;
+			} else if (isBorrowedMarker) {
+				degree.source = 'diatonic';
+			}
+
+			result.push(degree);
+		}
+
+		return result;
+	}
+
+	function chooseInterchangeSource(report, degreeIndex, rng) {
+		var sources = report && report.modalInterchangeSources ? report.modalInterchangeSources : [];
+		var candidates = [];
+		var baseChord = report && report.scaleChords ? report.scaleChords[degreeIndex] : null;
+
+		for (var i = 0; i < sources.length; i++) {
+			var chord = sources[i].scaleChords ? sources[i].scaleChords[degreeIndex] : null;
+
+			if (chord && (!baseChord || chord.nombre !== baseChord.nombre)) {
+				candidates.push(sources[i]);
+			}
+		}
+
+		if (!candidates.length) {
+			return null;
+		}
+
+		return candidates[Math.floor(rng() * candidates.length) % candidates.length];
 	}
 
 	function progressionMode(report) {
@@ -100,7 +145,29 @@
 		return isFinite(number) ? number : fallback;
 	}
 
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		target = target || {};
+		for (key in target) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
 	global.CodaProgressionPlanner = {
+		applyModalInterchangeSources: applyModalInterchangeSources,
+		chooseInterchangeSource: chooseInterchangeSource,
 		createPlan: createPlan,
 		fitDegreesToBars: fitDegreesToBars,
 		voiceLeadingProfile: voiceLeadingProfile

@@ -181,6 +181,7 @@ assert.deepEqual(changedProgression.measures[1], {
 	chord: initialized.uiState.getReport().scaleChords[3],
 	chordKind: 'triad',
 	chordName: 'F',
+	degreeIndex: 3,
 	degree: 'IV 6/4',
 	displayName: 'F 6/4',
 	durationBeats: 3,

@@ -18,17 +18,42 @@
 		var scaleNotes = options.report.scaleNotes || [];
 		var scaleChords = options.report.scaleChords || [];
 		var parallelChords = options.report.parallelScaleChords || [];
+		var interchangeSources = options.report.modalInterchangeSources || [];
 
 		for (var i = 0; i < degrees.length; i++) {
+			var source = interchangeSourceForDegree(interchangeSources, degrees[i]);
+			var chord = source && source.scaleChords && source.scaleChords[degrees[i].index] ?
+				source.scaleChords[degrees[i].index] :
+				degrees[i].source === 'parallel' && parallelChords[degrees[i].index] ?
+					parallelChords[degrees[i].index] :
+					scaleChords[degrees[i].index];
+
 			resolved.push({
-				chord: degrees[i].source === 'parallel' && parallelChords[degrees[i].index] ? parallelChords[degrees[i].index] : scaleChords[degrees[i].index],
+				chord: chord,
 				degree: scaleNotes[degrees[i].index] ? scaleNotes[degrees[i].index].grado : '',
 				degreeIndex: degrees[i].index,
-				source: degrees[i].source || 'diatonic'
+				source: source ? 'interchange' : degrees[i].source || 'diatonic',
+				sourceId: source ? source.id : degrees[i].sourceId,
+				sourceScaleIndex: source ? source.scaleIndex : degrees[i].sourceScaleIndex,
+				sourceTonicName: source ? source.tonicName : ''
 			});
 		}
 
 		return resolved;
+	}
+
+	function interchangeSourceForDegree(sources, degree) {
+		if (!degree || degree.source !== 'interchange') {
+			return null;
+		}
+
+		for (var i = 0; i < sources.length; i++) {
+			if (sources[i].id === degree.sourceId || Number(sources[i].scaleIndex) === Number(degree.sourceScaleIndex)) {
+				return sources[i];
+			}
+		}
+
+		return null;
 	}
 
 	function attachDegreeIndexes(resolvedDegrees, scaleNotes) {
@@ -84,6 +109,7 @@
 		degreeIndexForDegree: degreeIndexForDegree,
 		fromDegreeNames: fromDegreeNames,
 		fromGeneratedPlan: fromGeneratedPlan,
+		interchangeSourceForDegree: interchangeSourceForDegree,
 		normalizeDegreeName: normalizeDegreeName
 	};
 })(window);

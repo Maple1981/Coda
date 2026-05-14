@@ -25,7 +25,9 @@
 		menu = chordMenuRenderer.render(menuData, {
 			chordIndex: chordIndex,
 			i18n: options.i18n,
-			measureIndex: measureIndex
+			measureIndex: measureIndex,
+			notation: options.notation,
+			notationStyle: options.uiState && options.uiState.getNotationStyle ? options.uiState.getNotationStyle() : 'anglosaxon'
 		});
 
 		if (!menu) {
@@ -62,7 +64,9 @@
 		return {
 			degreeIndex: parseInt(item.getAttribute('data-degree-index'), 10),
 			inversionIndex: parseInt(item.getAttribute('data-inversion-index'), 10),
-			kind: item.getAttribute('data-chord-kind')
+			kind: item.getAttribute('data-chord-kind'),
+			source: item.getAttribute('data-chord-source') || 'diatonic',
+			sourceScaleIndex: item.getAttribute('data-source-scale-index')
 		};
 	}
 

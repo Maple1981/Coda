@@ -706,8 +706,9 @@ const chordMenuServiceGroups = global.CodaProgressionChordMenu.build({
 	}
 });
 assert.deepEqual(chordMenuServiceGroups[0].items.map(function (item) { return item.chordName; }), ['Cmaj7', 'Em7']);
-assert.deepEqual(chordMenuServiceGroups[1].items.map(function (item) { return item.chordName; }), ['Dm7']);
-assert.equal(chordMenuServiceGroups[1].items[0].commonToneCount, 1);
+assert.equal(chordMenuServiceGroups[1].id, 'interchange');
+assert.deepEqual(chordMenuServiceGroups[2].items.map(function (item) { return item.chordName; }), ['Dm7']);
+assert.equal(chordMenuServiceGroups[2].items[0].commonToneCount, 1);
 assert.ok(fs.readFileSync(path.join(root, 'js/midi/loader.js'), 'utf8').indexOf('root.USE_XHR = false') > -1);
 assert.equal(fs.readFileSync(path.join(root, 'js/midi/loader.js'), 'utf8').indexOf('script.text'), -1);
 assert.ok(fs.readFileSync(path.join(root, 'js/ui/static-text-controller.js'), 'utf8').indexOf('setTrustedHtml') > -1);

@@ -4,22 +4,22 @@
 
 	var labels = global.CodaRenderers.progressionLabels;
 
-	function renderTimeline(progression) {
+	function renderTimeline(progression, options) {
 		var html = '<div class="progressionTimeline" aria-label="">';
 
-		html += renderTimelineMeasures(progression);
+		html += renderTimelineMeasures(progression, options);
 		html += '</div>';
 
 		return html;
 	}
 
-	function renderTimelineMeasures(progression) {
+	function renderTimelineMeasures(progression, options) {
 		var progressionMeasures = progression && progression.measures ? progression.measures : null;
 		var measures = hasRenderableMeasures(progressionMeasures) ? progressionMeasures : fallbackMeasures();
 		var html = '';
 
 		for (var i = 0; i < measures.length; i++) {
-			html += renderMeasure(measures[i], i);
+			html += renderMeasure(measures[i], i, options);
 		}
 
 		return html;
@@ -47,7 +47,7 @@
 		return false;
 	}
 
-	function renderMeasure(measure, index) {
+	function renderMeasure(measure, index, options) {
 		var bar = measure.bar || index + 1;
 		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
 		var splitClass = chords.length > 1 ? ' measure--split' : '';
@@ -59,7 +59,7 @@
 		html += '<div class="measureChordList">';
 
 		for (var i = 0; i < chords.length; i++) {
-			html += renderMeasureChord(chords[i], i, chords.length);
+			html += renderMeasureChord(chords[i], i, chords.length, options);
 		}
 
 		html += '</div>';
@@ -68,10 +68,11 @@
 		return html;
 	}
 
-	function renderMeasureChord(chord, chordIndex, chordCount) {
+	function renderMeasureChord(chord, chordIndex, chordCount, options) {
 		var label = chord.displayName || chord.chordName || chord.label || '';
 		var degree = chord.degree || '';
 		var tonalFunction = chord.tonalFunction || '';
+		var source = sourceLabel(chord, options || {});
 		var buttons = '';
 		var dragHandle = '';
 
@@ -98,7 +99,24 @@
 			'<span class="measureChordName"><strong>' + labels.formatMusicalLabel(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
 			(degree ? '<em class="measureDegree">' + labels.formatMusicalLabel(degree) + '</em>' : '') +
 			(tonalFunction ? '<span class="measureFunction">' + labels.escapeHtml(tonalFunction) + '</span>' : '') +
+			(source ? '<span class="measureSource">' + labels.escapeHtml(source) + '</span>' : '') +
 			'</div>';
+	}
+
+	function sourceLabel(chord, options) {
+		var scaleIndex = chord.sourceScaleIndex;
+		var scaleName = scaleIndex != null && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t('data.scales.' + scaleIndex) : '';
+		var tonicName = chord.sourceTonicName || '';
+
+		if (chord.source !== 'interchange' || !scaleName) {
+			return '';
+		}
+
+		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
+			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
+		}
+
+		return tonicName ? tonicName + ' ' + scaleName : scaleName;
 	}
 
 	function fallbackMeasures() {
@@ -115,6 +133,7 @@
 		hasRenderableMeasures: hasRenderableMeasures,
 		renderMeasure: renderMeasure,
 		renderMeasureChord: renderMeasureChord,
+		sourceLabel: sourceLabel,
 		renderTimeline: renderTimeline,
 		renderTimelineMeasures: renderTimelineMeasures
 	};

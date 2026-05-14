@@ -11,10 +11,12 @@
 		var scaleNotes = report.scaleNotes || [];
 		var currentSegment = options ? options.currentSegment : null;
 		var currentFunction = currentSegment ? currentSegment.tonalFunction || '' : '';
+		var currentDegreeIndex = currentSegment && currentSegment.degreeIndex != null ? currentSegment.degreeIndex : -1;
 		var formatting = options.formatting || global.CodaProgressionFormatting;
 		var voicing = options.voicing || global.CodaProgressionVoicing;
 		var groups = [
 			{ id: 'sameFunction', items: [] },
+			{ id: 'interchange', items: [] },
 			{ id: 'commonNotes', items: [] },
 			{ id: 'remaining', items: [] }
 		];
@@ -48,13 +50,15 @@
 			var commonToneCount = currentSegment ? voicing.commonPitchNames(currentSegment, { notes: menuOptions.chordNotes(scaleChords[j]) }).length : 0;
 
 			if (commonToneCount > 0) {
-				pushToGroup(1, j, {
+				pushToGroup(2, j, {
 					commonToneCount: commonToneCount
 				});
 			}
 		}
 
-		groups[1].items.sort(function (a, b) {
+		pushInterchangeItems(groups[1], report, currentDegreeIndex, currentSegment, formatting);
+
+		groups[2].items.sort(function (a, b) {
 			if (a.commonToneCount !== b.commonToneCount) {
 				return b.commonToneCount - a.commonToneCount;
 			}
@@ -63,14 +67,45 @@
 		});
 
 		for (var k = 0; k < scaleChords.length; k++) {
-			pushToGroup(2, k);
+			pushToGroup(3, k);
 		}
 
 		return groups;
 	}
 
-	function chordReplacementOptions(chord, scaleNote, degreeIndex, formatting) {
-		return menuOptions.chordReplacementOptions(chord, scaleNote, degreeIndex, formatting);
+	function pushInterchangeItems(group, report, degreeIndex, currentSegment, formatting) {
+		var sources = report.modalInterchangeSources || [];
+		var currentChordName = currentSegment ? currentSegment.chordName || '' : '';
+
+		if (degreeIndex < 0) {
+			return;
+		}
+
+		for (var i = 0; i < sources.length; i++) {
+			var chord = sources[i].scaleChords ? sources[i].scaleChords[degreeIndex] : null;
+			var scaleNote = report.scaleNotes ? report.scaleNotes[degreeIndex] : null;
+
+			if (!chord || chord.nombre === currentChordName) {
+				continue;
+			}
+
+			group.items.push({
+				chordName: chord.nombre,
+				degree: formatting.formatDegreeForChord(scaleNote ? scaleNote.grado : '', chord.nombre),
+				degreeIndex: degreeIndex,
+				options: chordReplacementOptions(chord, scaleNote, degreeIndex, formatting, {
+					source: 'interchange',
+					sourceScaleIndex: sources[i].scaleIndex
+				}),
+				source: 'interchange',
+				sourceScaleIndex: sources[i].scaleIndex,
+				sourceTonicName: sources[i].tonicName
+			});
+		}
+	}
+
+	function chordReplacementOptions(chord, scaleNote, degreeIndex, formatting, metadata) {
+		return menuOptions.chordReplacementOptions(chord, scaleNote, degreeIndex, formatting, metadata);
 	}
 
 	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {

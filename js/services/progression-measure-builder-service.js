@@ -24,13 +24,14 @@
 				resolvedDegrees: resolvedDegrees
 			});
 
-			measures.push({
+			var measure = {
 				articulation: progressionState.articulation,
 				bar: i + 1,
 				beatUnit: progressionState.beatUnit,
 				chord: resolvedDegrees[i].chord,
 				chordKind: chordPlan.kind,
 				chordName: chordPlan.chordName,
+				degreeIndex: resolvedDegrees[i].degreeIndex,
 				degree: formattingService.displayDegree(chordPlan.degree, chordPlan.inversionLabel, chordPlan.suspension),
 				displayName: formattingService.displayName(chordPlan.chordName, chordPlan.inversionLabel, chordPlan.suspension, chordPlan.tensionLabel),
 				durationBeats: durationBeats,
@@ -48,7 +49,14 @@
 				tonalFunction: tonalFunctionForDegree(options.scaleDefinition, resolvedDegrees[i].degreeIndex),
 				voiceNotes: chordPlan.voiceNotes,
 				voices: progressionState.voices
-			});
+			};
+
+			if (resolvedDegrees[i].sourceScaleIndex != null) {
+				measure.sourceScaleIndex = resolvedDegrees[i].sourceScaleIndex;
+				measure.sourceTonicName = resolvedDegrees[i].sourceTonicName || '';
+			}
+
+			measures.push(measure);
 			previousPlan = chordPlan;
 		}
 

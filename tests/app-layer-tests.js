@@ -38,6 +38,8 @@ assert.equal(cMajorReport.scaleDefinition.nombre, 'Mayor');
 assert.deepEqual(cMajorReport.scaleNotes.map(function (note) { return note.nombre; }), ['C', 'D', 'E', 'F', 'G', 'A', 'B']);
 assert.deepEqual(cMajorReport.scaleChords.map(function (chord) { return chord.nombre; }), ['Cmaj7', 'Dm7', 'Em7', 'Fmaj7', 'G7', 'Am7', 'Bm7♭5']);
 assert.deepEqual(cMajorReport.parallelScaleChords.map(function (chord) { return chord.nombre; }), ['Cm7', 'Dm7♭5', 'D#maj7', 'Fm7', 'Gm7', 'G#maj7', 'A#7']);
+assert.ok(cMajorReport.modalInterchangeSources.some(function (source) { return source.scaleIndex === 3 && source.scaleChords[4].nombre === 'G7'; }));
+assert.ok(cMajorReport.modalInterchangeSources.some(function (source) { return source.scaleIndex === 15 && source.scaleChords[3].nombre === 'Fm7'; }));
 assert.equal(cMajorReport.extendedHarmonyEnabled, true);
 assert.equal(cMajorReport.mode, 'M');
 assert.equal(cMajorReport.circleOfFifths.selectedKey, 'C');
@@ -112,6 +114,7 @@ assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	chord: cMajorReport.scaleChords[3],
 	chordKind: 'triad',
 	chordName: 'F',
+	degreeIndex: 3,
 	degree: 'IV 6/4',
 	displayName: 'F 6/4',
 	durationBeats: 3,
@@ -375,11 +378,18 @@ const eMinorChordMenu = app.buildProgressionChordMenu({
 	currentSegment: eMinorProgressionPlan.measures[0],
 	report: eMinorReport
 });
-const cMajorInEMinor = eMinorChordMenu[1].items.filter(function (item) {
+assert.equal(eMinorChordMenu[1].id, 'interchange');
+assert.ok(eMinorChordMenu[1].items.length > 0);
+assert.equal(eMinorChordMenu[1].items[0].degreeIndex, eMinorProgressionPlan.measures[0].degreeIndex);
+assert.equal(eMinorChordMenu[1].items[0].source, 'interchange');
+assert.ok(eMinorChordMenu[1].items[0].options.some(function (item) {
+	return item.source === 'interchange' && item.sourceScaleIndex != null;
+}));
+const cMajorInEMinor = eMinorChordMenu[2].items.filter(function (item) {
 	return item.chordName === 'Cmaj7';
 })[0];
 assert.equal(cMajorInEMinor.degree, 'VImaj7');
-assert.deepEqual(eMinorChordMenu[1].items.map(function (item) {
+assert.deepEqual(eMinorChordMenu[2].items.map(function (item) {
 	return item.commonToneCount;
 }), [3, 2, 1, 1]);
 
@@ -447,7 +457,8 @@ assert.equal(generatedHighColorProgression.bars, 4);
 assert.equal(generatedHighColorProgression.generation.cadence, 'mixed-plagal');
 assert.equal(generatedHighColorProgression.generation.patternId, 'I-iv-I');
 assert.equal(generatedHighColorProgression.generation.style, 'modern');
-assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.source; }), ['diatonic', 'parallel', 'parallel', 'diatonic']);
+assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.source; }), ['diatonic', 'interchange', 'interchange', 'diatonic']);
+assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.sourceScaleIndex || null; }), [null, 15, 15, null]);
 assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'Fm', 'Fm7', 'C']);
 assert.ok(generatedHighColorProgression.measures[0].displayName.indexOf('add9') > -1);
 assert.ok(generatedHighColorProgression.measures[0].notes.length > 4);

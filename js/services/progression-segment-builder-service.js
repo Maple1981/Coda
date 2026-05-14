@@ -10,7 +10,7 @@
 		var resolvedDegree = chordSelection.resolvedDegree;
 		var chordPlan = chordSelection.chordPlan;
 
-		return {
+		var segment = {
 			articulation: measure.articulation,
 			bar: measure.bar,
 			beatUnit: measure.beatUnit,
@@ -18,6 +18,7 @@
 			chordIndex: timing.chordIndex,
 			chordKind: chordPlan.kind,
 			chordName: chordPlan.chordName,
+			degreeIndex: resolvedDegree.degreeIndex,
 			degree: formattingService.displayDegree(chordPlan.degree, chordPlan.inversionLabel, chordPlan.suspension),
 			displayName: formattingService.displayName(chordPlan.chordName, chordPlan.inversionLabel, chordPlan.suspension, chordPlan.tensionLabel),
 			durationBeats: timing.durationBeats,
@@ -36,6 +37,13 @@
 			voiceNotes: chordPlan.voiceNotes,
 			voices: measure.voices
 		};
+
+		if (resolvedDegree.sourceScaleIndex != null) {
+			segment.sourceScaleIndex = resolvedDegree.sourceScaleIndex;
+			segment.sourceTonicName = resolvedDegree.sourceTonicName || '';
+		}
+
+		return segment;
 	}
 
 	function replaceSplitMeasureSegment(measure, chordIndex, segment) {
@@ -60,6 +68,7 @@
 			'chordKind',
 			'chordName',
 			'degree',
+			'degreeIndex',
 			'displayName',
 			'inversion',
 			'inversionIndex',
@@ -67,6 +76,8 @@
 			'midiNotes',
 			'notes',
 			'source',
+			'sourceScaleIndex',
+			'sourceTonicName',
 			'suspension',
 			'tonalFunction',
 			'voiceNotes',
