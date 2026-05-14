@@ -2,6 +2,8 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
+
 	function cloneMeasure(measure) {
 		var clone = {};
 
@@ -48,32 +50,11 @@
 	}
 
 	function cloneVoiceNotes(voiceNotes) {
-		var result = [];
-
-		for (var i = 0; i < voiceNotes.length; i++) {
-			result.push(extendObject({}, voiceNotes[i]));
-		}
-
-		return result;
+		return objectService.cloneObjects(voiceNotes);
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	global.CodaProgressionMeasureClone = {

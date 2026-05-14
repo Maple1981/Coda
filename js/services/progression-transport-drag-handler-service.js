@@ -5,6 +5,7 @@
 	var dragDom = global.CodaProgressionTransportDom;
 	var dragClasses = global.CodaProgressionTransportDragClasses;
 	var dragData = global.CodaProgressionTransportDragData;
+	var dragTargets = global.CodaProgressionTransportDragTargets;
 
 	function create(options, state, clearDragState) {
 		options = options || {};
@@ -12,80 +13,69 @@
 		return {
 			dragend: clearDragState,
 			dragleave: function (event) {
-				var measure = dragDom.closest(event.target, '.measure');
-				var chordElement = dragDom.closest(event.target, '.measureChord');
+				var target = dragTargets.fromEvent(event);
 
-				dragClasses.unmarkChordDropTarget(chordElement);
-				dragClasses.unmarkMeasureDropTarget(measure);
+				dragClasses.unmarkChordDropTarget(target.chordElement);
+				dragClasses.unmarkMeasureDropTarget(target.measure);
 			},
 			dragover: function (event) {
-				var measure = dragDom.closest(event.target, '.measure');
-				var chordElement = dragDom.closest(event.target, '.measureChord');
-				var targetChordIndex;
+				var target = dragTargets.fromEvent(event);
 
-				if (!measure) {
+				if (!target.measure) {
 					return;
 				}
 
 				if (state.measureChord()) {
-					targetChordIndex = chordIndex(chordElement);
-					if (measureIndex(measure) !== state.measureChord().measureIndex || targetChordIndex <= 0) {
+					if (!dragTargets.canDropChord(state, target)) {
 						return;
 					}
 
 					dragDom.preventDefault(event);
-					dragClasses.markChordDropTarget(chordElement);
+					dragClasses.markChordDropTarget(target.chordElement);
 					dragDom.setDropEffect(event);
 					return;
 				}
 
 				dragDom.preventDefault(event);
-				dragClasses.markMeasureDropTarget(measure);
+				dragClasses.markMeasureDropTarget(target.measure);
 				dragDom.setDropEffect(event);
 			},
 			dragstart: function (event) {
-				var measure = dragDom.closest(event.target, '.measure');
-				var chordHandle = dragDom.closest(event.target, '.measureChordDragHandle');
-				var chordElement = dragDom.closest(event.target, '.measureChord');
+				var target = dragTargets.fromEvent(event);
 				var sourceMeasureIndex;
 				var sourceChordIndex;
 
-				if (!measure || dragDom.closest(event.target, '.measureSplitButton') || dragDom.closest(event.target, '.measureChordMenuButton')) {
+				if (dragTargets.isBlockedDragStart(event, target)) {
 					return;
 				}
 
-				if (chordHandle) {
-					sourceMeasureIndex = measureIndex(measure);
-					sourceChordIndex = chordIndex(chordElement);
-					if (sourceChordIndex <= 0) {
-						return;
-					}
-
+				if (dragTargets.canStartChordDrag(target)) {
+					sourceMeasureIndex = measureIndex(target.measure);
+					sourceChordIndex = chordIndex(target.chordElement);
 					state.setMeasureChord(sourceMeasureIndex, sourceChordIndex);
-					dragClasses.markChordDragging(chordElement);
+					dragClasses.markChordDragging(target.chordElement);
 					dragData.setChordDragData(event, sourceMeasureIndex, sourceChordIndex);
 					return;
 				}
 
-				state.setMeasureIndex(measureIndex(measure));
-				dragClasses.markMeasureDragging(measure);
+				state.setMeasureIndex(measureIndex(target.measure));
+				dragClasses.markMeasureDragging(target.measure);
 				dragData.setMeasureDragData(event, state.measureIndex());
 			},
 			drop: function (event) {
-				var measure = dragDom.closest(event.target, '.measure');
-				var chordElement = dragDom.closest(event.target, '.measureChord');
+				var target = dragTargets.fromEvent(event);
 				var fromIndex = dragSourceIndex(event, state.measureIndex());
 				var targetChordIndex;
 				var sourceChordDrag;
 
-				if (!measure) {
+				if (!target.measure) {
 					return;
 				}
 
 				if (state.measureChord()) {
 					sourceChordDrag = state.measureChord();
-					targetChordIndex = chordIndex(chordElement);
-					if (measureIndex(measure) !== sourceChordDrag.measureIndex || targetChordIndex <= 0) {
+					targetChordIndex = chordIndex(target.chordElement);
+					if (!dragTargets.canDropChord(state, target)) {
 						clearDragState();
 						return;
 					}
@@ -98,21 +88,21 @@
 
 				dragDom.preventDefault(event);
 				clearDragState();
-				dragData.run(options.onMeasureDrop, fromIndex, measureIndex(measure));
+				dragData.run(options.onMeasureDrop, fromIndex, measureIndex(target.measure));
 			}
 		};
 	}
 
 	function dragSourceIndex(event, fallbackIndex) {
-		return dragDom.dragSourceIndex(event, fallbackIndex);
+		return dragTargets.dragSourceIndex(event, fallbackIndex);
 	}
 
 	function measureIndex(measure) {
-		return dragDom.measureIndex(measure);
+		return dragTargets.measureIndex(measure);
 	}
 
 	function chordIndex(chordElement) {
-		return dragDom.chordIndex(chordElement);
+		return dragTargets.chordIndex(chordElement);
 	}
 
 	global.CodaProgressionTransportDragHandlers = {

@@ -16,6 +16,7 @@ function runScript(relativePath) {
 	vm.runInContext(source, context, { filename: relativePath });
 }
 
+runScript('js/renderers/progression-label-renderer.js');
 runScript('js/renderers/progression-chord-menu-renderer.js');
 runScript('js/services/progression-midi-download-service.js');
 runScript('js/services/progression-transport-shortcut-service.js');
@@ -23,6 +24,7 @@ runScript('js/services/progression-transport-dom-service.js');
 runScript('js/services/progression-transport-drag-class-service.js');
 runScript('js/services/progression-transport-drag-state-service.js');
 runScript('js/services/progression-transport-drag-data-service.js');
+runScript('js/services/progression-transport-drag-target-service.js');
 runScript('js/services/progression-transport-drag-handler-service.js');
 runScript('js/services/progression-transport-drag-service.js');
 runScript('js/services/progression-transport-view-service.js');

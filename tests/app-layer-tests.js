@@ -1,7 +1,7 @@
 const assert = require('assert');
-const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
+const { createScriptLoader } = require('./helpers/script-loader');
 
 const root = path.resolve(__dirname, '..');
 const context = {
@@ -11,83 +11,8 @@ const context = {
 context.window.window = context.window;
 vm.createContext(context);
 
-function runScript(relativePath) {
-	const source = fs.readFileSync(path.join(root, relativePath), 'utf8');
-	vm.runInContext(source, context, { filename: relativePath });
-}
-
-[
-	'js/data/constants-data.js',
-	'js/data/midi-data.js',
-	'js/data/notes-data.js',
-	'js/data/intervals-data.js',
-	'js/data/scales-data.js',
-	'js/data/chords-data.js',
-	'js/data/guitar-tunings-data.js',
-	'js/data/circle-of-fifths-data.js',
-	'js/data/extended-harmony-data.js',
-	'js/data/progression-rules-data.js',
-	'js/data.js',
-	'js/services/data-index-service.js',
-	'js/services/midi-export-service.js',
-	'js/services/progression-midi-file-service.js',
-	'js/services/progression-style-service.js',
-	'js/services/progression-state-normalizer-service.js',
-	'js/services/progression-degree-resolver-service.js',
-	'js/services/progression-pitch-service.js',
-	'js/services/progression-chord-quality-service.js',
-	'js/services/progression-voice-leading-score-service.js',
-	'js/services/progression-voicing-disposition-service.js',
-	'js/services/progression-voicing-factor-service.js',
-	'js/services/progression-voicing-midi-service.js',
-	'js/services/progression-voicing-factory-service.js',
-	'js/services/progression-voicing-selection-service.js',
-	'js/services/progression-voicing-service.js',
-	'js/services/progression-pedal-link-service.js',
-	'js/services/progression-voice-leading-service.js',
-	'js/services/progression-measure-clone-service.js',
-	'js/services/progression-measure-segment-service.js',
-	'js/services/progression-measure-timeline-service.js',
-	'js/services/progression-formatting-service.js',
-	'js/services/progression-tonal-function-service.js',
-	'js/services/progression-measure-context-service.js',
-	'js/services/progression-structure-index-service.js',
-	'js/services/progression-structure-editing-service.js',
-	'js/services/progression-suspension-resolution-service.js',
-	'js/services/progression-additional-chord-score-service.js',
-	'js/services/progression-additional-chord-service.js',
-	'js/services/progression-segment-builder-service.js',
-	'js/services/progression-replacement-chord-service.js',
-	'js/services/progression-measure-chord-addition-service.js',
-	'js/services/progression-measure-chord-replacement-service.js',
-	'js/services/progression-editing-service.js',
-	'js/services/progression-tension-service.js',
-	'js/services/progression-suspension-heuristic-service.js',
-	'js/services/progression-suspension-service.js',
-	'js/services/progression-seventh-decision-service.js',
-	'js/services/progression-chord-plan-service.js',
-	'js/services/progression-measure-builder-service.js',
-	'js/services/progression-result-service.js',
-	'js/services/progression-cadence-planner-service.js',
-	'js/services/progression-pattern-weight-service.js',
-	'js/services/progression-pattern-selector-service.js',
-	'js/services/progression-phrase-block-selector-service.js',
-	'js/services/progression-planner-service.js',
-	'js/services/progression-builder-service.js',
-	'js/services/progression-chord-menu-option-service.js',
-	'js/services/progression-chord-menu-service.js',
-	'js/domain/music-utils.js',
-	'js/domain/scale-domain.js',
-	'js/domain/chord-domain.js',
-	'js/domain/extended-harmony-domain.js',
-	'js/domain/circle-of-fifths-domain.js',
-	'js/domain/instrument-domain.js',
-	'js/domain/progression-domain.js',
-	'js/domain/music-domain.js',
-	'js/application/scale-report-application.js',
-	'js/application/chord-playback-application.js',
-	'js/application/progression-application.js'
-].forEach(runScript);
+const loader = createScriptLoader(root, context);
+loader.runManifestRange('js/data/constants-data.js', 'js/application/progression-application.js');
 
 const app = context.window.CodaApplication;
 const data = context.window.CodaData;

@@ -2,6 +2,24 @@
 
 El constructor de progresiones utiliza un estado normalizado de controles de interfaz y lo transforma en bloques armónicos mediante reglas ponderadas.
 
+## Mapa técnico de módulos
+
+El flujo principal del generador se reparte en módulos pequeños para evitar que el constructor vuelva a concentrarse en un único archivo:
+
+- `js/ui/progression-state-schema.js` define valores permitidos, valores por defecto y normalización de los controles.
+- `js/ui/progression-state.js` lee controles del DOM y produce un estado estable para los casos de uso.
+- `js/services/progression-planner-service.js` elige el patrón armónico general, los bloques de frase y la cadencia según el estilo, el modo y los controles de color.
+- `js/services/progression-builder-service.js` coordina la generación completa desde el informe de escala y el estado normalizado.
+- `js/services/progression-chord-plan-service.js` decide tríada, cuatríada, inversión, suspensión y tensiones antes de construir cada compás.
+- `js/services/progression-voicing-*.js` resuelve factores, registros MIDI, inversión, disposición abierta/cerrada y puntuación de conducción de voces.
+- `js/services/progression-measure-*.js` gestiona compases, segmentos internos, división en varios acordes y reconstrucción de la línea temporal.
+- `js/services/progression-transport-*.js` contiene el transporte de UI: reproducción, atajos, drag and drop, menú contextual, botones y acciones de edición.
+- `js/renderers/progression-*.js` separa etiquetas musicales, controles, línea temporal, menú contextual y composición del área de trabajo.
+- `js/services/progression-midi-*.js` y `js/services/midi-export-service.js` convierten la progresión en eventos MIDI y archivo descargable.
+- `js/application/progression-application.js` y `js/application/progression-playback-application.js` actúan como casos de uso, sin generar HTML ni leer controles directamente.
+
+Las pruebas que necesitan cargar pilas largas de módulos deben usar `tests/helpers/script-loader.js` para leer el orden desde `js/bootstrap/script-manifest.js`, en lugar de duplicar listas extensas de scripts.
+
 ## Estilo de escritura
 
 El control **Estilo** distingue dos enfoques iniciales:

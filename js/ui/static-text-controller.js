@@ -160,8 +160,9 @@
 
 	function ensureProgressionWorkbench() {
 		var container = global.document ? global.document.getElementById('constructorProgresiones') : null;
+		var childCount = container && container.children ? container.children.length : 0;
 
-		if (container && container.children.length === 0 && global.CodaRenderers && global.CodaRenderers.progressionWorkbench) {
+		if (container && childCount === 0 && global.CodaRenderers && global.CodaRenderers.progressionWorkbench) {
 			container.innerHTML = global.CodaRenderers.progressionWorkbench.render();
 		}
 	}

@@ -1,7 +1,7 @@
 const assert = require('assert');
-const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
+const { createScriptLoader } = require('./helpers/script-loader');
 
 const root = path.resolve(__dirname, '..');
 const context = {
@@ -11,46 +11,8 @@ const context = {
 context.window.window = context.window;
 vm.createContext(context);
 
-function runScript(relativePath) {
-	const source = fs.readFileSync(path.join(root, relativePath), 'utf8');
-	vm.runInContext(source, context, { filename: relativePath });
-}
-
-[
-	'js/data/constants-data.js',
-	'js/data/midi-data.js',
-	'js/data/notes-data.js',
-	'js/data/intervals-data.js',
-	'js/data/scales-data.js',
-	'js/data/chords-data.js',
-	'js/data/guitar-tunings-data.js',
-	'js/data/circle-of-fifths-data.js',
-	'js/data/extended-harmony-data.js',
-	'js/content/changelog-content.js',
-	'js/content/welcome-content.js',
-	'js/data.js',
-	'js/services/data-index-service.js',
-	'js/i18n/translations.js',
-	'js/i18n/i18n-service.js',
-	'js/services/notation-service.js',
-	'js/domain/music-utils.js',
-	'js/domain/scale-domain.js',
-	'js/domain/chord-domain.js',
-	'js/domain/extended-harmony-domain.js',
-	'js/domain/circle-of-fifths-domain.js',
-	'js/domain/instrument-domain.js',
-	'js/domain/progression-domain.js',
-	'js/domain/music-domain.js',
-	'js/renderers/scale-summary-renderer.js',
-	'js/renderers/scale-chords-renderer.js',
-	'js/renderers/extended-harmony-renderer.js',
-	'js/renderers/instrument-renderer.js',
-	'js/renderers/circle-of-fifths-renderer.js',
-	'js/renderers/changelog-renderer.js',
-	'js/renderers/welcome-renderer.js',
-	'js/renderers/progression-workbench-renderer.js',
-	'js/renderers/progression-chord-menu-renderer.js'
-].forEach(runScript);
+const loader = createScriptLoader(root, context);
+loader.runManifestRange('js/data/constants-data.js', 'js/renderers/progression-chord-menu-renderer.js');
 
 const data = context.window.CodaData;
 const domain = context.window.CodaDomain;

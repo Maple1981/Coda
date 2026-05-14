@@ -36,6 +36,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/i18n/i18n-service.js`: servicio de traducción, idioma actual y etiquetas de catálogos.
 - `js/services/notation-service.js`: formato visible de notas en notación anglosajona o latina sin alterar identificadores internos.
 - `js/services/data-index-service.js`: creación de `CodaData.indexes` y de índices no enumerables en las colecciones principales.
+- `js/services/progression-object-service.js`: utilidades compartidas de copia superficial y clonación de colecciones de objetos usadas por el motor de progresiones.
 - `js/services/musical-context-service.js`: construcción del contexto musical actual a partir de la selección de pantalla.
 - `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma, notación, tema visual, volumen maestro, tónica, escala, formato e instrumento sonoro.
 - `js/services/midi-export-service.js`: conversión de progresiones a eventos MIDI y bytes de archivo Standard MIDI File sin depender del DOM.
@@ -57,7 +58,10 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/renderers/circle-of-fifths-renderer.js`: navegación del círculo de quintas.
 - `js/renderers/changelog-renderer.js`: renderizado del contenido de novedades.
 - `js/renderers/welcome-renderer.js`: renderizado del contenido de bienvenida.
-- `js/renderers/progression-workbench-renderer.js`: renderizado inicial del área de progresiones.
+- `js/renderers/progression-label-renderer.js`: formateo HTML común de etiquetas musicales de progresiones, incluyendo subíndices de inversiones.
+- `js/renderers/progression-controls-renderer.js`: renderizado de los controles de tiempo, escritura y color armónico del constructor de progresiones.
+- `js/renderers/progression-timeline-renderer.js`: renderizado de compases, acordes, divisiones internas, grados, funciones e iconos de edición de la progresión.
+- `js/renderers/progression-workbench-renderer.js`: composición inicial del área de progresiones a partir de los renderers especializados.
 - `js/ui/ui-state.js`: factoría `CodaUiState.create(...)` para el estado mutable de pantalla.
 - `js/ui/progression-state-schema.js`: esquema estable de los controles del constructor de progresiones.
 - `js/ui/progression-state.js`: factoría y normalizador `CodaProgressionState` para leer los controles actuales de progresiones y producir un objeto estable.
@@ -75,6 +79,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - La lógica musical nueva debe entrar primero en `js/domain/`.
 - La orquestación de casos de uso debe vivir en `js/application/`.
 - El HTML debe concentrarse en `js/renderers/`.
+- Los renderers de progresiones deben mantenerse segmentados: controles, línea temporal, etiquetas musicales y composición del área de trabajo. Evitar que `progression-workbench-renderer.js` vuelva a acumular controles, compases y formato de etiquetas.
 - La interacción con el DOM debe quedarse en `js/ui/`.
 - El estado mutable de pantalla debe vivir en `CodaUiState`; el controlador puede orquestar eventos, pero no debe acumular nuevos valores de sesión como variables sueltas en closures.
 - El estado de progresiones debe leerse desde `CodaProgressionState` y guardarse en `CodaUiState`; los casos de uso posteriores deben recibir ese objeto normalizado, no leer directamente controles de formulario.
@@ -83,6 +88,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - La reproducción de progresiones debe mantener separadas la agenda musical, la normalización de eventos, las estrategias MIDI/arpegio y el runner de una ejecución. El caso de uso `createProgressionPlayback` no debe acumular nuevas reglas de secuenciación internas.
 - La selección de tónica, escala, formato e instrumento sonoro debe transformarse en un contexto musical explícito mediante `CodaMusicalContext` antes de alimentar casos de uso de aplicación. El instrumento sonoro se conserva como identificador General MIDI y la vista gráfica se resuelve mediante `viewInstrument`.
 - Las búsquedas repetidas en catálogos deben usar `CodaData.indexes` o los índices no enumerables generados por `js/services/data-index-service.js`; conservar siempre fallback lineal si una función acepta colecciones externas.
+- Las utilidades genéricas de copia y extensión de objetos dentro del motor de progresiones deben pasar por `CodaProgressionObjects`, no repetirse en cada servicio.
 - Los textos visibles nuevos deben pasar por `js/i18n/` cuando formen parte de la interfaz.
 - `js/i18n/` no debe escribir en el DOM. La aplicación de textos al HTML debe hacerse desde `js/ui/static-text-controller.js` o módulos UI equivalentes.
 - El contenido largo de interfaz debe vivir en `js/content/` como datos estructurados y renderizarse desde `js/renderers/`, evitando duplicarlo como HTML estático en `index.html`.
@@ -100,4 +106,5 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - Los reajustes de layout dependientes de medidas del DOM deben programarse con `requestAnimationFrame` mediante las funciones `schedule...` de `js/ui/scale-report-ui.js`.
 - Las preferencias ligeras pueden guardarse en la cookie `coda_preferences`; cualquier valor nuevo debe añadirse de forma compatible con los existentes. La selección principal del formulario debe restaurarse al arrancar sin forzar la recomendación automática de formato cuando el usuario ya había guardado una elección explícita.
 - El orden de carga de módulos debe mantenerse en `js/bootstrap/script-manifest.js` y verificarse con `tests/architecture-tests.js`.
+- Las pruebas que cargan pilas largas de scripts deben usar `tests/helpers/script-loader.js` para leer rangos desde el manifest, evitando listas manuales que se desincronicen al añadir módulos.
 - Si una mejora requiere servidor, cuentas de usuario, sincronización externa o almacenamiento persistente, debe tratarse como cambio de alcance.

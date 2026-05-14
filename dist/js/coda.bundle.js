@@ -2453,6 +2453,51 @@
 
 ;
 
+/* Source: js/services/progression-object-service.js */
+// Shared object helpers for progression services.
+(function (global) {
+	'use strict';
+
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		target = target || {};
+		values = values || {};
+
+		for (key in target) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
+	function cloneObjects(items) {
+		var result = [];
+
+		for (var i = 0; i < (items || []).length; i++) {
+			result.push(extendObject({}, items[i]));
+		}
+
+		return result;
+	}
+
+	global.CodaProgressionObjects = {
+		cloneObjects: cloneObjects,
+		extendObject: extendObject
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-chord-quality-service.js */
 // Chord quality parsing helpers shared by progression services.
 (function (global) {
@@ -2635,6 +2680,7 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
 	var voiceLeadingScoreService = global.CodaProgressionVoiceLeadingScore;
 
 	function chooseCandidate(voicing, previousPlan, disposition) {
@@ -2732,31 +2778,11 @@
 	}
 
 	function cloneVoiceNotes(voiceNotes) {
-		var result = [];
-
-		for (var i = 0; i < voiceNotes.length; i++) {
-			result.push(extendObject({}, voiceNotes[i]));
-		}
-
-		return result;
+		return objectService.cloneObjects(voiceNotes);
 	}
 
 	function extendObject(source, values) {
-		var result = {};
-
-		for (var key in source) {
-			if (Object.prototype.hasOwnProperty.call(source, key)) {
-				result[key] = source[key];
-			}
-		}
-
-		for (var valueKey in values) {
-			if (Object.prototype.hasOwnProperty.call(values, valueKey)) {
-				result[valueKey] = values[valueKey];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(source, values);
 	}
 
 	global.CodaProgressionVoicingDisposition = {
@@ -2837,6 +2863,7 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
 	var pitchService = global.CodaProgressionPitch;
 
 	function notesToAscendingMidi(notes, initialMidiNote) {
@@ -2901,21 +2928,7 @@
 	}
 
 	function extendObject(source, values) {
-		var result = {};
-
-		for (var key in source) {
-			if (Object.prototype.hasOwnProperty.call(source, key)) {
-				result[key] = source[key];
-			}
-		}
-
-		for (var valueKey in values) {
-			if (Object.prototype.hasOwnProperty.call(values, valueKey)) {
-				result[valueKey] = values[valueKey];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(source, values);
 	}
 
 	global.CodaProgressionVoicingMidi = {
@@ -3322,6 +3335,8 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
+
 	function cloneMeasure(measure) {
 		var clone = {};
 
@@ -3368,32 +3383,11 @@
 	}
 
 	function cloneVoiceNotes(voiceNotes) {
-		var result = [];
-
-		for (var i = 0; i < voiceNotes.length; i++) {
-			result.push(extendObject({}, voiceNotes[i]));
-		}
-
-		return result;
+		return objectService.cloneObjects(voiceNotes);
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	global.CodaProgressionMeasureClone = {
@@ -3804,6 +3798,8 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
+
 	function clampMeasureIndex(index, length) {
 		return clampIndex(index, length);
 	}
@@ -3823,22 +3819,7 @@
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	global.CodaProgressionStructureIndex = {
@@ -7393,110 +7374,39 @@
 
 ;
 
-/* Source: js/services/progression-transport-drag-handler-service.js */
-// Event handlers for progression drag and drop interactions.
+/* Source: js/services/progression-transport-drag-target-service.js */
+// Target resolution and validation for progression drag and drop.
 (function (global) {
 	'use strict';
 
 	var dragDom = global.CodaProgressionTransportDom;
-	var dragClasses = global.CodaProgressionTransportDragClasses;
-	var dragData = global.CodaProgressionTransportDragData;
 
-	function create(options, state, clearDragState) {
-		options = options || {};
-
+	function fromEvent(event) {
 		return {
-			dragend: clearDragState,
-			dragleave: function (event) {
-				var measure = dragDom.closest(event.target, '.measure');
-				var chordElement = dragDom.closest(event.target, '.measureChord');
-
-				dragClasses.unmarkChordDropTarget(chordElement);
-				dragClasses.unmarkMeasureDropTarget(measure);
-			},
-			dragover: function (event) {
-				var measure = dragDom.closest(event.target, '.measure');
-				var chordElement = dragDom.closest(event.target, '.measureChord');
-				var targetChordIndex;
-
-				if (!measure) {
-					return;
-				}
-
-				if (state.measureChord()) {
-					targetChordIndex = chordIndex(chordElement);
-					if (measureIndex(measure) !== state.measureChord().measureIndex || targetChordIndex <= 0) {
-						return;
-					}
-
-					dragDom.preventDefault(event);
-					dragClasses.markChordDropTarget(chordElement);
-					dragDom.setDropEffect(event);
-					return;
-				}
-
-				dragDom.preventDefault(event);
-				dragClasses.markMeasureDropTarget(measure);
-				dragDom.setDropEffect(event);
-			},
-			dragstart: function (event) {
-				var measure = dragDom.closest(event.target, '.measure');
-				var chordHandle = dragDom.closest(event.target, '.measureChordDragHandle');
-				var chordElement = dragDom.closest(event.target, '.measureChord');
-				var sourceMeasureIndex;
-				var sourceChordIndex;
-
-				if (!measure || dragDom.closest(event.target, '.measureSplitButton') || dragDom.closest(event.target, '.measureChordMenuButton')) {
-					return;
-				}
-
-				if (chordHandle) {
-					sourceMeasureIndex = measureIndex(measure);
-					sourceChordIndex = chordIndex(chordElement);
-					if (sourceChordIndex <= 0) {
-						return;
-					}
-
-					state.setMeasureChord(sourceMeasureIndex, sourceChordIndex);
-					dragClasses.markChordDragging(chordElement);
-					dragData.setChordDragData(event, sourceMeasureIndex, sourceChordIndex);
-					return;
-				}
-
-				state.setMeasureIndex(measureIndex(measure));
-				dragClasses.markMeasureDragging(measure);
-				dragData.setMeasureDragData(event, state.measureIndex());
-			},
-			drop: function (event) {
-				var measure = dragDom.closest(event.target, '.measure');
-				var chordElement = dragDom.closest(event.target, '.measureChord');
-				var fromIndex = dragSourceIndex(event, state.measureIndex());
-				var targetChordIndex;
-				var sourceChordDrag;
-
-				if (!measure) {
-					return;
-				}
-
-				if (state.measureChord()) {
-					sourceChordDrag = state.measureChord();
-					targetChordIndex = chordIndex(chordElement);
-					if (measureIndex(measure) !== sourceChordDrag.measureIndex || targetChordIndex <= 0) {
-						clearDragState();
-						return;
-					}
-
-					dragDom.preventDefault(event);
-					clearDragState();
-					dragData.run(options.onMeasureChordDrop, sourceChordDrag.measureIndex, sourceChordDrag.chordIndex, targetChordIndex);
-					return;
-				}
-
-				dragDom.preventDefault(event);
-				clearDragState();
-				dragData.run(options.onMeasureDrop, fromIndex, measureIndex(measure));
-			}
+			chordElement: dragDom.closest(event.target, '.measureChord'),
+			chordHandle: dragDom.closest(event.target, '.measureChordDragHandle'),
+			measure: dragDom.closest(event.target, '.measure')
 		};
+	}
+
+	function isBlockedDragStart(event, target) {
+		return !target.measure ||
+			dragDom.closest(event.target, '.measureSplitButton') ||
+			dragDom.closest(event.target, '.measureChordMenuButton');
+	}
+
+	function canStartChordDrag(target) {
+		return target.chordHandle && chordIndex(target.chordElement) > 0;
+	}
+
+	function canDropChord(state, target) {
+		var sourceChordDrag = state.measureChord();
+		var targetChordIndex = chordIndex(target.chordElement);
+
+		return sourceChordDrag &&
+			target.measure &&
+			measureIndex(target.measure) === sourceChordDrag.measureIndex &&
+			targetChordIndex > 0;
 	}
 
 	function dragSourceIndex(event, fallbackIndex) {
@@ -7509,6 +7419,127 @@
 
 	function chordIndex(chordElement) {
 		return dragDom.chordIndex(chordElement);
+	}
+
+	global.CodaProgressionTransportDragTargets = {
+		canDropChord: canDropChord,
+		canStartChordDrag: canStartChordDrag,
+		chordIndex: chordIndex,
+		dragSourceIndex: dragSourceIndex,
+		fromEvent: fromEvent,
+		isBlockedDragStart: isBlockedDragStart,
+		measureIndex: measureIndex
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-drag-handler-service.js */
+// Event handlers for progression drag and drop interactions.
+(function (global) {
+	'use strict';
+
+	var dragDom = global.CodaProgressionTransportDom;
+	var dragClasses = global.CodaProgressionTransportDragClasses;
+	var dragData = global.CodaProgressionTransportDragData;
+	var dragTargets = global.CodaProgressionTransportDragTargets;
+
+	function create(options, state, clearDragState) {
+		options = options || {};
+
+		return {
+			dragend: clearDragState,
+			dragleave: function (event) {
+				var target = dragTargets.fromEvent(event);
+
+				dragClasses.unmarkChordDropTarget(target.chordElement);
+				dragClasses.unmarkMeasureDropTarget(target.measure);
+			},
+			dragover: function (event) {
+				var target = dragTargets.fromEvent(event);
+
+				if (!target.measure) {
+					return;
+				}
+
+				if (state.measureChord()) {
+					if (!dragTargets.canDropChord(state, target)) {
+						return;
+					}
+
+					dragDom.preventDefault(event);
+					dragClasses.markChordDropTarget(target.chordElement);
+					dragDom.setDropEffect(event);
+					return;
+				}
+
+				dragDom.preventDefault(event);
+				dragClasses.markMeasureDropTarget(target.measure);
+				dragDom.setDropEffect(event);
+			},
+			dragstart: function (event) {
+				var target = dragTargets.fromEvent(event);
+				var sourceMeasureIndex;
+				var sourceChordIndex;
+
+				if (dragTargets.isBlockedDragStart(event, target)) {
+					return;
+				}
+
+				if (dragTargets.canStartChordDrag(target)) {
+					sourceMeasureIndex = measureIndex(target.measure);
+					sourceChordIndex = chordIndex(target.chordElement);
+					state.setMeasureChord(sourceMeasureIndex, sourceChordIndex);
+					dragClasses.markChordDragging(target.chordElement);
+					dragData.setChordDragData(event, sourceMeasureIndex, sourceChordIndex);
+					return;
+				}
+
+				state.setMeasureIndex(measureIndex(target.measure));
+				dragClasses.markMeasureDragging(target.measure);
+				dragData.setMeasureDragData(event, state.measureIndex());
+			},
+			drop: function (event) {
+				var target = dragTargets.fromEvent(event);
+				var fromIndex = dragSourceIndex(event, state.measureIndex());
+				var targetChordIndex;
+				var sourceChordDrag;
+
+				if (!target.measure) {
+					return;
+				}
+
+				if (state.measureChord()) {
+					sourceChordDrag = state.measureChord();
+					targetChordIndex = chordIndex(target.chordElement);
+					if (!dragTargets.canDropChord(state, target)) {
+						clearDragState();
+						return;
+					}
+
+					dragDom.preventDefault(event);
+					clearDragState();
+					dragData.run(options.onMeasureChordDrop, sourceChordDrag.measureIndex, sourceChordDrag.chordIndex, targetChordIndex);
+					return;
+				}
+
+				dragDom.preventDefault(event);
+				clearDragState();
+				dragData.run(options.onMeasureDrop, fromIndex, measureIndex(target.measure));
+			}
+		};
+	}
+
+	function dragSourceIndex(event, fallbackIndex) {
+		return dragTargets.dragSourceIndex(event, fallbackIndex);
+	}
+
+	function measureIndex(measure) {
+		return dragTargets.measureIndex(measure);
+	}
+
+	function chordIndex(chordElement) {
+		return dragTargets.chordIndex(chordElement);
 	}
 
 	global.CodaProgressionTransportDragHandlers = {
@@ -10541,36 +10572,55 @@
 
 ;
 
-/* Source: js/renderers/progression-workbench-renderer.js */
-// Renderer inicial para la futura área de construcción de progresiones.
+/* Source: js/renderers/progression-label-renderer.js */
+// Shared musical label formatting for progression renderers.
 (function (global) {
 	'use strict';
 
-	function render() {
-		var html = '';
+	function formatMusicalLabel(value) {
+		return String(value).split(/(\s+)/).map(function (part) {
+			if (isInversionLabel(part)) {
+				return '<sub class="musicInversion">' + escapeHtml(part) + '</sub>';
+			}
 
-		html += '<div class="workbenchHeader">';
-		html += '<div class="workbenchTitleGroup"><h2></h2><p class="workbenchKicker"></p></div>';
-		html += '<div class="workbenchContextGroup"><button id="toggleCircleOfFifthsFromContext" class="workbenchCircleToggle" type="button" title="" aria-label="" aria-controls="circleOfFifthsPopover" aria-expanded="false" hidden><span class="material-icons" aria-hidden="true">donut_large</span></button><p class="workbenchContext" aria-live="polite"><span class="workbenchContextKey"></span><span class="workbenchContextInstrument"></span></p><button id="toggleWorkbenchInstrumentMenu" class="workbenchInstrumentToggle" type="button" title="" aria-label="" aria-controls="workbenchInstrumentMenu" aria-expanded="false"><span class="material-icons" aria-hidden="true">expand_more</span></button><div id="workbenchInstrumentMenu" class="workbenchInstrumentMenu" hidden></div></div>';
-		html += '</div>';
-		html += '<div class="progressionControls">';
-		html += renderTimePanel();
-		html += renderWritingPanel();
-		html += renderColorPanel();
-		html += '</div>';
-		html += '<div class="progressionGenerateBar">';
-		html += '<button id="generateProgression" type="button" class="transportButton transportButton--generate"><span class="material-icons" aria-hidden="true">auto_awesome</span><span data-i18n="progression.generate"></span></button>';
-		html += '</div>';
-		html += renderTimeline();
-		html += '<div class="transportControls">';
-		html += '<label class="loopControl metronomeControl"><input id="progressionMetronome" type="checkbox" /><span data-i18n="progression.metronome"></span></label>';
-		html += '<label class="loopControl"><input id="progressionLoop" type="checkbox" /><span data-i18n="progression.loop"></span></label>';
-		html += '<button type="button" class="transportButton transportButton--goStart" title="" aria-label="" hidden><span class="material-icons" aria-hidden="true">first_page</span><span data-i18n="progression.goStart"></span></button>';
-		html += '<button type="button" class="transportButton transportButton--listen" aria-pressed="false"><span class="material-icons" aria-hidden="true">play_arrow</span><span data-i18n="progression.listen"></span></button>';
-		html += '<button type="button" class="transportButton transportButton--export"><span class="material-icons" aria-hidden="true">ios_share</span><span data-i18n="progression.exportMidi"></span></button>';
-		html += '</div>';
+			return escapeHtml(part);
+		}).join('');
+	}
 
-		return html;
+	function isInversionLabel(value) {
+		return /^(6|6\/4|6\/5|4\/3|4\/2)$/.test(value);
+	}
+
+	function escapeHtml(value) {
+		return String(value)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
+
+	global.CodaRenderers = global.CodaRenderers || {};
+	global.CodaRenderers.progressionLabels = {
+		escapeHtml: escapeHtml,
+		formatMusicalLabel: formatMusicalLabel,
+		isInversionLabel: isInversionLabel
+	};
+})(window);
+
+;
+
+/* Source: js/renderers/progression-controls-renderer.js */
+// Renderer for progression workbench control panels.
+(function (global) {
+	'use strict';
+
+	function renderPanels() {
+		return '<div class="progressionControls">' +
+			renderTimePanel() +
+			renderWritingPanel() +
+			renderColorPanel() +
+			'</div>';
 	}
 
 	function renderTimePanel() {
@@ -10621,6 +10671,25 @@
 		return '<button class="randomSelectButton randomControlButton" type="button" data-random-control-target="' + targetSelector + '" data-random-group="global" data-random-i18n-key="randomSelect.label"><span class="material-icons" aria-hidden="true">casino</span></button>';
 	}
 
+	global.CodaRenderers = global.CodaRenderers || {};
+	global.CodaRenderers.progressionControls = {
+		renderColorPanel: renderColorPanel,
+		renderControl: renderControl,
+		renderPanels: renderPanels,
+		renderTimePanel: renderTimePanel,
+		renderWritingPanel: renderWritingPanel
+	};
+})(window);
+
+;
+
+/* Source: js/renderers/progression-timeline-renderer.js */
+// Renderer for progression measure timeline.
+(function (global) {
+	'use strict';
+
+	var labels = global.CodaRenderers.progressionLabels;
+
 	function renderTimeline(progression) {
 		var html = '<div class="progressionTimeline" aria-label="">';
 
@@ -10666,9 +10735,9 @@
 		var splitClass = chords.length > 1 ? ' measure--split' : '';
 		var html = '';
 
-		html += '<div class="measure' + splitClass + '" draggable="true" data-progression-bar="' + escapeHtml(bar) + '" data-progression-index="' + escapeHtml(index) + '" tabindex="0">';
+		html += '<div class="measure' + splitClass + '" draggable="true" data-progression-bar="' + labels.escapeHtml(bar) + '" data-progression-index="' + labels.escapeHtml(index) + '" tabindex="0">';
 		html += '<button type="button" class="measureDragHandle" draggable="true" aria-label="" title="" data-i18n-title="progression.dragMeasure"><span class="material-icons" aria-hidden="true">open_with</span></button>';
-		html += '<span class="measureBar">' + escapeHtml(bar) + '</span>';
+		html += '<span class="measureBar">' + labels.escapeHtml(bar) + '</span>';
 		html += '<div class="measureChordList">';
 
 		for (var i = 0; i < chords.length; i++) {
@@ -10705,12 +10774,12 @@
 			buttons = '<span class="measureSplitActions">' + buttons + '</span>';
 		}
 
-		return '<div class="measureChord" data-measure-chord-index="' + escapeHtml(chordIndex) + '">' +
+		return '<div class="measureChord" data-measure-chord-index="' + labels.escapeHtml(chordIndex) + '">' +
 			dragHandle +
 			buttons +
-			'<span class="measureChordName"><strong>' + formatMusicalLabel(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
-			(degree ? '<em class="measureDegree">' + formatMusicalLabel(degree) + '</em>' : '') +
-			(tonalFunction ? '<span class="measureFunction">' + escapeHtml(tonalFunction) + '</span>' : '') +
+			'<span class="measureChordName"><strong>' + labels.formatMusicalLabel(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
+			(degree ? '<em class="measureDegree">' + labels.formatMusicalLabel(degree) + '</em>' : '') +
+			(tonalFunction ? '<span class="measureFunction">' + labels.escapeHtml(tonalFunction) + '</span>' : '') +
 			'</div>';
 	}
 
@@ -10723,38 +10792,75 @@
 		});
 	}
 
-	function escapeHtml(value) {
-		return String(value)
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&#39;');
+	global.CodaRenderers = global.CodaRenderers || {};
+	global.CodaRenderers.progressionTimeline = {
+		hasRenderableMeasures: hasRenderableMeasures,
+		renderMeasure: renderMeasure,
+		renderMeasureChord: renderMeasureChord,
+		renderTimeline: renderTimeline,
+		renderTimelineMeasures: renderTimelineMeasures
+	};
+})(window);
+
+;
+
+/* Source: js/renderers/progression-workbench-renderer.js */
+// Renderer inicial para el área de construcción de progresiones.
+(function (global) {
+	'use strict';
+
+	var controlsRenderer = global.CodaRenderers.progressionControls;
+	var timelineRenderer = global.CodaRenderers.progressionTimeline;
+
+	function render() {
+		var html = '';
+
+		html += renderHeader();
+		html += controlsRenderer.renderPanels();
+		html += renderGenerateBar();
+		html += timelineRenderer.renderTimeline();
+		html += renderTransportControls();
+
+		return html;
 	}
 
-	function formatMusicalLabel(value) {
-		return String(value).split(/(\s+)/).map(function (part) {
-			if (isInversionLabel(part)) {
-				return '<sub class="musicInversion">' + escapeHtml(part) + '</sub>';
-			}
-
-			return escapeHtml(part);
-		}).join('');
+	function renderHeader() {
+		return '<div class="workbenchHeader">' +
+			'<div class="workbenchTitleGroup"><h2></h2><p class="workbenchKicker"></p></div>' +
+			'<div class="workbenchContextGroup"><button id="toggleCircleOfFifthsFromContext" class="workbenchCircleToggle" type="button" title="" aria-label="" aria-controls="circleOfFifthsPopover" aria-expanded="false" hidden><span class="material-icons" aria-hidden="true">donut_large</span></button><p class="workbenchContext" aria-live="polite"><span class="workbenchContextKey"></span><span class="workbenchContextInstrument"></span></p><button id="toggleWorkbenchInstrumentMenu" class="workbenchInstrumentToggle" type="button" title="" aria-label="" aria-controls="workbenchInstrumentMenu" aria-expanded="false"><span class="material-icons" aria-hidden="true">expand_more</span></button><div id="workbenchInstrumentMenu" class="workbenchInstrumentMenu" hidden></div></div>' +
+			'</div>';
 	}
 
-	function isInversionLabel(value) {
-		return /^(6|6\/4|6\/5|4\/3|4\/2)$/.test(value);
+	function renderGenerateBar() {
+		return '<div class="progressionGenerateBar">' +
+			'<button id="generateProgression" type="button" class="transportButton transportButton--generate"><span class="material-icons" aria-hidden="true">auto_awesome</span><span data-i18n="progression.generate"></span></button>' +
+			'</div>';
+	}
+
+	function renderTransportControls() {
+		var html = '<div class="transportControls">';
+
+		html += '<label class="loopControl metronomeControl"><input id="progressionMetronome" type="checkbox" /><span data-i18n="progression.metronome"></span></label>';
+		html += '<label class="loopControl"><input id="progressionLoop" type="checkbox" /><span data-i18n="progression.loop"></span></label>';
+		html += '<button type="button" class="transportButton transportButton--goStart" title="" aria-label="" hidden><span class="material-icons" aria-hidden="true">first_page</span><span data-i18n="progression.goStart"></span></button>';
+		html += '<button type="button" class="transportButton transportButton--listen" aria-pressed="false"><span class="material-icons" aria-hidden="true">play_arrow</span><span data-i18n="progression.listen"></span></button>';
+		html += '<button type="button" class="transportButton transportButton--export"><span class="material-icons" aria-hidden="true">ios_share</span><span data-i18n="progression.exportMidi"></span></button>';
+		html += '</div>';
+
+		return html;
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};
 	global.CodaRenderers.progressionWorkbench = {
+		hasRenderableMeasures: timelineRenderer.hasRenderableMeasures,
 		render: render,
-		renderColorPanel: renderColorPanel,
-		renderTimePanel: renderTimePanel,
-		renderTimeline: renderTimeline,
-		hasRenderableMeasures: hasRenderableMeasures,
-		renderTimelineMeasures: renderTimelineMeasures,
-		renderWritingPanel: renderWritingPanel
+		renderColorPanel: controlsRenderer.renderColorPanel,
+		renderHeader: renderHeader,
+		renderTimePanel: controlsRenderer.renderTimePanel,
+		renderTimeline: timelineRenderer.renderTimeline,
+		renderTimelineMeasures: timelineRenderer.renderTimelineMeasures,
+		renderTransportControls: renderTransportControls,
+		renderWritingPanel: controlsRenderer.renderWritingPanel
 	};
 })(window);
 
@@ -10764,6 +10870,8 @@
 // Renderer for the contextual chord replacement menu.
 (function (global) {
 	'use strict';
+
+	var labels = global.CodaRenderers.progressionLabels;
 
 	function render(menuData, options) {
 		var doc = global.document;
@@ -10815,7 +10923,7 @@
 		var optionsContainer = doc.createElement('div');
 
 		details.className = 'progressionChordMenu__chord';
-		summary.innerHTML = formatMusicalLabel(item.chordName) + (item.degree ? ' &middot; ' + formatMusicalLabel(item.degree) : '');
+		summary.innerHTML = labels.formatMusicalLabel(item.chordName) + (item.degree ? ' &middot; ' + labels.formatMusicalLabel(item.degree) : '');
 		optionsContainer.className = 'progressionChordMenu__options';
 		details.appendChild(summary);
 		details.appendChild(optionsContainer);
@@ -10839,32 +10947,9 @@
 		button.setAttribute('data-degree-index', item.degreeIndex);
 		button.setAttribute('data-chord-kind', item.kind);
 		button.setAttribute('data-inversion-index', item.inversionIndex);
-		button.innerHTML = escapeHtml(kindLabel + ': ') + formatMusicalLabel(item.displayName) + (item.degree ? ' &middot; ' + formatMusicalLabel(item.degree) : '');
+		button.innerHTML = labels.escapeHtml(kindLabel + ': ') + labels.formatMusicalLabel(item.displayName) + (item.degree ? ' &middot; ' + labels.formatMusicalLabel(item.degree) : '');
 
 		return button;
-	}
-
-	function formatMusicalLabel(value) {
-		return String(value).split(/(\s+)/).map(function (part) {
-			if (isInversionLabel(part)) {
-				return '<sub class="musicInversion">' + escapeHtml(part) + '</sub>';
-			}
-
-			return escapeHtml(part);
-		}).join('');
-	}
-
-	function isInversionLabel(value) {
-		return /^(6|6\/4|6\/5|4\/3|4\/2)$/.test(value);
-	}
-
-	function escapeHtml(value) {
-		return String(value)
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&#39;');
 	}
 
 	function translate(i18n, key) {
@@ -11313,8 +11398,9 @@
 
 	function ensureProgressionWorkbench() {
 		var container = global.document ? global.document.getElementById('constructorProgresiones') : null;
+		var childCount = container && container.children ? container.children.length : 0;
 
-		if (container && container.children.length === 0 && global.CodaRenderers && global.CodaRenderers.progressionWorkbench) {
+		if (container && childCount === 0 && global.CodaRenderers && global.CodaRenderers.progressionWorkbench) {
 			container.innerHTML = global.CodaRenderers.progressionWorkbench.render();
 		}
 	}

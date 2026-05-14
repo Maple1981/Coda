@@ -2,6 +2,7 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
 	var voiceLeadingScoreService = global.CodaProgressionVoiceLeadingScore;
 
 	function chooseCandidate(voicing, previousPlan, disposition) {
@@ -99,31 +100,11 @@
 	}
 
 	function cloneVoiceNotes(voiceNotes) {
-		var result = [];
-
-		for (var i = 0; i < voiceNotes.length; i++) {
-			result.push(extendObject({}, voiceNotes[i]));
-		}
-
-		return result;
+		return objectService.cloneObjects(voiceNotes);
 	}
 
 	function extendObject(source, values) {
-		var result = {};
-
-		for (var key in source) {
-			if (Object.prototype.hasOwnProperty.call(source, key)) {
-				result[key] = source[key];
-			}
-		}
-
-		for (var valueKey in values) {
-			if (Object.prototype.hasOwnProperty.call(values, valueKey)) {
-				result[valueKey] = values[valueKey];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(source, values);
 	}
 
 	global.CodaProgressionVoicingDisposition = {

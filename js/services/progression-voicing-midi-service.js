@@ -2,6 +2,7 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
 	var pitchService = global.CodaProgressionPitch;
 
 	function notesToAscendingMidi(notes, initialMidiNote) {
@@ -66,21 +67,7 @@
 	}
 
 	function extendObject(source, values) {
-		var result = {};
-
-		for (var key in source) {
-			if (Object.prototype.hasOwnProperty.call(source, key)) {
-				result[key] = source[key];
-			}
-		}
-
-		for (var valueKey in values) {
-			if (Object.prototype.hasOwnProperty.call(values, valueKey)) {
-				result[valueKey] = values[valueKey];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(source, values);
 	}
 
 	global.CodaProgressionVoicingMidi = {
