@@ -371,8 +371,10 @@ assert.ok(welcomeHtml.indexOf('piano, guitarra clásica, órgano y cuerdas') > -
 const progressionWorkbenchHtml = progressionWorkbenchRenderer.render();
 assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchTitleGroup"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchContext" aria-live="polite"') > -1);
-assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchContextKey"') > -1);
-assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchContextInstrument"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="workbenchContextKeyToggle"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchContextKey" role="button"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="workbenchContextInstrumentToggle"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchContextInstrument" role="button"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="toggleCircleOfFifthsFromContext"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('donut_large') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('aria-controls="circleOfFifthsPopover"') > -1);

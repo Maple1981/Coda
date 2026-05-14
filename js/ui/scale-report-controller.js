@@ -347,7 +347,8 @@
 			on(global.document, 'click', function (event) {
 				var trigger = closest(event.target, '#toggleCircleOfFifths') ||
 					closest(event.target, '#toggleCircleOfFifthsFromContext') ||
-					closest(event.target, '#toggleCircleOfFifthsFromForm');
+					closest(event.target, '#toggleCircleOfFifthsFromForm') ||
+					closest(event.target, '#workbenchContextKeyToggle');
 
 				if (trigger) {
 					toggleCircleOfFifthsPopover(trigger);
@@ -373,7 +374,8 @@
 
 		function bindWorkbenchInstrumentMenu() {
 			on(global.document, 'click', function (event) {
-				var toggle = closest(event.target, '#toggleWorkbenchInstrumentMenu');
+				var toggle = closest(event.target, '#toggleWorkbenchInstrumentMenu') ||
+					closest(event.target, '#workbenchContextInstrumentToggle');
 				var item = closest(event.target, '.workbenchInstrumentMenuItem');
 
 				if (toggle) {
@@ -593,6 +595,7 @@
 			updateCircleToggleExpanded(query('#toggleCircleOfFifths'), expanded);
 			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromContext'), expanded);
 			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromForm'), expanded);
+			updateCircleToggleExpanded(query('#workbenchContextKeyToggle'), expanded);
 		}
 
 		function updateCircleToggleExpanded(button, expanded) {
@@ -625,6 +628,7 @@
 				toggle.setAttribute('aria-expanded', 'true');
 				setWorkbenchInstrumentToggleIcon('expand_less');
 			}
+			setWorkbenchInstrumentContextExpanded(true);
 		}
 
 		function closeWorkbenchInstrumentMenu() {
@@ -639,6 +643,7 @@
 				toggle.setAttribute('aria-expanded', 'false');
 				setWorkbenchInstrumentToggleIcon('expand_more');
 			}
+			setWorkbenchInstrumentContextExpanded(false);
 		}
 
 		function isWorkbenchInstrumentMenuOpen() {
@@ -655,6 +660,14 @@
 			}
 		}
 
+		function setWorkbenchInstrumentContextExpanded(expanded) {
+			var contextInstrument = query('#workbenchContextInstrumentToggle');
+
+			if (contextInstrument) {
+				contextInstrument.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+			}
+		}
+
 		function updateInstrumentSelection(instrumentId) {
 			var instrumentSelect = query('#instrumentoSonoro');
 
@@ -665,7 +678,7 @@
 			setValue(instrumentSelect, instrumentId);
 			setPlaybackInstrument(options, instrumentId);
 			saveFormPreferences(preferences);
-			renderReport();
+			renderInstrument(true);
 			recordHistorySnapshot();
 		}
 

@@ -285,6 +285,39 @@ document.dispatchDocumentEvent({
 });
 assert.equal(initialized.uiState.getProgressionState().bars, 8);
 
+const editedProgression = Object.assign({}, initialized.uiState.getProgression(), {
+	userEdited: true
+});
+const scaleReportsBeforeInstrumentChange = rendered.scaleReport;
+const progressionRendersBeforeInstrumentChange = rendered.progression;
+const instrumentRendersBeforeInstrumentChange = rendered.instrument;
+initialized.uiState.setProgression(editedProgression);
+document.getElementById('instrumentoSonoro').value = 'drawbar_organ';
+document.getElementById('instrumentoSonoro').dispatchEvent({
+	target: document.getElementById('instrumentoSonoro'),
+	type: 'change'
+});
+assert.strictEqual(initialized.uiState.getProgression(), editedProgression);
+assert.equal(rendered.scaleReport, scaleReportsBeforeInstrumentChange);
+assert.equal(rendered.progression, progressionRendersBeforeInstrumentChange);
+assert.equal(rendered.instrument, instrumentRendersBeforeInstrumentChange + 1);
+assert.equal(initialized.uiState.getSelection().midiInstrument, 'drawbar_organ');
+assert.equal(playbackInstruments[playbackInstruments.length - 1], 'drawbar_organ');
+assert.equal(savedPreferences.midiInstrument, 'drawbar_organ');
+
+document.dispatchDocumentEvent({
+	target: document.getElementById('workbenchContextInstrumentToggle'),
+	type: 'click'
+});
+assert.equal(document.getElementById('workbenchInstrumentMenu').hidden, false);
+assert.equal(document.getElementById('workbenchContextInstrumentToggle').getAttribute('aria-expanded'), 'true');
+document.dispatchDocumentEvent({
+	target: document.getElementById('workbenchContextInstrumentToggle'),
+	type: 'click'
+});
+assert.equal(document.getElementById('workbenchInstrumentMenu').hidden, true);
+assert.equal(document.getElementById('workbenchContextInstrumentToggle').getAttribute('aria-expanded'), 'false');
+
 console.log('Progression UI behavior tests passed');
 
 function createFakeUi(fakeDocument, renderedCounter) {
@@ -369,9 +402,21 @@ function createFakeDocument() {
 			return elements.sostenidos.checked ? elements.sostenidos : elements.bemoles;
 		}
 
-		if (selector === '.progressionControls') {
-			return elements.progressionControls;
-		}
+	if (selector === '.progressionControls') {
+		return elements.progressionControls;
+	}
+
+	if (selector === '.workbenchContext') {
+		return elements.workbenchContext;
+	}
+
+	if (selector === '.workbenchContextKey') {
+		return elements.workbenchContextKeyToggle;
+	}
+
+	if (selector === '.workbenchContextInstrument') {
+		return elements.workbenchContextInstrumentToggle;
+	}
 
 		if (selector.charAt(0) === '#' && selector.indexOf(' ') === -1) {
 			return elements[selector.slice(1)] || null;
@@ -397,6 +442,12 @@ function createFakeDocument() {
 	addElement('herramientasTeoricas');
 	addElement('constructorProgresiones');
 	addElement('progressionControls');
+	addElement('workbenchContext');
+	addElement('workbenchContextKeyToggle');
+	addElement('workbenchContextInstrumentToggle');
+	addElement('workbenchInstrumentMenu').hidden = true;
+	addElement('toggleWorkbenchInstrumentMenu');
+	addElement('toggleCircleOfFifthsFromContext');
 	addElement('toggleTheoryControls');
 	addElement('toggleScaleTheoryDetails');
 	addElement('undoChange');

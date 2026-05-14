@@ -10827,7 +10827,7 @@
 	function renderHeader() {
 		return '<div class="workbenchHeader">' +
 			'<div class="workbenchTitleGroup"><h2></h2><p class="workbenchKicker"></p></div>' +
-			'<div class="workbenchContextGroup"><button id="toggleCircleOfFifthsFromContext" class="workbenchCircleToggle" type="button" title="" aria-label="" aria-controls="circleOfFifthsPopover" aria-expanded="false" hidden><span class="material-icons" aria-hidden="true">donut_large</span></button><p class="workbenchContext" aria-live="polite"><span class="workbenchContextKey"></span><span class="workbenchContextInstrument"></span></p><button id="toggleWorkbenchInstrumentMenu" class="workbenchInstrumentToggle" type="button" title="" aria-label="" aria-controls="workbenchInstrumentMenu" aria-expanded="false"><span class="material-icons" aria-hidden="true">expand_more</span></button><div id="workbenchInstrumentMenu" class="workbenchInstrumentMenu" hidden></div></div>' +
+			'<div class="workbenchContextGroup"><button id="toggleCircleOfFifthsFromContext" class="workbenchCircleToggle" type="button" title="" aria-label="" aria-controls="circleOfFifthsPopover" aria-expanded="false" hidden><span class="material-icons" aria-hidden="true">donut_large</span></button><p class="workbenchContext" aria-live="polite"><span id="workbenchContextKeyToggle" class="workbenchContextKey" role="button" tabindex="0" aria-controls="circleOfFifthsPopover" aria-expanded="false"></span><span id="workbenchContextInstrumentToggle" class="workbenchContextInstrument" role="button" tabindex="0" aria-controls="workbenchInstrumentMenu" aria-expanded="false"></span></p><button id="toggleWorkbenchInstrumentMenu" class="workbenchInstrumentToggle" type="button" title="" aria-label="" aria-controls="workbenchInstrumentMenu" aria-expanded="false"><span class="material-icons" aria-hidden="true">expand_more</span></button><div id="workbenchInstrumentMenu" class="workbenchInstrumentMenu" hidden></div></div>' +
 			'</div>';
 	}
 
@@ -11279,8 +11279,12 @@
 		setAttribute(i18n, '#toggleCircleOfFifths', 'aria-label', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'aria-label', 'circle.open');
+		setAttribute(i18n, '#workbenchContextKeyToggle', 'title', 'circle.open');
+		setAttribute(i18n, '#workbenchContextKeyToggle', 'aria-label', 'circle.open');
 		setAttribute(i18n, '#toggleWorkbenchInstrumentMenu', 'title', 'progression.changeInstrument');
 		setAttribute(i18n, '#toggleWorkbenchInstrumentMenu', 'aria-label', 'progression.changeInstrument');
+		setAttribute(i18n, '#workbenchContextInstrumentToggle', 'title', 'progression.changeInstrument');
+		setAttribute(i18n, '#workbenchContextInstrumentToggle', 'aria-label', 'progression.changeInstrument');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'aria-label', 'circle.open');
 		setAttribute(i18n, '#closeCircleOfFifths', 'title', 'circle.close');
@@ -11347,6 +11351,9 @@
 
 	function applyProgressionLabels(i18n) {
 		ensureProgressionWorkbench();
+		if (!i18n) {
+			return;
+		}
 		setText(i18n, 'span[data-i18n="progression.time"]', 'progression.time');
 		setText(i18n, 'span[data-i18n="progression.bars"]', 'progression.bars');
 		setText(i18n, 'span[data-i18n="progression.meter"]', 'progression.meter');
@@ -11370,8 +11377,12 @@
 		setText(i18n, 'option[data-i18n="progression.style.classic"]', 'progression.style.classic');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'aria-label', 'circle.open');
+		setAttribute(i18n, '#workbenchContextKeyToggle', 'title', 'circle.open');
+		setAttribute(i18n, '#workbenchContextKeyToggle', 'aria-label', 'circle.open');
 		setAttribute(i18n, '#toggleWorkbenchInstrumentMenu', 'title', 'progression.changeInstrument');
 		setAttribute(i18n, '#toggleWorkbenchInstrumentMenu', 'aria-label', 'progression.changeInstrument');
+		setAttribute(i18n, '#workbenchContextInstrumentToggle', 'title', 'progression.changeInstrument');
+		setAttribute(i18n, '#workbenchContextInstrumentToggle', 'aria-label', 'progression.changeInstrument');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'aria-label', 'circle.open');
 		setText(i18n, '.transportButton--generate span[data-i18n="progression.generate"]', 'progression.generate');
@@ -13228,7 +13239,8 @@
 			on(global.document, 'click', function (event) {
 				var trigger = closest(event.target, '#toggleCircleOfFifths') ||
 					closest(event.target, '#toggleCircleOfFifthsFromContext') ||
-					closest(event.target, '#toggleCircleOfFifthsFromForm');
+					closest(event.target, '#toggleCircleOfFifthsFromForm') ||
+					closest(event.target, '#workbenchContextKeyToggle');
 
 				if (trigger) {
 					toggleCircleOfFifthsPopover(trigger);
@@ -13254,7 +13266,8 @@
 
 		function bindWorkbenchInstrumentMenu() {
 			on(global.document, 'click', function (event) {
-				var toggle = closest(event.target, '#toggleWorkbenchInstrumentMenu');
+				var toggle = closest(event.target, '#toggleWorkbenchInstrumentMenu') ||
+					closest(event.target, '#workbenchContextInstrumentToggle');
 				var item = closest(event.target, '.workbenchInstrumentMenuItem');
 
 				if (toggle) {
@@ -13474,6 +13487,7 @@
 			updateCircleToggleExpanded(query('#toggleCircleOfFifths'), expanded);
 			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromContext'), expanded);
 			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromForm'), expanded);
+			updateCircleToggleExpanded(query('#workbenchContextKeyToggle'), expanded);
 		}
 
 		function updateCircleToggleExpanded(button, expanded) {
@@ -13506,6 +13520,7 @@
 				toggle.setAttribute('aria-expanded', 'true');
 				setWorkbenchInstrumentToggleIcon('expand_less');
 			}
+			setWorkbenchInstrumentContextExpanded(true);
 		}
 
 		function closeWorkbenchInstrumentMenu() {
@@ -13520,6 +13535,7 @@
 				toggle.setAttribute('aria-expanded', 'false');
 				setWorkbenchInstrumentToggleIcon('expand_more');
 			}
+			setWorkbenchInstrumentContextExpanded(false);
 		}
 
 		function isWorkbenchInstrumentMenuOpen() {
@@ -13536,6 +13552,14 @@
 			}
 		}
 
+		function setWorkbenchInstrumentContextExpanded(expanded) {
+			var contextInstrument = query('#workbenchContextInstrumentToggle');
+
+			if (contextInstrument) {
+				contextInstrument.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+			}
+		}
+
 		function updateInstrumentSelection(instrumentId) {
 			var instrumentSelect = query('#instrumentoSonoro');
 
@@ -13546,7 +13570,7 @@
 			setValue(instrumentSelect, instrumentId);
 			setPlaybackInstrument(options, instrumentId);
 			saveFormPreferences(preferences);
-			renderReport();
+			renderInstrument(true);
 			recordHistorySnapshot();
 		}
 
