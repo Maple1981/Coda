@@ -10,6 +10,7 @@
 		var goStartButton = query('.transportButton--goStart');
 		var listenButton = query('.transportButton--listen');
 		var exportButton = query('.transportButton--export');
+		var transportDom = global.CodaProgressionTransportDom;
 		var playbackHeadIndex = 0;
 
 		if (!root || root.getAttribute('data-coda-progression-transport') === 'true') {
@@ -41,23 +42,23 @@
 		}
 
 		root.addEventListener('click', function (event) {
-			var chordMenuButton = closest(event.target, '.measureChordMenuButton');
-			var chordElement = closest(event.target, '.measureChord');
-			var splitButton = closest(event.target, '.measureSplitButton');
-			var measure = closest(event.target, '.measure');
+			var chordMenuButton = transportDom.closest(event.target, '.measureChordMenuButton');
+			var chordElement = transportDom.closest(event.target, '.measureChord');
+			var splitButton = transportDom.closest(event.target, '.measureSplitButton');
+			var measure = transportDom.closest(event.target, '.measure');
 			var clickedIndex;
 
-			if (!measure || closest(event.target, '.measureDragHandle')) {
+			if (!measure || transportDom.closest(event.target, '.measureDragHandle')) {
 				return;
 			}
 
-			clickedIndex = measureIndex(measure);
+			clickedIndex = transportDom.measureIndex(measure);
 			if (chordMenuButton) {
 				event.preventDefault();
 				if (typeof event.stopPropagation === 'function') {
 					event.stopPropagation();
 				}
-				global.CodaProgressionTransportMenu.open(options, chordMenuButton, clickedIndex, chordIndex(chordElement));
+				global.CodaProgressionTransportMenu.open(options, chordMenuButton, clickedIndex, transportDom.chordIndex(chordElement));
 				return;
 			}
 
@@ -65,7 +66,7 @@
 				event.preventDefault();
 				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
 				global.CodaProgressionTransportMenu.close();
-				global.CodaProgressionTransportActions.updateMeasureSplit(options, splitButton.getAttribute('data-progression-split-action'), clickedIndex, chordIndex(chordElement));
+				global.CodaProgressionTransportActions.updateMeasureSplit(options, splitButton.getAttribute('data-progression-split-action'), clickedIndex, transportDom.chordIndex(chordElement));
 				playbackHeadIndex = clickedIndex;
 				transportView.setPlaybackHead(playbackHeadIndex, false);
 				return;
@@ -125,13 +126,13 @@
 			});
 
 			global.document.addEventListener('click', function (event) {
-				var menuItem = closest(event.target, '.measureChordMenuItem');
-				var menu = closest(event.target, '.progressionChordMenu');
+				var menuItem = transportDom.closest(event.target, '.measureChordMenuItem');
+				var menu = transportDom.closest(event.target, '.progressionChordMenu');
 
 				if (menuItem) {
 					var replacement = global.CodaProgressionTransportMenu.replacementFromItem(menuItem);
-					var menuMeasureIndex = parseInt(menuItem.getAttribute('data-progression-index'), 10);
-					var menuChordIndex = parseInt(menuItem.getAttribute('data-measure-chord-index'), 10);
+					var menuMeasureIndex = transportDom.measureIndex(menuItem);
+					var menuChordIndex = transportDom.chordIndex(menuItem);
 
 					global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
 					global.CodaProgressionTransportActions.updateMeasureChordReplacement(options, menuMeasureIndex, menuChordIndex, replacement);
@@ -141,7 +142,7 @@
 					return;
 				}
 
-				if (!menu && !closest(event.target, '.measureChordMenuButton')) {
+				if (!menu && !transportDom.closest(event.target, '.measureChordMenuButton')) {
 					global.CodaProgressionTransportMenu.close();
 				}
 			});
@@ -166,24 +167,8 @@
 		};
 	}
 
-	function measureIndex(measure) {
-		var index = parseInt(measure.getAttribute('data-progression-index'), 10);
-
-		return isNaN(index) ? 0 : index;
-	}
-
-	function chordIndex(chordElement) {
-		var index = chordElement ? parseInt(chordElement.getAttribute('data-measure-chord-index'), 10) : 0;
-
-		return isNaN(index) ? 0 : index;
-	}
-
 	function query(selector) {
 		return global.document ? global.document.querySelector(selector) : null;
-	}
-
-	function closest(target, selector) {
-		return target && target.closest ? target.closest(selector) : null;
 	}
 
 	global.CodaProgressionTransport = {

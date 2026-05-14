@@ -2,6 +2,8 @@
 (function (global) {
 	'use strict';
 
+	var styleService = global.CodaProgressionStyle;
+
 	function normalize(progressionState) {
 		progressionState = progressionState || {};
 
@@ -14,7 +16,7 @@
 			counterpoint: numberOrDefault(progressionState.counterpoint, 20),
 			meter: progressionState.meter || '4/4',
 			modalInterchange: numberOrDefault(progressionState.modalInterchange, 25),
-			style: progressionState.style === 'classic' ? 'classic' : 'modern',
+			style: styleService.normalize(progressionState),
 			tensions: numberOrDefault(progressionState.tensions, 35),
 			voicing: progressionState.voicing === 'open' ? 'open' : 'closed',
 			voices: numberOrDefault(progressionState.voices, 4)

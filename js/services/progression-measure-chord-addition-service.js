@@ -5,6 +5,7 @@
 	var additionalChordService = global.CodaProgressionAdditionalChord;
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
 	var segmentBuilder = global.CodaProgressionSegmentBuilder;
+	var structureIndex = global.CodaProgressionStructureIndex;
 
 	function addMeasureChord(progression, measureIndex, options, dependencies) {
 		var measures = progression && progression.measures ? progression.measures.slice() : [];
@@ -58,42 +59,15 @@
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return structureIndex.extendObject(target, values);
 	}
 
 	function clampMeasureIndex(index, length) {
-		var numericIndex = parseInt(index, 10);
-
-		if (isNaN(numericIndex)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(length - 1, numericIndex));
+		return structureIndex.clampMeasureIndex(index, length);
 	}
 
 	function clampChordIndex(index, length) {
-		var numericIndex = parseInt(index, 10);
-
-		if (isNaN(numericIndex)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(Math.max(0, length - 1), numericIndex));
+		return structureIndex.clampChordIndex(index, length);
 	}
 
 	global.CodaProgressionMeasureChordAddition = {

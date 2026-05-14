@@ -2,8 +2,10 @@
 (function (global) {
 	'use strict';
 
+	var styleService = global.CodaProgressionStyle;
+
 	function finalCadenceForPattern(pattern, progressionState, rng) {
-		if (isModernStyle(progressionState)) {
+		if (styleService.isModern(progressionState)) {
 			return modernFinalCadence(pattern, rng);
 		}
 
@@ -73,10 +75,6 @@
 
 	function isAuthenticCadence(cadence) {
 		return cadence === 'authentic';
-	}
-
-	function isModernStyle(progressionState) {
-		return progressionState && progressionState.style === 'modern';
 	}
 
 	global.CodaProgressionCadencePlanner = {

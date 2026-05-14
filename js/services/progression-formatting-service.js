@@ -2,6 +2,8 @@
 (function (global) {
 	'use strict';
 
+	var chordQuality = global.CodaProgressionChordQuality;
+
 	function displayDegree(degree, inversionLabel, suspensionLabel) {
 		var name = degree || '';
 
@@ -26,53 +28,6 @@
 		return tensionLabel ? name + ' ' + tensionLabel : name;
 	}
 
-	function triadName(chord) {
-		var chordName = normalizeChordText(chord ? chord.nombre : '');
-		var rootMatch = /^([A-G](#|b|♭)?)/.exec(chordName);
-		var root = rootMatch ? rootMatch[1].replace('b', '♭') : chordName;
-		var suffix = chordQualitySuffix(chordName);
-
-		if (!root) {
-			return '';
-		}
-
-		if (suffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
-			return root + 'º';
-		}
-
-		if (suffix.indexOf('mmaj7') >= 0 || suffix.indexOf('mMaj7') >= 0 || suffix.indexOf('m7') >= 0 || suffix === 'm') {
-			return root + 'm';
-		}
-
-		if (suffix.indexOf('aug') >= 0 || suffix.indexOf('+') >= 0) {
-			return root + '+';
-		}
-
-		return root;
-	}
-
-	function isMinorQuality(chordName) {
-		var suffix = chordQualitySuffix(chordName);
-		var lowerSuffix = suffix.toLowerCase();
-
-		if (lowerSuffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
-			return true;
-		}
-
-		if (lowerSuffix.indexOf('maj') === 0) {
-			return false;
-		}
-
-		return lowerSuffix.charAt(0) === 'm';
-	}
-
-	function isDiminishedSeventhQuality(chordName) {
-		var suffix = chordQualitySuffix(chordName);
-		var lowerSuffix = suffix.toLowerCase();
-
-		return lowerSuffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0;
-	}
-
 	function formatDegreeForMeasure(degree, chord, useSeventh) {
 		if (useSeventh) {
 			return formatDegreeForChord(degree, chord ? chord.nombre : '');
@@ -82,19 +37,19 @@
 	}
 
 	function formatTriadDegreeForChord(degree, chordName) {
-		var cleanDegree = String(degree || '').replace('J', '').replace('M', '').replace('m', '');
-		var suffix = chordQualitySuffix(chordName);
+		var cleanDegree = cleanDegreeName(degree);
+		var suffix = chordQuality.chordQualitySuffix(chordName);
 		var transformedDegree;
 
 		if (!cleanDegree) {
 			return '';
 		}
 
-		if (suffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
-			return cleanDegree.toLowerCase() + 'º';
+		if (chordQuality.isDiminishedSeventhQuality(chordName)) {
+			return cleanDegree.toLowerCase() + '\u00ba';
 		}
 
-		if (suffix.indexOf('mmaj7') >= 0 || suffix.indexOf('mMaj7') >= 0 || suffix.indexOf('m7') >= 0 || suffix === 'm') {
+		if (chordQuality.isMinorSuffix(suffix)) {
 			transformedDegree = cleanDegree.toLowerCase();
 		} else {
 			transformedDegree = cleanDegree.toUpperCase();
@@ -108,10 +63,10 @@
 	}
 
 	function formatDegreeForChord(degree, chordName) {
-		var transformedDegree = '';
-		var cleanDegree = String(degree || '').replace('J', '').replace('M', '').replace('m', '');
-		var normalizedChordName = normalizeChordText(chordName);
-		var chordQuality = chordQualitySuffix(normalizedChordName);
+		var cleanDegree = cleanDegreeName(degree);
+		var normalizedChordName = chordQuality.normalizeChordText(chordName);
+		var suffix = chordQuality.chordQualitySuffix(normalizedChordName);
+		var transformedDegree;
 
 		if (!cleanDegree) {
 			return '';
@@ -127,7 +82,7 @@
 			transformedDegree = cleanDegree.toUpperCase();
 		}
 
-		transformedDegree += chordQuality;
+		transformedDegree += suffix;
 
 		if (transformedDegree.indexOf('m7') >= 0 && transformedDegree.indexOf('dim7') === -1) {
 			transformedDegree = transformedDegree.replace('m', '');
@@ -136,27 +91,19 @@
 		return transformedDegree;
 	}
 
-	function chordQualitySuffix(chordName) {
-		return normalizeChordText(chordName)
-			.replace(/^[A-G](#|b|♭)?/, '')
-			.replace(/b5/g, '♭5');
-	}
-
-	function normalizeChordText(value) {
-		return String(value || '')
-			.replace(/Ã¢â„¢Â­|â™­/g, '♭')
-			.replace(/Ã‚Âº|Âº/g, 'º');
+	function cleanDegreeName(degree) {
+		return String(degree || '').replace('J', '').replace('M', '').replace('m', '');
 	}
 
 	global.CodaProgressionFormatting = {
-		chordQualitySuffix: chordQualitySuffix,
+		chordQualitySuffix: chordQuality.chordQualitySuffix,
 		displayDegree: displayDegree,
 		displayName: displayName,
 		formatDegreeForChord: formatDegreeForChord,
 		formatDegreeForMeasure: formatDegreeForMeasure,
 		formatTriadDegreeForChord: formatTriadDegreeForChord,
-		isDiminishedSeventhQuality: isDiminishedSeventhQuality,
-		isMinorQuality: isMinorQuality,
-		triadName: triadName
+		isDiminishedSeventhQuality: chordQuality.isDiminishedSeventhQuality,
+		isMinorQuality: chordQuality.isMinorQuality,
+		triadName: chordQuality.triadName
 	};
 })(window);

@@ -4,6 +4,7 @@
 
 	var chordPlanService = global.CodaProgressionChordPlan;
 	var formattingService = global.CodaProgressionFormatting;
+	var tonalFunctionService = global.CodaProgressionTonalFunction;
 	var voiceLeadingService = global.CodaProgressionVoiceLeading;
 
 	function build(resolvedDegrees, progressionState, secondsPerBeat, options) {
@@ -55,17 +56,7 @@
 	}
 
 	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
-		var functions;
-		var tonalFunction;
-
-		if (!scaleDefinition || scaleDefinition.tonal !== 'true' || !scaleDefinition.funciones || degreeIndex < 0) {
-			return '';
-		}
-
-		functions = scaleDefinition.funciones.split('-');
-		tonalFunction = functions[degreeIndex] || '';
-
-		return tonalFunction === '—' || tonalFunction === 'â€”' ? '' : tonalFunction;
+		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
 	}
 
 	global.CodaProgressionMeasureBuilder = {

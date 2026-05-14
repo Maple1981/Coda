@@ -16,6 +16,10 @@ function runScript(relativePath) {
 	vm.runInContext(source, context, { filename: relativePath });
 }
 
+runScript('js/services/progression-metronome-schedule-service.js');
+runScript('js/services/progression-playback-note-event-service.js');
+runScript('js/services/progression-playback-timing-service.js');
+runScript('js/services/progression-playback-event-builder-service.js');
 runScript('js/services/progression-playback-schedule-service.js');
 runScript('js/services/progression-event-player-service.js');
 runScript('js/services/progression-playback-callbacks-service.js');

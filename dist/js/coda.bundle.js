@@ -2177,10 +2177,38 @@
 
 ;
 
+/* Source: js/services/progression-style-service.js */
+// Normalized style checks for progression generation rules.
+(function (global) {
+	'use strict';
+
+	function normalize(progressionState) {
+		return progressionState && progressionState.style === 'classic' ? 'classic' : 'modern';
+	}
+
+	function isModern(progressionState) {
+		return normalize(progressionState) === 'modern';
+	}
+
+	function isClassic(progressionState) {
+		return normalize(progressionState) === 'classic';
+	}
+
+	global.CodaProgressionStyle = {
+		isClassic: isClassic,
+		isModern: isModern,
+		normalize: normalize
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-state-normalizer-service.js */
 // Internal progression-state normalizer for application use cases.
 (function (global) {
 	'use strict';
+
+	var styleService = global.CodaProgressionStyle;
 
 	function normalize(progressionState) {
 		progressionState = progressionState || {};
@@ -2194,7 +2222,7 @@
 			counterpoint: numberOrDefault(progressionState.counterpoint, 20),
 			meter: progressionState.meter || '4/4',
 			modalInterchange: numberOrDefault(progressionState.modalInterchange, 25),
-			style: progressionState.style === 'classic' ? 'classic' : 'modern',
+			style: styleService.normalize(progressionState),
 			tensions: numberOrDefault(progressionState.tensions, 35),
 			voicing: progressionState.voicing === 'open' ? 'open' : 'closed',
 			voices: numberOrDefault(progressionState.voices, 4)
@@ -2420,6 +2448,87 @@
 		normalizePitchName: normalizePitchName,
 		noteIndex: noteIndex,
 		noteNameToMidi: noteNameToMidi
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-chord-quality-service.js */
+// Chord quality parsing helpers shared by progression services.
+(function (global) {
+	'use strict';
+
+	function triadName(chord) {
+		var chordName = normalizeChordText(chord && chord.nombre ? chord.nombre : chord);
+		var rootMatch = /^([A-G](#|b|\u266d)?)/.exec(chordName);
+		var root = rootMatch ? rootMatch[1].replace('b', '\u266d') : chordName;
+		var suffix = chordQualitySuffix(chordName);
+
+		if (!root) {
+			return '';
+		}
+
+		if (isDiminishedSeventhQuality(chordName)) {
+			return root + '\u00ba';
+		}
+
+		if (isMinorSuffix(suffix)) {
+			return root + 'm';
+		}
+
+		if (suffix.indexOf('aug') >= 0 || suffix.indexOf('+') >= 0) {
+			return root + '+';
+		}
+
+		return root;
+	}
+
+	function isMinorQuality(chordName) {
+		var suffix = chordQualitySuffix(chordName);
+		var lowerSuffix = suffix.toLowerCase();
+
+		if (isDiminishedSeventhQuality(chordName)) {
+			return true;
+		}
+
+		if (lowerSuffix.indexOf('maj') === 0) {
+			return false;
+		}
+
+		return lowerSuffix.charAt(0) === 'm';
+	}
+
+	function isDiminishedSeventhQuality(chordName) {
+		var suffix = chordQualitySuffix(chordName);
+		var lowerSuffix = suffix.toLowerCase();
+
+		return lowerSuffix.indexOf('dim') >= 0 || suffix.indexOf('\u00ba') >= 0 || suffix.indexOf('7\u266d5') >= 0;
+	}
+
+	function chordQualitySuffix(chordName) {
+		return normalizeChordText(chordName)
+			.replace(/^[A-G](#|b|\u266d)?/, '')
+			.replace(/b5/g, '\u266d5');
+	}
+
+	function normalizeChordText(value) {
+		return String(value || '')
+			.replace(/\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u017e\u00c2\u00a2\u00c3\u201a\u00c2\u00ad|\u00c3\u00a2\u00e2\u201e\u00a2\u00c2\u00ad/g, '\u266d')
+			.replace(/\u00e2\u2122\u00ad/g, '\u266d')
+			.replace(/\u00c3\u0192\u00e2\u20ac\u0161\u00c3\u201a\u00c2\u00ba|\u00c3\u201a\u00c2\u00ba|\u00c2\u00ba/g, '\u00ba');
+	}
+
+	function isMinorSuffix(suffix) {
+		return suffix.indexOf('mmaj7') >= 0 || suffix.indexOf('mMaj7') >= 0 || suffix.indexOf('m7') >= 0 || suffix === 'm';
+	}
+
+	global.CodaProgressionChordQuality = {
+		chordQualitySuffix: chordQualitySuffix,
+		isDiminishedSeventhQuality: isDiminishedSeventhQuality,
+		isMinorQuality: isMinorQuality,
+		isMinorSuffix: isMinorSuffix,
+		normalizeChordText: normalizeChordText,
+		triadName: triadName
 	};
 })(window);
 
@@ -2659,124 +2768,12 @@
 
 ;
 
-/* Source: js/services/progression-voicing-service.js */
-// Servicio de disposición y conducción de voces para progresiones armónicas.
+/* Source: js/services/progression-voicing-factor-service.js */
+// Chord factor roles, omissions and doublings for voicing construction.
 (function (global) {
 	'use strict';
 
-	var pitchService = global.CodaProgressionPitch;
-	var voiceLeadingScoreService = global.CodaProgressionVoiceLeadingScore;
-	var voicingDispositionService = global.CodaProgressionVoicingDisposition;
-
-	function chooseVoicing(options) {
-		var labels = options.kind === 'seventh' ? ['', '6/5', '4/3', '4/2'] : ['', '6', '6/4'];
-		var maxInversions = Math.min(options.baseNotes.length, labels.length);
-		var bestVoicing = null;
-		var bestScore = Infinity;
-		var forcedInversionIndex = options.forceInversionIndex != null ? clampInversionIndex(options.forceInversionIndex, maxInversions) : null;
-		var disposition = normalizeVoicingDisposition(options.voicing);
-
-		if (forcedInversionIndex != null) {
-			bestVoicing = createVoicing({
-				baseNotes: options.baseNotes,
-				chordName: options.chordName,
-				extraNotes: options.extraNotes,
-				initialMidiNote: options.initialMidiNote,
-				inversionIndex: forcedInversionIndex,
-				inversionLabel: labels[forcedInversionIndex],
-				kind: options.kind,
-				voices: options.voices
-			});
-			if (options.previousPlan) {
-				bestVoicing = fitVoicingToPrevious(bestVoicing, options.previousPlan);
-			}
-
-			return voicingDispositionService.chooseCandidate(bestVoicing, options.previousPlan, disposition);
-		}
-
-		for (var i = 0; i < maxInversions; i++) {
-			var voicing = createVoicing({
-				baseNotes: options.baseNotes,
-				chordName: options.chordName,
-				extraNotes: options.extraNotes,
-				initialMidiNote: options.initialMidiNote,
-				inversionIndex: i,
-				inversionLabel: labels[i],
-				kind: options.kind,
-				voices: options.voices
-			});
-			if (options.previousPlan) {
-				voicing = fitVoicingToPrevious(voicing, options.previousPlan);
-			}
-			voicing = voicingDispositionService.chooseCandidate(voicing, options.previousPlan, disposition);
-			var score = voicingScore(voicing, options.previousPlan, disposition);
-
-			if (score < bestScore) {
-				bestScore = score;
-				bestVoicing = voicing;
-			}
-		}
-
-		return bestVoicing || voicingDispositionService.chooseCandidate(createVoicing({
-			baseNotes: options.baseNotes,
-			chordName: options.chordName,
-			extraNotes: options.extraNotes,
-			initialMidiNote: options.initialMidiNote,
-			inversionIndex: 0,
-			inversionLabel: '',
-			kind: options.kind,
-			voices: options.voices
-	}), options.previousPlan, disposition);
-	}
-
-	function voicingScore(voicing, previousPlan, disposition) {
-		return voicingDispositionService.score(voicing, previousPlan, disposition);
-	}
-
-	function createVoicing(options) {
-		var voiceCount = Math.max(1, Math.min(numberOrDefault(options.voices, 4), 6));
-		var preparedBase = prepareBaseNotesForVoiceCount(options.baseNotes, options.kind, voiceCount, options.chordName);
-		var baseNotes = rotate(preparedBase.notes, options.inversionIndex);
-		var notes = baseNotes.slice();
-		var factorRoles = rotate(preparedBase.roles, options.inversionIndex);
-		var roles = factorRoles.slice();
-		var duplicateIndex = 0;
-		var duplicatePreference = ['root', 'third', 'fifth'];
-		var midiNotes;
-		var voiceNotes = [];
-
-		for (var i = 0; i < options.extraNotes.length && notes.length < voiceCount; i++) {
-			notes.push(options.extraNotes[i]);
-			roles.push('tension');
-		}
-
-		while (notes.length < voiceCount && notes.length > 0) {
-			var duplicate = duplicateFactor(options.baseNotes, duplicatePreference[duplicateIndex % duplicatePreference.length], options.kind);
-			notes.push(duplicate.note);
-			roles.push(duplicate.role + '-doubling');
-			duplicateIndex += 1;
-		}
-
-		notes = notes.slice(0, voiceCount);
-		roles = roles.slice(0, voiceCount);
-		midiNotes = notesToAscendingMidi(notes, options.initialMidiNote);
-
-		for (var j = 0; j < notes.length; j++) {
-			voiceNotes.push({
-				midiNote: midiNotes[j],
-				note: notes[j],
-				role: roles[j]
-			});
-		}
-
-		return {
-			inversionIndex: options.inversionIndex,
-			inversionLabel: options.inversionLabel,
-			midiNotes: midiNotes,
-			notes: notes,
-			voiceNotes: voiceNotes
-		};
-	}
+	var chordQuality = global.CodaProgressionChordQuality;
 
 	function prepareBaseNotesForVoiceCount(baseNotes, kind, voiceCount, chordName) {
 		var roles = factorRolesForKind(kind);
@@ -2791,7 +2788,7 @@
 			};
 		}
 
-		allowedRoles = isDiminishedSeventhQuality(chordName) ?
+		allowedRoles = chordQuality.isDiminishedSeventhQuality(chordName) ?
 			{ fifth: true, root: true, third: true } :
 			{ root: true, seventh: true, third: true };
 
@@ -2808,14 +2805,72 @@
 		};
 	}
 
-	function fitVoicingToPrevious(voicing, previousPlan) {
+	function factorRolesForKind(kind) {
+		return kind === 'seventh' ? ['root', 'third', 'fifth', 'seventh'] : ['root', 'third', 'fifth'];
+	}
+
+	function duplicateFactor(baseNotes, role, kind) {
+		var roleIndex = {
+			fifth: 2,
+			root: 0,
+			seventh: kind === 'seventh' ? 3 : 0,
+			third: 1
+		}[role];
+
+		return {
+			note: baseNotes[Math.min(roleIndex, baseNotes.length - 1)] || baseNotes[0],
+			role: role
+		};
+	}
+
+	global.CodaProgressionVoicingFactors = {
+		duplicateFactor: duplicateFactor,
+		factorRolesForKind: factorRolesForKind,
+		prepareBaseNotesForVoiceCount: prepareBaseNotesForVoiceCount
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-voicing-midi-service.js */
+// MIDI register helpers for progression voicing construction.
+(function (global) {
+	'use strict';
+
+	var pitchService = global.CodaProgressionPitch;
+
+	function notesToAscendingMidi(notes, initialMidiNote) {
+		var result = [];
+		var previousNote = null;
+
+		for (var i = 0; i < notes.length; i++) {
+			var midiNote = pitchService.noteNameToMidi(notes[i], initialMidiNote);
+
+			if (midiNote == null) {
+				continue;
+			}
+
+			midiNote -= 12;
+
+			while (previousNote != null && midiNote <= previousNote) {
+				midiNote += 12;
+			}
+
+			result.push(midiNote);
+			previousNote = midiNote;
+		}
+
+		return result;
+	}
+
+	function fitToPrevious(voicing, previousPlan) {
 		var fittedMidiNotes = [];
 		var fittedVoiceNotes = [];
 		var previousMidiNotes = previousPlan.midiNotes || [];
 
 		for (var i = 0; i < voicing.midiNotes.length; i++) {
 			var referenceNote = previousMidiNotes[Math.min(i, previousMidiNotes.length - 1)];
-			var midiNote = referenceNote != null ? nearestMidiTo(referenceNote, voicing.midiNotes[i]) : voicing.midiNotes[i];
+			var midiNote = referenceNote != null ? pitchService.nearestMidiTo(referenceNote, voicing.midiNotes[i]) : voicing.midiNotes[i];
 
 			if (i > 0) {
 				while (midiNote <= fittedMidiNotes[i - 1]) {
@@ -2835,6 +2890,219 @@
 		});
 	}
 
+	function clampInversionIndex(value, maxInversions) {
+		var numericValue = parseInt(value, 10);
+
+		if (isNaN(numericValue)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(maxInversions - 1, numericValue));
+	}
+
+	function extendObject(source, values) {
+		var result = {};
+
+		for (var key in source) {
+			if (Object.prototype.hasOwnProperty.call(source, key)) {
+				result[key] = source[key];
+			}
+		}
+
+		for (var valueKey in values) {
+			if (Object.prototype.hasOwnProperty.call(values, valueKey)) {
+				result[valueKey] = values[valueKey];
+			}
+		}
+
+		return result;
+	}
+
+	global.CodaProgressionVoicingMidi = {
+		clampInversionIndex: clampInversionIndex,
+		fitToPrevious: fitToPrevious,
+		notesToAscendingMidi: notesToAscendingMidi
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-voicing-factory-service.js */
+// Builds chord voicing candidates before disposition and voice-leading scoring.
+(function (global) {
+	'use strict';
+
+	var voicingFactors = global.CodaProgressionVoicingFactors;
+	var voicingMidi = global.CodaProgressionVoicingMidi;
+
+	function create(options) {
+		var voiceCount = Math.max(1, Math.min(numberOrDefault(options.voices, 4), 6));
+		var preparedBase = voicingFactors.prepareBaseNotesForVoiceCount(options.baseNotes, options.kind, voiceCount, options.chordName);
+		var baseNotes = rotate(preparedBase.notes, options.inversionIndex);
+		var notes = baseNotes.slice();
+		var factorRoles = rotate(preparedBase.roles, options.inversionIndex);
+		var roles = factorRoles.slice();
+		var duplicateIndex = 0;
+		var duplicatePreference = ['root', 'third', 'fifth'];
+		var midiNotes;
+		var voiceNotes = [];
+
+		for (var i = 0; i < options.extraNotes.length && notes.length < voiceCount; i++) {
+			notes.push(options.extraNotes[i]);
+			roles.push('tension');
+		}
+
+		while (notes.length < voiceCount && notes.length > 0) {
+			var duplicate = voicingFactors.duplicateFactor(options.baseNotes, duplicatePreference[duplicateIndex % duplicatePreference.length], options.kind);
+			notes.push(duplicate.note);
+			roles.push(duplicate.role + '-doubling');
+			duplicateIndex += 1;
+		}
+
+		notes = notes.slice(0, voiceCount);
+		roles = roles.slice(0, voiceCount);
+		midiNotes = voicingMidi.notesToAscendingMidi(notes, options.initialMidiNote);
+
+		for (var j = 0; j < notes.length; j++) {
+			voiceNotes.push({
+				midiNote: midiNotes[j],
+				note: notes[j],
+				role: roles[j]
+			});
+		}
+
+		return {
+			inversionIndex: options.inversionIndex,
+			inversionLabel: options.inversionLabel,
+			midiNotes: midiNotes,
+			notes: notes,
+			voiceNotes: voiceNotes
+		};
+	}
+
+	function fitToPrevious(voicing, previousPlan) {
+		return voicingMidi.fitToPrevious(voicing, previousPlan);
+	}
+
+	function clampInversionIndex(value, maxInversions) {
+		return voicingMidi.clampInversionIndex(value, maxInversions);
+	}
+
+	function rotate(values, startIndex) {
+		var result = [];
+
+		for (var i = 0; i < values.length; i++) {
+			result.push(values[(startIndex + i) % values.length]);
+		}
+
+		return result;
+	}
+
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
+	global.CodaProgressionVoicingFactory = {
+		clampInversionIndex: clampInversionIndex,
+		create: create,
+		fitToPrevious: fitToPrevious
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-voicing-selection-service.js */
+// Selects the best voicing inversion and disposition for a chord.
+(function (global) {
+	'use strict';
+
+	var voicingDispositionService = global.CodaProgressionVoicingDisposition;
+	var voicingFactory = global.CodaProgressionVoicingFactory;
+
+	function chooseVoicing(options) {
+		var labels = options.kind === 'seventh' ? ['', '6/5', '4/3', '4/2'] : ['', '6', '6/4'];
+		var maxInversions = Math.min(options.baseNotes.length, labels.length);
+		var bestVoicing = null;
+		var bestScore = Infinity;
+		var forcedInversionIndex = options.forceInversionIndex != null ? voicingFactory.clampInversionIndex(options.forceInversionIndex, maxInversions) : null;
+		var disposition = normalizeVoicingDisposition(options.voicing);
+
+		if (forcedInversionIndex != null) {
+			bestVoicing = buildVoicingCandidate(options, forcedInversionIndex, labels[forcedInversionIndex], disposition);
+
+			return voicingDispositionService.chooseCandidate(bestVoicing, options.previousPlan, disposition);
+		}
+
+		for (var i = 0; i < maxInversions; i++) {
+			var voicing = buildVoicingCandidate(options, i, labels[i], disposition);
+			var score = voicingDispositionService.score(voicing, options.previousPlan, disposition);
+
+			if (score < bestScore) {
+				bestScore = score;
+				bestVoicing = voicing;
+			}
+		}
+
+		return bestVoicing || voicingDispositionService.chooseCandidate(voicingFactory.create({
+			baseNotes: options.baseNotes,
+			chordName: options.chordName,
+			extraNotes: options.extraNotes,
+			initialMidiNote: options.initialMidiNote,
+			inversionIndex: 0,
+			inversionLabel: '',
+			kind: options.kind,
+			voices: options.voices
+		}), options.previousPlan, disposition);
+	}
+
+	function buildVoicingCandidate(options, inversionIndex, inversionLabel, disposition) {
+		var voicing = voicingFactory.create({
+			baseNotes: options.baseNotes,
+			chordName: options.chordName,
+			extraNotes: options.extraNotes,
+			initialMidiNote: options.initialMidiNote,
+			inversionIndex: inversionIndex,
+			inversionLabel: inversionLabel,
+			kind: options.kind,
+			voices: options.voices
+		});
+
+		if (options.previousPlan) {
+			voicing = voicingFactory.fitToPrevious(voicing, options.previousPlan);
+		}
+
+		return voicingDispositionService.chooseCandidate(voicing, options.previousPlan, disposition);
+	}
+
+	function normalizeVoicingDisposition(value) {
+		return value === 'open' ? 'open' : 'closed';
+	}
+
+	global.CodaProgressionVoicingSelection = {
+		buildVoicingCandidate: buildVoicingCandidate,
+		chooseVoicing: chooseVoicing,
+		normalizeVoicingDisposition: normalizeVoicingDisposition
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-voicing-service.js */
+// Fachada de voicing y conducción de voces para progresiones armónicas.
+(function (global) {
+	'use strict';
+
+	var pitchService = global.CodaProgressionPitch;
+	var voiceLeadingScoreService = global.CodaProgressionVoiceLeadingScore;
+	var voicingDispositionService = global.CodaProgressionVoicingDisposition;
+	var voicingSelectionService = global.CodaProgressionVoicingSelection;
+
+	function chooseVoicing(options) {
+		return voicingSelectionService.chooseVoicing(options);
+	}
+
 	function voiceLeadingTransitionScore(previousPlan, nextPlan) {
 		return voiceLeadingScoreService.voiceLeadingTransitionScore(previousPlan, nextPlan);
 	}
@@ -2849,30 +3117,6 @@
 
 	function firstVoicingScore(voicing) {
 		return voiceLeadingScoreService.firstVoicingScore(voicing);
-	}
-
-	function notesToAscendingMidi(notes, initialMidiNote) {
-		var result = [];
-		var previousNote = null;
-
-		for (var i = 0; i < notes.length; i++) {
-			var midiNote = noteNameToMidi(notes[i], initialMidiNote);
-
-			if (midiNote == null) {
-				continue;
-			}
-
-			midiNote -= 12;
-
-			while (previousNote != null && midiNote <= previousNote) {
-				midiNote += 12;
-			}
-
-			result.push(midiNote);
-			previousNote = midiNote;
-		}
-
-		return result;
 	}
 
 	function noteNameToMidi(noteName, initialMidiNote) {
@@ -2895,85 +3139,6 @@
 		return voicingDispositionService.upperVoiceSpan(midiNotes);
 	}
 
-	function rotate(values, startIndex) {
-		var result = [];
-
-		for (var i = 0; i < values.length; i++) {
-			result.push(values[(startIndex + i) % values.length]);
-		}
-
-		return result;
-	}
-
-	function factorRolesForKind(kind) {
-		return kind === 'seventh' ? ['root', 'third', 'fifth', 'seventh'] : ['root', 'third', 'fifth'];
-	}
-
-	function duplicateFactor(baseNotes, role, kind) {
-		var roleIndex = {
-			fifth: 2,
-			root: 0,
-			seventh: kind === 'seventh' ? 3 : 0,
-			third: 1
-		}[role];
-
-		return {
-			note: baseNotes[Math.min(roleIndex, baseNotes.length - 1)] || baseNotes[0],
-			role: role
-		};
-	}
-
-	function normalizeVoicingDisposition(value) {
-		return value === 'open' ? 'open' : 'closed';
-	}
-
-	function clampInversionIndex(value, maxInversions) {
-		var numericValue = parseInt(value, 10);
-
-		if (isNaN(numericValue)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(maxInversions - 1, numericValue));
-	}
-
-	function isDiminishedSeventhQuality(chordName) {
-		var suffix = chordQualitySuffix(chordName);
-		var lowerSuffix = suffix.toLowerCase();
-
-		return lowerSuffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0 || suffix.indexOf('7b5') >= 0;
-	}
-
-	function chordQualitySuffix(chordName) {
-		return String(chordName || '')
-			.replace(/^[A-G](#|b|♭)?/, '')
-			.replace(/b5/g, '♭5');
-	}
-
-	function extendObject(source, values) {
-		var result = {};
-
-		for (var key in source) {
-			if (Object.prototype.hasOwnProperty.call(source, key)) {
-				result[key] = source[key];
-			}
-		}
-
-		for (var valueKey in values) {
-			if (Object.prototype.hasOwnProperty.call(values, valueKey)) {
-				result[valueKey] = values[valueKey];
-			}
-		}
-
-		return result;
-	}
-
-	function numberOrDefault(value, fallback) {
-		var number = Number(value);
-
-		return isFinite(number) ? number : fallback;
-	}
-
 	global.CodaProgressionVoicing = {
 		chooseVoicing: chooseVoicing,
 		commonPitchNames: commonPitchNames,
@@ -2990,36 +3155,14 @@
 
 ;
 
-/* Source: js/services/progression-voice-leading-service.js */
-// Voice-leading annotations and pedal links between progression measures.
+/* Source: js/services/progression-pedal-link-service.js */
+// Pedal-note links between adjacent progression measures.
 (function (global) {
 	'use strict';
 
 	var voicingService = global.CodaProgressionVoicing;
 
-	function annotateMeasures(measures, progressionState) {
-		for (var i = 0; i < measures.length; i++) {
-			var previousMeasure = measures[i - 1] || null;
-			var nextMeasure = measures[i + 1] || null;
-
-			measures[i].pedalsIn = measures[i].pedalsIn || [];
-			measures[i].pedalsOut = measures[i].pedalsOut || [];
-			measures[i].voiceLeading = {
-				commonTones: previousMeasure ? commonVoiceLinks(previousMeasure, measures[i]).length : 0,
-				exteriorParallelPerfects: previousMeasure ? voicingService.countParallelPerfects(previousMeasure.midiNotes, measures[i].midiNotes, true) : 0,
-				parallelPerfects: previousMeasure ? voicingService.countParallelPerfects(previousMeasure.midiNotes, measures[i].midiNotes, false) : 0,
-				score: previousMeasure ? voicingService.voiceLeadingTransitionScore(previousMeasure, measures[i]) : voicingService.firstVoicingScore(measures[i])
-			};
-
-			if (nextMeasure) {
-				createPedalsBetween(measures[i], nextMeasure, progressionState);
-			}
-		}
-
-		return measures;
-	}
-
-	function createPedalsBetween(currentMeasure, nextMeasure, progressionState) {
+	function createBetween(currentMeasure, nextMeasure, progressionState) {
 		var links = commonVoiceLinks(currentMeasure, nextMeasure);
 		var maxPedals = numberOrDefault(progressionState.counterpoint, 0) >= 70 ? 2 : 1;
 		var pedalProbability = 0.16 +
@@ -3125,50 +3268,59 @@
 		return isFinite(number) ? number : fallback;
 	}
 
-	global.CodaProgressionVoiceLeading = {
-		annotateMeasures: annotateMeasures,
+	global.CodaProgressionPedalLinks = {
 		commonVoiceLinks: commonVoiceLinks,
+		createBetween: createBetween,
 		midiNotesFromVoiceNotes: midiNotesFromVoiceNotes
 	};
 })(window);
 
 ;
 
-/* Source: js/services/progression-measure-timeline-service.js */
-// Measure cloning, segmentation and timing utilities for progression editing.
+/* Source: js/services/progression-voice-leading-service.js */
+// Voice-leading annotations for progression measures.
 (function (global) {
 	'use strict';
 
-	function rebuildTimeline(progression, measures) {
-		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
-		var beatsPerBar = Number(progression.beatsPerBar) || 4;
-		var rebuiltMeasures = [];
+	var pedalLinkService = global.CodaProgressionPedalLinks;
+	var voicingService = global.CodaProgressionVoicing;
 
+	function annotateMeasures(measures, progressionState) {
 		for (var i = 0; i < measures.length; i++) {
-			var startBeat = i * beatsPerBar;
-			var durationBeats = Number(measures[i].durationBeats) || beatsPerBar;
-			var measure = cloneMeasure(measures[i]);
+			var previousMeasure = measures[i - 1] || null;
+			var nextMeasure = measures[i + 1] || null;
+			var commonLinks = previousMeasure ? pedalLinkService.commonVoiceLinks(previousMeasure, measures[i]) : [];
 
-			measure.bar = i + 1;
-			measure.startBeat = startBeat;
-			measure.endBeat = startBeat + durationBeats;
-			measure.durationBeats = durationBeats;
-			measure.durationSeconds = durationBeats * secondsPerBeat;
-			measure.startSeconds = startBeat * secondsPerBeat;
-			measure.endSeconds = measure.endBeat * secondsPerBeat;
-			if (measure.chords && measure.chords.length) {
-				measure.chords = retimeMeasureChords(measure, secondsPerBeat);
+			measures[i].pedalsIn = measures[i].pedalsIn || [];
+			measures[i].pedalsOut = measures[i].pedalsOut || [];
+			measures[i].voiceLeading = {
+				commonTones: commonLinks.length,
+				exteriorParallelPerfects: previousMeasure ? voicingService.countParallelPerfects(previousMeasure.midiNotes, measures[i].midiNotes, true) : 0,
+				parallelPerfects: previousMeasure ? voicingService.countParallelPerfects(previousMeasure.midiNotes, measures[i].midiNotes, false) : 0,
+				score: previousMeasure ? voicingService.voiceLeadingTransitionScore(previousMeasure, measures[i]) : voicingService.firstVoicingScore(measures[i])
+			};
+
+			if (nextMeasure) {
+				pedalLinkService.createBetween(measures[i], nextMeasure, progressionState);
 			}
-			rebuiltMeasures.push(measure);
 		}
 
-		return extendObject(progression, {
-			bars: rebuiltMeasures.length,
-			measures: rebuiltMeasures,
-			totalBeats: rebuiltMeasures.length * beatsPerBar,
-			totalSeconds: rebuiltMeasures.length * beatsPerBar * secondsPerBeat
-		});
+		return measures;
 	}
+
+	global.CodaProgressionVoiceLeading = {
+		annotateMeasures: annotateMeasures,
+		commonVoiceLinks: pedalLinkService.commonVoiceLinks,
+		midiNotesFromVoiceNotes: pedalLinkService.midiNotesFromVoiceNotes
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-measure-clone-service.js */
+// Shared cloning helpers for progression measures and measure segments.
+(function (global) {
+	'use strict';
 
 	function cloneMeasure(measure) {
 		var clone = {};
@@ -3188,77 +3340,6 @@
 		}
 
 		return clone;
-	}
-
-	function measureSegments(measure) {
-		if (measure && measure.chords && measure.chords.length) {
-			return measure.chords.map(cloneMeasure);
-		}
-
-		return measure ? [segmentFromMeasure(measure, {
-			chordIndex: 0,
-			durationBeats: Number(measure.durationBeats) || 4,
-			durationSeconds: Number(measure.durationSeconds) || 0,
-			startBeat: Number(measure.startBeat) || 0,
-			startSeconds: Number(measure.startSeconds) || 0
-		})] : [];
-	}
-
-	function measureWithSegments(measure, segments, progression) {
-		var rebuiltMeasure = cloneMeasure(measure);
-		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
-
-		if (!segments.length) {
-			return rebuiltMeasure;
-		}
-
-		rebuiltMeasure = copySegmentToMeasure(rebuiltMeasure, segments[0]);
-		if (segments.length === 1) {
-			delete rebuiltMeasure.chords;
-			return rebuiltMeasure;
-		}
-
-		rebuiltMeasure.chords = retimeMeasureChordList(rebuiltMeasure, segments, secondsPerBeat);
-
-		return rebuiltMeasure;
-	}
-
-	function segmentFromMeasure(measure, timing) {
-		var segment = cloneMeasure(measure);
-
-		delete segment.chords;
-		return extendObject(segment, {
-			chordIndex: timing.chordIndex,
-			durationBeats: timing.durationBeats,
-			durationSeconds: timing.durationSeconds,
-			endBeat: timing.startBeat + timing.durationBeats,
-			endSeconds: timing.startSeconds + timing.durationSeconds,
-			startBeat: timing.startBeat,
-			startSeconds: timing.startSeconds
-		});
-	}
-
-	function retimeMeasureChords(measure, secondsPerBeat) {
-		var chords = measure.chords || [];
-
-		return retimeMeasureChordList(measure, chords, secondsPerBeat);
-	}
-
-	function retimeMeasureChordList(measure, chords, secondsPerBeat) {
-		var durationBeats = (Number(measure.durationBeats) || 4) / Math.max(1, chords.length);
-		var result = [];
-
-		for (var i = 0; i < chords.length; i++) {
-			result.push(segmentFromMeasure(chords[i], {
-				chordIndex: i,
-				durationBeats: durationBeats,
-				durationSeconds: durationBeats * secondsPerBeat,
-				startBeat: (Number(measure.startBeat) || 0) + (durationBeats * i),
-				startSeconds: (Number(measure.startSeconds) || 0) + (durationBeats * secondsPerBeat * i)
-			}));
-		}
-
-		return result;
 	}
 
 	function copySegmentToMeasure(measure, segment) {
@@ -3315,6 +3396,166 @@
 		return result;
 	}
 
+	global.CodaProgressionMeasureClone = {
+		cloneMeasure: cloneMeasure,
+		copySegmentToMeasure: copySegmentToMeasure,
+		extendObject: extendObject
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-measure-segment-service.js */
+// Segment and retiming helpers for split progression measures.
+(function (global) {
+	'use strict';
+
+	var measureCloneService = global.CodaProgressionMeasureClone;
+
+	function measureSegments(measure) {
+		if (measure && measure.chords && measure.chords.length) {
+			return measure.chords.map(cloneMeasure);
+		}
+
+		return measure ? [segmentFromMeasure(measure, {
+			chordIndex: 0,
+			durationBeats: Number(measure.durationBeats) || 4,
+			durationSeconds: Number(measure.durationSeconds) || 0,
+			startBeat: Number(measure.startBeat) || 0,
+			startSeconds: Number(measure.startSeconds) || 0
+		})] : [];
+	}
+
+	function segmentFromMeasure(measure, timing) {
+		var segment = cloneMeasure(measure);
+
+		delete segment.chords;
+		return measureCloneService.extendObject(segment, {
+			chordIndex: timing.chordIndex,
+			durationBeats: timing.durationBeats,
+			durationSeconds: timing.durationSeconds,
+			endBeat: timing.startBeat + timing.durationBeats,
+			endSeconds: timing.startSeconds + timing.durationSeconds,
+			startBeat: timing.startBeat,
+			startSeconds: timing.startSeconds
+		});
+	}
+
+	function retimeMeasureChords(measure, secondsPerBeat) {
+		var chords = measure.chords || [];
+
+		return retimeMeasureChordList(measure, chords, secondsPerBeat);
+	}
+
+	function retimeMeasureChordList(measure, chords, secondsPerBeat) {
+		var durationBeats = (Number(measure.durationBeats) || 4) / Math.max(1, chords.length);
+		var result = [];
+
+		for (var i = 0; i < chords.length; i++) {
+			result.push(segmentFromMeasure(chords[i], {
+				chordIndex: i,
+				durationBeats: durationBeats,
+				durationSeconds: durationBeats * secondsPerBeat,
+				startBeat: (Number(measure.startBeat) || 0) + (durationBeats * i),
+				startSeconds: (Number(measure.startSeconds) || 0) + (durationBeats * secondsPerBeat * i)
+			}));
+		}
+
+		return result;
+	}
+
+	function cloneMeasure(measure) {
+		return measureCloneService.cloneMeasure(measure);
+	}
+
+	global.CodaProgressionMeasureSegments = {
+		measureSegments: measureSegments,
+		retimeMeasureChordList: retimeMeasureChordList,
+		retimeMeasureChords: retimeMeasureChords,
+		segmentFromMeasure: segmentFromMeasure
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-measure-timeline-service.js */
+// Measure timeline rebuild utilities for progression editing.
+(function (global) {
+	'use strict';
+
+	var measureCloneService = global.CodaProgressionMeasureClone;
+	var measureSegmentService = global.CodaProgressionMeasureSegments;
+
+	function rebuildTimeline(progression, measures) {
+		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
+		var beatsPerBar = Number(progression.beatsPerBar) || 4;
+		var rebuiltMeasures = [];
+
+		for (var i = 0; i < measures.length; i++) {
+			var startBeat = i * beatsPerBar;
+			var durationBeats = Number(measures[i].durationBeats) || beatsPerBar;
+			var measure = cloneMeasure(measures[i]);
+
+			measure.bar = i + 1;
+			measure.startBeat = startBeat;
+			measure.endBeat = startBeat + durationBeats;
+			measure.durationBeats = durationBeats;
+			measure.durationSeconds = durationBeats * secondsPerBeat;
+			measure.startSeconds = startBeat * secondsPerBeat;
+			measure.endSeconds = measure.endBeat * secondsPerBeat;
+			if (measure.chords && measure.chords.length) {
+				measure.chords = retimeMeasureChords(measure, secondsPerBeat);
+			}
+			rebuiltMeasures.push(measure);
+		}
+
+		return measureCloneService.extendObject(progression, {
+			bars: rebuiltMeasures.length,
+			measures: rebuiltMeasures,
+			totalBeats: rebuiltMeasures.length * beatsPerBar,
+			totalSeconds: rebuiltMeasures.length * beatsPerBar * secondsPerBeat
+		});
+	}
+
+	function cloneMeasure(measure) {
+		return measureCloneService.cloneMeasure(measure);
+	}
+
+	function measureSegments(measure) {
+		return measureSegmentService.measureSegments(measure);
+	}
+
+	function measureWithSegments(measure, segments, progression) {
+		var rebuiltMeasure = cloneMeasure(measure);
+		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
+
+		if (!segments.length) {
+			return rebuiltMeasure;
+		}
+
+		rebuiltMeasure = measureCloneService.copySegmentToMeasure(rebuiltMeasure, segments[0]);
+		if (segments.length === 1) {
+			delete rebuiltMeasure.chords;
+			return rebuiltMeasure;
+		}
+
+		rebuiltMeasure.chords = retimeMeasureChordList(rebuiltMeasure, segments, secondsPerBeat);
+
+		return rebuiltMeasure;
+	}
+
+	function segmentFromMeasure(measure, timing) {
+		return measureSegmentService.segmentFromMeasure(measure, timing);
+	}
+
+	function retimeMeasureChords(measure, secondsPerBeat) {
+		return measureSegmentService.retimeMeasureChords(measure, secondsPerBeat);
+	}
+
+	function retimeMeasureChordList(measure, chords, secondsPerBeat) {
+		return measureSegmentService.retimeMeasureChordList(measure, chords, secondsPerBeat);
+	}
+
 	global.CodaProgressionMeasureTimeline = {
 		cloneMeasure: cloneMeasure,
 		measureSegments: measureSegments,
@@ -3332,6 +3573,8 @@
 // Nomenclatura de acordes, grados e inversiones para progresiones.
 (function (global) {
 	'use strict';
+
+	var chordQuality = global.CodaProgressionChordQuality;
 
 	function displayDegree(degree, inversionLabel, suspensionLabel) {
 		var name = degree || '';
@@ -3357,53 +3600,6 @@
 		return tensionLabel ? name + ' ' + tensionLabel : name;
 	}
 
-	function triadName(chord) {
-		var chordName = normalizeChordText(chord ? chord.nombre : '');
-		var rootMatch = /^([A-G](#|b|♭)?)/.exec(chordName);
-		var root = rootMatch ? rootMatch[1].replace('b', '♭') : chordName;
-		var suffix = chordQualitySuffix(chordName);
-
-		if (!root) {
-			return '';
-		}
-
-		if (suffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
-			return root + 'º';
-		}
-
-		if (suffix.indexOf('mmaj7') >= 0 || suffix.indexOf('mMaj7') >= 0 || suffix.indexOf('m7') >= 0 || suffix === 'm') {
-			return root + 'm';
-		}
-
-		if (suffix.indexOf('aug') >= 0 || suffix.indexOf('+') >= 0) {
-			return root + '+';
-		}
-
-		return root;
-	}
-
-	function isMinorQuality(chordName) {
-		var suffix = chordQualitySuffix(chordName);
-		var lowerSuffix = suffix.toLowerCase();
-
-		if (lowerSuffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
-			return true;
-		}
-
-		if (lowerSuffix.indexOf('maj') === 0) {
-			return false;
-		}
-
-		return lowerSuffix.charAt(0) === 'm';
-	}
-
-	function isDiminishedSeventhQuality(chordName) {
-		var suffix = chordQualitySuffix(chordName);
-		var lowerSuffix = suffix.toLowerCase();
-
-		return lowerSuffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0;
-	}
-
 	function formatDegreeForMeasure(degree, chord, useSeventh) {
 		if (useSeventh) {
 			return formatDegreeForChord(degree, chord ? chord.nombre : '');
@@ -3413,19 +3609,19 @@
 	}
 
 	function formatTriadDegreeForChord(degree, chordName) {
-		var cleanDegree = String(degree || '').replace('J', '').replace('M', '').replace('m', '');
-		var suffix = chordQualitySuffix(chordName);
+		var cleanDegree = cleanDegreeName(degree);
+		var suffix = chordQuality.chordQualitySuffix(chordName);
 		var transformedDegree;
 
 		if (!cleanDegree) {
 			return '';
 		}
 
-		if (suffix.indexOf('dim') >= 0 || suffix.indexOf('º') >= 0 || suffix.indexOf('7♭5') >= 0) {
-			return cleanDegree.toLowerCase() + 'º';
+		if (chordQuality.isDiminishedSeventhQuality(chordName)) {
+			return cleanDegree.toLowerCase() + '\u00ba';
 		}
 
-		if (suffix.indexOf('mmaj7') >= 0 || suffix.indexOf('mMaj7') >= 0 || suffix.indexOf('m7') >= 0 || suffix === 'm') {
+		if (chordQuality.isMinorSuffix(suffix)) {
 			transformedDegree = cleanDegree.toLowerCase();
 		} else {
 			transformedDegree = cleanDegree.toUpperCase();
@@ -3439,10 +3635,10 @@
 	}
 
 	function formatDegreeForChord(degree, chordName) {
-		var transformedDegree = '';
-		var cleanDegree = String(degree || '').replace('J', '').replace('M', '').replace('m', '');
-		var normalizedChordName = normalizeChordText(chordName);
-		var chordQuality = chordQualitySuffix(normalizedChordName);
+		var cleanDegree = cleanDegreeName(degree);
+		var normalizedChordName = chordQuality.normalizeChordText(chordName);
+		var suffix = chordQuality.chordQualitySuffix(normalizedChordName);
+		var transformedDegree;
 
 		if (!cleanDegree) {
 			return '';
@@ -3458,7 +3654,7 @@
 			transformedDegree = cleanDegree.toUpperCase();
 		}
 
-		transformedDegree += chordQuality;
+		transformedDegree += suffix;
 
 		if (transformedDegree.indexOf('m7') >= 0 && transformedDegree.indexOf('dim7') === -1) {
 			transformedDegree = transformedDegree.replace('m', '');
@@ -3467,30 +3663,191 @@
 		return transformedDegree;
 	}
 
-	function chordQualitySuffix(chordName) {
-		return normalizeChordText(chordName)
-			.replace(/^[A-G](#|b|♭)?/, '')
-			.replace(/b5/g, '♭5');
-	}
-
-	function normalizeChordText(value) {
-		return String(value || '')
-			.replace(/Ã¢â„¢Â­|â™­/g, '♭')
-			.replace(/Ã‚Âº|Âº/g, 'º');
+	function cleanDegreeName(degree) {
+		return String(degree || '').replace('J', '').replace('M', '').replace('m', '');
 	}
 
 	global.CodaProgressionFormatting = {
-		chordQualitySuffix: chordQualitySuffix,
+		chordQualitySuffix: chordQuality.chordQualitySuffix,
 		displayDegree: displayDegree,
 		displayName: displayName,
 		formatDegreeForChord: formatDegreeForChord,
 		formatDegreeForMeasure: formatDegreeForMeasure,
 		formatTriadDegreeForChord: formatTriadDegreeForChord,
-		isDiminishedSeventhQuality: isDiminishedSeventhQuality,
-		isMinorQuality: isMinorQuality,
-		triadName: triadName
+		isDiminishedSeventhQuality: chordQuality.isDiminishedSeventhQuality,
+		isMinorQuality: chordQuality.isMinorQuality,
+		triadName: chordQuality.triadName
 	};
 })(window);
+
+;
+
+/* Source: js/services/progression-tonal-function-service.js */
+// Resolves tonal functions for progression degrees.
+(function (global) {
+	'use strict';
+
+	function forDegree(scaleDefinition, degreeIndex) {
+		var functions;
+		var tonalFunction;
+
+		if (!scaleDefinition || scaleDefinition.tonal !== 'true' || !scaleDefinition.funciones || degreeIndex < 0) {
+			return '';
+		}
+
+		functions = String(scaleDefinition.funciones).split('-');
+		tonalFunction = functions[degreeIndex] || '';
+
+		return isDashPlaceholder(tonalFunction) ? '' : tonalFunction;
+	}
+
+	function isDashPlaceholder(value) {
+		return value === '-' ||
+			value === '\u2014' ||
+			value === '\u00e2\u20ac\u201d' ||
+			value === '\u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d' ||
+			value === '\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\u00c2\u009d';
+	}
+
+	global.CodaProgressionTonalFunction = {
+		forDegree: forDegree
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-measure-context-service.js */
+// Shared measure context lookups for progression chord editing.
+(function (global) {
+	'use strict';
+
+	var formattingService = global.CodaProgressionFormatting;
+
+	function measurePlan(measure) {
+		if (!measure) {
+			return null;
+		}
+
+		return {
+			midiNotes: measure.midiNotes || [],
+			notes: measure.notes || [],
+			voiceNotes: measure.voiceNotes || []
+		};
+	}
+
+	function previousSegmentPlan(progression, bar, chordIndex) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var measureIndex = Math.max(0, (Number(bar) || 1) - 1);
+		var currentMeasure = measures[measureIndex];
+		var previousMeasure;
+
+		if (chordIndex > 0 && currentMeasure && currentMeasure.chords && currentMeasure.chords[chordIndex - 1]) {
+			return measurePlan(currentMeasure.chords[chordIndex - 1]);
+		}
+
+		previousMeasure = measures[measureIndex - 1];
+		if (!previousMeasure) {
+			return null;
+		}
+
+		if (previousMeasure.chords && previousMeasure.chords.length) {
+			return measurePlan(previousMeasure.chords[previousMeasure.chords.length - 1]);
+		}
+
+		return measurePlan(previousMeasure);
+	}
+
+	function resolvedDegreeFromMeasure(measure, report) {
+		var scaleChords = report && report.scaleChords ? report.scaleChords : [];
+		var parallelChords = report && report.parallelScaleChords ? report.parallelScaleChords : [];
+		var scaleNotes = report && report.scaleNotes ? report.scaleNotes : [];
+		var chordName = measure ? measure.chordName : '';
+
+		if (!measure) {
+			return null;
+		}
+
+		return findResolvedDegree(measure, chordName, scaleChords, scaleNotes, 'diatonic') ||
+			findResolvedDegree(measure, chordName, parallelChords, scaleNotes, 'parallel');
+	}
+
+	function findResolvedDegree(measure, chordName, chords, scaleNotes, defaultSource) {
+		for (var i = 0; i < chords.length; i++) {
+			if (matchesMeasureChord(measure, chordName, chords[i])) {
+				return {
+					chord: chords[i],
+					degree: scaleNotes[i] ? scaleNotes[i].grado : '',
+					degreeIndex: i,
+					source: measure.source || defaultSource
+				};
+			}
+		}
+
+		return null;
+	}
+
+	function matchesMeasureChord(measure, chordName, chord) {
+		return chord === measure.chord || formattingService.triadName(chord) === chordName || chord.nombre === chordName;
+	}
+
+	global.CodaProgressionMeasureContext = {
+		measurePlan: measurePlan,
+		previousSegmentPlan: previousSegmentPlan,
+		resolvedDegreeFromMeasure: resolvedDegreeFromMeasure
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-structure-index-service.js */
+// Shared index and object helpers for progression structural editing.
+(function (global) {
+	'use strict';
+
+	function clampMeasureIndex(index, length) {
+		return clampIndex(index, length);
+	}
+
+	function clampChordIndex(index, length) {
+		return clampIndex(index, length);
+	}
+
+	function clampIndex(index, length) {
+		var numericIndex = parseInt(index, 10);
+
+		if (!length || isNaN(numericIndex)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(length - 1, numericIndex));
+	}
+
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
+	global.CodaProgressionStructureIndex = {
+		clampChordIndex: clampChordIndex,
+		clampMeasureIndex: clampMeasureIndex,
+		extendObject: extendObject
+	};
+})(window);
+
 ;
 
 /* Source: js/services/progression-structure-editing-service.js */
@@ -3499,6 +3856,7 @@
 	'use strict';
 
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
+	var structureIndex = global.CodaProgressionStructureIndex;
 
 	function reorderMeasures(progression, fromIndex, toIndex) {
 		var measures = progression && progression.measures ? progression.measures.slice() : [];
@@ -3540,7 +3898,7 @@
 		segments.splice(toChordIndex, 0, movedSegment);
 		measures[index] = measureTimelineService.measureWithSegments(measure, segments, progression);
 
-		return extendObject(progression, {
+		return structureIndex.extendObject(progression, {
 			measures: measures
 		});
 	}
@@ -3565,48 +3923,17 @@
 		segments.splice(normalizedChordIndex, 1);
 		measures[index] = measureTimelineService.measureWithSegments(measure, segments, progression);
 
-		return extendObject(progression, {
+		return structureIndex.extendObject(progression, {
 			measures: measures
 		});
 	}
 
-	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
-	}
-
 	function clampMeasureIndex(index, length) {
-		var numericIndex = parseInt(index, 10);
-
-		if (!length || isNaN(numericIndex)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(length - 1, numericIndex));
+		return structureIndex.clampMeasureIndex(index, length);
 	}
 
 	function clampChordIndex(index, length) {
-		var numericIndex = parseInt(index, 10);
-
-		if (!length || isNaN(numericIndex)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(length - 1, numericIndex));
+		return structureIndex.clampChordIndex(index, length);
 	}
 
 	global.CodaProgressionStructureEditing = {
@@ -3620,100 +3947,15 @@
 
 ;
 
-/* Source: js/services/progression-additional-chord-service.js */
-// Chooses an additional chord for a split measure using tonal function and voice-leading heuristics.
+/* Source: js/services/progression-suspension-resolution-service.js */
+// Chooses the best immediate resolution when a split measure starts from a suspended chord.
 (function (global) {
 	'use strict';
 
-	var formattingService = global.CodaProgressionFormatting;
+	var measureContext = global.CodaProgressionMeasureContext;
 	var voicingService = global.CodaProgressionVoicing;
 
 	function choose(options) {
-		var report = options.report || {};
-		var scaleChords = report.scaleChords || [];
-		var scaleNotes = report.scaleNotes || [];
-		var candidates = [];
-		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
-		var previousPlan = measurePlan(options.measure);
-		var nextPlan = options.nextMeasure ? measurePlan(options.nextMeasure) : null;
-		var progressionState = options.progressionState;
-		var initialMidiNote = options.data && options.data.midi ? options.data.midi.initialMidiNote : 60;
-		var suspensionResolution = chooseSuspensionResolutionForMeasure({
-			buildChordPlan: options.buildChordPlan,
-			initialMidiNote: initialMidiNote,
-			measure: options.measure,
-			nextMeasure: options.nextMeasure,
-			nextPlan: nextPlan,
-			previousPlan: previousPlan,
-			progressionState: progressionState,
-			report: report,
-			rng: rng
-		});
-
-		if (suspensionResolution) {
-			return suspensionResolution;
-		}
-
-		for (var i = 0; i < scaleChords.length; i++) {
-			var resolvedDegree;
-			var chordPlan;
-			var score;
-
-			if (!scaleChords[i] || sameChordFamily(scaleChords[i], options.measure)) {
-				continue;
-			}
-
-			resolvedDegree = {
-				chord: scaleChords[i],
-				degree: scaleNotes[i] ? scaleNotes[i].grado : '',
-				degreeIndex: i,
-				source: 'diatonic'
-			};
-			chordPlan = options.buildChordPlan({
-				index: 1,
-				options: {
-					includeTensions: true,
-					initialMidiNote: initialMidiNote,
-					rng: rng,
-					scaleDefinition: report.scaleDefinition,
-					scaleNotes: scaleNotes
-				},
-				previousPlan: previousPlan,
-				progressionState: progressionState,
-				resolvedDegree: resolvedDegree,
-				resolvedDegrees: [
-					resolvedDegreeFromMeasure(options.measure, report) || resolvedDegree,
-					resolvedDegree,
-					resolvedDegreeFromMeasure(options.nextMeasure, report) || resolvedDegree
-				]
-			});
-			score = additionalChordScore({
-				chordPlan: chordPlan,
-				currentMeasure: options.measure,
-				nextMeasure: options.nextMeasure,
-				nextPlan: nextPlan,
-				progressionState: progressionState,
-				report: report,
-				resolvedDegree: resolvedDegree,
-				rng: rng
-			});
-
-			candidates.push({
-				chordPlan: chordPlan,
-				reportScaleDefinition: report.scaleDefinition,
-				resolvedDegree: resolvedDegree,
-				score: score
-			});
-		}
-
-		candidates.sort(function (a, b) {
-			return b.score - a.score;
-		});
-
-		return candidates.length ? candidates[0] : null;
-	}
-
-	function chooseSuspensionResolutionForMeasure(options) {
 		var measure = options.measure;
 		var resolvedDegree;
 		var candidates = [];
@@ -3723,7 +3965,7 @@
 			return null;
 		}
 
-		resolvedDegree = resolvedDegreeFromMeasure(measure, options.report);
+		resolvedDegree = measureContext.resolvedDegreeFromMeasure(measure, options.report);
 		if (!resolvedDegree || !resolvedDegree.chord) {
 			return null;
 		}
@@ -3749,7 +3991,7 @@
 					resolvedDegrees: [
 						resolvedDegree,
 						resolvedDegree,
-						resolvedDegreeFromMeasure(options.nextMeasure, options.report) || resolvedDegree
+						measureContext.resolvedDegreeFromMeasure(options.nextMeasure, options.report) || resolvedDegree
 					]
 				});
 
@@ -3757,7 +3999,7 @@
 					chordPlan: chordPlan,
 					reportScaleDefinition: options.report.scaleDefinition,
 					resolvedDegree: resolvedDegree,
-					score: suspensionResolutionScore({
+					score: score({
 						chordPlan: chordPlan,
 						nextPlan: options.nextPlan,
 						previousPlan: options.previousPlan,
@@ -3774,120 +4016,184 @@
 		return candidates.length ? candidates[0] : null;
 	}
 
-	function suspensionResolutionScore(options) {
-		var score = voicingService.voiceLeadingTransitionScore(options.previousPlan, options.chordPlan);
+	function score(options) {
+		var result = voicingService.voiceLeadingTransitionScore(options.previousPlan, options.chordPlan);
 
 		if (options.nextPlan) {
-			score += voicingService.voiceLeadingTransitionScore(options.chordPlan, options.nextPlan) * 0.25;
+			result += voicingService.voiceLeadingTransitionScore(options.chordPlan, options.nextPlan) * 0.25;
 		}
 
 		if (options.chordPlan.kind === 'seventh') {
-			score += 0.25;
+			result += 0.25;
 		}
 
-		return score + ((typeof options.rng === 'function' ? options.rng() : Math.random()) * 0.01);
+		return result + ((typeof options.rng === 'function' ? options.rng() : Math.random()) * 0.01);
 	}
 
-	function additionalChordScore(options) {
+	global.CodaProgressionSuspensionResolution = {
+		choose: choose
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-additional-chord-score-service.js */
+// Scores candidate chords inserted inside an existing progression measure.
+(function (global) {
+	'use strict';
+
+	var formattingService = global.CodaProgressionFormatting;
+	var tonalFunctionService = global.CodaProgressionTonalFunction;
+	var voicingService = global.CodaProgressionVoicing;
+
+	function score(options) {
 		var currentCommon = voicingService.commonPitchNames(options.currentMeasure, options.chordPlan).length;
 		var nextCommon = options.nextMeasure ? voicingService.commonPitchNames(options.chordPlan, options.nextMeasure).length : 0;
 		var currentFunction = options.currentMeasure.tonalFunction || '';
 		var nextFunction = options.nextMeasure ? options.nextMeasure.tonalFunction || '' : '';
-		var candidateFunction = tonalFunctionForDegree(options.report.scaleDefinition, options.resolvedDegree.degreeIndex);
-		var score = 0;
+		var candidateFunction = tonalFunctionService.forDegree(options.report.scaleDefinition, options.resolvedDegree.degreeIndex);
+		var result = 0;
 
-		score += currentCommon * 9;
-		score += nextCommon * 7;
+		result += currentCommon * 9;
+		result += nextCommon * 7;
 
 		if (currentCommon > 0 && (!options.nextMeasure || nextCommon > 0)) {
-			score += 10;
+			result += 10;
 		}
 
 		if (candidateFunction && candidateFunction === currentFunction) {
-			score += currentFunction === 'T' ? 18 : 8;
+			result += currentFunction === 'T' ? 18 : 8;
 		} else if (currentFunction && candidateFunction) {
-			score -= currentFunction === 'T' ? 8 : 4;
+			result -= currentFunction === 'T' ? 8 : 4;
 		}
 
 		if (candidateFunction && candidateFunction === nextFunction) {
-			score += 4;
+			result += 4;
 		}
 
 		if (options.nextMeasure && sameChordFamily(options.resolvedDegree.chord, options.nextMeasure)) {
-			score -= 16;
+			result -= 16;
 		}
 
-		score -= voicingService.voiceLeadingTransitionScore(options.currentMeasure, options.chordPlan) * 0.45;
+		result -= voicingService.voiceLeadingTransitionScore(options.currentMeasure, options.chordPlan) * 0.45;
 
 		if (options.nextPlan) {
-			score -= voicingService.voiceLeadingTransitionScore(options.chordPlan, options.nextPlan) * 0.35;
+			result -= voicingService.voiceLeadingTransitionScore(options.chordPlan, options.nextPlan) * 0.35;
 		}
 
 		if (currentCommon === 0 && nextCommon === 0) {
-			score -= 24;
+			result -= 24;
 		}
 
-		score += (typeof options.rng === 'function' ? options.rng() : Math.random()) * 2.5;
+		result += (typeof options.rng === 'function' ? options.rng() : Math.random()) * 2.5;
 
-		return score;
-	}
-
-	function measurePlan(measure) {
-		if (!measure) {
-			return null;
-		}
-
-		return {
-			midiNotes: measure.midiNotes || [],
-			notes: measure.notes || [],
-			voiceNotes: measure.voiceNotes || []
-		};
-	}
-
-	function resolvedDegreeFromMeasure(measure, report) {
-		var scaleChords = report && report.scaleChords ? report.scaleChords : [];
-		var parallelChords = report && report.parallelScaleChords ? report.parallelScaleChords : [];
-		var scaleNotes = report && report.scaleNotes ? report.scaleNotes : [];
-		var chordName = measure ? measure.chordName : '';
-
-		if (!measure) {
-			return null;
-		}
-
-		for (var i = 0; i < scaleChords.length; i++) {
-			if (scaleChords[i] === measure.chord || formattingService.triadName(scaleChords[i]) === chordName || scaleChords[i].nombre === chordName) {
-				return {
-					chord: scaleChords[i],
-					degree: scaleNotes[i] ? scaleNotes[i].grado : '',
-					degreeIndex: i,
-					source: measure.source || 'diatonic'
-				};
-			}
-		}
-
-		for (var j = 0; j < parallelChords.length; j++) {
-			if (parallelChords[j] === measure.chord || formattingService.triadName(parallelChords[j]) === chordName || parallelChords[j].nombre === chordName) {
-				return {
-					chord: parallelChords[j],
-					degree: scaleNotes[j] ? scaleNotes[j].grado : '',
-					degreeIndex: j,
-					source: measure.source || 'parallel'
-				};
-			}
-		}
-
-		return null;
-	}
-
-	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
-		var funciones = scaleDefinition && scaleDefinition.funciones ? String(scaleDefinition.funciones).split('-') : [];
-		var tonalFunction = funciones[degreeIndex] || '';
-
-		return tonalFunction === 'â€”' || tonalFunction === 'Ã¢â‚¬â€' ? '' : tonalFunction;
+		return result;
 	}
 
 	function sameChordFamily(chord, measure) {
 		return measure && (measure.chord === chord || measure.chordName === chord.nombre || measure.chordName === formattingService.triadName(chord));
+	}
+
+	global.CodaProgressionAdditionalChordScore = {
+		sameChordFamily: sameChordFamily,
+		score: score
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-additional-chord-service.js */
+// Chooses an additional chord for a split measure using tonal function and voice-leading heuristics.
+(function (global) {
+	'use strict';
+
+	var additionalChordScoreService = global.CodaProgressionAdditionalChordScore;
+	var measureContext = global.CodaProgressionMeasureContext;
+	var suspensionResolutionService = global.CodaProgressionSuspensionResolution;
+
+	function choose(options) {
+		var report = options.report || {};
+		var scaleChords = report.scaleChords || [];
+		var scaleNotes = report.scaleNotes || [];
+		var candidates = [];
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var previousPlan = measureContext.measurePlan(options.measure);
+		var nextPlan = options.nextMeasure ? measureContext.measurePlan(options.nextMeasure) : null;
+		var progressionState = options.progressionState;
+		var initialMidiNote = options.data && options.data.midi ? options.data.midi.initialMidiNote : 60;
+		var suspensionResolution = suspensionResolutionService.choose({
+			buildChordPlan: options.buildChordPlan,
+			initialMidiNote: initialMidiNote,
+			measure: options.measure,
+			nextMeasure: options.nextMeasure,
+			nextPlan: nextPlan,
+			previousPlan: previousPlan,
+			progressionState: progressionState,
+			report: report,
+			rng: rng
+		});
+
+		if (suspensionResolution) {
+			return suspensionResolution;
+		}
+
+		for (var i = 0; i < scaleChords.length; i++) {
+			var resolvedDegree;
+			var chordPlan;
+			var score;
+
+			if (!scaleChords[i] || additionalChordScoreService.sameChordFamily(scaleChords[i], options.measure)) {
+				continue;
+			}
+
+			resolvedDegree = {
+				chord: scaleChords[i],
+				degree: scaleNotes[i] ? scaleNotes[i].grado : '',
+				degreeIndex: i,
+				source: 'diatonic'
+			};
+			chordPlan = options.buildChordPlan({
+				index: 1,
+				options: {
+					includeTensions: true,
+					initialMidiNote: initialMidiNote,
+					rng: rng,
+					scaleDefinition: report.scaleDefinition,
+					scaleNotes: scaleNotes
+				},
+				previousPlan: previousPlan,
+				progressionState: progressionState,
+				resolvedDegree: resolvedDegree,
+				resolvedDegrees: [
+					measureContext.resolvedDegreeFromMeasure(options.measure, report) || resolvedDegree,
+					resolvedDegree,
+					measureContext.resolvedDegreeFromMeasure(options.nextMeasure, report) || resolvedDegree
+				]
+			});
+			score = additionalChordScoreService.score({
+				chordPlan: chordPlan,
+				currentMeasure: options.measure,
+				nextMeasure: options.nextMeasure,
+				nextPlan: nextPlan,
+				progressionState: progressionState,
+				report: report,
+				resolvedDegree: resolvedDegree,
+				rng: rng
+			});
+
+			candidates.push({
+				chordPlan: chordPlan,
+				reportScaleDefinition: report.scaleDefinition,
+				resolvedDegree: resolvedDegree,
+				score: score
+			});
+		}
+
+		candidates.sort(function (a, b) {
+			return b.score - a.score;
+		});
+
+		return candidates.length ? candidates[0] : null;
 	}
 
 	global.CodaProgressionAdditionalChord = {
@@ -3904,6 +4210,7 @@
 
 	var formattingService = global.CodaProgressionFormatting;
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
+	var tonalFunctionService = global.CodaProgressionTonalFunction;
 
 	function fromPlan(measure, chordSelection, timing) {
 		var resolvedDegree = chordSelection.resolvedDegree;
@@ -3982,10 +4289,7 @@
 	}
 
 	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
-		var funciones = scaleDefinition && scaleDefinition.funciones ? String(scaleDefinition.funciones).split('-') : [];
-		var tonalFunction = funciones[degreeIndex] || '';
-
-		return tonalFunction === 'â€”' || tonalFunction === 'Ã¢â‚¬â€' ? '' : tonalFunction;
+		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
 	}
 
 	global.CodaProgressionSegmentBuilder = {
@@ -4004,7 +4308,7 @@
 (function (global) {
 	'use strict';
 
-	var formattingService = global.CodaProgressionFormatting;
+	var measureContext = global.CodaProgressionMeasureContext;
 	var segmentBuilder = global.CodaProgressionSegmentBuilder;
 
 	function buildSegment(options) {
@@ -4026,7 +4330,7 @@
 			degreeIndex: degreeIndex,
 			source: 'diatonic'
 		};
-		previousPlan = previousSegmentPlan(options.progression, options.measure.bar, options.chordIndex);
+		previousPlan = measureContext.previousSegmentPlan(options.progression, options.measure.bar, options.chordIndex);
 		chordPlan = options.buildChordPlan({
 			index: 1,
 			options: {
@@ -4042,9 +4346,9 @@
 			progressionState: options.progressionState,
 			resolvedDegree: resolvedDegree,
 			resolvedDegrees: [
-				resolvedDegreeFromMeasure(options.segment, report) || resolvedDegree,
+				measureContext.resolvedDegreeFromMeasure(options.segment, report) || resolvedDegree,
 				resolvedDegree,
-				resolvedDegreeFromMeasure(options.nextMeasure, report) || resolvedDegree
+				measureContext.resolvedDegreeFromMeasure(options.nextMeasure, report) || resolvedDegree
 			]
 		});
 
@@ -4059,75 +4363,6 @@
 			startBeat: Number(options.segment.startBeat) || Number(options.measure.startBeat) || 0,
 			startSeconds: Number(options.segment.startSeconds) || Number(options.measure.startSeconds) || 0
 		});
-	}
-
-	function previousSegmentPlan(progression, bar, chordIndex) {
-		var measures = progression && progression.measures ? progression.measures : [];
-		var measureIndex = Math.max(0, (Number(bar) || 1) - 1);
-		var currentMeasure = measures[measureIndex];
-		var previousMeasure;
-
-		if (chordIndex > 0 && currentMeasure && currentMeasure.chords && currentMeasure.chords[chordIndex - 1]) {
-			return measurePlan(currentMeasure.chords[chordIndex - 1]);
-		}
-
-		previousMeasure = measures[measureIndex - 1];
-		if (!previousMeasure) {
-			return null;
-		}
-
-		if (previousMeasure.chords && previousMeasure.chords.length) {
-			return measurePlan(previousMeasure.chords[previousMeasure.chords.length - 1]);
-		}
-
-		return measurePlan(previousMeasure);
-	}
-
-	function measurePlan(measure) {
-		if (!measure) {
-			return null;
-		}
-
-		return {
-			midiNotes: measure.midiNotes || [],
-			notes: measure.notes || [],
-			voiceNotes: measure.voiceNotes || []
-		};
-	}
-
-	function resolvedDegreeFromMeasure(measure, report) {
-		var scaleChords = report && report.scaleChords ? report.scaleChords : [];
-		var parallelChords = report && report.parallelScaleChords ? report.parallelScaleChords : [];
-		var scaleNotes = report && report.scaleNotes ? report.scaleNotes : [];
-		var chordName = measure ? measure.chordName : '';
-
-		if (!measure) {
-			return null;
-		}
-
-		for (var i = 0; i < scaleChords.length; i++) {
-			if (scaleChords[i] === measure.chord || formattingService.triadName(scaleChords[i]) === chordName || scaleChords[i].nombre === chordName) {
-				return {
-					chord: scaleChords[i],
-					degree: scaleNotes[i] ? scaleNotes[i].grado : '',
-					degreeIndex: i,
-					source: measure.source || 'diatonic'
-				};
-			}
-		}
-
-		for (var j = 0; j < parallelChords.length; j++) {
-			if (parallelChords[j] === measure.chord || formattingService.triadName(parallelChords[j]) === chordName || parallelChords[j].nombre === chordName) {
-				return {
-					chord: parallelChords[j],
-					degree: scaleNotes[j] ? scaleNotes[j].grado : '',
-					degreeIndex: j,
-					source: measure.source || 'parallel'
-				};
-			}
-		}
-
-		return null;
 	}
 
 	global.CodaProgressionReplacementChord = {
@@ -4145,6 +4380,7 @@
 	var additionalChordService = global.CodaProgressionAdditionalChord;
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
 	var segmentBuilder = global.CodaProgressionSegmentBuilder;
+	var structureIndex = global.CodaProgressionStructureIndex;
 
 	function addMeasureChord(progression, measureIndex, options, dependencies) {
 		var measures = progression && progression.measures ? progression.measures.slice() : [];
@@ -4198,42 +4434,15 @@
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return structureIndex.extendObject(target, values);
 	}
 
 	function clampMeasureIndex(index, length) {
-		var numericIndex = parseInt(index, 10);
-
-		if (isNaN(numericIndex)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(length - 1, numericIndex));
+		return structureIndex.clampMeasureIndex(index, length);
 	}
 
 	function clampChordIndex(index, length) {
-		var numericIndex = parseInt(index, 10);
-
-		if (isNaN(numericIndex)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(Math.max(0, length - 1), numericIndex));
+		return structureIndex.clampChordIndex(index, length);
 	}
 
 	global.CodaProgressionMeasureChordAddition = {
@@ -4250,6 +4459,7 @@
 
 	var replacementChordService = global.CodaProgressionReplacementChord;
 	var segmentBuilder = global.CodaProgressionSegmentBuilder;
+	var structureIndex = global.CodaProgressionStructureIndex;
 
 	function replaceMeasureChord(progression, measureIndex, chordIndex, replacement, options, dependencies) {
 		var measures = progression && progression.measures ? progression.measures.slice() : [];
@@ -4298,32 +4508,11 @@
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return structureIndex.extendObject(target, values);
 	}
 
 	function clampMeasureIndex(index, length) {
-		var numericIndex = parseInt(index, 10);
-
-		if (isNaN(numericIndex)) {
-			return 0;
-		}
-
-		return Math.max(0, Math.min(length - 1, numericIndex));
+		return structureIndex.clampMeasureIndex(index, length);
 	}
 
 	global.CodaProgressionMeasureChordReplacement = {
@@ -4523,171 +4712,42 @@
 
 ;
 
-/* Source: js/services/progression-chord-plan-service.js */
-// Chord-plan builder for generated progressions.
+/* Source: js/services/progression-suspension-heuristic-service.js */
+// Heuristics for choosing chord suspensions in generated progressions.
 (function (global) {
 	'use strict';
 
-	var formattingService = global.CodaProgressionFormatting;
-	var tensionService = global.CodaProgressionTensions;
 	var voicingService = global.CodaProgressionVoicing;
 
-	function build(context) {
-		var resolvedDegree = context.resolvedDegree;
-		var chord = resolvedDegree.chord;
-		var useSeventh = context.options.forceKind ? context.options.forceKind === 'seventh' : shouldUseSeventh(context);
-		var baseNotes = useSeventh ? chordNotes(chord) : triadNotes(chord);
-		var suspension = context.options.preventSuspension ? null : chooseSuspension(context, baseNotes, useSeventh ? 'seventh' : 'triad');
-		var tensionOptions;
-		var voicing;
-		var chordName;
-
-		if (suspension) {
-			baseNotes = suspendedNotes(baseNotes, suspension.note);
-		}
-
-		tensionOptions = context.options.includeTensions ? tensionService.addToNotes(baseNotes, {
-			degreeIndex: resolvedDegree.degreeIndex,
-			kind: useSeventh ? 'seventh' : 'triad',
-			rng: context.options.rng,
-			scaleNotes: context.options.scaleNotes,
-			tensions: context.progressionState.tensions,
-			voices: context.progressionState.voices
-		}) : {
-			label: '',
-			notes: baseNotes
-		};
-		voicing = voicingService.chooseVoicing({
-			baseNotes: baseNotes,
-			chordName: chord.nombre,
-			extraNotes: tensionOptions.notes.slice(baseNotes.length),
-			forceInversionIndex: context.options.forceInversionIndex,
-			initialMidiNote: context.options.initialMidiNote || 60,
-			kind: useSeventh ? 'seventh' : 'triad',
-			previousPlan: context.previousPlan,
-			voicing: context.progressionState.voicing,
-			voices: context.progressionState.voices
-		});
-		chordName = useSeventh ? chord.nombre : formattingService.triadName(chord);
-
-		return {
-			chordName: chordName,
-			degree: formattingService.formatDegreeForMeasure(resolvedDegree.degree, chord, useSeventh),
-			inversionIndex: voicing.inversionIndex,
-			inversionLabel: voicing.inversionLabel,
-			kind: useSeventh ? 'seventh' : 'triad',
-			midiNotes: voicing.midiNotes,
-			notes: voicing.notes,
-			suspension: suspension ? suspension.label : '',
-			tensionLabel: tensionOptions.label,
-			voiceNotes: voicing.voiceNotes
-		};
-	}
-
-	function chooseSuspension(context, baseNotes, kind) {
-		var chord = context.resolvedDegree.chord;
-		var previousPlan = context.previousPlan;
-		var progressionState = context.progressionState;
-		var rng = typeof context.options.rng === 'function' ? context.options.rng : function () { return 1; };
-		var label;
-		var suspensionNote;
-		var originalVoicing;
-		var suspendedVoicing;
-		var probability;
-		var originalScore;
-		var suspendedScore;
-
-		if (!chord || !previousPlan || !chord.segunda || !chord.cuarta || baseNotes.length < 3) {
-			return null;
-		}
-
-		if (isTonicBoundary(context.index, context.resolvedDegrees.length, context.resolvedDegree.degreeIndex)) {
-			return null;
-		}
-
-		label = formattingService.isMinorQuality(chord.nombre) ? 'sus2' : 'sus4';
-		suspensionNote = label === 'sus2' ? chord.segunda : chord.cuarta;
-		originalVoicing = voicingService.chooseVoicing({
-			baseNotes: baseNotes,
-			chordName: chord.nombre,
-			extraNotes: [],
-			initialMidiNote: context.options.initialMidiNote || 60,
-			kind: kind,
-			previousPlan: previousPlan,
-			voicing: progressionState.voicing,
-			voices: progressionState.voices
-		});
-		suspendedVoicing = voicingService.chooseVoicing({
-			baseNotes: suspendedNotes(baseNotes, suspensionNote),
-			chordName: chord.nombre,
-			extraNotes: [],
-			initialMidiNote: context.options.initialMidiNote || 60,
-			kind: kind,
-			previousPlan: previousPlan,
-			voicing: progressionState.voicing,
-			voices: progressionState.voices
-		});
-		originalScore = voicingService.voiceLeadingTransitionScore(previousPlan, originalVoicing);
-		suspendedScore = voicingService.voiceLeadingTransitionScore(previousPlan, suspendedVoicing);
-		probability = suspensionProbability({
-			originalScore: originalScore,
-			progressionState: progressionState,
-			suspendedScore: suspendedScore
-		});
-
-		if (!voiceMovesParsimoniouslyToNote(previousPlan.voiceNotes, suspensionNote, context.options.initialMidiNote || 60)) {
-			probability *= 0.5;
-		}
-
-		if (rng() >= Math.min(0.55, probability)) {
-			return null;
-		}
-
-		return {
-			label: label,
-			note: suspensionNote
-		};
-	}
-
-	function suspensionProbability(options) {
+	function probability(options) {
 		var progressionState = options.progressionState || {};
-		var probability = 0.045 +
+		var result = 0.045 +
 			Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 25) / 360 +
 			Math.max(0, numberOrDefault(progressionState.tensions, 0) - 30) / 430;
 
 		if (numberOrDefault(progressionState.voices, 4) >= 4) {
-			probability += 0.02;
+			result += 0.02;
 		}
 
 		if (progressionState.articulation === 'sustain' || progressionState.articulation === 'legato') {
-			probability += 0.02;
+			result += 0.02;
 		} else if (progressionState.articulation === 'staccato') {
-			probability -= 0.035;
+			result -= 0.035;
 		}
 
 		if (numberOrDefault(progressionState.counterpoint, 0) >= 70 && numberOrDefault(progressionState.tensions, 0) >= 70) {
-			probability += 0.08;
+			result += 0.08;
 		}
 
 		if (options.suspendedScore <= options.originalScore) {
-			probability += 0.14;
+			result += 0.14;
 		} else if (options.suspendedScore <= options.originalScore + 2) {
-			probability += 0.09;
+			result += 0.09;
 		} else {
-			probability -= 0.05;
+			result -= 0.05;
 		}
 
-		return Math.max(0.03, probability);
-	}
-
-	function suspendedNotes(baseNotes, suspensionNote) {
-		var result = baseNotes.slice();
-
-		if (result.length > 1) {
-			result[1] = suspensionNote;
-		}
-
-		return result;
+		return Math.max(0.03, result);
 	}
 
 	function voiceMovesParsimoniouslyToNote(voiceNotes, noteName, initialMidiNote) {
@@ -4701,6 +4761,115 @@
 
 		return false;
 	}
+
+	function isTonicBoundary(index, length, degreeIndex) {
+		return degreeIndex === 0 && (index === 0 || index === length - 1);
+	}
+
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
+	global.CodaProgressionSuspensionHeuristic = {
+		isTonicBoundary: isTonicBoundary,
+		probability: probability,
+		voiceMovesParsimoniouslyToNote: voiceMovesParsimoniouslyToNote
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-suspension-service.js */
+// Chooses sus2/sus4 chord suspensions using voice-leading and tension settings.
+(function (global) {
+	'use strict';
+
+	var formattingService = global.CodaProgressionFormatting;
+	var suspensionHeuristic = global.CodaProgressionSuspensionHeuristic;
+	var voicingService = global.CodaProgressionVoicing;
+
+	function choose(context, baseNotes, kind) {
+		var chord = context.resolvedDegree.chord;
+		var previousPlan = context.previousPlan;
+		var progressionState = context.progressionState;
+		var rng = typeof context.options.rng === 'function' ? context.options.rng : function () { return 1; };
+		var label;
+		var suspensionNote;
+		var originalVoicing;
+		var suspendedVoicing;
+		var probability;
+
+		if (!chord || !previousPlan || !chord.segunda || !chord.cuarta || baseNotes.length < 3) {
+			return null;
+		}
+
+		if (suspensionHeuristic.isTonicBoundary(context.index, context.resolvedDegrees.length, context.resolvedDegree.degreeIndex)) {
+			return null;
+		}
+
+		label = formattingService.isMinorQuality(chord.nombre) ? 'sus2' : 'sus4';
+		suspensionNote = label === 'sus2' ? chord.segunda : chord.cuarta;
+		originalVoicing = chooseCandidateVoicing(context, baseNotes, kind);
+		suspendedVoicing = chooseCandidateVoicing(context, suspendedNotes(baseNotes, suspensionNote), kind);
+		probability = suspensionHeuristic.probability({
+			originalScore: voicingService.voiceLeadingTransitionScore(previousPlan, originalVoicing),
+			progressionState: progressionState,
+			suspendedScore: voicingService.voiceLeadingTransitionScore(previousPlan, suspendedVoicing)
+		});
+
+		if (!suspensionHeuristic.voiceMovesParsimoniouslyToNote(previousPlan.voiceNotes, suspensionNote, context.options.initialMidiNote || 60)) {
+			probability *= 0.5;
+		}
+
+		if (rng() >= Math.min(0.55, probability)) {
+			return null;
+		}
+
+		return {
+			label: label,
+			note: suspensionNote
+		};
+	}
+
+	function chooseCandidateVoicing(context, baseNotes, kind) {
+		return voicingService.chooseVoicing({
+			baseNotes: baseNotes,
+			chordName: context.resolvedDegree.chord.nombre,
+			extraNotes: [],
+			initialMidiNote: context.options.initialMidiNote || 60,
+			kind: kind,
+			previousPlan: context.previousPlan,
+			voicing: context.progressionState.voicing,
+			voices: context.progressionState.voices
+		});
+	}
+
+	function suspendedNotes(baseNotes, suspensionNote) {
+		var result = baseNotes.slice();
+
+		if (result.length > 1) {
+			result[1] = suspensionNote;
+		}
+
+		return result;
+	}
+
+	global.CodaProgressionSuspension = {
+		choose: choose,
+		suspendedNotes: suspendedNotes
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-seventh-decision-service.js */
+// Decides when a generated chord should use a seventh instead of a triad.
+(function (global) {
+	'use strict';
+
+	var voicingService = global.CodaProgressionVoicing;
 
 	function shouldUseSeventh(context) {
 		var progressionState = context.progressionState;
@@ -4799,6 +4968,90 @@
 		return isFinite(number) ? number : fallback;
 	}
 
+	global.CodaProgressionSeventhDecision = {
+		chordNotes: chordNotes,
+		shouldUseSeventh: shouldUseSeventh,
+		triadNotes: triadNotes
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-chord-plan-service.js */
+// Chord-plan builder for generated progressions.
+(function (global) {
+	'use strict';
+
+	var formattingService = global.CodaProgressionFormatting;
+	var seventhDecisionService = global.CodaProgressionSeventhDecision;
+	var suspensionService = global.CodaProgressionSuspension;
+	var tensionService = global.CodaProgressionTensions;
+	var voicingService = global.CodaProgressionVoicing;
+
+	function build(context) {
+		var resolvedDegree = context.resolvedDegree;
+		var chord = resolvedDegree.chord;
+		var useSeventh = context.options.forceKind ? context.options.forceKind === 'seventh' : seventhDecisionService.shouldUseSeventh(context);
+		var baseNotes = useSeventh ? chordNotes(chord) : triadNotes(chord);
+		var suspension = context.options.preventSuspension ? null : suspensionService.choose(context, baseNotes, useSeventh ? 'seventh' : 'triad');
+		var tensionOptions;
+		var voicing;
+		var chordName;
+
+		if (suspension) {
+			baseNotes = suspensionService.suspendedNotes(baseNotes, suspension.note);
+		}
+
+		tensionOptions = context.options.includeTensions ? tensionService.addToNotes(baseNotes, {
+			degreeIndex: resolvedDegree.degreeIndex,
+			kind: useSeventh ? 'seventh' : 'triad',
+			rng: context.options.rng,
+			scaleNotes: context.options.scaleNotes,
+			tensions: context.progressionState.tensions,
+			voices: context.progressionState.voices
+		}) : {
+			label: '',
+			notes: baseNotes
+		};
+		voicing = voicingService.chooseVoicing({
+			baseNotes: baseNotes,
+			chordName: chord.nombre,
+			extraNotes: tensionOptions.notes.slice(baseNotes.length),
+			forceInversionIndex: context.options.forceInversionIndex,
+			initialMidiNote: context.options.initialMidiNote || 60,
+			kind: useSeventh ? 'seventh' : 'triad',
+			previousPlan: context.previousPlan,
+			voicing: context.progressionState.voicing,
+			voices: context.progressionState.voices
+		});
+		chordName = useSeventh ? chord.nombre : formattingService.triadName(chord);
+
+		return {
+			chordName: chordName,
+			degree: formattingService.formatDegreeForMeasure(resolvedDegree.degree, chord, useSeventh),
+			inversionIndex: voicing.inversionIndex,
+			inversionLabel: voicing.inversionLabel,
+			kind: useSeventh ? 'seventh' : 'triad',
+			midiNotes: voicing.midiNotes,
+			notes: voicing.notes,
+			suspension: suspension ? suspension.label : '',
+			tensionLabel: tensionOptions.label,
+			voiceNotes: voicing.voiceNotes
+		};
+	}
+
+	function suspendedNotes(baseNotes, suspensionNote) {
+		return suspensionService.suspendedNotes(baseNotes, suspensionNote);
+	}
+
+	function chordNotes(chord) {
+		return seventhDecisionService.chordNotes(chord);
+	}
+
+	function triadNotes(chord) {
+		return seventhDecisionService.triadNotes(chord);
+	}
+
 	global.CodaProgressionChordPlan = {
 		build: build,
 		chordNotes: chordNotes,
@@ -4816,6 +5069,7 @@
 
 	var chordPlanService = global.CodaProgressionChordPlan;
 	var formattingService = global.CodaProgressionFormatting;
+	var tonalFunctionService = global.CodaProgressionTonalFunction;
 	var voiceLeadingService = global.CodaProgressionVoiceLeading;
 
 	function build(resolvedDegrees, progressionState, secondsPerBeat, options) {
@@ -4867,17 +5121,7 @@
 	}
 
 	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
-		var functions;
-		var tonalFunction;
-
-		if (!scaleDefinition || scaleDefinition.tonal !== 'true' || !scaleDefinition.funciones || degreeIndex < 0) {
-			return '';
-		}
-
-		functions = scaleDefinition.funciones.split('-');
-		tonalFunction = functions[degreeIndex] || '';
-
-		return tonalFunction === '—' || tonalFunction === 'â€”' ? '' : tonalFunction;
+		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
 	}
 
 	global.CodaProgressionMeasureBuilder = {
@@ -4942,8 +5186,10 @@
 (function (global) {
 	'use strict';
 
+	var styleService = global.CodaProgressionStyle;
+
 	function finalCadenceForPattern(pattern, progressionState, rng) {
-		if (isModernStyle(progressionState)) {
+		if (styleService.isModern(progressionState)) {
 			return modernFinalCadence(pattern, rng);
 		}
 
@@ -5015,10 +5261,6 @@
 		return cadence === 'authentic';
 	}
 
-	function isModernStyle(progressionState) {
-		return progressionState && progressionState.style === 'modern';
-	}
-
 	global.CodaProgressionCadencePlanner = {
 		chooseIntermediateCadence: chooseIntermediateCadence,
 		finalCadenceForPattern: finalCadenceForPattern,
@@ -5030,89 +5272,22 @@
 
 ;
 
-/* Source: js/services/progression-planner-service.js */
-// Harmonic phrase and cadence planner for generated progressions.
+/* Source: js/services/progression-pattern-weight-service.js */
+// Shared weight heuristics for harmonic patterns and phrase blocks.
 (function (global) {
 	'use strict';
 
 	var cadencePlanner = global.CodaProgressionCadencePlanner;
-
-	function createPlan(options) {
-		var progressionState = options.progressionState;
-		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
-		var mode = progressionMode(options.report);
-		var pattern = choosePattern({
-			mode: mode,
-			progressionState: progressionState,
-			rng: rng,
-			rules: options.rules
-		});
-		var degrees = progressionState.bars >= 8 ?
-			composePhraseBlocks({
-				mode: mode,
-				pattern: pattern,
-				progressionState: progressionState,
-				rng: rng,
-				rules: options.rules
-			}) :
-			fitDegreesToBars(pattern, progressionState.bars);
-
-		return {
-			degrees: degrees,
-			pattern: pattern,
-			voiceLeading: voiceLeadingProfile(progressionState)
-		};
-	}
-
-	function choosePattern(options) {
-		var patterns = options.rules && options.rules.patterns ? options.rules.patterns : [];
-		var candidates = [];
-		var totalWeight = 0;
-		var selectedValue;
-
-		for (var i = 0; i < patterns.length; i++) {
-			var weight;
-
-			if (!matchesMode(patterns[i], options.mode)) {
-				continue;
-			}
-
-			weight = adjustedPatternWeight(patterns[i], options.progressionState, options.mode);
-			if (weight <= 0) {
-				continue;
-			}
-
-			candidates.push({
-				pattern: patterns[i],
-				weight: weight
-			});
-			totalWeight += candidates[candidates.length - 1].weight;
-		}
-
-		if (!candidates.length) {
-			return fallbackPatternForStyle(options.progressionState);
-		}
-
-		selectedValue = options.rng() * totalWeight;
-
-		for (var j = 0; j < candidates.length; j++) {
-			selectedValue -= candidates[j].weight;
-			if (selectedValue <= 0) {
-				return candidates[j].pattern;
-			}
-		}
-
-		return candidates[candidates.length - 1].pattern;
-	}
+	var styleService = global.CodaProgressionStyle;
 
 	function adjustedPatternWeight(pattern, progressionState, mode) {
 		var weight = pattern.weight || 1;
 
-		if (isModernStyle(progressionState) && cadencePlanner.isAuthenticCadence(pattern.cadence)) {
+		if (styleService.isModern(progressionState) && cadencePlanner.isAuthenticCadence(pattern.cadence)) {
 			return 0;
 		}
 
-		if (isClassicStyle(progressionState) && !cadencePlanner.isAuthenticCadence(pattern.cadence)) {
+		if (styleService.isClassic(progressionState) && !cadencePlanner.isAuthenticCadence(pattern.cadence)) {
 			return 0;
 		}
 
@@ -5137,157 +5312,15 @@
 		return Math.max(1, weight);
 	}
 
-	function fallbackPatternForStyle(progressionState) {
-		if (isModernStyle(progressionState)) {
-			return {
-				cadence: 'half',
-				counterpoint: 70,
-				degrees: [0, 3, 1, 4],
-				form: 'fallback-modern',
-				id: 'fallback-modern-half',
-				weight: 1
-			};
-		}
-
-		return {
-			cadence: 'authentic',
-			counterpoint: 70,
-			degrees: [0, 3, 4, 0],
-			form: 'fallback-classic',
-			id: 'fallback-classic-authentic',
-			weight: 1
-		};
-	}
-
 	function affinityScore(value, target) {
 		return Math.max(0, 18 - Math.abs((Number(value) || 0) - (Number(target) || 0)) / 4);
-	}
-
-	function matchesMode(pattern, mode) {
-		return !pattern.modes || pattern.modes.indexOf(mode) > -1;
-	}
-
-	function progressionMode(report) {
-		return report && report.mode === 'M' ? 'major' : 'minor';
-	}
-
-	function fitDegreesToBars(pattern, bars) {
-		var fitted = [];
-		var sourceDegrees = pattern.degrees || [0, 3, 4, 0];
-		var normalizedBars = numberOrDefault(bars, sourceDegrees.length);
-		var borrowedIndexes = pattern.borrowed || [];
-
-		for (var i = 0; i < normalizedBars; i++) {
-			fitted.push({
-				index: sourceDegrees[i % sourceDegrees.length],
-				source: borrowedIndexes.indexOf(i % sourceDegrees.length) > -1 ? 'parallel' : 'diatonic'
-			});
-		}
-
-		cadencePlanner.forceCadentialEnding(fitted, pattern);
-
-		return fitted;
-	}
-
-	function composePhraseBlocks(options) {
-		var bars = numberOrDefault(options.progressionState.bars, 8);
-		var blockCount = Math.ceil(bars / 4);
-		var degrees = [];
-		var previousBlockId = '';
-
-		for (var blockIndex = 0; blockIndex < blockCount; blockIndex++) {
-			var remainingBars = bars - degrees.length;
-			var blockLength = Math.min(4, remainingBars);
-			var isFinalBlock = blockIndex === blockCount - 1;
-			var cadence = isFinalBlock ? cadencePlanner.finalCadenceForPattern(options.pattern, options.progressionState, options.rng) : cadencePlanner.chooseIntermediateCadence(options.rng);
-			var block = choosePhraseBlock({
-				cadence: cadence,
-				mode: options.mode,
-				previousBlockId: previousBlockId,
-				progressionState: options.progressionState,
-				rng: options.rng,
-				rules: options.rules
-			});
-
-			previousBlockId = block.id;
-			degrees = degrees.concat(fitBlockToBars(block, blockLength));
-		}
-
-		return degrees.slice(0, bars);
-	}
-
-	function choosePhraseBlock(options) {
-		var blocks = options.rules && options.rules.phraseBlocks ? options.rules.phraseBlocks : fallbackPhraseBlocks();
-		var candidates = [];
-		var totalWeight = 0;
-		var selectedValue;
-
-		for (var i = 0; i < blocks.length; i++) {
-			if (!matchesMode(blocks[i], options.mode) || !cadencePlanner.matchesCadence(blocks[i], options.cadence)) {
-				continue;
-			}
-
-			candidates.push({
-				block: blocks[i],
-				weight: adjustedBlockWeight(blocks[i], options.progressionState, options.previousBlockId, options.mode)
-			});
-			totalWeight += candidates[candidates.length - 1].weight;
-		}
-
-		if (candidates.length > 1) {
-			candidates = candidates.filter(function (candidate) {
-				return candidate.block.id !== options.previousBlockId;
-			});
-			totalWeight = sumCandidateWeights(candidates);
-		}
-
-		if (!candidates.length) {
-			return fallbackPhraseBlocks()[0];
-		}
-
-		selectedValue = options.rng() * totalWeight;
-
-		for (var j = 0; j < candidates.length; j++) {
-			selectedValue -= candidates[j].weight;
-			if (selectedValue <= 0) {
-				return candidates[j].block;
-			}
-		}
-
-		return candidates[candidates.length - 1].block;
-	}
-
-	function sumCandidateWeights(candidates) {
-		var totalWeight = 0;
-
-		for (var i = 0; i < candidates.length; i++) {
-			totalWeight += candidates[i].weight;
-		}
-
-		return totalWeight;
-	}
-
-	function adjustedBlockWeight(block, progressionState, previousBlockId, mode) {
-		var weight = block.weight || 1;
-
-		weight += affinityScore(progressionState.counterpoint, block.counterpoint);
-		weight += affinityScore(progressionState.modalInterchange, block.modalColor);
-		weight += affinityScore(progressionState.tensions, block.tensionAffinity);
-		weight += commonToneDegreeScore(block.degrees, progressionState);
-		weight *= sensitiveDegreeFactor(block.degrees, mode, progressionState);
-
-		if (block.id === previousBlockId) {
-			weight = Math.max(1, weight * 0.12);
-		}
-
-		return Math.max(1, weight);
 	}
 
 	function sensitiveDegreeFactor(degrees, mode, progressionState) {
 		var sensitiveDegree = mode === 'major' ? 6 : 1;
 		var factor = 1;
 
-		if (!isModernStyle(progressionState) || !degrees) {
+		if (!styleService.isModern(progressionState) || !degrees) {
 			return factor;
 		}
 
@@ -5326,34 +5359,321 @@
 		return score * affinity;
 	}
 
-	function isModernStyle(progressionState) {
-		return progressionState && progressionState.style === 'modern';
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
 	}
 
-	function isClassicStyle(progressionState) {
-		return progressionState && progressionState.style === 'classic';
+	global.CodaProgressionPatternWeight = {
+		adjustedPatternWeight: adjustedPatternWeight,
+		affinityScore: affinityScore,
+		commonToneDegreeScore: commonToneDegreeScore,
+		sensitiveDegreeFactor: sensitiveDegreeFactor
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-pattern-selector-service.js */
+// Weighted selection of base harmonic progression patterns.
+(function (global) {
+	'use strict';
+
+	var patternWeight = global.CodaProgressionPatternWeight;
+	var styleService = global.CodaProgressionStyle;
+
+	function choose(options) {
+		var patterns = options.rules && options.rules.patterns ? options.rules.patterns : [];
+		var candidates = [];
+		var totalWeight = 0;
+		var selectedValue;
+
+		for (var i = 0; i < patterns.length; i++) {
+			var weight;
+
+			if (!matchesMode(patterns[i], options.mode)) {
+				continue;
+			}
+
+			weight = patternWeight.adjustedPatternWeight(patterns[i], options.progressionState, options.mode);
+			if (weight <= 0) {
+				continue;
+			}
+
+			candidates.push({
+				pattern: patterns[i],
+				weight: weight
+			});
+			totalWeight += candidates[candidates.length - 1].weight;
+		}
+
+		if (!candidates.length) {
+			return fallbackPatternForStyle(options.progressionState);
+		}
+
+		selectedValue = options.rng() * totalWeight;
+
+		for (var j = 0; j < candidates.length; j++) {
+			selectedValue -= candidates[j].weight;
+			if (selectedValue <= 0) {
+				return candidates[j].pattern;
+			}
+		}
+
+		return candidates[candidates.length - 1].pattern;
+	}
+
+	function fallbackPatternForStyle(progressionState) {
+		if (styleService.isModern(progressionState)) {
+			return {
+				cadence: 'half',
+				counterpoint: 70,
+				degrees: [0, 3, 1, 4],
+				form: 'fallback-modern',
+				id: 'fallback-modern-half',
+				weight: 1
+			};
+		}
+
+		return {
+			cadence: 'authentic',
+			counterpoint: 70,
+			degrees: [0, 3, 4, 0],
+			form: 'fallback-classic',
+			id: 'fallback-classic-authentic',
+			weight: 1
+		};
+	}
+
+	function matchesMode(pattern, mode) {
+		return !pattern.modes || pattern.modes.indexOf(mode) > -1;
+	}
+
+	function sensitiveDegreeFactor(degrees, mode, progressionState) {
+		return patternWeight.sensitiveDegreeFactor(degrees, mode, progressionState);
+	}
+
+	function commonToneDegreeScore(degrees, progressionState) {
+		return patternWeight.commonToneDegreeScore(degrees, progressionState);
+	}
+
+	global.CodaProgressionPatternSelector = {
+		affinityScore: patternWeight.affinityScore,
+		choose: choose,
+		commonToneDegreeScore: commonToneDegreeScore,
+		matchesMode: matchesMode,
+		sensitiveDegreeFactor: sensitiveDegreeFactor
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-phrase-block-selector-service.js */
+// Weighted selection of four-bar phrase blocks for generated progressions.
+(function (global) {
+	'use strict';
+
+	var cadencePlanner = global.CodaProgressionCadencePlanner;
+	var patternWeight = global.CodaProgressionPatternWeight;
+	var patternSelector = global.CodaProgressionPatternSelector;
+
+	function choose(options) {
+		var blocks = options.rules && options.rules.phraseBlocks ? options.rules.phraseBlocks : fallbackPhraseBlocks();
+		var candidates = [];
+		var totalWeight = 0;
+		var selectedValue;
+
+		for (var i = 0; i < blocks.length; i++) {
+			var weight;
+
+			if (!patternSelector.matchesMode(blocks[i], options.mode) || !cadencePlanner.matchesCadence(blocks[i], options.cadence)) {
+				continue;
+			}
+
+			weight = adjustedBlockWeight(blocks[i], options.progressionState, options.previousBlockId, options.mode);
+			if (weight <= 0) {
+				continue;
+			}
+
+			candidates.push({
+				block: blocks[i],
+				weight: weight
+			});
+			totalWeight += candidates[candidates.length - 1].weight;
+		}
+
+		if (candidates.length > 1) {
+			candidates = candidates.filter(function (candidate) {
+				return candidate.block.id !== options.previousBlockId;
+			});
+			totalWeight = sumCandidateWeights(candidates);
+		}
+
+		if (!candidates.length) {
+			return fallbackPhraseBlocks()[0];
+		}
+
+		selectedValue = options.rng() * totalWeight;
+
+		for (var j = 0; j < candidates.length; j++) {
+			selectedValue -= candidates[j].weight;
+			if (selectedValue <= 0) {
+				return candidates[j].block;
+			}
+		}
+
+		return candidates[candidates.length - 1].block;
+	}
+
+	function sumCandidateWeights(candidates) {
+		return candidates.reduce(function (sum, candidate) {
+			return sum + candidate.weight;
+		}, 0);
+	}
+
+	function adjustedBlockWeight(block, progressionState, previousBlockId, mode) {
+		var weight = block.weight || 1;
+
+		weight += patternWeight.affinityScore(progressionState.counterpoint, block.counterpoint);
+		weight += patternWeight.affinityScore(progressionState.modalInterchange, block.modalColor);
+		weight += patternWeight.affinityScore(progressionState.tensions, block.tensionAffinity);
+		weight += patternWeight.commonToneDegreeScore(block.degrees, progressionState);
+		weight *= patternWeight.sensitiveDegreeFactor(block.degrees, mode, progressionState);
+
+		if (block.id === previousBlockId) {
+			weight = Math.max(1, weight * 0.12);
+		}
+
+		return Math.max(1, weight);
 	}
 
 	function fitBlockToBars(block, bars) {
-		var degrees = [];
 		var sourceDegrees = block.degrees || [0, 3, 4, 0];
 		var borrowedIndexes = block.borrowed || [];
+		var fitted = [];
 
 		for (var i = 0; i < bars; i++) {
-			degrees.push({
+			fitted.push({
 				index: sourceDegrees[i % sourceDegrees.length],
 				source: borrowedIndexes.indexOf(i % sourceDegrees.length) > -1 ? 'parallel' : 'diatonic'
 			});
 		}
 
-		return degrees;
+		return fitted;
 	}
 
 	function fallbackPhraseBlocks() {
 		return [
-			{ cadence: 'half', degrees: [0, 1, 3, 4], id: 'fallback-half', modes: ['major', 'minor'], weight: 1 },
-			{ cadence: 'authentic', degrees: [0, 3, 4, 0], id: 'fallback-authentic', modes: ['major', 'minor'], weight: 1 }
+			{
+				cadence: 'half',
+				degrees: [0, 1, 3, 4],
+				id: 'fallback-half',
+				modes: ['major', 'minor'],
+				weight: 1
+			},
+			{
+				cadence: 'authentic',
+				degrees: [0, 3, 4, 0],
+				id: 'fallback-authentic',
+				modes: ['major', 'minor'],
+				weight: 1
+			}
 		];
+	}
+
+	global.CodaProgressionPhraseBlockSelector = {
+		choose: choose,
+		fallbackPhraseBlocks: fallbackPhraseBlocks,
+		fitBlockToBars: fitBlockToBars
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-planner-service.js */
+// Harmonic phrase and cadence planner for generated progressions.
+(function (global) {
+	'use strict';
+
+	var cadencePlanner = global.CodaProgressionCadencePlanner;
+	var patternSelector = global.CodaProgressionPatternSelector;
+	var phraseBlockSelector = global.CodaProgressionPhraseBlockSelector;
+
+	function createPlan(options) {
+		var progressionState = options.progressionState;
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var mode = progressionMode(options.report);
+		var pattern = patternSelector.choose({
+			mode: mode,
+			progressionState: progressionState,
+			rng: rng,
+			rules: options.rules
+		});
+		var degrees = progressionState.bars >= 8 ?
+			composePhraseBlocks({
+				mode: mode,
+				pattern: pattern,
+				progressionState: progressionState,
+				rng: rng,
+				rules: options.rules
+			}) :
+			fitDegreesToBars(pattern, progressionState.bars);
+
+		return {
+			degrees: degrees,
+			pattern: pattern,
+			voiceLeading: voiceLeadingProfile(progressionState)
+		};
+	}
+
+	function progressionMode(report) {
+		return report && report.mode === 'M' ? 'major' : 'minor';
+	}
+
+	function fitDegreesToBars(pattern, bars) {
+		var fitted = [];
+		var sourceDegrees = pattern.degrees || [0, 3, 4, 0];
+		var normalizedBars = numberOrDefault(bars, sourceDegrees.length);
+		var borrowedIndexes = pattern.borrowed || [];
+
+		for (var i = 0; i < normalizedBars; i++) {
+			fitted.push({
+				index: sourceDegrees[i % sourceDegrees.length],
+				source: borrowedIndexes.indexOf(i % sourceDegrees.length) > -1 ? 'parallel' : 'diatonic'
+			});
+		}
+
+		cadencePlanner.forceCadentialEnding(fitted, pattern);
+
+		return fitted;
+	}
+
+	function composePhraseBlocks(options) {
+		var bars = numberOrDefault(options.progressionState.bars, 8);
+		var blockCount = Math.ceil(bars / 4);
+		var degrees = [];
+		var previousBlockId = '';
+
+		for (var blockIndex = 0; blockIndex < blockCount; blockIndex++) {
+			var remainingBars = bars - degrees.length;
+			var blockLength = Math.min(4, remainingBars);
+			var isFinalBlock = blockIndex === blockCount - 1;
+			var cadence = isFinalBlock ? cadencePlanner.finalCadenceForPattern(options.pattern, options.progressionState, options.rng) : cadencePlanner.chooseIntermediateCadence(options.rng);
+			var block = phraseBlockSelector.choose({
+				cadence: cadence,
+				mode: options.mode,
+				previousBlockId: previousBlockId,
+				progressionState: options.progressionState,
+				rng: options.rng,
+				rules: options.rules
+			});
+
+			previousBlockId = block.id;
+			degrees = degrees.concat(phraseBlockSelector.fitBlockToBars(block, blockLength));
+		}
+
+		return degrees.slice(0, bars);
 	}
 
 	function voiceLeadingProfile(progressionState) {
@@ -5459,10 +5779,83 @@
 
 ;
 
+/* Source: js/services/progression-chord-menu-option-service.js */
+// Builds chord replacement variants for the progression chord menu.
+(function (global) {
+	'use strict';
+
+	function chordReplacementOptions(chord, scaleNote, degreeIndex, formatting) {
+		var degree = scaleNote ? scaleNote.grado : '';
+		var triadLabels = ['', '6', '6/4'];
+		var seventhLabels = ['', '6/5', '4/3', '4/2'];
+		var options = [];
+
+		pushOptions(options, {
+			chord: chord,
+			degree: degree,
+			degreeIndex: degreeIndex,
+			formatting: formatting,
+			kind: 'triad',
+			labels: triadLabels
+		});
+		pushOptions(options, {
+			chord: chord,
+			degree: degree,
+			degreeIndex: degreeIndex,
+			formatting: formatting,
+			kind: 'seventh',
+			labels: seventhLabels
+		});
+
+		return options;
+	}
+
+	function pushOptions(options, config) {
+		for (var i = 0; i < config.labels.length; i++) {
+			options.push(buildOption(config, i));
+		}
+	}
+
+	function buildOption(config, inversionIndex) {
+		var inversionLabel = config.labels[inversionIndex];
+		var formattedDegree = config.kind === 'seventh' ?
+			config.formatting.formatDegreeForChord(config.degree, config.chord.nombre) :
+			config.formatting.formatTriadDegreeForChord(config.degree, config.chord.nombre);
+		var chordName = config.kind === 'seventh' ? config.chord.nombre : config.formatting.triadName(config.chord);
+
+		return {
+			degree: config.formatting.displayDegree(formattedDegree, inversionLabel, ''),
+			degreeIndex: config.degreeIndex,
+			displayName: config.formatting.displayName(chordName, inversionLabel, '', ''),
+			inversionIndex: inversionIndex,
+			inversionLabel: inversionLabel,
+			kind: config.kind
+		};
+	}
+
+	function chordNotes(chord) {
+		if (!chord) {
+			return [];
+		}
+
+		return [chord.fundamental, chord.tercera, chord.quinta, chord.septima];
+	}
+
+	global.CodaProgressionChordMenuOptions = {
+		chordNotes: chordNotes,
+		chordReplacementOptions: chordReplacementOptions
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-chord-menu-service.js */
 // Construcción del menú de sustitución de acordes para el visualizador de progresiones.
 (function (global) {
 	'use strict';
+
+	var menuOptions = global.CodaProgressionChordMenuOptions;
+	var tonalFunctionService = global.CodaProgressionTonalFunction;
 
 	function build(options) {
 		var report = options && options.report ? options.report : {};
@@ -5504,7 +5897,7 @@
 		}
 
 		for (var j = 0; j < scaleChords.length; j++) {
-			var commonToneCount = currentSegment ? voicing.commonPitchNames(currentSegment, { notes: chordNotes(scaleChords[j]) }).length : 0;
+			var commonToneCount = currentSegment ? voicing.commonPitchNames(currentSegment, { notes: menuOptions.chordNotes(scaleChords[j]) }).length : 0;
 
 			if (commonToneCount > 0) {
 				pushToGroup(1, j, {
@@ -5529,56 +5922,11 @@
 	}
 
 	function chordReplacementOptions(chord, scaleNote, degreeIndex, formatting) {
-		var degree = scaleNote ? scaleNote.grado : '';
-		var triadLabels = ['', '6', '6/4'];
-		var seventhLabels = ['', '6/5', '4/3', '4/2'];
-		var options = [];
-
-		for (var i = 0; i < triadLabels.length; i++) {
-			options.push({
-				degree: formatting.displayDegree(formatting.formatTriadDegreeForChord(degree, chord.nombre), triadLabels[i], ''),
-				degreeIndex: degreeIndex,
-				displayName: formatting.displayName(formatting.triadName(chord), triadLabels[i], '', ''),
-				inversionIndex: i,
-				inversionLabel: triadLabels[i],
-				kind: 'triad'
-			});
-		}
-
-		for (var j = 0; j < seventhLabels.length; j++) {
-			options.push({
-				degree: formatting.displayDegree(formatting.formatDegreeForChord(degree, chord.nombre), seventhLabels[j], ''),
-				degreeIndex: degreeIndex,
-				displayName: formatting.displayName(chord.nombre, seventhLabels[j], '', ''),
-				inversionIndex: j,
-				inversionLabel: seventhLabels[j],
-				kind: 'seventh'
-			});
-		}
-
-		return options;
+		return menuOptions.chordReplacementOptions(chord, scaleNote, degreeIndex, formatting);
 	}
 
 	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
-		var functions;
-		var tonalFunction;
-
-		if (!scaleDefinition || scaleDefinition.tonal !== 'true' || !scaleDefinition.funciones || degreeIndex < 0) {
-			return '';
-		}
-
-		functions = scaleDefinition.funciones.split('-');
-		tonalFunction = functions[degreeIndex] || '';
-
-		return tonalFunction === '—' || tonalFunction === 'â€”' ? '' : tonalFunction;
-	}
-
-	function chordNotes(chord) {
-		if (!chord) {
-			return [];
-		}
-
-		return [chord.fundamental, chord.tercera, chord.quinta, chord.septima];
+		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
 	}
 
 	global.CodaProgressionChordMenu = {
@@ -6077,25 +6425,12 @@
 
 ;
 
-/* Source: js/services/progression-playback-schedule-service.js */
-// Builds playback and metronome schedules for generated progressions.
+/* Source: js/services/progression-metronome-schedule-service.js */
+// Builds metronome beat schedules for generated progressions.
 (function (global) {
 	'use strict';
 
-	function buildProgressionPlaybackSchedule(progression, options) {
-		var measures = progression && progression.measures ? progression.measures : [];
-		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
-		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
-		var schedule = [];
-
-		for (var i = startIndex; i < measures.length; i++) {
-			schedule = schedule.concat(buildMeasurePlaybackEvents(measures[i], i, startOffset, options));
-		}
-
-		return schedule;
-	}
-
-	function buildProgressionMetronomeSchedule(progression, options) {
+	function build(progression, options) {
 		var measures = progression && progression.measures ? progression.measures : [];
 		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
 		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
@@ -6126,68 +6461,30 @@
 		return 60 / Math.max(1, bpm);
 	}
 
-	function buildScheduledMeasures(progression, startIndex) {
+	function normalizeStartIndex(startIndex, progression) {
 		var measures = progression && progression.measures ? progression.measures : [];
-		startIndex = normalizeStartIndex(startIndex, progression);
+		var numericIndex = parseInt(startIndex, 10);
 
-		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
-		var scheduledMeasures = [];
-
-		for (var i = startIndex; i < measures.length; i++) {
-			scheduledMeasures.push({
-				delay: Math.max(0, (Number(measures[i].startSeconds) || 0) - startOffset),
-				index: i,
-				measure: measures[i]
-			});
+		if (!measures.length || isNaN(numericIndex)) {
+			return 0;
 		}
 
-		return scheduledMeasures;
+		return Math.max(0, Math.min(measures.length - 1, numericIndex));
 	}
 
-	function buildMeasurePlaybackEvents(measure, index, startOffset, options) {
-		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
-		var events = [];
+	global.CodaProgressionMetronomeSchedule = {
+		build: build
+	};
+})(window);
 
-		for (var i = 0; i < chords.length; i++) {
-			events.push(buildMeasurePlaybackEvent(chords[i], index, startOffset, options, i));
-		}
+;
 
-		return events;
-	}
+/* Source: js/services/progression-playback-note-event-service.js */
+// Builds per-note playback events, including sustained pedal behavior.
+(function (global) {
+	'use strict';
 
-	function buildMeasurePlaybackEvent(measure, index, startOffset, options, chordIndex) {
-		var duration = playbackDuration(measure);
-		var notes = notesForVoices(measure.notes, measure.voices);
-		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
-		var midiNoteEvents = buildMidiNoteEvents(measure, duration, options);
-		var mode = measure.articulation === 'arpeggio' ? 'arpeggio' : 'chord';
-		var event = {
-			arpeggioStep: arpeggioStepSeconds(measure),
-			bar: measure.bar,
-			degree: measure.degree,
-			delay: Math.max(0, (measure.startSeconds || 0) - (startOffset || 0)),
-			duration: duration,
-			index: index,
-			mode: mode,
-			notes: notes
-		};
-
-		if (chordIndex) {
-			event.chordIndex = chordIndex;
-		}
-
-		if (midiNotes.length) {
-			event.midiNotes = midiNotes;
-		}
-
-		if (midiNoteEvents.length) {
-			event.midiNoteEvents = midiNoteEvents;
-		}
-
-		return event;
-	}
-
-	function buildMidiNoteEvents(measure, duration, options) {
+	function build(measure, duration, options) {
 		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
 		var events = [];
 
@@ -6242,17 +6539,24 @@
 		return duration;
 	}
 
-	function playbackTotalSeconds(progression, scheduledMeasures) {
-		var lastMeasure;
+	function notesForVoices(notes, voices) {
+		var voiceCount = Math.max(1, Math.min(Number(voices) || 4, 6));
 
-		if (!scheduledMeasures.length) {
-			return 0;
-		}
-
-		lastMeasure = scheduledMeasures[scheduledMeasures.length - 1].measure;
-
-		return scheduledMeasures[scheduledMeasures.length - 1].delay + (Number(lastMeasure.durationSeconds) || 0);
+		return (notes || []).slice(0, voiceCount);
 	}
+
+	global.CodaProgressionPlaybackNoteEvents = {
+		build: build,
+		supportsPedalHold: supportsPedalHold
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-playback-timing-service.js */
+// Playback timing helpers for scheduled progression events.
+(function (global) {
+	'use strict';
 
 	function normalizeStartIndex(startIndex, progression) {
 		var measures = progression && progression.measures ? progression.measures : [];
@@ -6298,6 +6602,148 @@
 		var duration = Number(measure && measure.durationSeconds) || 0;
 
 		return Math.max(0.05, Math.min(0.18, duration / 8));
+	}
+
+	function playbackTotalSeconds(progression, scheduledMeasures) {
+		var lastMeasure;
+
+		if (!scheduledMeasures.length) {
+			return 0;
+		}
+
+		lastMeasure = scheduledMeasures[scheduledMeasures.length - 1].measure;
+
+		return scheduledMeasures[scheduledMeasures.length - 1].delay + (Number(lastMeasure.durationSeconds) || 0);
+	}
+
+	global.CodaProgressionPlaybackTiming = {
+		arpeggioStepSeconds: arpeggioStepSeconds,
+		articulationDurationFactor: articulationDurationFactor,
+		normalizeStartIndex: normalizeStartIndex,
+		notesForVoices: notesForVoices,
+		playbackDuration: playbackDuration,
+		playbackTotalSeconds: playbackTotalSeconds
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-playback-event-builder-service.js */
+// Builds chord playback events from scheduled progression measures.
+(function (global) {
+	'use strict';
+
+	var noteEventService = global.CodaProgressionPlaybackNoteEvents;
+	var timingService = global.CodaProgressionPlaybackTiming;
+
+	function buildMeasurePlaybackEvents(measure, index, startOffset, options) {
+		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
+		var events = [];
+
+		for (var i = 0; i < chords.length; i++) {
+			events.push(buildMeasurePlaybackEvent(chords[i], index, startOffset, options, i));
+		}
+
+		return events;
+	}
+
+	function buildMeasurePlaybackEvent(measure, index, startOffset, options, chordIndex) {
+		var duration = timingService.playbackDuration(measure);
+		var notes = timingService.notesForVoices(measure.notes, measure.voices);
+		var midiNotes = timingService.notesForVoices(measure.midiNotes, measure.voices);
+		var midiNoteEvents = noteEventService.build(measure, duration, options);
+		var mode = measure.articulation === 'arpeggio' ? 'arpeggio' : 'chord';
+		var event = {
+			arpeggioStep: timingService.arpeggioStepSeconds(measure),
+			bar: measure.bar,
+			degree: measure.degree,
+			delay: Math.max(0, (measure.startSeconds || 0) - (startOffset || 0)),
+			duration: duration,
+			index: index,
+			mode: mode,
+			notes: notes
+		};
+
+		if (chordIndex) {
+			event.chordIndex = chordIndex;
+		}
+
+		if (midiNotes.length) {
+			event.midiNotes = midiNotes;
+		}
+
+		if (midiNoteEvents.length) {
+			event.midiNoteEvents = midiNoteEvents;
+		}
+
+		return event;
+	}
+
+	global.CodaProgressionPlaybackEventBuilder = {
+		buildMeasurePlaybackEvent: buildMeasurePlaybackEvent,
+		buildMeasurePlaybackEvents: buildMeasurePlaybackEvents
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-playback-schedule-service.js */
+// Builds playback and metronome schedules for generated progressions.
+(function (global) {
+	'use strict';
+
+	var eventBuilder = global.CodaProgressionPlaybackEventBuilder;
+	var metronomeScheduleService = global.CodaProgressionMetronomeSchedule;
+	var timingService = global.CodaProgressionPlaybackTiming;
+
+	function buildProgressionPlaybackSchedule(progression, options) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
+		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
+		var schedule = [];
+
+		for (var i = startIndex; i < measures.length; i++) {
+			schedule = schedule.concat(eventBuilder.buildMeasurePlaybackEvents(measures[i], i, startOffset, options));
+		}
+
+		return schedule;
+	}
+
+	function buildProgressionMetronomeSchedule(progression, options) {
+		return metronomeScheduleService.build(progression, options);
+	}
+
+	function buildScheduledMeasures(progression, startIndex) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var normalizedStartIndex = normalizeStartIndex(startIndex, progression);
+		var startOffset = measures[normalizedStartIndex] ? Number(measures[normalizedStartIndex].startSeconds) || 0 : 0;
+		var scheduledMeasures = [];
+
+		for (var i = normalizedStartIndex; i < measures.length; i++) {
+			scheduledMeasures.push({
+				delay: Math.max(0, (Number(measures[i].startSeconds) || 0) - startOffset),
+				index: i,
+				measure: measures[i]
+			});
+		}
+
+		return scheduledMeasures;
+	}
+
+	function normalizeStartIndex(startIndex, progression) {
+		return timingService.normalizeStartIndex(startIndex, progression);
+	}
+
+	function notesForVoices(notes, voices) {
+		return timingService.notesForVoices(notes, voices);
+	}
+
+	function playbackTotalSeconds(progression, scheduledMeasures) {
+		return timingService.playbackTotalSeconds(progression, scheduledMeasures);
+	}
+
+	function articulationDurationFactor(articulation) {
+		return timingService.articulationDurationFactor(articulation);
 	}
 
 	global.CodaProgressionPlaybackSchedule = {
@@ -6630,159 +7076,32 @@
 
 ;
 
-/* Source: js/services/progression-transport-drag-service.js */
-// Encapsulates drag and drop interactions for progression measures and measure chords.
+/* Source: js/services/progression-transport-dom-service.js */
+// DOM helpers for progression transport interactions.
 (function (global) {
 	'use strict';
 
-	function initialize(options) {
-		options = options || {};
+	function closest(target, selector) {
+		return target && typeof target.closest === 'function' ? target.closest(selector) : null;
+	}
 
-		var root = options.root;
-		var draggedMeasureIndex = null;
-		var draggedMeasureChord = null;
+	function chordIndex(chordElement) {
+		var index = chordElement ? parseInt(chordElement.getAttribute('data-measure-chord-index'), 10) : 0;
 
-		if (!root || typeof root.addEventListener !== 'function') {
-			return null;
-		}
+		return isNaN(index) ? 0 : index;
+	}
 
-		root.addEventListener('dragstart', function (event) {
-			var measure = closest(event.target, '.measure');
-			var chordHandle = closest(event.target, '.measureChordDragHandle');
-			var chordElement = closest(event.target, '.measureChord');
-			var sourceMeasureIndex;
-			var sourceChordIndex;
+	function measureIndex(measure) {
+		var index = parseInt(measure.getAttribute('data-progression-index'), 10);
 
-			if (!measure || closest(event.target, '.measureSplitButton') || closest(event.target, '.measureChordMenuButton')) {
-				return;
-			}
+		return isNaN(index) ? 0 : index;
+	}
 
-			if (chordHandle) {
-				sourceMeasureIndex = measureIndex(measure);
-				sourceChordIndex = chordIndex(chordElement);
-				if (sourceChordIndex <= 0) {
-					return;
-				}
+	function dragSourceIndex(event, fallbackIndex) {
+		var dataIndex = event && event.dataTransfer ? event.dataTransfer.getData('text/plain') : '';
+		var numericIndex = parseInt(dataIndex, 10);
 
-				draggedMeasureChord = {
-					chordIndex: sourceChordIndex,
-					measureIndex: sourceMeasureIndex
-				};
-				if (chordElement) {
-					chordElement.classList.add('isDragging');
-				}
-
-				if (event.dataTransfer) {
-					event.dataTransfer.effectAllowed = 'move';
-					event.dataTransfer.setData('text/coda-progression-chord', sourceMeasureIndex + ':' + sourceChordIndex);
-					event.dataTransfer.setData('text/plain', sourceMeasureIndex + ':' + sourceChordIndex);
-				}
-				return;
-			}
-
-			draggedMeasureIndex = measureIndex(measure);
-			measure.classList.add('isDragging');
-
-			if (event.dataTransfer) {
-				event.dataTransfer.effectAllowed = 'move';
-				event.dataTransfer.setData('text/plain', String(draggedMeasureIndex));
-			}
-		});
-
-		root.addEventListener('dragover', function (event) {
-			var measure = closest(event.target, '.measure');
-			var chordElement = closest(event.target, '.measureChord');
-			var targetChordIndex;
-
-			if (!measure) {
-				return;
-			}
-
-			if (draggedMeasureChord) {
-				targetChordIndex = chordIndex(chordElement);
-				if (measureIndex(measure) !== draggedMeasureChord.measureIndex || targetChordIndex <= 0) {
-					return;
-				}
-
-				preventDefault(event);
-				if (chordElement) {
-					chordElement.classList.add('isChordDropTarget');
-				}
-				setDropEffect(event);
-				return;
-			}
-
-			preventDefault(event);
-			measure.classList.add('isDropTarget');
-			setDropEffect(event);
-		});
-
-		root.addEventListener('dragleave', function (event) {
-			var measure = closest(event.target, '.measure');
-			var chordElement = closest(event.target, '.measureChord');
-
-			if (chordElement) {
-				chordElement.classList.remove('isChordDropTarget');
-			}
-			if (measure) {
-				measure.classList.remove('isDropTarget');
-			}
-		});
-
-		root.addEventListener('drop', function (event) {
-			var measure = closest(event.target, '.measure');
-			var chordElement = closest(event.target, '.measureChord');
-			var fromIndex = dragSourceIndex(event, draggedMeasureIndex);
-			var toIndex;
-			var targetChordIndex;
-			var sourceChordDrag;
-
-			if (!measure) {
-				return;
-			}
-
-			if (draggedMeasureChord) {
-				sourceChordDrag = draggedMeasureChord;
-				targetChordIndex = chordIndex(chordElement);
-				if (measureIndex(measure) !== sourceChordDrag.measureIndex || targetChordIndex <= 0) {
-					clearDragState();
-					return;
-				}
-
-				preventDefault(event);
-				clearDragState();
-				run(options.onMeasureChordDrop, sourceChordDrag.measureIndex, sourceChordDrag.chordIndex, targetChordIndex);
-				return;
-			}
-
-			preventDefault(event);
-			clearDragState();
-			toIndex = measureIndex(measure);
-			run(options.onMeasureDrop, fromIndex, toIndex);
-		});
-
-		root.addEventListener('dragend', clearDragState);
-
-		function clearDragState() {
-			draggedMeasureIndex = null;
-			draggedMeasureChord = null;
-			if (!global.document || typeof global.document.querySelectorAll !== 'function') {
-				return;
-			}
-
-			Array.prototype.forEach.call(global.document.querySelectorAll('.measure.isDragging, .measure.isDropTarget'), function (measure) {
-				measure.classList.remove('isDragging');
-				measure.classList.remove('isDropTarget');
-			});
-			Array.prototype.forEach.call(global.document.querySelectorAll('.measureChord.isDragging, .measureChord.isChordDropTarget'), function (chord) {
-				chord.classList.remove('isDragging');
-				chord.classList.remove('isChordDropTarget');
-			});
-		}
-
-		return {
-			clear: clearDragState
-		};
+		return isNaN(numericIndex) ? fallbackIndex : numericIndex;
 	}
 
 	function preventDefault(event) {
@@ -6797,6 +7116,254 @@
 		}
 	}
 
+	global.CodaProgressionTransportDom = {
+		chordIndex: chordIndex,
+		closest: closest,
+		dragSourceIndex: dragSourceIndex,
+		measureIndex: measureIndex,
+		preventDefault: preventDefault,
+		setDropEffect: setDropEffect
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-drag-class-service.js */
+// Visual class helpers for progression drag and drop state.
+(function (global) {
+	'use strict';
+
+	function clear(documentRef) {
+		if (!documentRef || typeof documentRef.querySelectorAll !== 'function') {
+			return;
+		}
+
+		Array.prototype.forEach.call(documentRef.querySelectorAll('.measure.isDragging, .measure.isDropTarget'), function (measure) {
+			measure.classList.remove('isDragging');
+			measure.classList.remove('isDropTarget');
+		});
+		Array.prototype.forEach.call(documentRef.querySelectorAll('.measureChord.isDragging, .measureChord.isChordDropTarget'), function (chord) {
+			chord.classList.remove('isDragging');
+			chord.classList.remove('isChordDropTarget');
+		});
+	}
+
+	function markChordDragging(chordElement) {
+		addClass(chordElement, 'isDragging');
+	}
+
+	function markChordDropTarget(chordElement) {
+		addClass(chordElement, 'isChordDropTarget');
+	}
+
+	function markMeasureDragging(measure) {
+		addClass(measure, 'isDragging');
+	}
+
+	function markMeasureDropTarget(measure) {
+		addClass(measure, 'isDropTarget');
+	}
+
+	function unmarkChordDropTarget(chordElement) {
+		removeClass(chordElement, 'isChordDropTarget');
+	}
+
+	function unmarkMeasureDropTarget(measure) {
+		removeClass(measure, 'isDropTarget');
+	}
+
+	function addClass(element, className) {
+		if (element && element.classList) {
+			element.classList.add(className);
+		}
+	}
+
+	function removeClass(element, className) {
+		if (element && element.classList) {
+			element.classList.remove(className);
+		}
+	}
+
+	global.CodaProgressionTransportDragClasses = {
+		clear: clear,
+		markChordDragging: markChordDragging,
+		markChordDropTarget: markChordDropTarget,
+		markMeasureDragging: markMeasureDragging,
+		markMeasureDropTarget: markMeasureDropTarget,
+		unmarkChordDropTarget: unmarkChordDropTarget,
+		unmarkMeasureDropTarget: unmarkMeasureDropTarget
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-drag-state-service.js */
+// Mutable drag state for progression transport interactions.
+(function (global) {
+	'use strict';
+
+	function create() {
+		var draggedMeasureIndex = null;
+		var draggedMeasureChord = null;
+
+		function setMeasureIndex(value) {
+			draggedMeasureIndex = value;
+			draggedMeasureChord = null;
+		}
+
+		function setMeasureChord(measureIndex, chordIndex) {
+			draggedMeasureChord = {
+				chordIndex: chordIndex,
+				measureIndex: measureIndex
+			};
+			draggedMeasureIndex = null;
+		}
+
+		function clear() {
+			draggedMeasureIndex = null;
+			draggedMeasureChord = null;
+		}
+
+		return {
+			clear: clear,
+			measureChord: function () {
+				return draggedMeasureChord;
+			},
+			measureIndex: function () {
+				return draggedMeasureIndex;
+			},
+			setMeasureChord: setMeasureChord,
+			setMeasureIndex: setMeasureIndex
+		};
+	}
+
+	global.CodaProgressionTransportDragState = {
+		create: create
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-drag-handler-service.js */
+// Event handlers for progression drag and drop interactions.
+(function (global) {
+	'use strict';
+
+	var dragDom = global.CodaProgressionTransportDom;
+	var dragClasses = global.CodaProgressionTransportDragClasses;
+
+	function create(options, state, clearDragState) {
+		options = options || {};
+
+		return {
+			dragend: clearDragState,
+			dragleave: function (event) {
+				var measure = dragDom.closest(event.target, '.measure');
+				var chordElement = dragDom.closest(event.target, '.measureChord');
+
+				dragClasses.unmarkChordDropTarget(chordElement);
+				dragClasses.unmarkMeasureDropTarget(measure);
+			},
+			dragover: function (event) {
+				var measure = dragDom.closest(event.target, '.measure');
+				var chordElement = dragDom.closest(event.target, '.measureChord');
+				var targetChordIndex;
+
+				if (!measure) {
+					return;
+				}
+
+				if (state.measureChord()) {
+					targetChordIndex = chordIndex(chordElement);
+					if (measureIndex(measure) !== state.measureChord().measureIndex || targetChordIndex <= 0) {
+						return;
+					}
+
+					dragDom.preventDefault(event);
+					dragClasses.markChordDropTarget(chordElement);
+					dragDom.setDropEffect(event);
+					return;
+				}
+
+				dragDom.preventDefault(event);
+				dragClasses.markMeasureDropTarget(measure);
+				dragDom.setDropEffect(event);
+			},
+			dragstart: function (event) {
+				var measure = dragDom.closest(event.target, '.measure');
+				var chordHandle = dragDom.closest(event.target, '.measureChordDragHandle');
+				var chordElement = dragDom.closest(event.target, '.measureChord');
+				var sourceMeasureIndex;
+				var sourceChordIndex;
+
+				if (!measure || dragDom.closest(event.target, '.measureSplitButton') || dragDom.closest(event.target, '.measureChordMenuButton')) {
+					return;
+				}
+
+				if (chordHandle) {
+					sourceMeasureIndex = measureIndex(measure);
+					sourceChordIndex = chordIndex(chordElement);
+					if (sourceChordIndex <= 0) {
+						return;
+					}
+
+					state.setMeasureChord(sourceMeasureIndex, sourceChordIndex);
+					dragClasses.markChordDragging(chordElement);
+					setChordDragData(event, sourceMeasureIndex, sourceChordIndex);
+					return;
+				}
+
+				state.setMeasureIndex(measureIndex(measure));
+				dragClasses.markMeasureDragging(measure);
+				setMeasureDragData(event, state.measureIndex());
+			},
+			drop: function (event) {
+				var measure = dragDom.closest(event.target, '.measure');
+				var chordElement = dragDom.closest(event.target, '.measureChord');
+				var fromIndex = dragSourceIndex(event, state.measureIndex());
+				var targetChordIndex;
+				var sourceChordDrag;
+
+				if (!measure) {
+					return;
+				}
+
+				if (state.measureChord()) {
+					sourceChordDrag = state.measureChord();
+					targetChordIndex = chordIndex(chordElement);
+					if (measureIndex(measure) !== sourceChordDrag.measureIndex || targetChordIndex <= 0) {
+						clearDragState();
+						return;
+					}
+
+					dragDom.preventDefault(event);
+					clearDragState();
+					run(options.onMeasureChordDrop, sourceChordDrag.measureIndex, sourceChordDrag.chordIndex, targetChordIndex);
+					return;
+				}
+
+				dragDom.preventDefault(event);
+				clearDragState();
+				run(options.onMeasureDrop, fromIndex, measureIndex(measure));
+			}
+		};
+	}
+
+	function setChordDragData(event, measureIndexValue, chordIndexValue) {
+		if (event.dataTransfer) {
+			event.dataTransfer.effectAllowed = 'move';
+			event.dataTransfer.setData('text/coda-progression-chord', measureIndexValue + ':' + chordIndexValue);
+			event.dataTransfer.setData('text/plain', measureIndexValue + ':' + chordIndexValue);
+		}
+	}
+
+	function setMeasureDragData(event, measureIndexValue) {
+		if (event.dataTransfer) {
+			event.dataTransfer.effectAllowed = 'move';
+			event.dataTransfer.setData('text/plain', String(measureIndexValue));
+		}
+	}
+
 	function run(callback, value, secondValue, thirdValue) {
 		if (typeof callback === 'function') {
 			callback(value, secondValue, thirdValue);
@@ -6804,26 +7371,75 @@
 	}
 
 	function dragSourceIndex(event, fallbackIndex) {
-		var dataIndex = event && event.dataTransfer ? event.dataTransfer.getData('text/plain') : '';
-		var numericIndex = parseInt(dataIndex, 10);
-
-		return isNaN(numericIndex) ? fallbackIndex : numericIndex;
+		return dragDom.dragSourceIndex(event, fallbackIndex);
 	}
 
 	function measureIndex(measure) {
-		var index = parseInt(measure.getAttribute('data-progression-index'), 10);
-
-		return isNaN(index) ? 0 : index;
+		return dragDom.measureIndex(measure);
 	}
 
 	function chordIndex(chordElement) {
-		var index = chordElement ? parseInt(chordElement.getAttribute('data-measure-chord-index'), 10) : 0;
-
-		return isNaN(index) ? 0 : index;
+		return dragDom.chordIndex(chordElement);
 	}
 
-	function closest(target, selector) {
-		return target && typeof target.closest === 'function' ? target.closest(selector) : null;
+	global.CodaProgressionTransportDragHandlers = {
+		chordIndex: chordIndex,
+		create: create,
+		dragSourceIndex: dragSourceIndex,
+		measureIndex: measureIndex
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-transport-drag-service.js */
+// Encapsulates drag and drop wiring for progression measures and measure chords.
+(function (global) {
+	'use strict';
+
+	var dragClasses = global.CodaProgressionTransportDragClasses;
+	var dragHandlers = global.CodaProgressionTransportDragHandlers;
+	var dragState = global.CodaProgressionTransportDragState;
+
+	function initialize(options) {
+		options = options || {};
+
+		var root = options.root;
+		var state = dragState.create();
+		var handlers;
+
+		if (!root || typeof root.addEventListener !== 'function') {
+			return null;
+		}
+
+		handlers = dragHandlers.create(options, state, clearDragState);
+
+		root.addEventListener('dragstart', handlers.dragstart);
+		root.addEventListener('dragover', handlers.dragover);
+		root.addEventListener('dragleave', handlers.dragleave);
+		root.addEventListener('drop', handlers.drop);
+		root.addEventListener('dragend', handlers.dragend);
+
+		function clearDragState() {
+			state.clear();
+			dragClasses.clear(global.document);
+		}
+
+		return {
+			clear: clearDragState
+		};
+	}
+
+	function dragSourceIndex(event, fallbackIndex) {
+		return dragHandlers.dragSourceIndex(event, fallbackIndex);
+	}
+
+	function measureIndex(measure) {
+		return dragHandlers.measureIndex(measure);
+	}
+
+	function chordIndex(chordElement) {
+		return dragHandlers.chordIndex(chordElement);
 	}
 
 	global.CodaProgressionTransportDrag = {
@@ -11259,6 +11875,7 @@
 		var goStartButton = query('.transportButton--goStart');
 		var listenButton = query('.transportButton--listen');
 		var exportButton = query('.transportButton--export');
+		var transportDom = global.CodaProgressionTransportDom;
 		var playbackHeadIndex = 0;
 
 		if (!root || root.getAttribute('data-coda-progression-transport') === 'true') {
@@ -11290,23 +11907,23 @@
 		}
 
 		root.addEventListener('click', function (event) {
-			var chordMenuButton = closest(event.target, '.measureChordMenuButton');
-			var chordElement = closest(event.target, '.measureChord');
-			var splitButton = closest(event.target, '.measureSplitButton');
-			var measure = closest(event.target, '.measure');
+			var chordMenuButton = transportDom.closest(event.target, '.measureChordMenuButton');
+			var chordElement = transportDom.closest(event.target, '.measureChord');
+			var splitButton = transportDom.closest(event.target, '.measureSplitButton');
+			var measure = transportDom.closest(event.target, '.measure');
 			var clickedIndex;
 
-			if (!measure || closest(event.target, '.measureDragHandle')) {
+			if (!measure || transportDom.closest(event.target, '.measureDragHandle')) {
 				return;
 			}
 
-			clickedIndex = measureIndex(measure);
+			clickedIndex = transportDom.measureIndex(measure);
 			if (chordMenuButton) {
 				event.preventDefault();
 				if (typeof event.stopPropagation === 'function') {
 					event.stopPropagation();
 				}
-				global.CodaProgressionTransportMenu.open(options, chordMenuButton, clickedIndex, chordIndex(chordElement));
+				global.CodaProgressionTransportMenu.open(options, chordMenuButton, clickedIndex, transportDom.chordIndex(chordElement));
 				return;
 			}
 
@@ -11314,7 +11931,7 @@
 				event.preventDefault();
 				global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
 				global.CodaProgressionTransportMenu.close();
-				global.CodaProgressionTransportActions.updateMeasureSplit(options, splitButton.getAttribute('data-progression-split-action'), clickedIndex, chordIndex(chordElement));
+				global.CodaProgressionTransportActions.updateMeasureSplit(options, splitButton.getAttribute('data-progression-split-action'), clickedIndex, transportDom.chordIndex(chordElement));
 				playbackHeadIndex = clickedIndex;
 				transportView.setPlaybackHead(playbackHeadIndex, false);
 				return;
@@ -11374,13 +11991,13 @@
 			});
 
 			global.document.addEventListener('click', function (event) {
-				var menuItem = closest(event.target, '.measureChordMenuItem');
-				var menu = closest(event.target, '.progressionChordMenu');
+				var menuItem = transportDom.closest(event.target, '.measureChordMenuItem');
+				var menu = transportDom.closest(event.target, '.progressionChordMenu');
 
 				if (menuItem) {
 					var replacement = global.CodaProgressionTransportMenu.replacementFromItem(menuItem);
-					var menuMeasureIndex = parseInt(menuItem.getAttribute('data-progression-index'), 10);
-					var menuChordIndex = parseInt(menuItem.getAttribute('data-measure-chord-index'), 10);
+					var menuMeasureIndex = transportDom.measureIndex(menuItem);
+					var menuChordIndex = transportDom.chordIndex(menuItem);
 
 					global.CodaProgressionTransportPlayback.stop(options, listenButton, playbackHeadIndex);
 					global.CodaProgressionTransportActions.updateMeasureChordReplacement(options, menuMeasureIndex, menuChordIndex, replacement);
@@ -11390,7 +12007,7 @@
 					return;
 				}
 
-				if (!menu && !closest(event.target, '.measureChordMenuButton')) {
+				if (!menu && !transportDom.closest(event.target, '.measureChordMenuButton')) {
 					global.CodaProgressionTransportMenu.close();
 				}
 			});
@@ -11415,24 +12032,8 @@
 		};
 	}
 
-	function measureIndex(measure) {
-		var index = parseInt(measure.getAttribute('data-progression-index'), 10);
-
-		return isNaN(index) ? 0 : index;
-	}
-
-	function chordIndex(chordElement) {
-		var index = chordElement ? parseInt(chordElement.getAttribute('data-measure-chord-index'), 10) : 0;
-
-		return isNaN(index) ? 0 : index;
-	}
-
 	function query(selector) {
 		return global.document ? global.document.querySelector(selector) : null;
-	}
-
-	function closest(target, selector) {
-		return target && target.closest ? target.closest(selector) : null;
 	}
 
 	global.CodaProgressionTransport = {

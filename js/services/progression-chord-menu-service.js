@@ -2,6 +2,9 @@
 (function (global) {
 	'use strict';
 
+	var menuOptions = global.CodaProgressionChordMenuOptions;
+	var tonalFunctionService = global.CodaProgressionTonalFunction;
+
 	function build(options) {
 		var report = options && options.report ? options.report : {};
 		var scaleChords = report.scaleChords || [];
@@ -42,7 +45,7 @@
 		}
 
 		for (var j = 0; j < scaleChords.length; j++) {
-			var commonToneCount = currentSegment ? voicing.commonPitchNames(currentSegment, { notes: chordNotes(scaleChords[j]) }).length : 0;
+			var commonToneCount = currentSegment ? voicing.commonPitchNames(currentSegment, { notes: menuOptions.chordNotes(scaleChords[j]) }).length : 0;
 
 			if (commonToneCount > 0) {
 				pushToGroup(1, j, {
@@ -67,56 +70,11 @@
 	}
 
 	function chordReplacementOptions(chord, scaleNote, degreeIndex, formatting) {
-		var degree = scaleNote ? scaleNote.grado : '';
-		var triadLabels = ['', '6', '6/4'];
-		var seventhLabels = ['', '6/5', '4/3', '4/2'];
-		var options = [];
-
-		for (var i = 0; i < triadLabels.length; i++) {
-			options.push({
-				degree: formatting.displayDegree(formatting.formatTriadDegreeForChord(degree, chord.nombre), triadLabels[i], ''),
-				degreeIndex: degreeIndex,
-				displayName: formatting.displayName(formatting.triadName(chord), triadLabels[i], '', ''),
-				inversionIndex: i,
-				inversionLabel: triadLabels[i],
-				kind: 'triad'
-			});
-		}
-
-		for (var j = 0; j < seventhLabels.length; j++) {
-			options.push({
-				degree: formatting.displayDegree(formatting.formatDegreeForChord(degree, chord.nombre), seventhLabels[j], ''),
-				degreeIndex: degreeIndex,
-				displayName: formatting.displayName(chord.nombre, seventhLabels[j], '', ''),
-				inversionIndex: j,
-				inversionLabel: seventhLabels[j],
-				kind: 'seventh'
-			});
-		}
-
-		return options;
+		return menuOptions.chordReplacementOptions(chord, scaleNote, degreeIndex, formatting);
 	}
 
 	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
-		var functions;
-		var tonalFunction;
-
-		if (!scaleDefinition || scaleDefinition.tonal !== 'true' || !scaleDefinition.funciones || degreeIndex < 0) {
-			return '';
-		}
-
-		functions = scaleDefinition.funciones.split('-');
-		tonalFunction = functions[degreeIndex] || '';
-
-		return tonalFunction === '—' || tonalFunction === 'â€”' ? '' : tonalFunction;
-	}
-
-	function chordNotes(chord) {
-		if (!chord) {
-			return [];
-		}
-
-		return [chord.fundamental, chord.tercera, chord.quinta, chord.septima];
+		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
 	}
 
 	global.CodaProgressionChordMenu = {

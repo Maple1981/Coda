@@ -19,6 +19,10 @@ function runScript(relativePath) {
 runScript('js/renderers/progression-chord-menu-renderer.js');
 runScript('js/services/progression-midi-download-service.js');
 runScript('js/services/progression-transport-shortcut-service.js');
+runScript('js/services/progression-transport-dom-service.js');
+runScript('js/services/progression-transport-drag-class-service.js');
+runScript('js/services/progression-transport-drag-state-service.js');
+runScript('js/services/progression-transport-drag-handler-service.js');
 runScript('js/services/progression-transport-drag-service.js');
 runScript('js/services/progression-transport-view-service.js');
 runScript('js/services/progression-transport-actions-service.js');

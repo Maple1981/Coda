@@ -4,6 +4,7 @@
 
 	var formattingService = global.CodaProgressionFormatting;
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
+	var tonalFunctionService = global.CodaProgressionTonalFunction;
 
 	function fromPlan(measure, chordSelection, timing) {
 		var resolvedDegree = chordSelection.resolvedDegree;
@@ -82,10 +83,7 @@
 	}
 
 	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
-		var funciones = scaleDefinition && scaleDefinition.funciones ? String(scaleDefinition.funciones).split('-') : [];
-		var tonalFunction = funciones[degreeIndex] || '';
-
-		return tonalFunction === 'â€”' || tonalFunction === 'Ã¢â‚¬â€' ? '' : tonalFunction;
+		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
 	}
 
 	global.CodaProgressionSegmentBuilder = {
