@@ -67,9 +67,10 @@
 			var cssClass = note.tipo != null ? ' class="' + note.tipo + '"' : '';
 			var separator = j < visibleNotes.length - 1 ? ' - ' : '';
 			var noteLabel = formatNote(options, note.nombre);
+			var midiAttribute = note.midiNote != null ? ' data-midi-note="' + escapeHtml(note.midiNote) + '"' : '';
 
 			html += '<li' + cssClass + '>';
-			html += '<button class="scaleDegreeNoteButton" type="button" data-note-name="' + escapeHtml(note.nombre) + '">' +
+			html += '<button class="scaleDegreeNoteButton" type="button" data-note-name="' + escapeHtml(note.nombre) + '"' + midiAttribute + '>' +
 				noteLabel + '<sup>' + note.grado + '</sup></button>' + separator;
 			html += '</li>';
 		}

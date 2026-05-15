@@ -29,6 +29,7 @@
 
 			var interval = utils.findInterval(options.intervals, semitoneSum);
 			var scaleNote = {
+				midiNote: 60 + options.tonicIndex + semitoneSum,
 				nombre: utils.noteName(options.notes[position], options.preferFlats),
 				semitonos: semitoneSum,
 				nombreGrado: interval.nombre,

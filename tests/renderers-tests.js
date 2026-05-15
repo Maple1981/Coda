@@ -141,6 +141,7 @@ assert.ok(scaleSummaryHtml.indexOf('<ul class="notasEscala">') > -1);
 assert.ok(scaleSummaryHtml.indexOf('C<sup>I</sup>') > -1);
 assert.ok(scaleSummaryHtml.indexOf('class="scaleDegreeNoteButton"') > -1);
 assert.ok(scaleSummaryHtml.indexOf('data-note-name="C"') > -1);
+assert.ok(scaleSummaryHtml.indexOf('data-midi-note="60"') > -1);
 
 const circleHtml = circleOfFifthsRenderer.render({
 	orderedKeys: data.circleOfFifths.slice(0, 12),
