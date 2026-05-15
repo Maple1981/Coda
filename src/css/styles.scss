@@ -1501,6 +1501,19 @@ section#bienvenida .columnata article{
 	margin-top:.3em;
 }
 
+.measureNotes{
+	color:rgba(230, 238, 242, .58);
+	font-size:.72em;
+	font-weight:500;
+	letter-spacing:.01em;
+	line-height:1.2;
+	margin-top:.08em;
+	max-width:100%;
+	overflow:hidden;
+	text-overflow:ellipsis;
+	white-space:nowrap;
+}
+
 .musicInversion{
 	font-size:.72em;
 	line-height:0;
@@ -1781,6 +1794,10 @@ body[data-theme="day"] section#armoniaExtendida #acordeonArmoniaExtendida .codaA
 
 body[data-theme="day"] .measureFunction{
 	color:#7d2785;
+}
+
+body[data-theme="day"] .measureNotes{
+	color:#59656b;
 }
 
 body[data-theme="day"] .workbenchContextKey{

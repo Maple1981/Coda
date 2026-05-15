@@ -453,6 +453,7 @@ const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineM
 			chordName: 'Cmaj7',
 			degree: 'Imaj7',
 			displayName: 'Cmaj7 add9',
+			notes: ['C', 'E', 'G', 'B', 'D', 'C'],
 			tonalFunction: 'T'
 		},
 		{
@@ -471,7 +472,14 @@ assert.ok(renderedProgressionTimeline.indexOf('measureChordMenuButton') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('data-i18n-title="progression.changeMeasureChord"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<strong>Cmaj7 add9</strong>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<em class="measureDegree">Imaj7</em>') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('<span class="measureNotes">C - E - G - B - D</span>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<span class="measureFunction">T</span>') > -1);
+assert.equal(context.window.CodaRenderers.progressionTimeline.notesLabel({
+	notes: ['C', 'Eb', 'G', 'C']
+}, {
+	notation: notation,
+	notationStyle: 'latin'
+}), 'Do - Mi♭ - Sol');
 const sectionBContextTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [
 		{ bar: 1, chordName: 'C' },

@@ -151,6 +151,7 @@
 		var degree = chord.degree || '';
 		var tonalFunction = chord.tonalFunction || '';
 		var source = sourceLabel(chord, options || {});
+		var notes = notesLabel(chord, options || {});
 		var buttons = '';
 		var dragHandle = '';
 
@@ -176,9 +177,55 @@
 			buttons +
 			'<span class="measureChordName"><strong>' + labels.formatMusicalLabel(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
 			(degree ? '<em class="measureDegree">' + labels.formatMusicalLabel(degree) + '</em>' : '') +
+			(notes ? '<span class="measureNotes">' + labels.escapeHtml(notes) + '</span>' : '') +
 			(tonalFunction ? '<span class="measureFunction">' + labels.escapeHtml(tonalFunction) + '</span>' : '') +
 			(source ? '<span class="measureSource">' + labels.escapeHtml(source) + '</span>' : '') +
 			'</div>';
+	}
+
+	function notesLabel(chord, options) {
+		var notes = uniqueNotes(chord.notes || notesFromVoices(chord.voiceNotes));
+		var formatted = [];
+
+		if (!notes.length) {
+			return '';
+		}
+
+		for (var i = 0; i < notes.length; i++) {
+			if (options.notation && typeof options.notation.formatNoteName === 'function') {
+				formatted.push(options.notation.formatNoteName(notes[i], options.notationStyle));
+			} else {
+				formatted.push(notes[i]);
+			}
+		}
+
+		return formatted.join(' - ');
+	}
+
+	function notesFromVoices(voiceNotes) {
+		var notes = [];
+
+		for (var i = 0; i < (voiceNotes || []).length; i++) {
+			notes.push(voiceNotes[i].note);
+		}
+
+		return notes;
+	}
+
+	function uniqueNotes(notes) {
+		var result = [];
+		var seen = {};
+
+		for (var i = 0; i < (notes || []).length; i++) {
+			var note = notes[i];
+
+			if (note && !seen[note]) {
+				seen[note] = true;
+				result.push(note);
+			}
+		}
+
+		return result;
 	}
 
 	function sourceLabel(chord, options) {
@@ -216,6 +263,7 @@
 		renderMeasure: renderMeasure,
 		renderMeasureChord: renderMeasureChord,
 		renderSectionHeader: renderSectionHeader,
+		notesLabel: notesLabel,
 		sectionContextLabel: sectionContextLabel,
 		sourceLabel: sourceLabel,
 		renderTimeline: renderTimeline,

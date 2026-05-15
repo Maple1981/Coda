@@ -632,6 +632,10 @@ body[data-theme="day"] .measureDegree {
   color: #7d2785;
 }
 
+body[data-theme="day"] .measureNotes {
+  color: #59656b;
+}
+
 body[data-theme="day"] .measureFunction {
   color: #7d2785;
 }
@@ -2194,6 +2198,19 @@ section#bienvenida .columnata article {
   font-style: normal;
   font-weight: 600;
   margin-top: .3em;
+}
+
+.measureNotes {
+  color: rgba(230, 238, 242, 0.58);
+  font-size: .72em;
+  font-weight: 500;
+  letter-spacing: .01em;
+  line-height: 1.2;
+  margin-top: .08em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .musicInversion {

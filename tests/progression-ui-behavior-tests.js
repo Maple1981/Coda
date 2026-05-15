@@ -289,7 +289,26 @@ document.dispatchDocumentEvent({
 });
 assert.equal(initialized.uiState.getProgressionState().bars, 8);
 
-const editedProgression = Object.assign({}, initialized.uiState.getProgression(), {
+const editedSourceProgression = initialized.uiState.getProgression();
+const editedProgression = Object.assign({}, editedSourceProgression, {
+	measures: editedSourceProgression.measures.map(function (measure, index) {
+		if (index !== 0) {
+			return measure;
+		}
+
+		return Object.assign({}, measure, {
+			chords: [
+				Object.assign({}, measure, { chordIndex: 0 }),
+				Object.assign({}, measure, {
+					chordIndex: 1,
+					chordName: 'Am',
+					degree: 'vi',
+					displayName: 'Am',
+					notes: ['A', 'C', 'E']
+				})
+			]
+		});
+	}),
 	userEdited: true
 });
 const scaleReportsBeforeInstrumentChange = rendered.scaleReport;
@@ -308,6 +327,21 @@ assert.equal(rendered.instrument, instrumentRendersBeforeInstrumentChange + 1);
 assert.equal(initialized.uiState.getSelection().midiInstrument, 'drawbar_organ');
 assert.equal(playbackInstruments[playbackInstruments.length - 1], 'drawbar_organ');
 assert.equal(savedPreferences.midiInstrument, 'drawbar_organ');
+assert.equal(initialized.uiState.getProgression().measures[0].chords.length, 2);
+
+const progressionRendersBeforeEditedControlChange = rendered.progression;
+document.getElementById('progressionBars').value = '16';
+document.querySelector('.progressionControls').dispatchEvent({
+	target: document.getElementById('progressionBars'),
+	type: 'change'
+});
+assert.equal(initialized.uiState.getProgressionState().bars, 16);
+assert.equal(initialized.uiState.getProgression().userEdited, true);
+assert.equal(initialized.uiState.getProgression().measures[0].chords.length, 2);
+assert.equal(initialized.uiState.getProgression().measures.length, 16);
+assert.equal(initialized.uiState.getProgression().bars, 16);
+assert.equal(initialized.uiState.getProgression().measures[15].bar, 16);
+assert.equal(rendered.progression, progressionRendersBeforeEditedControlChange + 1);
 
 document.dispatchDocumentEvent({
 	target: document.getElementById('workbenchContextInstrumentToggle'),

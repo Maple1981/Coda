@@ -12690,6 +12690,7 @@
 		var degree = chord.degree || '';
 		var tonalFunction = chord.tonalFunction || '';
 		var source = sourceLabel(chord, options || {});
+		var notes = notesLabel(chord, options || {});
 		var buttons = '';
 		var dragHandle = '';
 
@@ -12715,9 +12716,55 @@
 			buttons +
 			'<span class="measureChordName"><strong>' + labels.formatMusicalLabel(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
 			(degree ? '<em class="measureDegree">' + labels.formatMusicalLabel(degree) + '</em>' : '') +
+			(notes ? '<span class="measureNotes">' + labels.escapeHtml(notes) + '</span>' : '') +
 			(tonalFunction ? '<span class="measureFunction">' + labels.escapeHtml(tonalFunction) + '</span>' : '') +
 			(source ? '<span class="measureSource">' + labels.escapeHtml(source) + '</span>' : '') +
 			'</div>';
+	}
+
+	function notesLabel(chord, options) {
+		var notes = uniqueNotes(chord.notes || notesFromVoices(chord.voiceNotes));
+		var formatted = [];
+
+		if (!notes.length) {
+			return '';
+		}
+
+		for (var i = 0; i < notes.length; i++) {
+			if (options.notation && typeof options.notation.formatNoteName === 'function') {
+				formatted.push(options.notation.formatNoteName(notes[i], options.notationStyle));
+			} else {
+				formatted.push(notes[i]);
+			}
+		}
+
+		return formatted.join(' - ');
+	}
+
+	function notesFromVoices(voiceNotes) {
+		var notes = [];
+
+		for (var i = 0; i < (voiceNotes || []).length; i++) {
+			notes.push(voiceNotes[i].note);
+		}
+
+		return notes;
+	}
+
+	function uniqueNotes(notes) {
+		var result = [];
+		var seen = {};
+
+		for (var i = 0; i < (notes || []).length; i++) {
+			var note = notes[i];
+
+			if (note && !seen[note]) {
+				seen[note] = true;
+				result.push(note);
+			}
+		}
+
+		return result;
 	}
 
 	function sourceLabel(chord, options) {
@@ -12755,6 +12802,7 @@
 		renderMeasure: renderMeasure,
 		renderMeasureChord: renderMeasureChord,
 		renderSectionHeader: renderSectionHeader,
+		notesLabel: notesLabel,
 		sectionContextLabel: sectionContextLabel,
 		sourceLabel: sourceLabel,
 		renderTimeline: renderTimeline,
@@ -15419,7 +15467,7 @@
 					data: options.data,
 					i18n: i18n,
 					onProgressionChanged: function (progression, renderOptions) {
-						setProgression(progression, renderOptions);
+						setProgression(markProgressionAsUserEdited(progression), renderOptions);
 						recordHistorySnapshot();
 					},
 					notation: notation,
@@ -15984,7 +16032,14 @@
 		}
 
 		function updateProgressionStateFromControls() {
-			syncProgressionState();
+			if (progressionState && typeof progressionState.readFromControls === 'function') {
+				uiState.setProgressionState(progressionState.readFromControls(global.document));
+				if (isUserEditedProgression(uiState.getProgression())) {
+					refreshEditedProgressionFromState();
+				} else {
+					syncProgressionPlan();
+				}
+			}
 			saveProgressionPreferences(preferences, progressionPreferences);
 		}
 
@@ -16085,6 +16140,106 @@
 			if (progressionTransportController && typeof progressionTransportController.setPlaybackHead === 'function') {
 				progressionTransportController.setPlaybackHead(renderOptions.playbackHeadIndex || 0);
 			}
+		}
+
+		function refreshEditedProgressionFromState() {
+			var progression = uiState.getProgression();
+			var state = uiState.getProgressionState();
+			var refreshed;
+
+			if (!progression || !state) {
+				return;
+			}
+
+			refreshed = progressionWithState(progression, state);
+			if (options.application && typeof options.application.rebuildProgressionTimeline === 'function') {
+				refreshed = options.application.rebuildProgressionTimeline(refreshed, normalizeMeasureDurations(adjustedMeasuresForState(progression, state), state));
+			}
+			refreshed.userEdited = true;
+			setProgression(refreshed);
+		}
+
+		function adjustedMeasuresForState(progression, state) {
+			var measures = cloneJson(progression.measures || []);
+			var targetBars = Math.max(1, Number(state.bars) || measures.length);
+			var generated;
+
+			if (measures.length > targetBars) {
+				return measures.slice(0, targetBars);
+			}
+
+			if (
+				measures.length < targetBars &&
+				options.application &&
+				typeof options.application.generateProgressionFromState === 'function' &&
+				uiState.getReport()
+			) {
+				generated = options.application.generateProgressionFromState({
+					data: options.data,
+					progressionState: state,
+					report: uiState.getReport()
+				});
+				measures = measures.concat((generated.measures || []).slice(measures.length, targetBars));
+			}
+
+			return measures;
+		}
+
+		function progressionWithState(progression, state) {
+			var next = cloneJson(progression) || {};
+			var secondsPerBeat = 60 / (Number(state.bpm) || 120);
+
+			next.articulation = state.articulation;
+			next.beatUnit = state.beatUnit;
+			next.beatsPerBar = state.beatsPerBar;
+			next.bpm = state.bpm;
+			next.harmonicColor = {
+				chromaticism: state.chromaticism,
+				counterpoint: state.counterpoint,
+				modalInterchange: state.modalInterchange,
+				tensions: state.tensions
+			};
+			next.meter = state.meter;
+			next.secondsPerBeat = secondsPerBeat;
+			next.style = state.style;
+			next.totalBeats = (next.measures ? next.measures.length : Number(state.bars) || 0) * state.beatsPerBar;
+			next.totalSeconds = next.totalBeats * secondsPerBeat;
+			next.voicing = state.voicing;
+			next.voices = state.voices;
+
+			return next;
+		}
+
+		function normalizeMeasureDurations(measures, state) {
+			var normalized = cloneJson(measures || []);
+
+			for (var i = 0; i < normalized.length; i++) {
+				normalized[i].articulation = state.articulation;
+				normalized[i].beatUnit = state.beatUnit;
+				normalized[i].durationBeats = state.beatsPerBar;
+				if (normalized[i].chords && normalized[i].chords.length) {
+					for (var j = 0; j < normalized[i].chords.length; j++) {
+						normalized[i].chords[j].articulation = state.articulation;
+						normalized[i].chords[j].beatUnit = state.beatUnit;
+					}
+				}
+			}
+
+			return normalized;
+		}
+
+		function markProgressionAsUserEdited(progression) {
+			var next = cloneJson(progression) || progression;
+
+			if (next) {
+				next.userEdited = true;
+			}
+
+			return next;
+		}
+
+		function isUserEditedProgression(progression) {
+			return !!(progression && progression.userEdited === true);
 		}
 
 		function updateWorkbenchContext(selection, musicalContext) {

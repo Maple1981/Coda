@@ -298,6 +298,19 @@
   margin-top: 0.3em;
 }
 
+.measureNotes {
+  color: rgba(230, 238, 242, 0.58);
+  font-size: 0.72em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  margin-top: 0.08em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .measureDragHandle {
   position: absolute;
   top: 0.45em;
@@ -378,6 +391,10 @@ body[data-theme="day"] .measureDragHandle {
 
 body[data-theme="day"] .measureDegree {
   color: #7d2785;
+}
+
+body[data-theme="day"] .measureNotes {
+  color: #59656b;
 }
 
 body[data-theme="day"] .measure--split .measureChord {
