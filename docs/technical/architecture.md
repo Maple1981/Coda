@@ -41,7 +41,10 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/services/progression-chromatic-cadence-service.js`: generación de cadencias cromáticas tonales con sexta napolitana y acordes de sexta aumentada, siempre como preparación de dominante.
 - `js/services/musical-context-service.js`: construcción del contexto musical actual a partir de la selección de pantalla.
 - `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma, notación, tema visual, volumen maestro, tónica, escala, formato, instrumento sonoro y controles del constructor de progresiones.
+- `js/services/progression-document-service.js`: forma canónica del documento editable de progresión. Normaliza versión, secciones y marcas de edición de usuario sin mezclarlo con renderizado ni almacenamiento.
+- `js/services/progression-workspace-service.js`: contrato versionado del workspace persistido de progresiones. Construye, valida y firma el estado que puede guardarse localmente.
 - `js/services/progression-workspace-storage-service.js`: persistencia local del trabajo actual del constructor de progresiones mediante `localStorage`, incluyendo secciones, acordes añadidos, reordenaciones y controles asociados.
+- `js/services/progression-edit-command-service.js`: despachador común de comandos de edición de progresiones: añadir, quitar, reordenar, reemplazar acordes y generar sección B.
 - `js/services/midi-export-service.js`: conversión de progresiones a eventos MIDI y bytes de archivo Standard MIDI File sin depender del DOM.
 - `js/application/scale-report-application.js`: construye informes de escala e instrumentos.
 - `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI y alturas MIDI de instrumentos a eventos de playback.
@@ -86,6 +89,8 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - La interacción con el DOM debe quedarse en `js/ui/`.
 - El estado mutable de pantalla debe vivir en `CodaUiState`; el controlador puede orquestar eventos, pero no debe acumular nuevos valores de sesión como variables sueltas en closures.
 - El estado de progresiones debe leerse desde `CodaProgressionState` y guardarse en `CodaUiState`; los casos de uso posteriores deben recibir ese objeto normalizado, no leer directamente controles de formulario.
+- La progresión editable debe tratarse como un documento versionado mediante `CodaProgressionDocument`. Las operaciones de edición deben devolver documentos marcados como trabajo de usuario para que undo/redo, persistencia y renderizado tengan un contrato estable.
+- Las ediciones de progresión deben pasar por `CodaProgressionEditCommands` o por casos de uso de aplicación que lo utilicen. Evitar que la UI marque o reconstruya manualmente operaciones como añadir, quitar, reordenar o reemplazar acordes.
 - Las reglas de validación y valores permitidos del estado de progresiones deben vivir en `CodaProgressionStateSchema`; si se añade un control nuevo al constructor, debe actualizarse ese esquema, la cookie funcional y las traducciones de interfaz.
 - El transporte de progresiones debe componerse mediante servicios pequeños: botones, clicks de compases, eventos de documento, drag and drop, acciones, playback y menú contextual. `js/ui/progression-transport-controller.js` debe limitarse a inicializar y cablear esas piezas.
 - La reproducción de progresiones debe mantener separadas la agenda musical, la normalización de eventos, las estrategias MIDI/arpegio y el runner de una ejecución. El caso de uso `createProgressionPlayback` no debe acumular nuevas reglas de secuenciación internas.
@@ -108,7 +113,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - Los eventos sobre acordes y notas de instrumento deben delegarse desde contenedores estables. Evitar reenlazar manejadores sobre cada celda renderizada.
 - Los reajustes de layout dependientes de medidas del DOM deben programarse con `requestAnimationFrame` mediante las funciones `schedule...` de `js/ui/scale-report-ui.js`.
 - Las preferencias ligeras pueden guardarse en la cookie `coda_preferences`; cualquier valor nuevo debe añadirse de forma compatible con los existentes. La selección principal del formulario debe restaurarse al arrancar sin forzar la recomendación automática de formato cuando el usuario ya había guardado una elección explícita.
-- El trabajo editable de progresiones debe guardarse en `coda_progression_workspace` mediante `localStorage`, no en cookie. Incluye la progresión completa y debe restaurarse solo cuando coincida con la tónica, escala y formato guardados para evitar mezclar material armónico de contextos distintos.
+- El trabajo editable de progresiones debe guardarse en `coda_progression_workspace` mediante `localStorage`, no en cookie. Incluye la progresión completa y debe restaurarse solo cuando coincida con la tónica, escala y formato guardados para evitar mezclar material armónico de contextos distintos. El contrato versionado de ese estado vive en `CodaProgressionWorkspace`; el servicio de almacenamiento solo debe leer y escribir en el navegador.
 - El orden de carga de módulos debe mantenerse en `js/bootstrap/script-manifest.js` y verificarse con `tests/architecture-tests.js`.
 - Las pruebas que cargan pilas largas de scripts deben usar `tests/helpers/script-loader.js` para leer rangos desde el manifest, evitando listas manuales que se desincronicen al añadir módulos.
 - Si una mejora requiere servidor, cuentas de usuario, sincronización externa o almacenamiento persistente, debe tratarse como cambio de alcance.

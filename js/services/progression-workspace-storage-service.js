@@ -3,7 +3,7 @@
 	'use strict';
 
 	var storageKey = 'coda_progression_workspace';
-	var version = 1;
+	var workspaceService = global.CodaProgressionWorkspace;
 
 	function read() {
 		var storage = storageProvider();
@@ -19,12 +19,14 @@
 			return null;
 		}
 
-		return isValidWorkspace(parsed) ? parsed : null;
+		parsed = workspaceService && typeof workspaceService.migrate === 'function' ? workspaceService.migrate(parsed) : parsed;
+
+		return workspaceService && workspaceService.isValid(parsed) ? parsed : null;
 	}
 
 	function write(workspace) {
 		var storage = storageProvider();
-		var normalized = sanitizeWorkspace(workspace);
+		var normalized = workspaceService && typeof workspaceService.sanitize === 'function' ? workspaceService.sanitize(workspace) : null;
 
 		if (!storage || !normalized) {
 			return false;
@@ -53,79 +55,19 @@
 	}
 
 	function buildWorkspace(options) {
-		options = options || {};
-
-		return sanitizeWorkspace({
-			progression: options.progression,
-			progressionState: options.progressionState,
-			selectedTuningIndex: options.selectedTuningIndex,
-			signature: contextSignature(options.selection),
-			updatedAt: new Date().toISOString(),
-			version: version
-		});
+		return workspaceService && typeof workspaceService.build === 'function' ? workspaceService.build(options) : null;
 	}
 
 	function matchesSelection(workspace, selection) {
-		return !!(workspace && workspace.signature && workspace.signature === contextSignature(selection));
+		return workspaceService && typeof workspaceService.matchesSelection === 'function' ?
+			workspaceService.matchesSelection(workspace, selection) :
+			false;
 	}
 
 	function contextSignature(selection) {
-		selection = selection || {};
-
-		return [
-			selection.tonicIndex != null ? selection.tonicIndex : '',
-			selection.scaleIndex != null ? selection.scaleIndex : '',
-			selection.format != null ? selection.format : formatFromPreference(selection.preferFlats)
-		].join('|');
-	}
-
-	function formatFromPreference(preferFlats) {
-		if (preferFlats === true) {
-			return '1';
-		}
-
-		if (preferFlats === false) {
-			return '0';
-		}
-
-		return '';
-	}
-
-	function sanitizeWorkspace(workspace) {
-		if (!workspace || !workspace.progression || !workspace.progressionState || !workspace.signature) {
-			return null;
-		}
-
-		return {
-			progression: cloneJson(workspace.progression),
-			progressionState: cloneJson(workspace.progressionState),
-			selectedTuningIndex: normalizeTuningIndex(workspace.selectedTuningIndex),
-			signature: String(workspace.signature),
-			updatedAt: workspace.updatedAt || new Date().toISOString(),
-			version: version
-		};
-	}
-
-	function isValidWorkspace(workspace) {
-		return !!(
-			workspace &&
-			Number(workspace.version) === version &&
-			workspace.signature &&
-			workspace.progression &&
-			workspace.progressionState &&
-			workspace.progression.measures &&
-			workspace.progression.measures.length
-		);
-	}
-
-	function normalizeTuningIndex(value) {
-		var numericValue = Number(value);
-
-		return isFinite(numericValue) && numericValue >= 0 ? numericValue : 0;
-	}
-
-	function cloneJson(value) {
-		return value == null ? null : JSON.parse(JSON.stringify(value));
+		return workspaceService && typeof workspaceService.contextSignature === 'function' ?
+			workspaceService.contextSignature(selection) :
+			'';
 	}
 
 	function storageProvider() {

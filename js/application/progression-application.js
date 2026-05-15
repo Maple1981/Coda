@@ -4,7 +4,7 @@
 
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
 	var formattingService = global.CodaProgressionFormatting;
-	var editingService = global.CodaProgressionEditing;
+	var editCommands = global.CodaProgressionEditCommands;
 	var chordPlanService = global.CodaProgressionChordPlan;
 	var chordMenuService = global.CodaProgressionChordMenu;
 	var stateNormalizer = global.CodaProgressionStateNormalizer;
@@ -25,10 +25,20 @@
 	}
 
 	function generateContrastingProgressionSection(options) {
-		return sectionContrastService.generate(options, {
-			buildScaleReport: global.CodaApplication.buildScaleReport,
-			generateProgressionFromState: generateProgressionFromState,
-			rebuildProgressionTimeline: rebuildProgressionTimeline
+		options = options || {};
+
+		return editCommands.apply({
+			options: options,
+			type: editCommands.types.generateSectionB
+		}, {
+			generateSectionB: function (commandOptions) {
+				return sectionContrastService.generate(commandOptions, {
+					buildScaleReport: global.CodaApplication.buildScaleReport,
+					generateProgressionFromState: generateProgressionFromState,
+					rebuildProgressionTimeline: rebuildProgressionTimeline
+				});
+			},
+			progression: options.progression
 		});
 	}
 
@@ -37,28 +47,63 @@
 	}
 
 	function reorderProgressionMeasures(progression, fromIndex, toIndex) {
-		return editingService.reorderMeasures(progression, fromIndex, toIndex);
+		return editCommands.apply({
+			fromIndex: fromIndex,
+			toIndex: toIndex,
+			type: editCommands.types.reorderMeasures
+		}, {
+			progression: progression
+		});
 	}
 
 	function reorderProgressionMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex) {
-		return editingService.reorderMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex);
+		return editCommands.apply({
+			fromChordIndex: fromChordIndex,
+			measureIndex: measureIndex,
+			toChordIndex: toChordIndex,
+			type: editCommands.types.reorderMeasureChords
+		}, {
+			progression: progression
+		});
 	}
 
 	function addProgressionMeasureChord(progression, measureIndex, options) {
-		return editingService.addMeasureChord(progression, measureIndex, options, {
-			buildChordPlan: buildChordPlan,
-			normalizeProgressionState: normalizeProgressionState
+		return editCommands.apply({
+			measureIndex: measureIndex,
+			options: options,
+			type: editCommands.types.addMeasureChord
+		}, {
+			dependencies: {
+				buildChordPlan: buildChordPlan,
+				normalizeProgressionState: normalizeProgressionState
+			},
+			progression: progression
 		});
 	}
 
 	function removeProgressionMeasureChord(progression, measureIndex, chordIndex) {
-		return editingService.removeMeasureChord(progression, measureIndex, chordIndex);
+		return editCommands.apply({
+			chordIndex: chordIndex,
+			measureIndex: measureIndex,
+			type: editCommands.types.removeMeasureChord
+		}, {
+			progression: progression
+		});
 	}
 
 	function replaceProgressionMeasureChord(progression, measureIndex, chordIndex, replacement, options) {
-		return editingService.replaceMeasureChord(progression, measureIndex, chordIndex, replacement, options, {
-			buildChordPlan: buildChordPlan,
-			normalizeProgressionState: normalizeProgressionState
+		return editCommands.apply({
+			chordIndex: chordIndex,
+			measureIndex: measureIndex,
+			options: options,
+			replacement: replacement,
+			type: editCommands.types.replaceMeasureChord
+		}, {
+			dependencies: {
+				buildChordPlan: buildChordPlan,
+				normalizeProgressionState: normalizeProgressionState
+			},
+			progression: progression
 		});
 	}
 

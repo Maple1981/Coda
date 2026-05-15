@@ -13,6 +13,7 @@
 		var progressionPreferences = options.progressionPreferences || global.CodaProgressionPreferences;
 		var progressionTransport = options.progressionTransport || global.CodaProgressionTransport;
 		var progressionTransportController = null;
+		var progressionDocument = options.progressionDocument || global.CodaProgressionDocument;
 		var progressionState = options.progressionState || global.CodaProgressionState;
 		var progressionWorkspaceStorage = options.progressionWorkspaceStorage || global.CodaProgressionWorkspaceStorage;
 		var staticText = options.staticText || global.CodaStaticText;
@@ -1139,6 +1140,18 @@
 		}
 
 		function markProgressionAsUserEdited(progression) {
+			return progressionDocument && typeof progressionDocument.markUserEdited === 'function' ?
+				progressionDocument.markUserEdited(progression) :
+				fallbackMarkProgressionAsUserEdited(progression);
+		}
+
+		function isUserEditedProgression(progression) {
+			return progressionDocument && typeof progressionDocument.isUserEdited === 'function' ?
+				progressionDocument.isUserEdited(progression) :
+				!!(progression && progression.userEdited === true);
+		}
+
+		function fallbackMarkProgressionAsUserEdited(progression) {
 			var next = cloneJson(progression) || progression;
 
 			if (next) {
@@ -1146,10 +1159,6 @@
 			}
 
 			return next;
-		}
-
-		function isUserEditedProgression(progression) {
-			return !!(progression && progression.userEdited === true);
 		}
 
 		function updateWorkbenchContext(selection, musicalContext) {

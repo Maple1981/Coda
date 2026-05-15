@@ -25,7 +25,7 @@ El playback actual usa Web Audio y soundfonts locales. No necesita cámara, micr
 
 La cookie funcional `coda_preferences` solo debe guardar valores ligeros de interfaz: idioma, notación, tema, volumen, tónica, escala, formato, instrumento sonoro y controles del constructor de progresiones. `js/services/preferences-service.js` centraliza la validación para que una cookie manipulada no pueda forzar índices fuera de rango, valores desconocidos o rutas de soundfont inesperadas.
 
-El trabajo armónico completo del constructor de progresiones se guarda en `localStorage`, bajo la clave `coda_progression_workspace`, porque una progresión editada puede superar el tamaño razonable de una cookie. Este estado incluye la progresión actual, secciones generadas, acordes añadidos, reordenaciones y el estado de los controles. Sigue siendo almacenamiento local del navegador: no se envía a ningún servidor, no crea cuentas de usuario y puede borrarse limpiando los datos del sitio.
+El trabajo armónico completo del constructor de progresiones se guarda en `localStorage`, bajo la clave `coda_progression_workspace`, porque una progresión editada puede superar el tamaño razonable de una cookie. Este estado incluye la progresión actual, secciones generadas, acordes añadidos, reordenaciones y el estado de los controles. `js/services/progression-workspace-service.js` valida y versiona ese contrato antes de que `js/services/progression-workspace-storage-service.js` lo lea o escriba. Sigue siendo almacenamiento local del navegador: no se envía a ningún servidor, no crea cuentas de usuario y puede borrarse limpiando los datos del sitio.
 
 ## HTML confiable
 

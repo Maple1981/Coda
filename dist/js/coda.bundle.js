@@ -2280,72 +2280,194 @@
 
 ;
 
-/* Source: js/services/progression-workspace-storage-service.js */
-// Local persistence for the current progression workspace.
+/* Source: js/services/progression-document-service.js */
+// Canonical helpers for editable progression documents.
 (function (global) {
 	'use strict';
 
-	var storageKey = 'coda_progression_workspace';
-	var version = 1;
+	var documentVersion = 1;
 
-	function read() {
-		var storage = storageProvider();
-		var parsed;
+	function normalize(progression, options) {
+		var next;
 
-		if (!storage) {
-			return null;
+		if (!progression) {
+			return progression;
 		}
 
-		try {
-			parsed = JSON.parse(storage.getItem(storageKey) || 'null');
-		} catch (error) {
-			return null;
+		options = options || {};
+		next = cloneJson(progression);
+		next.documentVersion = Number(next.documentVersion) || documentVersion;
+
+		if (options.ensureSections) {
+			next.sections = normalizeSections(next.sections, next.measures);
 		}
 
-		return isValidWorkspace(parsed) ? parsed : null;
+		if (next.sections && next.sections.length) {
+			annotateSectionMeasures(next.measures || [], next.sections);
+		}
+
+		return next;
 	}
 
-	function write(workspace) {
-		var storage = storageProvider();
-		var normalized = sanitizeWorkspace(workspace);
-
-		if (!storage || !normalized) {
-			return false;
+	function markUserEdited(progression) {
+		if (!progression) {
+			return progression;
 		}
 
-		try {
-			storage.setItem(storageKey, JSON.stringify(normalized));
-			return true;
-		} catch (error) {
-			return false;
+		return extendObject(progression, {
+			documentVersion: Number(progression.documentVersion) || documentVersion,
+			userEdited: true
+		});
+	}
+
+	function isUserEdited(progression) {
+		return !!(progression && progression.userEdited === true);
+	}
+
+	function normalizeSections(sections, measures) {
+		var normalized = [];
+		var fallbackLength = measures && measures.length ? measures.length : 0;
+
+		for (var i = 0; i < (sections || []).length; i++) {
+			var section = sections[i] || {};
+			var startIndex = normalizeNonNegative(section.startIndex);
+			var length = normalizeNonNegative(section.length);
+
+			if (!section.id || !length) {
+				continue;
+			}
+
+			normalized.push(extendObject(section, {
+				labelKey: section.labelKey || ('progression.section' + section.id),
+				length: length,
+				startIndex: startIndex
+			}));
+		}
+
+		if (!normalized.length && fallbackLength) {
+			normalized.push({
+				id: 'A',
+				labelKey: 'progression.sectionA',
+				length: fallbackLength,
+				startIndex: 0
+			});
+		}
+
+		return normalized;
+	}
+
+	function annotateSectionMeasures(measures, sections) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			var section = sections[i];
+
+			for (var j = section.startIndex; j < section.startIndex + section.length && j < measures.length; j++) {
+				measures[j].sectionId = section.id;
+				measures[j].sectionLabelKey = section.labelKey;
+			}
 		}
 	}
 
-	function clear() {
-		var storage = storageProvider();
-
-		if (!storage) {
-			return;
-		}
-
-		try {
-			storage.removeItem(storageKey);
-		} catch (error) {
-			return;
-		}
+	function cloneJson(value) {
+		return value == null ? null : JSON.parse(JSON.stringify(value));
 	}
 
-	function buildWorkspace(options) {
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target || {}) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values || {}) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
+	function normalizeNonNegative(value) {
+		var numericValue = parseInt(value, 10);
+
+		return isFinite(numericValue) && numericValue > 0 ? numericValue : 0;
+	}
+
+	global.CodaProgressionDocument = {
+		annotateSectionMeasures: annotateSectionMeasures,
+		isUserEdited: isUserEdited,
+		markUserEdited: markUserEdited,
+		normalize: normalize,
+		normalizeSections: normalizeSections,
+		version: documentVersion
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-workspace-service.js */
+// Canonical shape and validation for the persisted progression workspace.
+(function (global) {
+	'use strict';
+
+	var workspaceVersion = 1;
+	var progressionDocument = global.CodaProgressionDocument;
+
+	function build(options) {
 		options = options || {};
 
-		return sanitizeWorkspace({
+		return sanitize({
 			progression: options.progression,
 			progressionState: options.progressionState,
 			selectedTuningIndex: options.selectedTuningIndex,
 			signature: contextSignature(options.selection),
 			updatedAt: new Date().toISOString(),
-			version: version
+			version: workspaceVersion
 		});
+	}
+
+	function sanitize(workspace) {
+		if (!workspace || !workspace.progression || !workspace.progressionState || !workspace.signature) {
+			return null;
+		}
+
+		return {
+			progression: progressionDocument && typeof progressionDocument.normalize === 'function' ?
+				progressionDocument.normalize(workspace.progression) :
+				cloneJson(workspace.progression),
+			progressionState: cloneJson(workspace.progressionState),
+			selectedTuningIndex: normalizeTuningIndex(workspace.selectedTuningIndex),
+			signature: String(workspace.signature),
+			updatedAt: workspace.updatedAt || new Date().toISOString(),
+			version: workspaceVersion
+		};
+	}
+
+	function migrate(workspace) {
+		if (!workspace) {
+			return null;
+		}
+
+		if (Number(workspace.version) === workspaceVersion) {
+			return sanitize(workspace);
+		}
+
+		return null;
+	}
+
+	function isValid(workspace) {
+		return !!(
+			workspace &&
+			Number(workspace.version) === workspaceVersion &&
+			workspace.signature &&
+			workspace.progression &&
+			workspace.progressionState &&
+			workspace.progression.measures &&
+			workspace.progression.measures.length
+		);
 	}
 
 	function matchesSelection(workspace, selection) {
@@ -2374,33 +2496,6 @@
 		return '';
 	}
 
-	function sanitizeWorkspace(workspace) {
-		if (!workspace || !workspace.progression || !workspace.progressionState || !workspace.signature) {
-			return null;
-		}
-
-		return {
-			progression: cloneJson(workspace.progression),
-			progressionState: cloneJson(workspace.progressionState),
-			selectedTuningIndex: normalizeTuningIndex(workspace.selectedTuningIndex),
-			signature: String(workspace.signature),
-			updatedAt: workspace.updatedAt || new Date().toISOString(),
-			version: version
-		};
-	}
-
-	function isValidWorkspace(workspace) {
-		return !!(
-			workspace &&
-			Number(workspace.version) === version &&
-			workspace.signature &&
-			workspace.progression &&
-			workspace.progressionState &&
-			workspace.progression.measures &&
-			workspace.progression.measures.length
-		);
-	}
-
 	function normalizeTuningIndex(value) {
 		var numericValue = Number(value);
 
@@ -2409,6 +2504,92 @@
 
 	function cloneJson(value) {
 		return value == null ? null : JSON.parse(JSON.stringify(value));
+	}
+
+	global.CodaProgressionWorkspace = {
+		build: build,
+		contextSignature: contextSignature,
+		isValid: isValid,
+		matchesSelection: matchesSelection,
+		migrate: migrate,
+		sanitize: sanitize,
+		version: workspaceVersion
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-workspace-storage-service.js */
+// Local persistence for the current progression workspace.
+(function (global) {
+	'use strict';
+
+	var storageKey = 'coda_progression_workspace';
+	var workspaceService = global.CodaProgressionWorkspace;
+
+	function read() {
+		var storage = storageProvider();
+		var parsed;
+
+		if (!storage) {
+			return null;
+		}
+
+		try {
+			parsed = JSON.parse(storage.getItem(storageKey) || 'null');
+		} catch (error) {
+			return null;
+		}
+
+		parsed = workspaceService && typeof workspaceService.migrate === 'function' ? workspaceService.migrate(parsed) : parsed;
+
+		return workspaceService && workspaceService.isValid(parsed) ? parsed : null;
+	}
+
+	function write(workspace) {
+		var storage = storageProvider();
+		var normalized = workspaceService && typeof workspaceService.sanitize === 'function' ? workspaceService.sanitize(workspace) : null;
+
+		if (!storage || !normalized) {
+			return false;
+		}
+
+		try {
+			storage.setItem(storageKey, JSON.stringify(normalized));
+			return true;
+		} catch (error) {
+			return false;
+		}
+	}
+
+	function clear() {
+		var storage = storageProvider();
+
+		if (!storage) {
+			return;
+		}
+
+		try {
+			storage.removeItem(storageKey);
+		} catch (error) {
+			return;
+		}
+	}
+
+	function buildWorkspace(options) {
+		return workspaceService && typeof workspaceService.build === 'function' ? workspaceService.build(options) : null;
+	}
+
+	function matchesSelection(workspace, selection) {
+		return workspaceService && typeof workspaceService.matchesSelection === 'function' ?
+			workspaceService.matchesSelection(workspace, selection) :
+			false;
+	}
+
+	function contextSignature(selection) {
+		return workspaceService && typeof workspaceService.contextSignature === 'function' ?
+			workspaceService.contextSignature(selection) :
+			'';
 	}
 
 	function storageProvider() {
@@ -7492,6 +7673,82 @@
 
 ;
 
+/* Source: js/services/progression-edit-command-service.js */
+// Central command dispatcher for editable progression operations.
+(function (global) {
+	'use strict';
+
+	var documentService = global.CodaProgressionDocument;
+	var editingService = global.CodaProgressionEditing;
+
+	var commandTypes = {
+		addMeasureChord: 'addMeasureChord',
+		generateSectionB: 'generateSectionB',
+		removeMeasureChord: 'removeMeasureChord',
+		reorderMeasureChords: 'reorderMeasureChords',
+		reorderMeasures: 'reorderMeasures',
+		replaceMeasureChord: 'replaceMeasureChord'
+	};
+
+	function apply(command, context) {
+		var nextProgression;
+
+		command = command || {};
+		context = context || {};
+
+		switch (command.type) {
+		case commandTypes.addMeasureChord:
+			nextProgression = editingService.addMeasureChord(context.progression, command.measureIndex, command.options, context.dependencies);
+			break;
+		case commandTypes.removeMeasureChord:
+			nextProgression = editingService.removeMeasureChord(context.progression, command.measureIndex, command.chordIndex);
+			break;
+		case commandTypes.reorderMeasureChords:
+			nextProgression = editingService.reorderMeasureChords(context.progression, command.measureIndex, command.fromChordIndex, command.toChordIndex);
+			break;
+		case commandTypes.reorderMeasures:
+			nextProgression = editingService.reorderMeasures(context.progression, command.fromIndex, command.toIndex);
+			break;
+		case commandTypes.replaceMeasureChord:
+			nextProgression = editingService.replaceMeasureChord(context.progression, command.measureIndex, command.chordIndex, command.replacement, command.options, context.dependencies);
+			break;
+		case commandTypes.generateSectionB:
+			nextProgression = typeof context.generateSectionB === 'function' ? context.generateSectionB(command.options || {}) : context.progression;
+			break;
+		default:
+			nextProgression = context.progression;
+			break;
+		}
+
+		return nextProgression === context.progression ? context.progression : markUserEdited(nextProgression);
+	}
+
+	function markUserEdited(progression) {
+		return documentService && typeof documentService.markUserEdited === 'function' ?
+			documentService.markUserEdited(progression) :
+			fallbackMarkUserEdited(progression);
+	}
+
+	function fallbackMarkUserEdited(progression) {
+		var next;
+
+		if (!progression) {
+			return progression;
+		}
+
+		next = JSON.parse(JSON.stringify(progression));
+		next.userEdited = true;
+		return next;
+	}
+
+	global.CodaProgressionEditCommands = {
+		apply: apply,
+		types: commandTypes
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-chord-menu-option-service.js */
 // Builds chord replacement variants for the progression chord menu.
 (function (global) {
@@ -11379,7 +11636,7 @@
 
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
 	var formattingService = global.CodaProgressionFormatting;
-	var editingService = global.CodaProgressionEditing;
+	var editCommands = global.CodaProgressionEditCommands;
 	var chordPlanService = global.CodaProgressionChordPlan;
 	var chordMenuService = global.CodaProgressionChordMenu;
 	var stateNormalizer = global.CodaProgressionStateNormalizer;
@@ -11400,10 +11657,20 @@
 	}
 
 	function generateContrastingProgressionSection(options) {
-		return sectionContrastService.generate(options, {
-			buildScaleReport: global.CodaApplication.buildScaleReport,
-			generateProgressionFromState: generateProgressionFromState,
-			rebuildProgressionTimeline: rebuildProgressionTimeline
+		options = options || {};
+
+		return editCommands.apply({
+			options: options,
+			type: editCommands.types.generateSectionB
+		}, {
+			generateSectionB: function (commandOptions) {
+				return sectionContrastService.generate(commandOptions, {
+					buildScaleReport: global.CodaApplication.buildScaleReport,
+					generateProgressionFromState: generateProgressionFromState,
+					rebuildProgressionTimeline: rebuildProgressionTimeline
+				});
+			},
+			progression: options.progression
 		});
 	}
 
@@ -11412,28 +11679,63 @@
 	}
 
 	function reorderProgressionMeasures(progression, fromIndex, toIndex) {
-		return editingService.reorderMeasures(progression, fromIndex, toIndex);
+		return editCommands.apply({
+			fromIndex: fromIndex,
+			toIndex: toIndex,
+			type: editCommands.types.reorderMeasures
+		}, {
+			progression: progression
+		});
 	}
 
 	function reorderProgressionMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex) {
-		return editingService.reorderMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex);
+		return editCommands.apply({
+			fromChordIndex: fromChordIndex,
+			measureIndex: measureIndex,
+			toChordIndex: toChordIndex,
+			type: editCommands.types.reorderMeasureChords
+		}, {
+			progression: progression
+		});
 	}
 
 	function addProgressionMeasureChord(progression, measureIndex, options) {
-		return editingService.addMeasureChord(progression, measureIndex, options, {
-			buildChordPlan: buildChordPlan,
-			normalizeProgressionState: normalizeProgressionState
+		return editCommands.apply({
+			measureIndex: measureIndex,
+			options: options,
+			type: editCommands.types.addMeasureChord
+		}, {
+			dependencies: {
+				buildChordPlan: buildChordPlan,
+				normalizeProgressionState: normalizeProgressionState
+			},
+			progression: progression
 		});
 	}
 
 	function removeProgressionMeasureChord(progression, measureIndex, chordIndex) {
-		return editingService.removeMeasureChord(progression, measureIndex, chordIndex);
+		return editCommands.apply({
+			chordIndex: chordIndex,
+			measureIndex: measureIndex,
+			type: editCommands.types.removeMeasureChord
+		}, {
+			progression: progression
+		});
 	}
 
 	function replaceProgressionMeasureChord(progression, measureIndex, chordIndex, replacement, options) {
-		return editingService.replaceMeasureChord(progression, measureIndex, chordIndex, replacement, options, {
-			buildChordPlan: buildChordPlan,
-			normalizeProgressionState: normalizeProgressionState
+		return editCommands.apply({
+			chordIndex: chordIndex,
+			measureIndex: measureIndex,
+			options: options,
+			replacement: replacement,
+			type: editCommands.types.replaceMeasureChord
+		}, {
+			dependencies: {
+				buildChordPlan: buildChordPlan,
+				normalizeProgressionState: normalizeProgressionState
+			},
+			progression: progression
 		});
 	}
 
@@ -15302,6 +15604,7 @@
 		var progressionPreferences = options.progressionPreferences || global.CodaProgressionPreferences;
 		var progressionTransport = options.progressionTransport || global.CodaProgressionTransport;
 		var progressionTransportController = null;
+		var progressionDocument = options.progressionDocument || global.CodaProgressionDocument;
 		var progressionState = options.progressionState || global.CodaProgressionState;
 		var progressionWorkspaceStorage = options.progressionWorkspaceStorage || global.CodaProgressionWorkspaceStorage;
 		var staticText = options.staticText || global.CodaStaticText;
@@ -16428,6 +16731,18 @@
 		}
 
 		function markProgressionAsUserEdited(progression) {
+			return progressionDocument && typeof progressionDocument.markUserEdited === 'function' ?
+				progressionDocument.markUserEdited(progression) :
+				fallbackMarkProgressionAsUserEdited(progression);
+		}
+
+		function isUserEditedProgression(progression) {
+			return progressionDocument && typeof progressionDocument.isUserEdited === 'function' ?
+				progressionDocument.isUserEdited(progression) :
+				!!(progression && progression.userEdited === true);
+		}
+
+		function fallbackMarkProgressionAsUserEdited(progression) {
 			var next = cloneJson(progression) || progression;
 
 			if (next) {
@@ -16435,10 +16750,6 @@
 			}
 
 			return next;
-		}
-
-		function isUserEditedProgression(progression) {
-			return !!(progression && progression.userEdited === true);
 		}
 
 		function updateWorkbenchContext(selection, musicalContext) {
@@ -17383,6 +17694,7 @@
 			notation: options.notation,
 			preferences: options.preferences,
 			playbackService: playbackService,
+			progressionDocument: options.progressionDocument || global.CodaProgressionDocument,
 			progressionPreferences: options.progressionPreferences || global.CodaProgressionPreferences,
 			progressionPlayback: progressionPlayback,
 			progressionState: options.progressionState || global.CodaProgressionState,

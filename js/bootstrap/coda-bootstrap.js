@@ -56,6 +56,7 @@
 			notation: options.notation,
 			preferences: options.preferences,
 			playbackService: playbackService,
+			progressionDocument: options.progressionDocument || global.CodaProgressionDocument,
 			progressionPreferences: options.progressionPreferences || global.CodaProgressionPreferences,
 			progressionPlayback: progressionPlayback,
 			progressionState: options.progressionState || global.CodaProgressionState,

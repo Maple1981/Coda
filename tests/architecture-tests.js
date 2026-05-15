@@ -39,6 +39,8 @@ assert.ok(global.CodaMusicalContext.create);
 assert.ok(global.CodaNotation.formatNoteName);
 assert.ok(global.CodaPreferences.create);
 assert.ok(global.CodaProgressionPreferences.fromPreferences);
+assert.ok(global.CodaProgressionDocument.normalize);
+assert.ok(global.CodaProgressionWorkspace.build);
 assert.ok(global.CodaProgressionWorkspaceStorage.read);
 assert.ok(global.CodaProgressionStateNormalizer.normalize);
 assert.ok(global.CodaProgressionDegreeResolver.fromGeneratedPlan);
@@ -71,6 +73,7 @@ assert.ok(global.CodaProgressionReplacementChord.buildSegment);
 assert.ok(global.CodaProgressionMeasureChordAddition.addMeasureChord);
 assert.ok(global.CodaProgressionMeasureChordReplacement.replaceMeasureChord);
 assert.ok(global.CodaProgressionEditing.addMeasureChord);
+assert.ok(global.CodaProgressionEditCommands.apply);
 assert.ok(global.CodaProgressionTensions.addToNotes);
 assert.ok(global.CodaProgressionSuspensionHeuristic.probability);
 assert.ok(global.CodaProgressionSuspension.choose);
@@ -210,6 +213,8 @@ assert.ok(manifestScripts.indexOf('js/i18n/i18n-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/musical-context-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/notation-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/preferences-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-document-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-workspace-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-workspace-storage-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-state-normalizer-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-degree-resolver-service.js') > -1);
@@ -259,6 +264,7 @@ assert.ok(manifestScripts.indexOf('js/services/progression-modal-planner-service
 assert.ok(manifestScripts.indexOf('js/services/progression-planner-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-builder-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-section-contrast-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-edit-command-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-chord-menu-option-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-chord-menu-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/midi-export-service.js') > -1);
@@ -515,6 +521,27 @@ assert.equal(global.CodaProgressionWorkspaceStorage.matchesSelection(workspace, 
 	scaleIndex: 2,
 	tonicIndex: 5
 }), false);
+const normalizedDocument = global.CodaProgressionDocument.normalize({
+	measures: [{ bar: 1 }]
+}, {
+	ensureSections: true
+});
+assert.equal(normalizedDocument.documentVersion, 1);
+assert.deepEqual(normalizedDocument.sections, [{
+	id: 'A',
+	labelKey: 'progression.sectionA',
+	length: 1,
+	startIndex: 0
+}]);
+assert.equal(normalizedDocument.measures[0].sectionId, 'A');
+assert.equal(global.CodaProgressionDocument.markUserEdited({
+	measures: [{ bar: 1 }]
+}).userEdited, true);
+assert.equal(global.CodaProgressionWorkspace.contextSignature({
+	preferFlats: true,
+	scaleIndex: 2,
+	tonicIndex: 5
+}), '5|2|1');
 assert.deepEqual(global.CodaProgressionStateNormalizer.normalize({
 	beatUnit: 8,
 	beatsPerBar: 7,
@@ -1017,6 +1044,7 @@ assert.equal(controllerOptions.keyNavigation, global.CodaKeyNavigation);
 assert.ok(controllerOptions.musicalContext.fromSelection);
 assert.equal(controllerOptions.notation, global.CodaNotation);
 assert.equal(controllerOptions.playbackService, startResult.playbackService);
+assert.equal(controllerOptions.progressionDocument, global.CodaProgressionDocument);
 assert.equal(controllerOptions.progressionPlayback, startResult.progressionPlayback);
 assert.equal(controllerOptions.progressionPreferences, global.CodaProgressionPreferences);
 assert.equal(controllerOptions.progressionWorkspaceStorage, global.CodaProgressionWorkspaceStorage);
