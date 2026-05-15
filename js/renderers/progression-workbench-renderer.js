@@ -4,7 +4,6 @@
 
 	var controlsRenderer = global.CodaRenderers.progressionControls;
 	var timelineRenderer = global.CodaRenderers.progressionTimeline;
-	var inspectorRenderer = global.CodaRenderers.progressionInspector;
 
 	function render() {
 		var html = '';
@@ -13,7 +12,6 @@
 		html += controlsRenderer.renderPanels();
 		html += renderGenerateBar();
 		html += timelineRenderer.renderTimeline();
-		html += inspectorRenderer.renderShell();
 		html += renderTransportControls();
 
 		return html;

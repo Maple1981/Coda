@@ -38,6 +38,14 @@
 			voices: measure.voices
 		};
 
+		if (resolvedDegree.chromaticRole) {
+			segment.chromaticRole = resolvedDegree.chromaticRole;
+		}
+
+		if (resolvedDegree.sourceLabelKey) {
+			segment.sourceLabelKey = resolvedDegree.sourceLabelKey;
+		}
+
 		if (resolvedDegree.sourceScaleIndex != null) {
 			segment.sourceScaleIndex = resolvedDegree.sourceScaleIndex;
 			segment.sourceTonicName = resolvedDegree.sourceTonicName || '';
@@ -67,6 +75,7 @@
 			'chord',
 			'chordKind',
 			'chordName',
+			'chromaticRole',
 			'degree',
 			'degreeIndex',
 			'displayName',
@@ -75,7 +84,15 @@
 			'isSilence',
 			'midiNotes',
 			'notes',
+			'restorableChromaticRole',
+			'restorableDegreeIndex',
+			'restorableInversionIndex',
+			'restorableKind',
+			'restorableSource',
+			'restorableSourceLabelKey',
+			'restorableSourceScaleIndex',
 			'source',
+			'sourceLabelKey',
 			'sourceScaleIndex',
 			'sourceTonicName',
 			'suspension',

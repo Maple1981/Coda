@@ -132,7 +132,7 @@
 	}
 
 	function canReplaceChord(chord) {
-		return !!(chord && !chord.isSilence && chord.degreeIndex != null);
+		return !!(chord && !chord.isSilence && chord.degreeIndex != null && chord.source !== 'chromatic');
 	}
 
 	function isActiveVariant(chord, kind, inversionIndex) {

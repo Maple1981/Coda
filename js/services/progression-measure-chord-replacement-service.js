@@ -18,7 +18,7 @@
 		options = options || {};
 		replacement = replacement || {};
 		dependencies = dependencies || {};
-		if (!progression || !measure || (replacement.degreeIndex == null && replacement.kind !== 'silence')) {
+		if (!progression || !measure || (!isBuildableReplacement(replacement) && replacement.kind !== 'silence')) {
 			return progression;
 		}
 
@@ -56,6 +56,10 @@
 
 	function extendObject(target, values) {
 		return structureIndex.extendObject(target, values);
+	}
+
+	function isBuildableReplacement(replacement) {
+		return replacement.degreeIndex != null || (replacement.source === 'chromatic' && replacement.chromaticRole === 'neapolitan');
 	}
 
 	function clampMeasureIndex(index, length) {

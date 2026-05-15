@@ -11,15 +11,16 @@
 		var scaleNotes = report.scaleNotes || [];
 		var degreeIndex = parseInt(options.replacement.degreeIndex, 10);
 		var source = interchangeSourceForReplacement(report, options.replacement);
+		var chromaticDegree = chromaticDegreeForReplacement(report, options.replacement);
 		var resolvedDegree;
 		var chordPlan;
 		var previousPlan;
 
-		if (isNaN(degreeIndex) || !(source ? source.scaleChords[degreeIndex] : scaleChords[degreeIndex])) {
+		if (!chromaticDegree && (isNaN(degreeIndex) || !(source ? source.scaleChords[degreeIndex] : scaleChords[degreeIndex]))) {
 			return null;
 		}
 
-		resolvedDegree = {
+		resolvedDegree = chromaticDegree || {
 			chord: source ? source.scaleChords[degreeIndex] : scaleChords[degreeIndex],
 			degree: scaleNotes[degreeIndex] ? scaleNotes[degreeIndex].grado : '',
 			degreeIndex: degreeIndex,
@@ -84,6 +85,13 @@
 			isSilence: true,
 			midiNotes: [],
 			notes: [],
+			restorableDegreeIndex: editableValue(segment, 'degreeIndex'),
+			restorableChromaticRole: editableValue(segment, 'chromaticRole'),
+			restorableInversionIndex: editableValue(segment, 'inversionIndex') || 0,
+			restorableKind: editableValue(segment, 'chordKind') || 'triad',
+			restorableSourceLabelKey: editableValue(segment, 'sourceLabelKey'),
+			restorableSource: editableValue(segment, 'source') || 'diatonic',
+			restorableSourceScaleIndex: editableValue(segment, 'sourceScaleIndex'),
 			source: 'silence',
 			sourceScaleIndex: null,
 			sourceTonicName: '',
@@ -94,6 +102,36 @@
 			voiceNotes: [],
 			voices: measure.voices
 		};
+	}
+
+	function chromaticDegreeForReplacement(report, replacement) {
+		var chromaticCadenceService = global.CodaProgressionChromaticCadence;
+		var degree;
+
+		if (!replacement || replacement.source !== 'chromatic' || replacement.chromaticRole !== 'neapolitan' || !chromaticCadenceService) {
+			return null;
+		}
+
+		degree = chromaticCadenceService.neapolitanDegree(report);
+		degree.forceInversionIndex = replacement.inversionIndex;
+		degree.forceKind = replacement.kind === 'seventh' ? 'seventh' : 'triad';
+
+		return {
+			chord: degree.chord,
+			chromaticRole: degree.chromaticRole,
+			degree: degree.degreeDisplayName,
+			degreeDisplayName: '',
+			degreeIndex: degree.index,
+			source: 'chromatic',
+			sourceLabelKey: degree.sourceLabelKey,
+			tonalFunctionOverride: degree.tonalFunctionOverride
+		};
+	}
+
+	function editableValue(segment, key) {
+		var restoreKey = 'restorable' + key.charAt(0).toUpperCase() + key.slice(1);
+
+		return segment && segment[key] != null ? segment[key] : segment ? segment[restoreKey] : null;
 	}
 
 	function interchangeSourceForReplacement(report, replacement) {

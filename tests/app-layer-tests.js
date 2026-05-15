@@ -417,6 +417,32 @@ assert.equal(silentProgression.measures[0].degree, '');
 assert.deepEqual(silentProgression.measures[0].notes, []);
 assert.deepEqual(silentProgression.measures[0].midiNotes, []);
 assert.equal(silentProgression.measures[0].tonalFunction, '');
+assert.equal(silentProgression.measures[0].restorableDegreeIndex, 0);
+assert.equal(silentProgression.measures[0].restorableKind, 'triad');
+assert.equal(silentProgression.measures[0].restorableInversionIndex, 0);
+assert.equal(silentProgression.measures[0].restorableSource, 'diatonic');
+const restoredSilentProgression = app.replaceProgressionMeasureChord(silentProgression, 0, 0, {
+	degreeIndex: silentProgression.measures[0].restorableDegreeIndex,
+	inversionIndex: 2,
+	kind: 'seventh',
+	source: silentProgression.measures[0].restorableSource,
+	sourceScaleIndex: silentProgression.measures[0].restorableSourceScaleIndex
+}, {
+	data: data,
+	progressionState: {
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		meter: '4/4',
+		voices: 4
+	},
+	report: cMajorReport
+});
+assert.equal(restoredSilentProgression.measures[0].isSilence, undefined);
+assert.equal(restoredSilentProgression.measures[0].degree, 'Imaj7 4/3');
+assert.equal(restoredSilentProgression.measures[0].chordKind, 'seventh');
+assert.equal(restoredSilentProgression.measures[0].inversionIndex, 2);
 
 const eMinorReport = app.buildScaleReport({
 	data: data,
@@ -499,6 +525,27 @@ assert.ok(eMinorChromaticProgression.measures.some(function (measure) {
 assert.ok(eMinorChromaticProgression.measures.some(function (measure) {
 	return measure.sourceLabelKey === 'progression.chromatic.neapolitan';
 }));
+const cMajorNeapolitanReplacement = app.replaceProgressionMeasureChord(cMajorProgressionPlan, 0, 0, {
+	chromaticRole: 'neapolitan',
+	inversionIndex: 0,
+	kind: 'seventh',
+	source: 'chromatic'
+}, {
+	data: data,
+	progressionState: {
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		meter: '4/4',
+		voices: 4
+	},
+	report: cMajorReport
+});
+assert.equal(cMajorNeapolitanReplacement.measures[0].source, 'chromatic');
+assert.equal(cMajorNeapolitanReplacement.measures[0].chromaticRole, 'neapolitan');
+assert.equal(cMajorNeapolitanReplacement.measures[0].displayName, 'Dbmaj7');
+assert.equal(cMajorNeapolitanReplacement.measures[0].degree, '♭IImaj7');
 
 const replacedSeventhProgression = app.replaceProgressionMeasureChord(cMajorProgressionPlan, 0, 0, {
 	degreeIndex: 4,

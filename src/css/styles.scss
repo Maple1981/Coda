@@ -976,7 +976,7 @@ section#bienvenida .columnata article{
 
 .progression-workbench{
 	min-height:42vh;
-	padding:0 0 1.4em 0;
+	padding:0 0 5.4em 0;
 	border-bottom:1px solid $basic_fillbrightgrad_color;
 }
 
@@ -1308,6 +1308,117 @@ section#bienvenida .columnata article{
 .measureChord.isSelected{
 	outline:2px solid $corporative_complementarybright_color;
 	outline-offset:2px;
+}
+
+.measureChordQuickToggle{
+	width:1.45em;
+	height:1.45em;
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	background:transparent;
+	color:$neutral_color;
+	cursor:pointer;
+	border-radius:4px;
+	flex:0 0 auto;
+}
+
+.measureChordQuickToggle:hover,
+.measureChordQuickToggle:focus,
+.measureChord.isQuickOpen .measureChordQuickToggle{
+	color:$corporative_complementarybright_color;
+	outline:none;
+}
+
+.measureChord.isQuickOpen .measureChordQuickToggle .material-icons{
+	transform:rotate(90deg);
+}
+
+.measureChordQuickToggle .material-icons{
+	font-size:1em;
+	line-height:1;
+	transition:transform .16s ease;
+}
+
+.measureChordQuickWrap{
+	position:relative;
+	display:inline-flex;
+	align-items:center;
+	flex:0 0 auto;
+}
+
+.measureChordQuickEditor{
+	position:absolute;
+	left:calc(100% + .25em);
+	top:50%;
+	transform:translateY(-50%);
+	z-index:60;
+	display:none;
+	flex-wrap:wrap;
+	gap:.25em;
+	width:max-content;
+	max-width:13.5em;
+	padding:.45em;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:6px;
+	background:$basic_filldarkgrad_color;
+	box-shadow:0 10px 28px rgba(0, 0, 0, .42);
+}
+
+.measure:nth-child(4n) .measureChordQuickEditor{
+	left:auto;
+	right:calc(100% + .25em);
+}
+
+.measureChord.isQuickOpen .measureChordQuickEditor{
+	display:flex;
+}
+
+.measureChordQuickGroup{
+	display:inline-flex;
+	flex-wrap:wrap;
+	gap:.25em;
+	padding-right:.35em;
+	border-right:1px solid rgba(197, 246, 255, .12);
+}
+
+.measureChordQuickGroup:last-child{
+	padding-right:0;
+	border-right:0;
+}
+
+.measureChordQuickButton{
+	min-width:1.9em;
+	height:1.55em;
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:4px;
+	background:$basic_fill_color;
+	color:$basic_front_color;
+	cursor:pointer;
+	font-size:.72em;
+	font-weight:800;
+	line-height:1;
+	padding:.15em .3em;
+}
+
+.measureChordQuickButton:hover,
+.measureChordQuickButton:focus,
+.measureChordQuickButton.isActive{
+	border-color:$corporative_complementary_color;
+	color:$corporative_complementarybright_color;
+	outline:none;
+}
+
+.measureChordQuickButton.isActive{
+	background:rgba(172, 72, 190, .16);
+}
+
+.measureChordQuickButton .material-icons{
+	font-size:1em;
+	line-height:1;
 }
 
 .measureSplitActions{
@@ -1738,11 +1849,24 @@ section#bienvenida .columnata article{
 }
 
 .transportControls{
+	position:sticky;
+	bottom:.65em;
+	z-index:55;
 	display:flex;
 	flex-wrap:wrap;
 	gap:.75em;
 	justify-content:flex-end;
-	margin-top:1em;
+	align-items:center;
+	margin:1.1em 0 0 0;
+	padding:.65em .75em;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:8px;
+	background:linear-gradient(
+		0deg,
+		$basic_filldarkgrad_color 0%,
+		$basic_fill_color 100%
+	);
+	box-shadow:0 -12px 30px rgba(0, 0, 0, .36);
 }
 
 .loopControl{
@@ -1952,6 +2076,12 @@ body[data-theme="day"] .measureNotes{
 	color:#59656b;
 }
 
+body[data-theme="day"] .transportControls{
+	border-color:#b7c3ca;
+	background:linear-gradient(0deg, #f2f4f5 0%, #ffffff 100%);
+	box-shadow:0 -12px 26px rgba(31, 37, 40, .14);
+}
+
 body[data-theme="day"] .workbenchContextKey{
 	color:#1f2528;
 }
@@ -2023,6 +2153,43 @@ body[data-theme="day"] .measure--split .measureChord.isChordDropTarget{
 
 body[data-theme="day"] .measureChord.isSelected{
 	outline-color:#7d2785;
+}
+
+body[data-theme="day"] .measureChordQuickToggle{
+	color:#59656b;
+}
+
+body[data-theme="day"] .measureChordQuickToggle:hover,
+body[data-theme="day"] .measureChordQuickToggle:focus,
+body[data-theme="day"] .measureChord.isQuickOpen .measureChordQuickToggle{
+	color:#7d2785;
+}
+
+body[data-theme="day"] .measureChordQuickEditor{
+	border-color:#b7c3ca;
+	background:#ffffff;
+	box-shadow:0 10px 28px rgba(31, 37, 40, .2);
+}
+
+body[data-theme="day"] .measureChordQuickGroup{
+	border-right-color:rgba(89, 101, 107, .18);
+}
+
+body[data-theme="day"] .measureChordQuickButton{
+	border-color:#b7c3ca;
+	background:#ffffff;
+	color:#1f2528;
+}
+
+body[data-theme="day"] .measureChordQuickButton:hover,
+body[data-theme="day"] .measureChordQuickButton:focus,
+body[data-theme="day"] .measureChordQuickButton.isActive{
+	border-color:#7d2785;
+	color:#7d2785;
+}
+
+body[data-theme="day"] .measureChordQuickButton.isActive{
+	background:rgba(125, 39, 133, .1);
 }
 
 body[data-theme="day"] .progressionInspector{
@@ -2256,6 +2423,11 @@ footer{
 
 	.progressionTimeline{
 		grid-template-columns:1fr;
+	}
+
+	.transportControls{
+		bottom:.45em;
+		justify-content:center;
 	}
 
 	.progressionControls label{

@@ -28,6 +28,8 @@
 			var transportDom = global.CodaProgressionTransportDom;
 			var menuItem = transportDom.closest(event.target, '.measureChordMenuItem');
 			var menu = transportDom.closest(event.target, '.progressionChordMenu');
+			var quickEditor = transportDom.closest(event.target, '.measureChordQuickEditor');
+			var quickToggle = transportDom.closest(event.target, '.measureChordQuickToggle');
 
 			if (menuItem) {
 				replaceFromMenuItem(options, menuItem);
@@ -36,6 +38,10 @@
 
 			if (!menu && !transportDom.closest(event.target, '.measureChordMenuButton')) {
 				global.CodaProgressionTransportMenu.close();
+			}
+
+			if (!quickEditor && !quickToggle) {
+				closeQuickEditors();
 			}
 		});
 	}
@@ -53,7 +59,21 @@
 		options.transportView.setPlaybackHead(menuMeasureIndex, false);
 	}
 
+	function closeQuickEditors() {
+		var opened = global.document && typeof global.document.querySelectorAll === 'function' ? global.document.querySelectorAll('.measureChord.isQuickOpen') : [];
+
+		Array.prototype.forEach.call(opened, function (chordElement) {
+			var button = typeof chordElement.querySelector === 'function' ? chordElement.querySelector('.measureChordQuickToggle') : null;
+
+			chordElement.classList.remove('isQuickOpen');
+			if (button && typeof button.setAttribute === 'function') {
+				button.setAttribute('aria-expanded', 'false');
+			}
+		});
+	}
+
 	global.CodaProgressionTransportDocumentEvents = {
-		bind: bind
+		bind: bind,
+		closeQuickEditors: closeQuickEditors
 	};
 })(window);

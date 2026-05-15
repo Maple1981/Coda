@@ -452,8 +452,11 @@ const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineM
 		{
 			bar: 1,
 			chordName: 'Cmaj7',
+			degreeIndex: 0,
 			degree: 'Imaj7',
 			displayName: 'Cmaj7 add9',
+			inversionIndex: 0,
+			kind: 'seventh',
 			notes: ['C', 'E', 'G', 'B', 'D', 'C'],
 			tonalFunction: 'T'
 		},
@@ -471,10 +474,42 @@ assert.ok(renderedProgressionTimeline.indexOf('measureDragHandle') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-split-action="add"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('measureChordMenuButton') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('data-i18n-title="progression.changeMeasureChord"') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('measureChordQuickToggle') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('data-i18n-title="progression.quickEditChord"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<strong>Cmaj7 add9</strong>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<em class="measureDegree">Imaj7</em>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<span class="measureNotes">C - E - G - B - D</span>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<span class="measureFunction">T</span>') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('measureChordQuickEditor') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('measureChordQuickButton') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('measureChordQuickGroup') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('data-inspector-action="quick-kind"') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('data-inspector-action="quick-inversion"') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('data-chord-kind="triad"') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('data-chord-kind="seventh"') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('data-inspector-action="silence"') > -1);
+assert.ok(context.window.CodaRenderers.progressionTimeline.renderMeasureChord({
+	isSilence: true,
+	restorableDegreeIndex: 0,
+	restorableInversionIndex: 1,
+	restorableKind: 'triad',
+	restorableSource: 'diatonic'
+}, 0, 1).indexOf('measureChordQuickToggle') > -1);
+const neapolitanQuickHtml = context.window.CodaRenderers.progressionTimeline.renderMeasureChord({
+	chromaticRole: 'neapolitan',
+	degreeIndex: 1,
+	source: 'chromatic'
+}, 0, 1);
+assert.ok(neapolitanQuickHtml.indexOf('measureChordQuickToggle') > -1);
+assert.ok(neapolitanQuickHtml.indexOf('data-inspector-action="quick-kind"') > -1);
+const swissQuickHtml = context.window.CodaRenderers.progressionTimeline.renderMeasureChord({
+	chromaticRole: 'swiss65',
+	degreeIndex: 5,
+	source: 'chromatic'
+}, 0, 1);
+assert.ok(swissQuickHtml.indexOf('measureChordQuickToggle') > -1);
+assert.equal(swissQuickHtml.indexOf('data-inspector-action="quick-kind"'), -1);
+assert.ok(swissQuickHtml.indexOf('data-inspector-action="silence"') > -1);
 assert.equal(context.window.CodaRenderers.progressionTimeline.notesLabel({
 	notes: ['C', 'Eb', 'G', 'C']
 }, {
@@ -576,7 +611,7 @@ assert.ok(progressionWorkbenchRenderer.renderTimelineMeasures({
 		}
 	]
 }).indexOf('<strong>Imaj7</strong>') > -1);
-assert.ok(progressionWorkbenchRenderer.render().indexOf('progressionInspector') > -1);
+assert.equal(progressionWorkbenchRenderer.render().indexOf('progressionInspector'), -1);
 const renderedInspector = progressionInspectorRenderer.render({
 	chord: {
 		degree: 'Imaj7 4/3',

@@ -52,13 +52,13 @@
 	}
 
 	function formatTextNotes(text, style) {
-		return String(text).replace(/\b([A-G])([#b♯♭]?)(?=\s|$)/g, function (match) {
+		return String(text).replace(/\b([A-G])((?:##|bb|#|b|\u266F|\u266D|\uD834\uDD2A|\uD834\uDD2B)?)(?=\s|$)/g, function (match) {
 			return formatNoteName(match, style);
 		});
 	}
 
 	function parseNoteName(value) {
-		var match = /^([A-G])([#b♯♭]?)(.*)$/.exec(value || '');
+		var match = /^([A-G])((?:##|bb|#|b|\u266F|\u266D|\uD834\uDD2A|\uD834\uDD2B)?)(.*)$/.exec(value || '');
 
 		if (!match) {
 			return null;
@@ -80,12 +80,20 @@
 	}
 
 	function normalizeAccidental(accidental) {
-		if (accidental === '#') {
-			return '♯';
+		if (accidental === '#' || accidental === '\u266F') {
+			return '\u266F';
 		}
 
-		if (accidental === 'b') {
-			return '♭';
+		if (accidental === 'b' || accidental === '\u266D') {
+			return '\u266D';
+		}
+
+		if (accidental === '##' || accidental === '\uD834\uDD2A') {
+			return '\uD834\uDD2A';
+		}
+
+		if (accidental === 'bb' || accidental === '\uD834\uDD2B') {
+			return '\uD834\uDD2B';
 		}
 
 		return accidental || '';

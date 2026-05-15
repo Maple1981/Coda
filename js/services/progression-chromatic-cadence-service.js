@@ -109,7 +109,7 @@
 			chord: {
 				factorNotes: [root, third, fifth],
 				fundamental: root,
-				nombre: root,
+				nombre: root + 'maj7',
 				quinta: fifth,
 				septima: noteName(tonicIndex, 'flat'),
 				tercera: third
@@ -129,17 +129,20 @@
 
 	function augmentedSixthDegree(report, rng) {
 		var tonicIndex = tonicIndexFromReport(report);
+		var tonicName = tonicNameFromReport(report, tonicIndex);
 		var variant = augmentedSixthVariant(rng);
-		var notes = augmentedSixthNotes(tonicIndex, variant);
+		var notes = augmentedSixthNotes(tonicIndex, variant, tonicName);
+		var chordName = notes[0] + ' ' + variant.label;
 
 		return {
 			chord: {
 				factorNotes: notes,
 				fundamental: notes[0],
-				nombre: variant.label,
+				nombre: chordName,
 				quinta: notes[2],
 				septima: notes[3],
-				tercera: notes[1]
+				tercera: notes[1],
+				displayName: chordName
 			},
 			chromaticRole: variant.id,
 			degreeDisplayName: variant.label,
@@ -157,31 +160,39 @@
 	function augmentedSixthVariant(rng) {
 		var value = typeof rng === 'function' ? rng() : Math.random();
 
-		if (value < 0.34) {
+		if (value < 0.25) {
 			return { id: 'italian6', label: 'It+6' };
 		}
 
-		if (value < 0.68) {
+		if (value < 0.5) {
 			return { id: 'french43', label: 'Fr+6' };
+		}
+
+		if (value < 0.75) {
+			return { id: 'german65', label: 'Ger+6' };
 		}
 
 		return { id: 'swiss65', label: 'Sw+6' };
 	}
 
-	function augmentedSixthNotes(tonicIndex, variant) {
-		var flatSix = noteName(tonicIndex + 8, 'flat');
-		var tonic = noteName(tonicIndex, 'sharp');
-		var sharpFour = noteName(tonicIndex + 6, 'sharp');
+	function augmentedSixthNotes(tonicIndex, variant, tonicName) {
+		var flatSix = spellChromaticDegree(tonicName, tonicIndex, 6, 8);
+		var tonic = spellChromaticDegree(tonicName, tonicIndex, 1, 0);
+		var sharpFour = spellChromaticDegree(tonicName, tonicIndex, 4, 6);
 
 		if (variant.id === 'italian6') {
 			return [flatSix, tonic, tonic, sharpFour];
 		}
 
 		if (variant.id === 'french43') {
-			return [flatSix, tonic, noteName(tonicIndex + 2, 'sharp'), sharpFour];
+			return [flatSix, tonic, spellChromaticDegree(tonicName, tonicIndex, 2, 2), sharpFour];
 		}
 
-		return [flatSix, tonic, noteName(tonicIndex + 3, 'flat'), sharpFour];
+		if (variant.id === 'german65') {
+			return [flatSix, tonic, spellChromaticDegree(tonicName, tonicIndex, 3, 3), sharpFour];
+		}
+
+		return [flatSix, tonic, spellChromaticDegree(tonicName, tonicIndex, 2, 3), sharpFour];
 	}
 
 	function cadentialSixFourDegree() {
@@ -269,6 +280,84 @@
 		}
 
 		return 0;
+	}
+
+	function tonicNameFromReport(report, tonicIndex) {
+		if (report && report.tonicName) {
+			return report.tonicName;
+		}
+
+		return noteName(tonicIndex, 'sharp');
+	}
+
+	function spellChromaticDegree(tonicName, tonicIndex, degreeNumber, semitoneOffset) {
+		var letter = degreeLetter(tonicName, degreeNumber);
+		var target = normalizeIndex(tonicIndex + semitoneOffset);
+		var accidental = accidentalFor(letter, target);
+
+		return letter + accidental;
+	}
+
+	function degreeLetter(tonicName, degreeNumber) {
+		var letters = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+		var tonicLetter = parseNoteName(tonicName).letter || 'C';
+		var tonicLetterIndex = letters.indexOf(tonicLetter);
+
+		if (tonicLetterIndex < 0) {
+			tonicLetterIndex = 0;
+		}
+
+		return letters[(tonicLetterIndex + degreeNumber - 1) % letters.length];
+	}
+
+	function accidentalFor(letter, targetPitchClass) {
+		var natural = naturalPitchClass(letter);
+		var delta = targetPitchClass - natural;
+
+		while (delta > 6) {
+			delta -= OCTAVE;
+		}
+		while (delta < -6) {
+			delta += OCTAVE;
+		}
+
+		if (delta === 2) {
+			return '\uD834\uDD2A';
+		}
+		if (delta === 1) {
+			return '\u266F';
+		}
+		if (delta === -1) {
+			return '\u266D';
+		}
+		if (delta === -2) {
+			return '\uD834\uDD2B';
+		}
+
+		return '';
+	}
+
+	function naturalPitchClass(letter) {
+		var values = {
+			C: 0,
+			D: 2,
+			E: 4,
+			F: 5,
+			G: 7,
+			A: 9,
+			B: 11
+		};
+
+		return values[letter] || 0;
+	}
+
+	function parseNoteName(noteNameValue) {
+		var match = /^([A-G])([#b\u266F\u266D\uD834\uDD2A\uD834\uDD2B]*)/.exec(String(noteNameValue || ''));
+
+		return {
+			accidental: match ? match[2] : '',
+			letter: match ? match[1] : ''
+		};
 	}
 
 	function noteName(index, spelling) {

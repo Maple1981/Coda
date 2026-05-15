@@ -66,6 +66,7 @@ let splitRequest = null;
 let reorderedChordRequest = null;
 let midiBuildRequest = null;
 let midiDownloads = 0;
+let replaceRequest = null;
 
 const controller = context.window.CodaProgressionTransport.initialize({
 	application: {
@@ -113,6 +114,17 @@ const controller = context.window.CodaProgressionTransport.initialize({
 				measureIndex: measureIndex,
 				sourceProgression: sourceProgression,
 				toChordIndex: toChordIndex
+			};
+			return {
+				measures: sourceProgression.measures.slice()
+			};
+		},
+		replaceProgressionMeasureChord: function (sourceProgression, measureIndex, chordIndex, replacement) {
+			replaceRequest = {
+				chordIndex: chordIndex,
+				measureIndex: measureIndex,
+				replacement: replacement,
+				sourceProgression: sourceProgression
 			};
 			return {
 				measures: sourceProgression.measures.slice()
@@ -291,6 +303,71 @@ document.measures[1].dispatchChordDragStart(2);
 document.measures[2].dropChordOn(1);
 assert.equal(reorderedChordRequest, null);
 
+document.measures[1].dispatchQuickToggleClick(0);
+assert.equal(document.measures[1].isChordQuickOpen(0), true);
+assert.equal(document.measures[1].quickToggleExpanded(0), 'true');
+document.measures[2].dispatchQuickToggleClick(0);
+assert.equal(document.measures[1].isChordQuickOpen(0), false);
+assert.equal(document.measures[2].isChordQuickOpen(0), true);
+document.dispatchClick(createFakeElement('outside-quick-editor'));
+assert.equal(document.measures[2].isChordQuickOpen(0), false);
+
+document.measures[1].dispatchQuickChordClick('silence', 0);
+assert.deepEqual(replaceRequest, {
+	chordIndex: 0,
+	measureIndex: 1,
+	replacement: {
+		kind: 'silence'
+	},
+	sourceProgression: progression
+});
+assert.deepEqual(changedOptions, {
+	playbackHeadIndex: 1
+});
+
+progression.measures[1].degreeIndex = 2;
+progression.measures[1].chordKind = 'triad';
+progression.measures[1].inversionIndex = 2;
+progression.measures[1].source = 'diatonic';
+document.measures[1].dispatchQuickChordClick('quick-kind', 0, {
+	'data-chord-kind': 'seventh'
+});
+assert.equal(replaceRequest.replacement.degreeIndex, 2);
+assert.equal(replaceRequest.replacement.inversionIndex, 2);
+assert.equal(replaceRequest.replacement.kind, 'seventh');
+assert.equal(replaceRequest.replacement.source, 'diatonic');
+
+progression.measures[1].chordKind = 'seventh';
+progression.measures[1].inversionIndex = 2;
+document.measures[1].dispatchQuickChordClick('quick-inversion', 0, {
+	'data-inversion-index': '3'
+});
+assert.equal(replaceRequest.replacement.degreeIndex, 2);
+assert.equal(replaceRequest.replacement.inversionIndex, 3);
+assert.equal(replaceRequest.replacement.kind, 'seventh');
+
+progression.measures[1].isSilence = true;
+progression.measures[1].restorableDegreeIndex = 4;
+progression.measures[1].restorableKind = 'seventh';
+progression.measures[1].restorableInversionIndex = 1;
+progression.measures[1].restorableSource = 'diatonic';
+document.measures[1].dispatchQuickChordClick('quick-kind', 0, {
+	'data-chord-kind': 'seventh'
+});
+assert.equal(replaceRequest.replacement.degreeIndex, 4);
+assert.equal(replaceRequest.replacement.inversionIndex, 1);
+assert.equal(replaceRequest.replacement.kind, 'seventh');
+assert.equal(replaceRequest.replacement.source, 'diatonic');
+delete progression.measures[1].degreeIndex;
+delete progression.measures[1].chordKind;
+delete progression.measures[1].inversionIndex;
+delete progression.measures[1].source;
+delete progression.measures[1].isSilence;
+delete progression.measures[1].restorableDegreeIndex;
+delete progression.measures[1].restorableKind;
+delete progression.measures[1].restorableInversionIndex;
+delete progression.measures[1].restorableSource;
+
 document.loop.checked = true;
 assert.equal(lastPlayCallbacks.shouldLoop(), true);
 document.metronome.checked = true;
@@ -341,6 +418,14 @@ function createFakeDocument(measureCount) {
 	for (let i = 0; i < measureCount; i++) {
 		measures.push(createFakeMeasure(i, rootElement, chordElements));
 	}
+	rootElement.querySelectorAll = function (selector) {
+		if (selector === '.measureChord.isQuickOpen') {
+			return chordElements.filter(function (chordElement) {
+				return chordElement.classList.contains('isQuickOpen');
+			});
+		}
+		return [];
+	};
 
 	const fakeDocument = {
 		body: createFakeElement('body'),
@@ -371,6 +456,16 @@ function createFakeDocument(measureCount) {
 				type: 'keydown'
 			};
 			(listeners.keydown || []).forEach(function (handler) {
+				handler(event);
+			});
+			return event;
+		},
+		dispatchClick: function (target) {
+			const event = {
+				target: target || createFakeElement('click-target'),
+				type: 'click'
+			};
+			(listeners.click || []).forEach(function (handler) {
 				handler(event);
 			});
 			return event;
@@ -425,6 +520,11 @@ function createFakeDocument(measureCount) {
 					return chordElement.classList.contains('isDragging') || chordElement.classList.contains('isChordDropTarget');
 				});
 			}
+			if (selector === '.measureChord.isQuickOpen') {
+				return chordElements.filter(function (chordElement) {
+					return chordElement.classList.contains('isQuickOpen');
+				});
+			}
 			return [];
 		},
 		dragStart: function (index) {
@@ -455,6 +555,7 @@ function createFakeMeasure(index, rootElement, chordElements) {
 	const chordElement = createFakeChordElement(index, 0, element);
 	const chords = [chordElement];
 	const chordHandles = [];
+	const quickToggles = [];
 
 	for (let i = 1; i < 4; i++) {
 		const additionalChord = createFakeChordElement(index, i, element);
@@ -526,6 +627,54 @@ function createFakeMeasure(index, rootElement, chordElements) {
 			type: 'click'
 		});
 	};
+	element.dispatchQuickToggleClick = function (chordIndex) {
+		const quickToggle = quickToggleFor(chordIndex || 0);
+
+		rootElement.dispatchEvent({
+			preventDefault: function () {},
+			stopPropagation: function () {},
+			target: quickToggle,
+			type: 'click'
+		});
+	};
+	element.isChordQuickOpen = function (chordIndex) {
+		return (chords[chordIndex || 0] || chordElement).classList.contains('isQuickOpen');
+	};
+	element.quickToggleExpanded = function (chordIndex) {
+		return quickToggleFor(chordIndex || 0).getAttribute('aria-expanded');
+	};
+	element.dispatchQuickChordClick = function (action, chordIndex, attributes) {
+		const targetChord = chords[chordIndex || 0] || chordElement;
+		const quickButton = createFakeElement('quick-' + index + '-' + (chordIndex || 0));
+
+		quickButton.getAttribute = function (name) {
+			if (name === 'data-inspector-action') {
+				return action;
+			}
+			if (attributes && Object.prototype.hasOwnProperty.call(attributes, name)) {
+				return attributes[name];
+			}
+			return null;
+		};
+		quickButton.closest = function (selector) {
+			if (selector === '.measureChordQuickButton') {
+				return quickButton;
+			}
+			if (selector === '.measure') {
+				return element;
+			}
+			if (selector === '.measureChord') {
+				return targetChord;
+			}
+			return null;
+		};
+		rootElement.dispatchEvent({
+			preventDefault: function () {},
+			stopPropagation: function () {},
+			target: quickButton,
+			type: 'click'
+		});
+	};
 	element.dispatchChordDragStart = function (chordIndex) {
 		rootElement.dispatchEvent({
 			dataTransfer: dataTransfer(),
@@ -541,6 +690,38 @@ function createFakeMeasure(index, rootElement, chordElements) {
 			type: 'drop'
 		});
 	};
+
+	function quickToggleFor(chordIndex) {
+		const targetChord = chords[chordIndex] || chordElement;
+
+		if (quickToggles[chordIndex]) {
+			return quickToggles[chordIndex];
+		}
+
+		const quickToggle = createFakeElement('quick-toggle-' + index + '-' + chordIndex);
+
+		quickToggle.closest = function (selector) {
+			if (selector === '.measureChordQuickToggle') {
+				return quickToggle;
+			}
+			if (selector === '.measureChord') {
+				return targetChord;
+			}
+			if (selector === '.measure') {
+				return element;
+			}
+			return null;
+		};
+		targetChord.querySelector = function (selector) {
+			if (selector === '.measureChordQuickToggle') {
+				return quickToggle;
+			}
+			return null;
+		};
+		quickToggles[chordIndex] = quickToggle;
+
+		return quickToggle;
+	}
 
 	return element;
 }

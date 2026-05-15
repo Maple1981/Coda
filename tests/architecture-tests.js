@@ -844,6 +844,27 @@ const neapolitanDegree = global.CodaProgressionChromaticCadence.neapolitanDegree
 assert.deepEqual(neapolitanDegree.chord.factorNotes, ['Db', 'F', 'Ab']);
 assert.equal(neapolitanDegree.forceInversionIndex, 1);
 assert.equal(neapolitanDegree.degreeDisplayName, '♭II');
+const gSharpSwissSixth = global.CodaProgressionChromaticCadence.augmentedSixthDegree({
+	tonicIndex: 8,
+	tonicName: 'G#'
+}, sequenceRng([0.9]));
+assert.equal(gSharpSwissSixth.chord.nombre, 'E Sw+6');
+assert.deepEqual(gSharpSwissSixth.chord.factorNotes, ['E', 'G♯', 'A𝄪', 'C𝄪']);
+assert.equal(gSharpSwissSixth.chord.fundamental, 'E');
+assert.deepEqual(global.CodaProgressionChromaticCadence.augmentedSixthNotes(8, {
+	id: 'german65',
+	label: 'Ger+6'
+}, 'G#'), ['E', 'G♯', 'B', 'C𝄪']);
+assert.deepEqual(global.CodaProgressionChromaticCadence.augmentedSixthNotes(8, {
+	id: 'french43',
+	label: 'Fr+6'
+}, 'G#'), ['E', 'G♯', 'A♯', 'C𝄪']);
+assert.deepEqual(global.CodaProgressionChromaticCadence.augmentedSixthNotes(8, {
+	id: 'italian6',
+	label: 'It+6'
+}, 'G#'), ['E', 'G♯', 'G♯', 'C𝄪']);
+assert.equal(global.CodaProgressionVoicing.noteIndex('A𝄪'), 11);
+assert.equal(global.CodaProgressionVoicing.noteIndex('C𝄪'), 2);
 assert.equal(global.CodaProgressionCadencePlanner.finalCadenceForPattern({
 	cadence: 'authentic'
 }, {
@@ -1251,6 +1272,8 @@ assert.equal(englishI18n.dataLabel('scales', 0, 'Mayor'), 'Major');
 assert.equal(englishI18n.dataLabel('tunings', 0, 'Estándar E'), 'Standard E');
 assert.equal(global.CodaNotation.formatChordName('F#m7', 'latin'), 'Fa♯m7');
 assert.equal(global.CodaNotation.formatNoteSequence('D-F#-A-C', 'latin'), 'Re-Fa♯-La-Do');
+assert.equal(global.CodaNotation.formatNoteName('A𝄪', 'latin'), 'La𝄪');
+assert.equal(global.CodaNotation.formatNoteName('C𝄪', 'anglosaxon'), 'C𝄪');
 
 global.CodaData.midiInstruments.forEach(function (instrument, index) {
 	assert.ok(global.CodaTranslations.es['data.midiInstruments.' + index] != null);

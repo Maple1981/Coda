@@ -1540,6 +1540,7 @@
 			'progression.metronome': 'Metrónomo',
 			'progression.meter': 'Compás',
 			'progression.modalInterchange': 'Intercambio',
+			'progression.quickEditChord': 'Edición rápida del acorde',
 			'progression.removeMeasureChord': 'Quitar acorde añadido',
 			'progression.sectionA': 'Sección A',
 			'progression.sectionB': 'Sección B',
@@ -1756,6 +1757,7 @@
 			'progression.metronome': 'Metronome',
 			'progression.meter': 'Meter',
 			'progression.modalInterchange': 'Interchange',
+			'progression.quickEditChord': 'Quick chord edit',
 			'progression.removeMeasureChord': 'Remove added chord',
 			'progression.sectionA': 'Section A',
 			'progression.sectionB': 'Section B',
@@ -1972,13 +1974,13 @@
 	}
 
 	function formatTextNotes(text, style) {
-		return String(text).replace(/\b([A-G])([#b♯♭]?)(?=\s|$)/g, function (match) {
+		return String(text).replace(/\b([A-G])((?:##|bb|#|b|\u266F|\u266D|\uD834\uDD2A|\uD834\uDD2B)?)(?=\s|$)/g, function (match) {
 			return formatNoteName(match, style);
 		});
 	}
 
 	function parseNoteName(value) {
-		var match = /^([A-G])([#b♯♭]?)(.*)$/.exec(value || '');
+		var match = /^([A-G])((?:##|bb|#|b|\u266F|\u266D|\uD834\uDD2A|\uD834\uDD2B)?)(.*)$/.exec(value || '');
 
 		if (!match) {
 			return null;
@@ -2000,12 +2002,20 @@
 	}
 
 	function normalizeAccidental(accidental) {
-		if (accidental === '#') {
-			return '♯';
+		if (accidental === '#' || accidental === '\u266F') {
+			return '\u266F';
 		}
 
-		if (accidental === 'b') {
-			return '♭';
+		if (accidental === 'b' || accidental === '\u266D') {
+			return '\u266D';
+		}
+
+		if (accidental === '##' || accidental === '\uD834\uDD2A') {
+			return '\uD834\uDD2A';
+		}
+
+		if (accidental === 'bb' || accidental === '\uD834\uDD2B') {
+			return '\uD834\uDD2B';
 		}
 
 		return accidental || '';
@@ -2915,13 +2925,51 @@
 		};
 		var normalizedName = normalizePitchName(noteName);
 
-		return indexes[normalizedName] != null ? indexes[normalizedName] : null;
+		return indexes[normalizedName] != null ? indexes[normalizedName] : parsedNoteIndex(normalizedName);
 	}
 
 	function normalizePitchName(noteName) {
-		var match = /^([A-G])([#b\u266f\u266d]?)/.exec(String(noteName || '').replace('\u266f', '#').replace('\u266d', 'b'));
+		var normalized = String(noteName || '')
+			.replace(/\uD834\uDD2A/g, '##')
+			.replace(/\uD834\uDD2B/g, 'bb')
+			.replace(/\u266f/g, '#')
+			.replace(/\u266d/g, 'b');
+		var match = /^([A-G])([#b]{0,2})/.exec(normalized);
 
 		return match ? match[1] + match[2] : '';
+	}
+
+	function parsedNoteIndex(noteName) {
+		var match = /^([A-G])([#b]{0,2})$/.exec(noteName || '');
+		var naturalIndexes = {
+			C: 0,
+			D: 2,
+			E: 4,
+			F: 5,
+			G: 7,
+			A: 9,
+			B: 11
+		};
+		var index;
+
+		if (!match || naturalIndexes[match[1]] == null) {
+			return null;
+		}
+
+		index = naturalIndexes[match[1]] + accidentalOffset(match[2]);
+		index %= 12;
+
+		return index < 0 ? index + 12 : index;
+	}
+
+	function accidentalOffset(accidental) {
+		var offset = 0;
+
+		for (var i = 0; i < String(accidental || '').length; i++) {
+			offset += accidental.charAt(i) === '#' ? 1 : -1;
+		}
+
+		return offset;
 	}
 
 	function nearestMidiTo(referenceNote, midiNote) {
@@ -4895,6 +4943,14 @@
 			voices: measure.voices
 		};
 
+		if (resolvedDegree.chromaticRole) {
+			segment.chromaticRole = resolvedDegree.chromaticRole;
+		}
+
+		if (resolvedDegree.sourceLabelKey) {
+			segment.sourceLabelKey = resolvedDegree.sourceLabelKey;
+		}
+
 		if (resolvedDegree.sourceScaleIndex != null) {
 			segment.sourceScaleIndex = resolvedDegree.sourceScaleIndex;
 			segment.sourceTonicName = resolvedDegree.sourceTonicName || '';
@@ -4924,6 +4980,7 @@
 			'chord',
 			'chordKind',
 			'chordName',
+			'chromaticRole',
 			'degree',
 			'degreeIndex',
 			'displayName',
@@ -4932,7 +4989,15 @@
 			'isSilence',
 			'midiNotes',
 			'notes',
+			'restorableChromaticRole',
+			'restorableDegreeIndex',
+			'restorableInversionIndex',
+			'restorableKind',
+			'restorableSource',
+			'restorableSourceLabelKey',
+			'restorableSourceScaleIndex',
 			'source',
+			'sourceLabelKey',
 			'sourceScaleIndex',
 			'sourceTonicName',
 			'suspension',
@@ -4980,15 +5045,16 @@
 		var scaleNotes = report.scaleNotes || [];
 		var degreeIndex = parseInt(options.replacement.degreeIndex, 10);
 		var source = interchangeSourceForReplacement(report, options.replacement);
+		var chromaticDegree = chromaticDegreeForReplacement(report, options.replacement);
 		var resolvedDegree;
 		var chordPlan;
 		var previousPlan;
 
-		if (isNaN(degreeIndex) || !(source ? source.scaleChords[degreeIndex] : scaleChords[degreeIndex])) {
+		if (!chromaticDegree && (isNaN(degreeIndex) || !(source ? source.scaleChords[degreeIndex] : scaleChords[degreeIndex]))) {
 			return null;
 		}
 
-		resolvedDegree = {
+		resolvedDegree = chromaticDegree || {
 			chord: source ? source.scaleChords[degreeIndex] : scaleChords[degreeIndex],
 			degree: scaleNotes[degreeIndex] ? scaleNotes[degreeIndex].grado : '',
 			degreeIndex: degreeIndex,
@@ -5053,6 +5119,13 @@
 			isSilence: true,
 			midiNotes: [],
 			notes: [],
+			restorableDegreeIndex: editableValue(segment, 'degreeIndex'),
+			restorableChromaticRole: editableValue(segment, 'chromaticRole'),
+			restorableInversionIndex: editableValue(segment, 'inversionIndex') || 0,
+			restorableKind: editableValue(segment, 'chordKind') || 'triad',
+			restorableSourceLabelKey: editableValue(segment, 'sourceLabelKey'),
+			restorableSource: editableValue(segment, 'source') || 'diatonic',
+			restorableSourceScaleIndex: editableValue(segment, 'sourceScaleIndex'),
 			source: 'silence',
 			sourceScaleIndex: null,
 			sourceTonicName: '',
@@ -5063,6 +5136,36 @@
 			voiceNotes: [],
 			voices: measure.voices
 		};
+	}
+
+	function chromaticDegreeForReplacement(report, replacement) {
+		var chromaticCadenceService = global.CodaProgressionChromaticCadence;
+		var degree;
+
+		if (!replacement || replacement.source !== 'chromatic' || replacement.chromaticRole !== 'neapolitan' || !chromaticCadenceService) {
+			return null;
+		}
+
+		degree = chromaticCadenceService.neapolitanDegree(report);
+		degree.forceInversionIndex = replacement.inversionIndex;
+		degree.forceKind = replacement.kind === 'seventh' ? 'seventh' : 'triad';
+
+		return {
+			chord: degree.chord,
+			chromaticRole: degree.chromaticRole,
+			degree: degree.degreeDisplayName,
+			degreeDisplayName: '',
+			degreeIndex: degree.index,
+			source: 'chromatic',
+			sourceLabelKey: degree.sourceLabelKey,
+			tonalFunctionOverride: degree.tonalFunctionOverride
+		};
+	}
+
+	function editableValue(segment, key) {
+		var restoreKey = 'restorable' + key.charAt(0).toUpperCase() + key.slice(1);
+
+		return segment && segment[key] != null ? segment[key] : segment ? segment[restoreKey] : null;
 	}
 
 	function interchangeSourceForReplacement(report, replacement) {
@@ -5191,7 +5294,7 @@
 		options = options || {};
 		replacement = replacement || {};
 		dependencies = dependencies || {};
-		if (!progression || !measure || (replacement.degreeIndex == null && replacement.kind !== 'silence')) {
+		if (!progression || !measure || (!isBuildableReplacement(replacement) && replacement.kind !== 'silence')) {
 			return progression;
 		}
 
@@ -5229,6 +5332,10 @@
 
 	function extendObject(target, values) {
 		return structureIndex.extendObject(target, values);
+	}
+
+	function isBuildableReplacement(replacement) {
+		return replacement.degreeIndex != null || (replacement.source === 'chromatic' && replacement.chromaticRole === 'neapolitan');
 	}
 
 	function clampMeasureIndex(index, length) {
@@ -6091,7 +6198,7 @@
 			chord: {
 				factorNotes: [root, third, fifth],
 				fundamental: root,
-				nombre: root,
+				nombre: root + 'maj7',
 				quinta: fifth,
 				septima: noteName(tonicIndex, 'flat'),
 				tercera: third
@@ -6111,17 +6218,20 @@
 
 	function augmentedSixthDegree(report, rng) {
 		var tonicIndex = tonicIndexFromReport(report);
+		var tonicName = tonicNameFromReport(report, tonicIndex);
 		var variant = augmentedSixthVariant(rng);
-		var notes = augmentedSixthNotes(tonicIndex, variant);
+		var notes = augmentedSixthNotes(tonicIndex, variant, tonicName);
+		var chordName = notes[0] + ' ' + variant.label;
 
 		return {
 			chord: {
 				factorNotes: notes,
 				fundamental: notes[0],
-				nombre: variant.label,
+				nombre: chordName,
 				quinta: notes[2],
 				septima: notes[3],
-				tercera: notes[1]
+				tercera: notes[1],
+				displayName: chordName
 			},
 			chromaticRole: variant.id,
 			degreeDisplayName: variant.label,
@@ -6139,31 +6249,39 @@
 	function augmentedSixthVariant(rng) {
 		var value = typeof rng === 'function' ? rng() : Math.random();
 
-		if (value < 0.34) {
+		if (value < 0.25) {
 			return { id: 'italian6', label: 'It+6' };
 		}
 
-		if (value < 0.68) {
+		if (value < 0.5) {
 			return { id: 'french43', label: 'Fr+6' };
+		}
+
+		if (value < 0.75) {
+			return { id: 'german65', label: 'Ger+6' };
 		}
 
 		return { id: 'swiss65', label: 'Sw+6' };
 	}
 
-	function augmentedSixthNotes(tonicIndex, variant) {
-		var flatSix = noteName(tonicIndex + 8, 'flat');
-		var tonic = noteName(tonicIndex, 'sharp');
-		var sharpFour = noteName(tonicIndex + 6, 'sharp');
+	function augmentedSixthNotes(tonicIndex, variant, tonicName) {
+		var flatSix = spellChromaticDegree(tonicName, tonicIndex, 6, 8);
+		var tonic = spellChromaticDegree(tonicName, tonicIndex, 1, 0);
+		var sharpFour = spellChromaticDegree(tonicName, tonicIndex, 4, 6);
 
 		if (variant.id === 'italian6') {
 			return [flatSix, tonic, tonic, sharpFour];
 		}
 
 		if (variant.id === 'french43') {
-			return [flatSix, tonic, noteName(tonicIndex + 2, 'sharp'), sharpFour];
+			return [flatSix, tonic, spellChromaticDegree(tonicName, tonicIndex, 2, 2), sharpFour];
 		}
 
-		return [flatSix, tonic, noteName(tonicIndex + 3, 'flat'), sharpFour];
+		if (variant.id === 'german65') {
+			return [flatSix, tonic, spellChromaticDegree(tonicName, tonicIndex, 3, 3), sharpFour];
+		}
+
+		return [flatSix, tonic, spellChromaticDegree(tonicName, tonicIndex, 2, 3), sharpFour];
 	}
 
 	function cadentialSixFourDegree() {
@@ -6251,6 +6369,84 @@
 		}
 
 		return 0;
+	}
+
+	function tonicNameFromReport(report, tonicIndex) {
+		if (report && report.tonicName) {
+			return report.tonicName;
+		}
+
+		return noteName(tonicIndex, 'sharp');
+	}
+
+	function spellChromaticDegree(tonicName, tonicIndex, degreeNumber, semitoneOffset) {
+		var letter = degreeLetter(tonicName, degreeNumber);
+		var target = normalizeIndex(tonicIndex + semitoneOffset);
+		var accidental = accidentalFor(letter, target);
+
+		return letter + accidental;
+	}
+
+	function degreeLetter(tonicName, degreeNumber) {
+		var letters = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+		var tonicLetter = parseNoteName(tonicName).letter || 'C';
+		var tonicLetterIndex = letters.indexOf(tonicLetter);
+
+		if (tonicLetterIndex < 0) {
+			tonicLetterIndex = 0;
+		}
+
+		return letters[(tonicLetterIndex + degreeNumber - 1) % letters.length];
+	}
+
+	function accidentalFor(letter, targetPitchClass) {
+		var natural = naturalPitchClass(letter);
+		var delta = targetPitchClass - natural;
+
+		while (delta > 6) {
+			delta -= OCTAVE;
+		}
+		while (delta < -6) {
+			delta += OCTAVE;
+		}
+
+		if (delta === 2) {
+			return '\uD834\uDD2A';
+		}
+		if (delta === 1) {
+			return '\u266F';
+		}
+		if (delta === -1) {
+			return '\u266D';
+		}
+		if (delta === -2) {
+			return '\uD834\uDD2B';
+		}
+
+		return '';
+	}
+
+	function naturalPitchClass(letter) {
+		var values = {
+			C: 0,
+			D: 2,
+			E: 4,
+			F: 5,
+			G: 7,
+			A: 9,
+			B: 11
+		};
+
+		return values[letter] || 0;
+	}
+
+	function parseNoteName(noteNameValue) {
+		var match = /^([A-G])([#b\u266F\u266D\uD834\uDD2A\uD834\uDD2B]*)/.exec(String(noteNameValue || ''));
+
+		return {
+			accidental: match ? match[2] : '',
+			letter: match ? match[1] : ''
+		};
 	}
 
 	function noteName(index, spelling) {
@@ -8281,13 +8477,51 @@
 	function noteIndex(noteName) {
 		var normalizedName = normalizeNoteName(noteName);
 
-		return noteIndexes[normalizedName] != null ? noteIndexes[normalizedName] : null;
+		return noteIndexes[normalizedName] != null ? noteIndexes[normalizedName] : parsedNoteIndex(normalizedName);
 	}
 
 	function normalizeNoteName(noteName) {
-		var match = /^([A-G])([#b♯♭]?)/.exec(String(noteName || '').replace('♯', '#').replace('♭', 'b'));
+		var normalized = String(noteName || '')
+			.replace(/\uD834\uDD2A/g, '##')
+			.replace(/\uD834\uDD2B/g, 'bb')
+			.replace(/♯/g, '#')
+			.replace(/♭/g, 'b');
+		var match = /^([A-G])([#b]{0,2})/.exec(normalized);
 
 		return match ? match[1] + match[2] : '';
+	}
+
+	function parsedNoteIndex(noteName) {
+		var match = /^([A-G])([#b]{0,2})$/.exec(noteName || '');
+		var naturalIndexes = {
+			C: 0,
+			D: 2,
+			E: 4,
+			F: 5,
+			G: 7,
+			A: 9,
+			B: 11
+		};
+		var index;
+
+		if (!match || naturalIndexes[match[1]] == null) {
+			return null;
+		}
+
+		index = naturalIndexes[match[1]] + accidentalOffset(match[2]);
+		index %= 12;
+
+		return index < 0 ? index + 12 : index;
+	}
+
+	function accidentalOffset(accidental) {
+		var offset = 0;
+
+		for (var i = 0; i < String(accidental || '').length; i++) {
+			offset += accidental.charAt(i) === '#' ? 1 : -1;
+		}
+
+		return offset;
 	}
 
 	function articulationFactor(articulation) {
@@ -9964,14 +10198,14 @@
 		var progression = currentProgression(options);
 		var inspectorSelection = selectionData(progression, selected);
 
+		selected.measureIndex = inspectorSelection.measureIndex;
+		selected.chordIndex = inspectorSelection.chordIndex;
+		updateSelectedChordClass(inspectorSelection);
 		if (!panel || !renderer) {
 			return;
 		}
 
-		selected.measureIndex = inspectorSelection.measureIndex;
-		selected.chordIndex = inspectorSelection.chordIndex;
 		panel.innerHTML = renderer.render(inspectorSelection, renderOptions(options));
-		updateSelectedChordClass(inspectorSelection);
 	}
 
 	function selectionData(progression, selected) {
@@ -10489,6 +10723,8 @@
 			var transportDom = global.CodaProgressionTransportDom;
 			var chordMenuButton = transportDom.closest(event.target, '.measureChordMenuButton');
 			var chordElement = transportDom.closest(event.target, '.measureChord');
+			var quickButton = transportDom.closest(event.target, '.measureChordQuickButton');
+			var quickToggle = transportDom.closest(event.target, '.measureChordQuickToggle');
 			var splitButton = transportDom.closest(event.target, '.measureSplitButton');
 			var measure = transportDom.closest(event.target, '.measure');
 			var clickedIndex;
@@ -10499,6 +10735,20 @@
 
 			clickedIndex = transportDom.measureIndex(measure);
 			selectInspectorChord(options, clickedIndex, transportDom.chordIndex(chordElement));
+			if (quickToggle) {
+				preventAndStop(event);
+				toggleQuickEditor(options.root, chordElement, quickToggle);
+				return;
+			}
+
+			if (quickButton) {
+				preventAndStop(event);
+				updateQuickChord(options, quickButton, clickedIndex, transportDom.chordIndex(chordElement));
+				return;
+			}
+
+			closeQuickEditors(options.root);
+
 			if (chordMenuButton) {
 				preventAndStop(event);
 				global.CodaProgressionTransportMenu.open(options.transportOptions, chordMenuButton, clickedIndex, transportDom.chordIndex(chordElement));
@@ -10526,6 +10776,111 @@
 		});
 	}
 
+	function updateQuickChord(options, quickButton, measureIndex, chordIndex) {
+		var action = quickButton.getAttribute('data-inspector-action');
+		var selection = chordSelection(options, measureIndex, chordIndex);
+		var chord = selection.chord || {};
+		var replacement = quickReplacementFromAction(chord, action, quickButton);
+
+		if (!selection.measure) {
+			return;
+		}
+		if (!replacement) {
+			return;
+		}
+
+		global.CodaProgressionTransportPlayback.stop(options.transportOptions, options.listenButton, options.getPlaybackHeadIndex());
+		global.CodaProgressionTransportMenu.close();
+		global.CodaProgressionTransportActions.updateMeasureChordReplacement(options.transportOptions, selection.measureIndex, selection.chordIndex, replacement);
+		closeQuickEditors(options.root);
+		options.setPlaybackHeadIndex(selection.measureIndex);
+		options.transportView.setPlaybackHead(selection.measureIndex, false);
+	}
+
+	function quickReplacementFromAction(chord, action, quickButton) {
+		var kind = quickKind(chord);
+		var inversionIndex = quickInversionIndex(chord);
+		var degreeIndex = editableDegreeIndex(chord);
+		var source = editableSource(chord);
+		var sourceScaleIndex = editableSourceScaleIndex(chord);
+
+		if (action === 'silence') {
+			return {
+				kind: 'silence'
+			};
+		}
+		if (degreeIndex == null) {
+			return null;
+		}
+		if (action === 'quick-kind' || action === 'replace') {
+			kind = quickButton.getAttribute('data-chord-kind') || kind;
+			inversionIndex = clampInversionIndex(kind, inversionIndex);
+		}
+		if (action === 'quick-inversion' || action === 'replace') {
+			inversionIndex = clampInversionIndex(kind, parseInt(quickButton.getAttribute('data-inversion-index'), 10) || 0);
+		}
+
+		return {
+			chromaticRole: editableChromaticRole(chord),
+			degreeIndex: degreeIndex,
+			inversionIndex: inversionIndex,
+			kind: kind === 'seventh' ? 'seventh' : 'triad',
+			source: source,
+			sourceScaleIndex: sourceScaleIndex
+		};
+	}
+
+	function editableDegreeIndex(chord) {
+		return chord && chord.isSilence ? chord.restorableDegreeIndex : chord.degreeIndex;
+	}
+
+	function editableSource(chord) {
+		return chord && chord.isSilence ? (chord.restorableSource || 'diatonic') : (chord.source || 'diatonic');
+	}
+
+	function editableSourceScaleIndex(chord) {
+		return chord && chord.isSilence ? chord.restorableSourceScaleIndex : chord.sourceScaleIndex;
+	}
+
+	function editableChromaticRole(chord) {
+		return chord && chord.isSilence ? chord.restorableChromaticRole : chord.chromaticRole;
+	}
+
+	function quickKind(chord) {
+		if (chord && chord.isSilence && chord.restorableKind) {
+			return chord.restorableKind;
+		}
+
+		return chord && (chord.chordKind || chord.kind) ? (chord.chordKind || chord.kind) : (chord && chord.chordName && chord.chordName.indexOf('7') > -1 ? 'seventh' : 'triad');
+	}
+
+	function quickInversionIndex(chord) {
+		if (chord && chord.isSilence && chord.restorableInversionIndex != null) {
+			return Number(chord.restorableInversionIndex) || 0;
+		}
+
+		return Number(chord && chord.inversionIndex) || 0;
+	}
+
+	function clampInversionIndex(kind, inversionIndex) {
+		var max = kind === 'seventh' ? 3 : 2;
+
+		return Math.max(0, Math.min(max, Number(inversionIndex) || 0));
+	}
+
+	function chordSelection(options, measureIndex, chordIndex) {
+		var progression = options.transportOptions && options.transportOptions.uiState ? options.transportOptions.uiState.getProgression() : null;
+		var measures = progression && progression.measures ? progression.measures : [];
+		var measure = measures[measureIndex] || null;
+
+		return {
+			chord: global.CodaProgressionTransportMenu.currentChordSegment(measure, chordIndex),
+			chordIndex: chordIndex,
+			measure: measure,
+			measureIndex: measureIndex
+		};
+	}
+
 	function selectInspectorChord(options, measureIndex, chordIndex) {
 		if (options.inspector && typeof options.inspector.select === 'function') {
 			options.inspector.select(measureIndex, chordIndex);
@@ -10550,6 +10905,32 @@
 		if (event && typeof event.stopPropagation === 'function') {
 			event.stopPropagation();
 		}
+	}
+
+	function toggleQuickEditor(root, chordElement, button) {
+		var open = chordElement && chordElement.classList && chordElement.classList.contains('isQuickOpen');
+
+		closeQuickEditors(root);
+
+		if (!open && chordElement && chordElement.classList) {
+			chordElement.classList.add('isQuickOpen');
+			if (button && typeof button.setAttribute === 'function') {
+				button.setAttribute('aria-expanded', 'true');
+			}
+		}
+	}
+
+	function closeQuickEditors(root) {
+		var opened = root && typeof root.querySelectorAll === 'function' ? root.querySelectorAll('.measureChord.isQuickOpen') : [];
+
+		Array.prototype.forEach.call(opened, function (chordElement) {
+			var button = typeof chordElement.querySelector === 'function' ? chordElement.querySelector('.measureChordQuickToggle') : null;
+
+			chordElement.classList.remove('isQuickOpen');
+			if (button && typeof button.setAttribute === 'function') {
+				button.setAttribute('aria-expanded', 'false');
+			}
+		});
 	}
 
 	global.CodaProgressionTransportMeasureClick = {
@@ -10590,6 +10971,8 @@
 			var transportDom = global.CodaProgressionTransportDom;
 			var menuItem = transportDom.closest(event.target, '.measureChordMenuItem');
 			var menu = transportDom.closest(event.target, '.progressionChordMenu');
+			var quickEditor = transportDom.closest(event.target, '.measureChordQuickEditor');
+			var quickToggle = transportDom.closest(event.target, '.measureChordQuickToggle');
 
 			if (menuItem) {
 				replaceFromMenuItem(options, menuItem);
@@ -10598,6 +10981,10 @@
 
 			if (!menu && !transportDom.closest(event.target, '.measureChordMenuButton')) {
 				global.CodaProgressionTransportMenu.close();
+			}
+
+			if (!quickEditor && !quickToggle) {
+				closeQuickEditors();
 			}
 		});
 	}
@@ -10615,8 +11002,22 @@
 		options.transportView.setPlaybackHead(menuMeasureIndex, false);
 	}
 
+	function closeQuickEditors() {
+		var opened = global.document && typeof global.document.querySelectorAll === 'function' ? global.document.querySelectorAll('.measureChord.isQuickOpen') : [];
+
+		Array.prototype.forEach.call(opened, function (chordElement) {
+			var button = typeof chordElement.querySelector === 'function' ? chordElement.querySelector('.measureChordQuickToggle') : null;
+
+			chordElement.classList.remove('isQuickOpen');
+			if (button && typeof button.setAttribute === 'function') {
+				button.setAttribute('aria-expanded', 'false');
+			}
+		});
+	}
+
 	global.CodaProgressionTransportDocumentEvents = {
-		bind: bind
+		bind: bind,
+		closeQuickEditors: closeQuickEditors
 	};
 })(window);
 
@@ -13389,6 +13790,7 @@
 		var notes = notesLabel(chord, options || {});
 		var buttons = '';
 		var dragHandle = '';
+		var quickControls = renderQuickControls(chord, options || {});
 
 		if (chordCount > 2 && chordIndex > 0) {
 			dragHandle = '<button type="button" class="measureChordDragHandle" draggable="true" aria-label="" title="" data-i18n-title="progression.dragMeasureChord"><span class="material-icons" aria-hidden="true">open_with</span></button>';
@@ -13410,12 +13812,127 @@
 		return '<div class="measureChord" data-measure-chord-index="' + labels.escapeHtml(chordIndex) + '">' +
 			dragHandle +
 			buttons +
-			'<span class="measureChordName"><strong>' + labels.formatMusicalLabel(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
+			'<span class="measureChordName"><strong>' + labels.formatMusicalLabel(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button>' + quickControls + '</span>' +
 			(degree ? '<em class="measureDegree">' + labels.formatMusicalLabel(degree) + '</em>' : '') +
 			(notes ? '<span class="measureNotes">' + labels.escapeHtml(notes) + '</span>' : '') +
 			(tonalFunction ? '<span class="measureFunction">' + labels.escapeHtml(tonalFunction) + '</span>' : '') +
 			(source ? '<span class="measureSource">' + labels.escapeHtml(source) + '</span>' : '') +
 			'</div>';
+	}
+
+	function renderQuickControls(chord, options) {
+		if (!canQuickEdit(chord)) {
+			return '';
+		}
+
+		return '<span class="measureChordQuickWrap">' + renderQuickToggle(chord) + renderQuickEditor(chord, options || {}) + '</span>';
+	}
+
+	function renderQuickToggle(chord) {
+		if (!canQuickEdit(chord)) {
+			return '';
+		}
+
+		return '<button type="button" class="measureChordQuickToggle" data-measure-chord-quick-toggle="true" aria-haspopup="true" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.quickEditChord"><span class="material-icons" aria-hidden="true">chevron_right</span></button>';
+	}
+
+	function renderQuickEditor(chord, options) {
+		var html = '';
+		var kind = quickKind(chord);
+		var silenceOnly = isAugmentedSixthChord(chord);
+		var inversions = kind === 'seventh' ? [
+			{ index: 0, label: translate(options, 'progression.inspector.rootPositionShort') },
+			{ index: 1, label: '6/5' },
+			{ index: 2, label: '4/3' },
+			{ index: 3, label: '4/2' }
+		] : [
+			{ index: 0, label: translate(options, 'progression.inspector.rootPositionShort') },
+			{ index: 1, label: '6' },
+			{ index: 2, label: '6/4' }
+		];
+
+		if (!canQuickEdit(chord)) {
+			return '';
+		}
+
+		html += '<div class="measureChordQuickEditor">';
+		if (!silenceOnly) {
+			html += '<div class="measureChordQuickGroup">';
+			html += renderKindButton(chord, 'triad', '3', options);
+			html += renderKindButton(chord, 'seventh', '7', options);
+			html += '</div>';
+			html += '<div class="measureChordQuickGroup">';
+			for (var i = 0; i < inversions.length; i++) {
+				html += renderInversionButton(chord, inversions[i].index, inversions[i].label, options);
+			}
+			html += '</div>';
+		}
+		html += '<div class="measureChordQuickGroup">';
+		html += '<button type="button" class="measureChordQuickButton measureChordQuickButton--silence' + (chord.isSilence ? ' isActive' : '') + '" data-inspector-action="silence" title="' + labels.escapeHtml(translate(options, 'progression.chordMenu.silence')) + '" aria-label="' + labels.escapeHtml(translate(options, 'progression.chordMenu.silence')) + '" aria-pressed="' + (chord.isSilence ? 'true' : 'false') + '"><span class="material-icons" aria-hidden="true">volume_off</span></button>';
+		html += '</div>';
+		html += '</div>';
+
+		return html;
+	}
+
+	function renderKindButton(chord, kind, label, options) {
+		var active = quickKind(chord) === kind && !chord.isSilence;
+		var title = translate(options, kind === 'seventh' ? 'progression.chordMenu.seventh' : 'progression.chordMenu.triad');
+
+		return '<button type="button" class="measureChordQuickButton' + (active ? ' isActive' : '') + '" data-inspector-action="quick-kind" data-chord-kind="' + labels.escapeHtml(kind) + '" title="' + labels.escapeHtml(title) + '" aria-label="' + labels.escapeHtml(title) + '" aria-pressed="' + (active ? 'true' : 'false') + '">' + labels.formatMusicalLabel(label) + '</button>';
+	}
+
+	function renderInversionButton(chord, inversionIndex, label, options) {
+		var active = quickInversionIndex(chord) === inversionIndex && !chord.isSilence;
+		var title = translate(options, 'progression.inspector.inversion');
+
+		return '<button type="button" class="measureChordQuickButton' + (active ? ' isActive' : '') + '" data-inspector-action="quick-inversion" data-inversion-index="' + labels.escapeHtml(inversionIndex) + '" title="' + labels.escapeHtml(title + ' ' + label) + '" aria-label="' + labels.escapeHtml(title + ' ' + label) + '" aria-pressed="' + (active ? 'true' : 'false') + '">' + labels.formatMusicalLabel(label) + '</button>';
+	}
+
+	function canQuickEdit(chord) {
+		return !!(chord && (
+			(editableDegreeIndex(chord) != null && editableSource(chord) !== 'chromatic') ||
+			isNeapolitanChord(chord) ||
+			isAugmentedSixthChord(chord)
+		));
+	}
+
+	function editableDegreeIndex(chord) {
+		return chord && chord.isSilence ? chord.restorableDegreeIndex : chord.degreeIndex;
+	}
+
+	function editableSource(chord) {
+		return chord && chord.isSilence ? (chord.restorableSource || 'diatonic') : (chord.source || 'diatonic');
+	}
+
+	function editableChromaticRole(chord) {
+		return chord && chord.isSilence ? chord.restorableChromaticRole : chord.chromaticRole;
+	}
+
+	function isNeapolitanChord(chord) {
+		return editableSource(chord) === 'chromatic' && editableChromaticRole(chord) === 'neapolitan';
+	}
+
+	function isAugmentedSixthChord(chord) {
+		var role = editableChromaticRole(chord);
+
+		return editableSource(chord) === 'chromatic' && /^(italian6|french43|german65|swiss65)$/.test(role || '');
+	}
+
+	function quickKind(chord) {
+		if (chord && chord.isSilence && chord.restorableKind) {
+			return chord.restorableKind;
+		}
+
+		return chord && (chord.chordKind || chord.kind) ? (chord.chordKind || chord.kind) : (chord && chord.chordName && chord.chordName.indexOf('7') > -1 ? 'seventh' : 'triad');
+	}
+
+	function quickInversionIndex(chord) {
+		if (chord && chord.isSilence && chord.restorableInversionIndex != null) {
+			return Number(chord.restorableInversionIndex) || 0;
+		}
+
+		return Number(chord && chord.inversionIndex) || 0;
 	}
 
 	function notesLabel(chord, options) {
@@ -13483,6 +14000,10 @@
 		return tonicName ? tonicName + ' ' + scaleName : scaleName;
 	}
 
+	function translate(options, key) {
+		return options && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(key) : key;
+	}
+
 	function fallbackMeasures() {
 		return ['Imaj7', 'vi7', 'ii7', 'V7', 'Imaj7', 'IVmaj7', 'V7sus4', 'Imaj9'].map(function (label, index) {
 			return {
@@ -13497,6 +14018,8 @@
 		hasRenderableMeasures: hasRenderableMeasures,
 		renderMeasure: renderMeasure,
 		renderMeasureChord: renderMeasureChord,
+		renderQuickControls: renderQuickControls,
+		renderQuickEditor: renderQuickEditor,
 		renderSectionHeader: renderSectionHeader,
 		notesLabel: notesLabel,
 		sectionContextLabel: sectionContextLabel,
@@ -13644,7 +14167,7 @@
 	}
 
 	function canReplaceChord(chord) {
-		return !!(chord && !chord.isSilence && chord.degreeIndex != null);
+		return !!(chord && !chord.isSilence && chord.degreeIndex != null && chord.source !== 'chromatic');
 	}
 
 	function isActiveVariant(chord, kind, inversionIndex) {
@@ -13721,7 +14244,6 @@
 
 	var controlsRenderer = global.CodaRenderers.progressionControls;
 	var timelineRenderer = global.CodaRenderers.progressionTimeline;
-	var inspectorRenderer = global.CodaRenderers.progressionInspector;
 
 	function render() {
 		var html = '';
@@ -13730,7 +14252,6 @@
 		html += controlsRenderer.renderPanels();
 		html += renderGenerateBar();
 		html += timelineRenderer.renderTimeline();
-		html += inspectorRenderer.renderShell();
 		html += renderTransportControls();
 
 		return html;
@@ -14362,6 +14883,7 @@
 		setTitleAndLabel(i18n, '.progressionSectionCircleButton[data-i18n-title="circle.open"]', 'circle.open');
 		setTitleAndLabel(i18n, '#generateProgressionSectionB[data-i18n-title="progression.generateSectionB"]', 'progression.generateSectionB');
 		setTitleAndLabel(i18n, '.measureChordMenuButton[data-i18n-title="progression.changeMeasureChord"]', 'progression.changeMeasureChord');
+		setTitleAndLabel(i18n, '.measureChordQuickToggle[data-i18n-title="progression.quickEditChord"]', 'progression.quickEditChord');
 		setTitleAndLabel(i18n, '.measureDragHandle[data-i18n-title="progression.dragMeasure"]', 'progression.dragMeasure');
 		setTitleAndLabel(i18n, '.measureChordDragHandle[data-i18n-title="progression.dragMeasureChord"]', 'progression.dragMeasureChord');
 		setTitleAndLabel(i18n, '.measureSplitButton[data-i18n-title="progression.addMeasureChord"]', 'progression.addMeasureChord');
@@ -17823,6 +18345,8 @@
 		}
 
 		function noteNameToMidi(noteName, offset) {
+			var parsedIndex = parsedNoteIndex(noteName);
+
 			if (notes._codaIndex && notes._codaIndex.indexByName && notes._codaIndex.indexByName[noteName] !== undefined) {
 				return initialMidiNote + defaultValue(offset, 0) + notes._codaIndex.indexByName[noteName];
 			}
@@ -17832,6 +18356,48 @@
 					return initialMidiNote + defaultValue(offset, 0) + i;
 				}
 			}
+
+			if (parsedIndex != null) {
+				return initialMidiNote + defaultValue(offset, 0) + parsedIndex;
+			}
+		}
+
+		function parsedNoteIndex(noteName) {
+			var normalized = String(noteName || '')
+				.replace(/\uD834\uDD2A/g, '##')
+				.replace(/\uD834\uDD2B/g, 'bb')
+				.replace(/\u266F/g, '#')
+				.replace(/\u266D/g, 'b');
+			var match = /^([A-G])([#b]{0,2})/.exec(normalized);
+			var naturalIndexes = {
+				C: 0,
+				D: 2,
+				E: 4,
+				F: 5,
+				G: 7,
+				A: 9,
+				B: 11
+			};
+			var index;
+
+			if (!match || naturalIndexes[match[1]] == null) {
+				return null;
+			}
+
+			index = naturalIndexes[match[1]] + accidentalOffset(match[2]);
+			index %= 12;
+
+			return index < 0 ? index + 12 : index;
+		}
+
+		function accidentalOffset(accidental) {
+			var offset = 0;
+
+			for (var i = 0; i < String(accidental || '').length; i++) {
+				offset += accidental.charAt(i) === '#' ? 1 : -1;
+			}
+
+			return offset;
 		}
 
 		function chordNamesToMidi(noteNames, bassOctaveOffset) {

@@ -86,14 +86,14 @@
 		var progression = currentProgression(options);
 		var inspectorSelection = selectionData(progression, selected);
 
+		selected.measureIndex = inspectorSelection.measureIndex;
+		selected.chordIndex = inspectorSelection.chordIndex;
+		updateSelectedChordClass(inspectorSelection);
 		if (!panel || !renderer) {
 			return;
 		}
 
-		selected.measureIndex = inspectorSelection.measureIndex;
-		selected.chordIndex = inspectorSelection.chordIndex;
 		panel.innerHTML = renderer.render(inspectorSelection, renderOptions(options));
-		updateSelectedChordClass(inspectorSelection);
 	}
 
 	function selectionData(progression, selected) {

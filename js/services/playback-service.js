@@ -115,6 +115,8 @@
 		}
 
 		function noteNameToMidi(noteName, offset) {
+			var parsedIndex = parsedNoteIndex(noteName);
+
 			if (notes._codaIndex && notes._codaIndex.indexByName && notes._codaIndex.indexByName[noteName] !== undefined) {
 				return initialMidiNote + defaultValue(offset, 0) + notes._codaIndex.indexByName[noteName];
 			}
@@ -124,6 +126,48 @@
 					return initialMidiNote + defaultValue(offset, 0) + i;
 				}
 			}
+
+			if (parsedIndex != null) {
+				return initialMidiNote + defaultValue(offset, 0) + parsedIndex;
+			}
+		}
+
+		function parsedNoteIndex(noteName) {
+			var normalized = String(noteName || '')
+				.replace(/\uD834\uDD2A/g, '##')
+				.replace(/\uD834\uDD2B/g, 'bb')
+				.replace(/\u266F/g, '#')
+				.replace(/\u266D/g, 'b');
+			var match = /^([A-G])([#b]{0,2})/.exec(normalized);
+			var naturalIndexes = {
+				C: 0,
+				D: 2,
+				E: 4,
+				F: 5,
+				G: 7,
+				A: 9,
+				B: 11
+			};
+			var index;
+
+			if (!match || naturalIndexes[match[1]] == null) {
+				return null;
+			}
+
+			index = naturalIndexes[match[1]] + accidentalOffset(match[2]);
+			index %= 12;
+
+			return index < 0 ? index + 12 : index;
+		}
+
+		function accidentalOffset(accidental) {
+			var offset = 0;
+
+			for (var i = 0; i < String(accidental || '').length; i++) {
+				offset += accidental.charAt(i) === '#' ? 1 : -1;
+			}
+
+			return offset;
 		}
 
 		function chordNamesToMidi(noteNames, bassOctaveOffset) {

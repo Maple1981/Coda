@@ -51,13 +51,51 @@
 		};
 		var normalizedName = normalizePitchName(noteName);
 
-		return indexes[normalizedName] != null ? indexes[normalizedName] : null;
+		return indexes[normalizedName] != null ? indexes[normalizedName] : parsedNoteIndex(normalizedName);
 	}
 
 	function normalizePitchName(noteName) {
-		var match = /^([A-G])([#b\u266f\u266d]?)/.exec(String(noteName || '').replace('\u266f', '#').replace('\u266d', 'b'));
+		var normalized = String(noteName || '')
+			.replace(/\uD834\uDD2A/g, '##')
+			.replace(/\uD834\uDD2B/g, 'bb')
+			.replace(/\u266f/g, '#')
+			.replace(/\u266d/g, 'b');
+		var match = /^([A-G])([#b]{0,2})/.exec(normalized);
 
 		return match ? match[1] + match[2] : '';
+	}
+
+	function parsedNoteIndex(noteName) {
+		var match = /^([A-G])([#b]{0,2})$/.exec(noteName || '');
+		var naturalIndexes = {
+			C: 0,
+			D: 2,
+			E: 4,
+			F: 5,
+			G: 7,
+			A: 9,
+			B: 11
+		};
+		var index;
+
+		if (!match || naturalIndexes[match[1]] == null) {
+			return null;
+		}
+
+		index = naturalIndexes[match[1]] + accidentalOffset(match[2]);
+		index %= 12;
+
+		return index < 0 ? index + 12 : index;
+	}
+
+	function accidentalOffset(accidental) {
+		var offset = 0;
+
+		for (var i = 0; i < String(accidental || '').length; i++) {
+			offset += accidental.charAt(i) === '#' ? 1 : -1;
+		}
+
+		return offset;
 	}
 
 	function nearestMidiTo(referenceNote, midiNote) {

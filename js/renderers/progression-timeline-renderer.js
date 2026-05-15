@@ -154,6 +154,7 @@
 		var notes = notesLabel(chord, options || {});
 		var buttons = '';
 		var dragHandle = '';
+		var quickControls = renderQuickControls(chord, options || {});
 
 		if (chordCount > 2 && chordIndex > 0) {
 			dragHandle = '<button type="button" class="measureChordDragHandle" draggable="true" aria-label="" title="" data-i18n-title="progression.dragMeasureChord"><span class="material-icons" aria-hidden="true">open_with</span></button>';
@@ -175,12 +176,127 @@
 		return '<div class="measureChord" data-measure-chord-index="' + labels.escapeHtml(chordIndex) + '">' +
 			dragHandle +
 			buttons +
-			'<span class="measureChordName"><strong>' + labels.formatMusicalLabel(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button></span>' +
+			'<span class="measureChordName"><strong>' + labels.formatMusicalLabel(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button>' + quickControls + '</span>' +
 			(degree ? '<em class="measureDegree">' + labels.formatMusicalLabel(degree) + '</em>' : '') +
 			(notes ? '<span class="measureNotes">' + labels.escapeHtml(notes) + '</span>' : '') +
 			(tonalFunction ? '<span class="measureFunction">' + labels.escapeHtml(tonalFunction) + '</span>' : '') +
 			(source ? '<span class="measureSource">' + labels.escapeHtml(source) + '</span>' : '') +
 			'</div>';
+	}
+
+	function renderQuickControls(chord, options) {
+		if (!canQuickEdit(chord)) {
+			return '';
+		}
+
+		return '<span class="measureChordQuickWrap">' + renderQuickToggle(chord) + renderQuickEditor(chord, options || {}) + '</span>';
+	}
+
+	function renderQuickToggle(chord) {
+		if (!canQuickEdit(chord)) {
+			return '';
+		}
+
+		return '<button type="button" class="measureChordQuickToggle" data-measure-chord-quick-toggle="true" aria-haspopup="true" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.quickEditChord"><span class="material-icons" aria-hidden="true">chevron_right</span></button>';
+	}
+
+	function renderQuickEditor(chord, options) {
+		var html = '';
+		var kind = quickKind(chord);
+		var silenceOnly = isAugmentedSixthChord(chord);
+		var inversions = kind === 'seventh' ? [
+			{ index: 0, label: translate(options, 'progression.inspector.rootPositionShort') },
+			{ index: 1, label: '6/5' },
+			{ index: 2, label: '4/3' },
+			{ index: 3, label: '4/2' }
+		] : [
+			{ index: 0, label: translate(options, 'progression.inspector.rootPositionShort') },
+			{ index: 1, label: '6' },
+			{ index: 2, label: '6/4' }
+		];
+
+		if (!canQuickEdit(chord)) {
+			return '';
+		}
+
+		html += '<div class="measureChordQuickEditor">';
+		if (!silenceOnly) {
+			html += '<div class="measureChordQuickGroup">';
+			html += renderKindButton(chord, 'triad', '3', options);
+			html += renderKindButton(chord, 'seventh', '7', options);
+			html += '</div>';
+			html += '<div class="measureChordQuickGroup">';
+			for (var i = 0; i < inversions.length; i++) {
+				html += renderInversionButton(chord, inversions[i].index, inversions[i].label, options);
+			}
+			html += '</div>';
+		}
+		html += '<div class="measureChordQuickGroup">';
+		html += '<button type="button" class="measureChordQuickButton measureChordQuickButton--silence' + (chord.isSilence ? ' isActive' : '') + '" data-inspector-action="silence" title="' + labels.escapeHtml(translate(options, 'progression.chordMenu.silence')) + '" aria-label="' + labels.escapeHtml(translate(options, 'progression.chordMenu.silence')) + '" aria-pressed="' + (chord.isSilence ? 'true' : 'false') + '"><span class="material-icons" aria-hidden="true">volume_off</span></button>';
+		html += '</div>';
+		html += '</div>';
+
+		return html;
+	}
+
+	function renderKindButton(chord, kind, label, options) {
+		var active = quickKind(chord) === kind && !chord.isSilence;
+		var title = translate(options, kind === 'seventh' ? 'progression.chordMenu.seventh' : 'progression.chordMenu.triad');
+
+		return '<button type="button" class="measureChordQuickButton' + (active ? ' isActive' : '') + '" data-inspector-action="quick-kind" data-chord-kind="' + labels.escapeHtml(kind) + '" title="' + labels.escapeHtml(title) + '" aria-label="' + labels.escapeHtml(title) + '" aria-pressed="' + (active ? 'true' : 'false') + '">' + labels.formatMusicalLabel(label) + '</button>';
+	}
+
+	function renderInversionButton(chord, inversionIndex, label, options) {
+		var active = quickInversionIndex(chord) === inversionIndex && !chord.isSilence;
+		var title = translate(options, 'progression.inspector.inversion');
+
+		return '<button type="button" class="measureChordQuickButton' + (active ? ' isActive' : '') + '" data-inspector-action="quick-inversion" data-inversion-index="' + labels.escapeHtml(inversionIndex) + '" title="' + labels.escapeHtml(title + ' ' + label) + '" aria-label="' + labels.escapeHtml(title + ' ' + label) + '" aria-pressed="' + (active ? 'true' : 'false') + '">' + labels.formatMusicalLabel(label) + '</button>';
+	}
+
+	function canQuickEdit(chord) {
+		return !!(chord && (
+			(editableDegreeIndex(chord) != null && editableSource(chord) !== 'chromatic') ||
+			isNeapolitanChord(chord) ||
+			isAugmentedSixthChord(chord)
+		));
+	}
+
+	function editableDegreeIndex(chord) {
+		return chord && chord.isSilence ? chord.restorableDegreeIndex : chord.degreeIndex;
+	}
+
+	function editableSource(chord) {
+		return chord && chord.isSilence ? (chord.restorableSource || 'diatonic') : (chord.source || 'diatonic');
+	}
+
+	function editableChromaticRole(chord) {
+		return chord && chord.isSilence ? chord.restorableChromaticRole : chord.chromaticRole;
+	}
+
+	function isNeapolitanChord(chord) {
+		return editableSource(chord) === 'chromatic' && editableChromaticRole(chord) === 'neapolitan';
+	}
+
+	function isAugmentedSixthChord(chord) {
+		var role = editableChromaticRole(chord);
+
+		return editableSource(chord) === 'chromatic' && /^(italian6|french43|german65|swiss65)$/.test(role || '');
+	}
+
+	function quickKind(chord) {
+		if (chord && chord.isSilence && chord.restorableKind) {
+			return chord.restorableKind;
+		}
+
+		return chord && (chord.chordKind || chord.kind) ? (chord.chordKind || chord.kind) : (chord && chord.chordName && chord.chordName.indexOf('7') > -1 ? 'seventh' : 'triad');
+	}
+
+	function quickInversionIndex(chord) {
+		if (chord && chord.isSilence && chord.restorableInversionIndex != null) {
+			return Number(chord.restorableInversionIndex) || 0;
+		}
+
+		return Number(chord && chord.inversionIndex) || 0;
 	}
 
 	function notesLabel(chord, options) {
@@ -248,6 +364,10 @@
 		return tonicName ? tonicName + ' ' + scaleName : scaleName;
 	}
 
+	function translate(options, key) {
+		return options && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(key) : key;
+	}
+
 	function fallbackMeasures() {
 		return ['Imaj7', 'vi7', 'ii7', 'V7', 'Imaj7', 'IVmaj7', 'V7sus4', 'Imaj9'].map(function (label, index) {
 			return {
@@ -262,6 +382,8 @@
 		hasRenderableMeasures: hasRenderableMeasures,
 		renderMeasure: renderMeasure,
 		renderMeasureChord: renderMeasureChord,
+		renderQuickControls: renderQuickControls,
+		renderQuickEditor: renderQuickEditor,
 		renderSectionHeader: renderSectionHeader,
 		notesLabel: notesLabel,
 		sectionContextLabel: sectionContextLabel,

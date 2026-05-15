@@ -163,6 +163,7 @@
 		setTitleAndLabel(i18n, '.progressionSectionCircleButton[data-i18n-title="circle.open"]', 'circle.open');
 		setTitleAndLabel(i18n, '#generateProgressionSectionB[data-i18n-title="progression.generateSectionB"]', 'progression.generateSectionB');
 		setTitleAndLabel(i18n, '.measureChordMenuButton[data-i18n-title="progression.changeMeasureChord"]', 'progression.changeMeasureChord');
+		setTitleAndLabel(i18n, '.measureChordQuickToggle[data-i18n-title="progression.quickEditChord"]', 'progression.quickEditChord');
 		setTitleAndLabel(i18n, '.measureDragHandle[data-i18n-title="progression.dragMeasure"]', 'progression.dragMeasure');
 		setTitleAndLabel(i18n, '.measureChordDragHandle[data-i18n-title="progression.dragMeasureChord"]', 'progression.dragMeasureChord');
 		setTitleAndLabel(i18n, '.measureSplitButton[data-i18n-title="progression.addMeasureChord"]', 'progression.addMeasureChord');
