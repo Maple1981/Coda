@@ -255,4 +255,124 @@ const firstStaccatoOff = staccatoEvents.filter(function (event) {
 })[0];
 assert.equal(firstStaccatoOff.tick, 864);
 
+const expressiveEvents = midiExport.createProgressionMidiEvents({
+	initialMidiNote: 60,
+	progression: {
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		intensity: 70,
+		measures: [
+			{
+				articulation: 'sustain',
+				bar: 1,
+				beatsPerBar: 4,
+				degree: 'I',
+				durationBeats: 1,
+				humanization: 0,
+				intensity: 70,
+				midiNotes: [60, 64, 67],
+				startBeat: 0,
+				swing: 0
+			},
+			{
+				articulation: 'sustain',
+				bar: 1,
+				beatsPerBar: 4,
+				degree: 'IV',
+				durationBeats: 1,
+				humanization: 0,
+				intensity: 70,
+				midiNotes: [65, 69, 72],
+				startBeat: 0.5,
+				swing: 60
+			}
+		]
+	}
+});
+const expressiveNoteOns = expressiveEvents.filter(function (event) {
+	return event.type === 'noteOn';
+});
+assert.equal(expressiveNoteOns[0].velocity, 70);
+assert.ok(expressiveNoteOns[3].tick > 240);
+
+const editedMidiFile = app.buildProgressionMidiFile({
+	data: data,
+	midiInstrument: 'string_ensemble_1',
+	progression: {
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 90,
+		intensity: 64,
+		measures: [
+			{
+				bar: 1,
+				chords: [
+					{
+						articulation: 'legato',
+						bar: 1,
+						degree: 'Iadd9 6/4 sus4',
+						durationBeats: 2,
+						humanization: 0,
+						intensity: 64,
+						inversion: '6/4',
+						midiNotes: [55, 60, 64, 74],
+						startBeat: 0,
+						swing: 0,
+						suspension: 'sus4',
+						tensions: ['add9']
+					},
+					{
+						bar: 1,
+						degree: 'Silencio',
+						durationBeats: 2,
+						isSilence: true,
+						midiNotes: [],
+						notes: [],
+						startBeat: 2
+					}
+				],
+				durationBeats: 4,
+				startBeat: 0
+			},
+			{
+				bar: 2,
+				degree: 'V7 4/2',
+				durationBeats: 4,
+				humanization: 0,
+				intensity: 64,
+				inversion: '4/2',
+				midiNotes: [53, 59, 62, 67],
+				sectionId: 'B',
+				startBeat: 4,
+				swing: 0
+			}
+		],
+		meter: '4/4',
+		sections: [
+			{ id: 'A', labelKey: 'progression.sectionA', length: 1, startIndex: 0 },
+			{ id: 'B', labelKey: 'progression.sectionB', length: 1, startIndex: 1 }
+		]
+	}
+});
+const editedProgramEvent = editedMidiFile.events.find(function (event) {
+	return event.type === 'programChange';
+});
+const editedNoteOns = editedMidiFile.events.filter(function (event) {
+	return event.type === 'noteOn';
+});
+assert.equal(editedProgramEvent.program, 48);
+assert.equal(editedNoteOns.length, 8);
+assert.deepEqual(editedNoteOns.slice(0, 4).map(function (event) { return event.degree; }), [
+	'Iadd9 6/4 sus4',
+	'Iadd9 6/4 sus4',
+	'Iadd9 6/4 sus4',
+	'Iadd9 6/4 sus4'
+]);
+assert.deepEqual(editedNoteOns.slice(4).map(function (event) { return event.tick; }), [1920, 1920, 1920, 1920]);
+assert.deepEqual(editedNoteOns.slice(4).map(function (event) { return event.degree; }), ['V7 4/2', 'V7 4/2', 'V7 4/2', 'V7 4/2']);
+assert.ok(!editedMidiFile.events.some(function (event) {
+	return event.type === 'noteOn' && event.tick === 960;
+}));
+
 console.log('Progression MIDI tests passed');

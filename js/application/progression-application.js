@@ -42,6 +42,24 @@
 		});
 	}
 
+	function generateProgressionSection(options) {
+		options = options || {};
+
+		return editCommands.apply({
+			options: options,
+			type: editCommands.types.generateSection
+		}, {
+			generateSection: function (commandOptions) {
+				return sectionContrastService.generateSection(commandOptions, {
+					buildScaleReport: global.CodaApplication.buildScaleReport,
+					generateProgressionFromState: generateProgressionFromState,
+					rebuildProgressionTimeline: rebuildProgressionTimeline
+				});
+			},
+			progression: options.progression
+		});
+	}
+
 	function buildProgressionMidiFile(options) {
 		return midiFileService.build(options);
 	}
@@ -139,6 +157,7 @@
 	global.CodaApplication.buildProgressionFromState = buildProgressionFromState;
 	global.CodaApplication.generateProgressionFromState = generateProgressionFromState;
 	global.CodaApplication.generateContrastingProgressionSection = generateContrastingProgressionSection;
+	global.CodaApplication.generateProgressionSection = generateProgressionSection;
 	global.CodaApplication.formatProgressionDegreeForChord = formatDegreeForChord;
 	global.CodaApplication.rebuildProgressionTimeline = rebuildProgressionTimeline;
 	global.CodaApplication.removeProgressionMeasureChord = removeProgressionMeasureChord;

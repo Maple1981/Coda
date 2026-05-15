@@ -126,6 +126,9 @@
 		setText(i18n, 'span[data-i18n="progression.writing"]', 'progression.writing');
 		setText(i18n, 'span[data-i18n="progression.articulation"]', 'progression.articulation');
 		setText(i18n, 'span[data-i18n="progression.style"]', 'progression.style');
+		setText(i18n, 'span[data-i18n="progression.intensity"]', 'progression.intensity');
+		setText(i18n, 'span[data-i18n="progression.humanization"]', 'progression.humanization');
+		setText(i18n, 'span[data-i18n="progression.swing"]', 'progression.swing');
 		setText(i18n, 'span[data-i18n="progression.harmonicColor"]', 'progression.harmonicColor');
 		setText(i18n, 'span[data-i18n="progression.modalInterchange"]', 'progression.modalInterchange');
 		setText(i18n, 'span[data-i18n="progression.chromaticism"]', 'progression.chromaticism');
@@ -160,8 +163,15 @@
 		setText(i18n, '.progressionInspector p[data-i18n="progression.inspector.empty"]', 'progression.inspector.empty');
 		setText(i18n, '.progressionSectionHeader h3[data-i18n="progression.sectionA"]', 'progression.sectionA');
 		setText(i18n, '.progressionSectionHeader h3[data-i18n="progression.sectionB"]', 'progression.sectionB');
+		setText(i18n, '.progressionSectionHeader h3[data-i18n="progression.sectionAprime"]', 'progression.sectionAprime');
+		setText(i18n, '.progressionSectionHeader h3[data-i18n="progression.sectionC"]', 'progression.sectionC');
+		setText(i18n, '.progressionSectionHeader h3[data-i18n="progression.nextSection"]', 'progression.nextSection');
+		setText(i18n, 'option[data-i18n="progression.sectionAprime"]', 'progression.sectionAprime');
+		setText(i18n, 'option[data-i18n="progression.sectionC"]', 'progression.sectionC');
 		setTitleAndLabel(i18n, '.progressionSectionCircleButton[data-i18n-title="circle.open"]', 'circle.open');
 		setTitleAndLabel(i18n, '#generateProgressionSectionB[data-i18n-title="progression.generateSectionB"]', 'progression.generateSectionB');
+		setTitleAndLabel(i18n, '#generateProgressionNextSection[data-i18n-title="progression.generateNextSection"]', 'progression.generateNextSection');
+		setTitleAndLabel(i18n, '#progressionNextSectionType[data-i18n-title="progression.nextSectionType"]', 'progression.nextSectionType');
 		setTitleAndLabel(i18n, '.measureChordMenuButton[data-i18n-title="progression.changeMeasureChord"]', 'progression.changeMeasureChord');
 		setTitleAndLabel(i18n, '.measureChordQuickToggle[data-i18n-title="progression.quickEditChord"]', 'progression.quickEditChord');
 		setTitleAndLabel(i18n, '.measureDragHandle[data-i18n-title="progression.dragMeasure"]', 'progression.dragMeasure');

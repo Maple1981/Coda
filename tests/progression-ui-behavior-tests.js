@@ -106,9 +106,12 @@ assert.deepEqual(initialState, {
 	bpm: 120,
 	chromaticism: 10,
 	counterpoint: 20,
+	humanization: 0,
+	intensity: 80,
 	meter: '4/4',
 	modalInterchange: 25,
 	style: 'modern',
+	swing: 0,
 	tensions: 35,
 	voicing: 'closed',
 	voices: 4
@@ -163,11 +166,14 @@ assert.deepEqual(savedPreferences, {
 	progressionArticulation: 'staccato',
 	progressionBars: '4',
 	progressionBpm: '120',
-	progressionChromaticism: '10',
-	progressionCounterpoint: '20',
+	progressionChromaticism: 10,
+	progressionCounterpoint: 20,
+	progressionHumanization: 0,
+	progressionIntensity: 80,
 	progressionMeter: '3/4',
-	progressionModalInterchange: '25',
+	progressionModalInterchange: 25,
 	progressionStyle: 'classic',
+	progressionSwing: 0,
 	progressionTensions: '60',
 	progressionVoicing: 'closed',
 	progressionVoices: '3'
@@ -192,6 +198,7 @@ assert.deepEqual(changedProgression.measures[1], {
 	articulation: 'staccato',
 	bar: 2,
 	beatUnit: 4,
+	beatsPerBar: 3,
 	chord: initialized.uiState.getReport().scaleChords[3],
 	chordKind: 'triad',
 	chordName: 'F',
@@ -202,6 +209,8 @@ assert.deepEqual(changedProgression.measures[1], {
 	durationSeconds: 1.5,
 	endBeat: 6,
 	endSeconds: 3,
+	humanization: 0,
+	intensity: 80,
 	inversion: '6/4',
 	inversionIndex: 2,
 	midiNotes: [48, 53, 57],
@@ -211,6 +220,7 @@ assert.deepEqual(changedProgression.measures[1], {
 	source: 'diatonic',
 	startBeat: 3,
 	startSeconds: 1.5,
+	swing: 0,
 	suspension: '',
 	tonalFunction: 'SD',
 	voiceNotes: [
@@ -368,6 +378,18 @@ assert.equal(savedWorkspaces[savedWorkspaces.length - 1].progression.userEdited,
 assert.ok(savedWorkspaces[savedWorkspaces.length - 1].progression.sections.some(function (section) {
 	return section.id === 'B';
 }));
+const sectionProgressionLength = initialized.uiState.getProgression().measures.length;
+document.getElementById('progressionBpm').value = '132';
+document.querySelector('.progressionControls').dispatchEvent({
+	target: document.getElementById('progressionBpm'),
+	type: 'change'
+});
+assert.equal(initialized.uiState.getProgressionState().bpm, 132);
+assert.equal(initialized.uiState.getProgression().measures.length, sectionProgressionLength);
+assert.ok(initialized.uiState.getProgression().sections.some(function (section) {
+	return section.id === 'B';
+}));
+assert.equal(savedWorkspaces[savedWorkspaces.length - 1].progression.measures.length, sectionProgressionLength);
 
 document.dispatchDocumentEvent({
 	target: document.getElementById('workbenchContextInstrumentToggle'),
@@ -530,9 +552,12 @@ function createFakeDocument() {
 	addElement('progressionBpm', '120');
 	addElement('progressionChromaticism', '10');
 	addElement('progressionCounterpoint', '20');
+	addElement('progressionHumanization', '0');
+	addElement('progressionIntensity', '80');
 	addElement('progressionMeter', '4/4');
 	addElement('progressionModalInterchange', '25');
 	addElement('progressionStyle', 'modern');
+	addElement('progressionSwing', '0');
 	addElement('progressionTensions', '35');
 	addElement('progressionVoicing', 'closed');
 	addElement('progressionVoices', '4');

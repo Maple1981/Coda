@@ -30,6 +30,9 @@
 		html += renderControl('progression.voicing', '<select id="progressionVoicing"><option value="closed" selected="selected" data-i18n="progression.voicing.closed"></option><option value="open" data-i18n="progression.voicing.open"></option></select>', '#progressionVoicing', null, 'progression.help.voicing');
 		html += renderControl('progression.articulation', '<select id="progressionArticulation"><option value="sustain" data-i18n="progression.articulation.sustain"></option><option value="legato" data-i18n="progression.articulation.legato"></option><option value="staccato" data-i18n="progression.articulation.staccato"></option><option value="arpeggio" data-i18n="progression.articulation.arpeggio"></option></select>', '#progressionArticulation', null, 'progression.help.articulation');
 		html += renderControl('progression.style', '<select id="progressionStyle"><option value="modern" selected="selected" data-i18n="progression.style.modern"></option><option value="classic" data-i18n="progression.style.classic"></option></select>', '#progressionStyle', null, 'progression.help.style');
+		html += renderControl('progression.intensity', '<input id="progressionIntensity" type="range" value="80" min="1" max="127" step="1" />', '#progressionIntensity', null, 'progression.help.intensity');
+		html += renderControl('progression.humanization', '<input id="progressionHumanization" type="range" value="0" min="0" max="100" step="1" />', '#progressionHumanization', null, 'progression.help.humanization');
+		html += renderControl('progression.swing', '<input id="progressionSwing" type="range" value="0" min="0" max="75" step="1" />', '#progressionSwing', null, 'progression.help.swing');
 		html += '</fieldset>';
 
 		return html;

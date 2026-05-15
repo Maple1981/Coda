@@ -30,9 +30,12 @@
 			bpm: valueOf(root, 'progressionBpm'),
 			chromaticism: valueOf(root, 'progressionChromaticism'),
 			counterpoint: valueOf(root, 'progressionCounterpoint'),
+			humanization: valueOf(root, 'progressionHumanization'),
+			intensity: valueOf(root, 'progressionIntensity'),
 			meter: valueOf(root, 'progressionMeter'),
 			modalInterchange: valueOf(root, 'progressionModalInterchange'),
 			style: valueOf(root, 'progressionStyle'),
+			swing: valueOf(root, 'progressionSwing'),
 			tensions: valueOf(root, 'progressionTensions'),
 			voicing: valueOf(root, 'progressionVoicing'),
 			voices: valueOf(root, 'progressionVoices')

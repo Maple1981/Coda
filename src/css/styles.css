@@ -874,6 +874,12 @@ body[data-theme="day"] .progressionSectionContext {
   color: #59656b;
 }
 
+body[data-theme="day"] .progressionSectionTypeSelect {
+  background: #ffffff;
+  border-color: #b7c3ca;
+  color: #1f2528;
+}
+
 body[data-theme="day"] .progressionChordMenu h3 {
   color: #006e58;
 }
@@ -1323,6 +1329,28 @@ section#notacion ul li {
 
 section#notacion ul li sup {
   font-size: .7em;
+}
+
+section#notacion .scaleDegreeNoteButton {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: start;
+      -ms-flex-align: start;
+          align-items: flex-start;
+  gap: .05em;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0 .05em;
+  cursor: pointer;
+}
+
+section#notacion .scaleDegreeNoteButton:hover,
+section#notacion .scaleDegreeNoteButton:focus {
+  color: #9dff00;
+  outline: none;
 }
 
 section#notacion ul li.principal {
@@ -2547,6 +2575,25 @@ section#bienvenida .columnata article {
 .progressionSectionContext {
   color: #bbb;
   font-size: .82em;
+  font-weight: 600;
+}
+
+.progressionSectionHeader--next {
+  -webkit-box-pack: start;
+      -ms-flex-pack: start;
+          justify-content: flex-start;
+  margin-top: .45em;
+}
+
+.progressionSectionTypeSelect {
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  min-width: 8.4em;
+  background: #222;
+  color: #eee;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: .35em .55em;
   font-weight: 600;
 }
 

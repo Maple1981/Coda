@@ -66,9 +66,11 @@
 			var note = visibleNotes[j];
 			var cssClass = note.tipo != null ? ' class="' + note.tipo + '"' : '';
 			var separator = j < visibleNotes.length - 1 ? ' - ' : '';
+			var noteLabel = formatNote(options, note.nombre);
 
 			html += '<li' + cssClass + '>';
-			html += formatNote(options, note.nombre) + '<sup>' + note.grado + '</sup>' + separator;
+			html += '<button class="scaleDegreeNoteButton" type="button" data-note-name="' + escapeHtml(note.nombre) + '">' +
+				noteLabel + '<sup>' + note.grado + '</sup></button>' + separator;
 			html += '</li>';
 		}
 
@@ -145,6 +147,14 @@
 		}
 
 		return keyName;
+	}
+
+	function escapeHtml(value) {
+		return String(value == null ? '' : value)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;');
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};

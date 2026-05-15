@@ -139,6 +139,59 @@ assert.equal(contrastingSectionProgression.sections[1].circleOfFifths.selectedKe
 assert.equal(contrastingSectionProgression.measures[4].bar, 5);
 assert.equal(contrastingSectionProgression.measures[4].sectionId, 'B');
 assert.equal(contrastingSectionProgression.measures[4].tonalFunction, 'SD');
+
+const aprimeProgression = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	progression: contrastingSectionProgression,
+	progressionState: {
+		articulation: 'legato',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '3/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 3
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0, 0, 0.5, 0.75]),
+	sectionType: 'ap',
+	selection: { preferFlats: false }
+});
+assert.deepEqual(aprimeProgression.sections.map(function (section) { return section.id; }), ['A', 'B', 'A\'']);
+assert.equal(aprimeProgression.sections[2].labelKey, 'progression.sectionAprime');
+assert.equal(aprimeProgression.sections[2].variationOf, 'A');
+assert.equal(aprimeProgression.sections[2].state.bars, 4);
+assert.equal(aprimeProgression.measures[8].sectionId, 'A\'');
+
+const sectionCProgression = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	progression: aprimeProgression,
+	progressionState: {
+		articulation: 'legato',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '3/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 3
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0.1, 0.1, 0.1, 0.1]),
+	sectionType: 'C',
+	selection: { preferFlats: false }
+});
+assert.deepEqual(sectionCProgression.sections.map(function (section) { return section.id; }), ['A', 'B', 'A\'', 'C']);
+assert.equal(sectionCProgression.sections[3].labelKey, 'progression.sectionC');
+assert.notEqual(sectionCProgression.sections[3].contextLabel, sectionCProgression.sections[0].contextLabel);
+assert.equal(sectionCProgression.measures[12].sectionId, 'C');
 [
 	{ expected: 'relative', rng: sequenceRng([0.5, 0.1, 0.1, 0.1]) },
 	{ expected: 'parallel', rng: sequenceRng([0.75, 0.1, 0.1, 0.1]) },
@@ -175,6 +228,7 @@ assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	articulation: 'legato',
 	bar: 2,
 	beatUnit: 4,
+	beatsPerBar: 3,
 	chord: cMajorReport.scaleChords[3],
 	chordKind: 'triad',
 	chordName: 'F',
@@ -185,6 +239,8 @@ assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	durationSeconds: 1.5,
 	endBeat: 6,
 	endSeconds: 3,
+	humanization: 0,
+	intensity: 80,
 	inversion: '6/4',
 	inversionIndex: 2,
 	midiNotes: [48, 53, 57],
@@ -194,6 +250,7 @@ assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	source: 'diatonic',
 	startBeat: 3,
 	startSeconds: 1.5,
+	swing: 0,
 	suspension: '',
 	tonalFunction: 'SD',
 	voiceNotes: [
@@ -779,6 +836,39 @@ assert.equal(modernCadenceProgression.generation.cadence, 'half');
 assert.deepEqual(modernCadenceProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['ii7 sus2', 'V7 4/3 sus4']);
 assert.equal(classicCadenceProgression.generation.cadence, 'authentic');
 assert.deepEqual(classicCadenceProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['V 6', 'I']);
+const forcedMinorCadenceRules = {
+	patterns: [
+		{
+			cadence: 'authentic',
+			counterpoint: 70,
+			degrees: [0, 3, 4, 0],
+			form: 'forced-minor-authentic',
+			id: 'forced-minor-authentic',
+			modes: ['minor'],
+			modalColor: 10,
+			tensionAffinity: 30,
+			weight: 100
+		}
+	]
+};
+const classicMinorCadenceProgression = app.generateProgressionFromState({
+	progressionState: {
+		bars: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		meter: '4/4',
+		style: 'classic'
+	},
+	report: eMinorReport,
+	rng: function () { return 0.99; },
+	rules: forcedMinorCadenceRules
+});
+assert.equal(classicMinorCadenceProgression.generation.cadence, 'authentic');
+assert.equal(classicMinorCadenceProgression.measures[2].chordName, 'B');
+assert.equal(classicMinorCadenceProgression.measures[2].source, 'interchange');
+assert.equal(classicMinorCadenceProgression.measures[2].sourceScaleIndex, 3);
+assert.equal(classicMinorCadenceProgression.measures[2].sourceTonicName, 'E');
+assert.notEqual(classicMinorCadenceProgression.measures[2].chordName, 'Bm');
 const cadentialSixFourProgression = app.generateProgressionFromState({
 	progressionState: {
 		bars: 4,
@@ -952,6 +1042,42 @@ const modalReport = app.buildScaleReport({
 assert.equal(modalReport.extendedHarmonyEnabled, false);
 assert.equal(modalReport.parallelScaleChords.length, 0);
 assert.equal(modalReport.circleOfFifths, null);
+
+const cMinorReport = app.buildScaleReport({
+	data: data,
+	domain: domain,
+	preferFlats: true,
+	scaleIndex: 2,
+	scaleName: 'Menor natural',
+	tonicIndex: noteIndex('C'),
+	tonicName: 'C'
+});
+const cMinorPlan = app.buildProgressionFromState({
+	domain: domain,
+	progressionState: {
+		bars: 4,
+		bpm: 120,
+		meter: '4/4'
+	},
+	report: cMinorReport
+});
+const cMinorRelativeSection = app.generateContrastingProgressionSection({
+	data: data,
+	domain: domain,
+	progression: cMinorPlan,
+	progressionState: {
+		bars: 4,
+		bpm: 120,
+		meter: '4/4'
+	},
+	report: cMinorReport,
+	rng: sequenceRng([0.5, 0.1, 0.1, 0.1]),
+	selection: { preferFlats: true }
+});
+assert.equal(cMinorRelativeSection.sections[1].contrast, 'relative');
+assert.equal(cMinorRelativeSection.sections[1].contextTonicName, 'Eb');
+assert.equal(cMinorRelativeSection.sections[1].contextScaleName, 'Mayor');
+assert.equal(cMinorRelativeSection.sections[1].circleOfFifths.selectedKey, 'Eb');
 
 console.log('Application layer tests passed');
 

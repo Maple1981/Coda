@@ -636,6 +636,24 @@ section#notacion{
 		font-size:.7em;
 	}
 
+	.scaleDegreeNoteButton{
+		display:inline-flex;
+		align-items:flex-start;
+		gap:.05em;
+		border:0;
+		background:transparent;
+		color:inherit;
+		font:inherit;
+		padding:0 .05em;
+		cursor:pointer;
+	}
+
+	.scaleDegreeNoteButton:hover,
+	.scaleDegreeNoteButton:focus{
+		color:$corporative_mainbright_color;
+		outline:none;
+	}
+
 	ul li.principal{
 		font-weight:600;
 	}
@@ -1692,6 +1710,22 @@ section#bienvenida .columnata article{
 	font-weight:600;
 }
 
+.progressionSectionHeader--next{
+	justify-content:flex-start;
+	margin-top:.45em;
+}
+
+.progressionSectionTypeSelect{
+	box-sizing:border-box;
+	min-width:8.4em;
+	background:$basic_fill_color;
+	color:$basic_front_color;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:4px;
+	padding:.35em .55em;
+	font-weight:600;
+}
+
 .progressionChordMenu h3{
 	margin:.25em 0 .4em 0;
 	border-bottom:none;
@@ -2302,6 +2336,12 @@ body[data-theme="day"] .progressionSectionRandomButton:focus{
 
 body[data-theme="day"] .progressionSectionContext{
 	color:#59656b;
+}
+
+body[data-theme="day"] .progressionSectionTypeSelect{
+	background:#ffffff;
+	border-color:#b7c3ca;
+	color:#1f2528;
 }
 
 body[data-theme="day"] .progressionChordMenu h3{

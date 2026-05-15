@@ -3,11 +3,14 @@
 	'use strict';
 
 	function playMidiChord(playbackService, event) {
+		var options;
+
 		if (typeof playbackService.playMidiChord === 'function') {
-			playbackService.playMidiChord(event.midiNotes, {
+			options = withVelocity({
 				delay: event.delay,
 				duration: event.duration
-			});
+			}, event.velocity);
+			playbackService.playMidiChord(event.midiNotes, options);
 			return true;
 		}
 
@@ -16,10 +19,10 @@
 		}
 
 		for (var i = 0; i < event.midiNotes.length; i++) {
-			playbackService.playMidiNote(event.midiNotes[i], {
+			playbackService.playMidiNote(event.midiNotes[i], withVelocity({
 				delay: event.delay,
 				duration: event.duration
-			});
+			}, event.velocity));
 		}
 
 		return true;
@@ -31,10 +34,10 @@
 		}
 
 		for (var i = 0; i < event.midiNoteEvents.length; i++) {
-			playbackService.playMidiNote(event.midiNoteEvents[i].midiNote, {
+			playbackService.playMidiNote(event.midiNoteEvents[i].midiNote, withVelocity({
 				delay: event.delay + (event.midiNoteEvents[i].delay || 0),
 				duration: event.midiNoteEvents[i].duration
-			});
+			}, event.midiNoteEvents[i].velocity || event.velocity));
 		}
 
 		return true;
@@ -54,10 +57,10 @@
 		}
 
 		for (var i = 0; i < midiNotes.length; i++) {
-			playbackService.playMidiNote(midiNotes[i], {
+			playbackService.playMidiNote(midiNotes[i], withVelocity({
 				delay: event.delay + (event.arpeggioStep * i),
 				duration: Math.max(0.1, event.duration - (event.arpeggioStep * i))
-			});
+			}, event.velocity));
 		}
 
 		return true;
@@ -68,12 +71,20 @@
 			return false;
 		}
 
-		playbackService.playChordFromNames(event.notes, {
+		playbackService.playChordFromNames(event.notes, withVelocity({
 			delay: event.delay,
 			duration: event.duration
-		});
+		}, event.velocity));
 
 		return true;
+	}
+
+	function withVelocity(options, velocity) {
+		if (velocity != null) {
+			options.velocity = velocity;
+		}
+
+		return options;
 	}
 
 	global.CodaProgressionMidiEventPlayer = {

@@ -8,6 +8,7 @@
 	var commandTypes = {
 		addMeasureChord: 'addMeasureChord',
 		generateSectionB: 'generateSectionB',
+		generateSection: 'generateSection',
 		removeMeasureChord: 'removeMeasureChord',
 		reorderMeasureChords: 'reorderMeasureChords',
 		reorderMeasures: 'reorderMeasures',
@@ -38,6 +39,9 @@
 			break;
 		case commandTypes.generateSectionB:
 			nextProgression = typeof context.generateSectionB === 'function' ? context.generateSectionB(command.options || {}) : context.progression;
+			break;
+		case commandTypes.generateSection:
+			nextProgression = typeof context.generateSection === 'function' ? context.generateSection(command.options || {}) : context.progression;
 			break;
 		default:
 			nextProgression = context.progression;

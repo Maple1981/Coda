@@ -15,9 +15,12 @@
 			bpm: numberOrDefault(progressionState.bpm, 120),
 			chromaticism: numberOrDefault(progressionState.chromaticism, 10),
 			counterpoint: numberOrDefault(progressionState.counterpoint, 20),
+			humanization: numberOrDefault(progressionState.humanization, 0),
+			intensity: numberOrDefault(progressionState.intensity, 80),
 			meter: progressionState.meter || '4/4',
 			modalInterchange: numberOrDefault(progressionState.modalInterchange, 25),
 			style: styleService.normalize(progressionState),
+			swing: numberOrDefault(progressionState.swing, 0),
 			tensions: numberOrDefault(progressionState.tensions, 35),
 			voicing: progressionState.voicing === 'open' ? 'open' : 'closed',
 			voices: numberOrDefault(progressionState.voices, 4)

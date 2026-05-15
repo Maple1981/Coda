@@ -202,7 +202,7 @@
 			var startDelay = defaultValue(playbackOptions.delay, delay);
 			var duration = defaultValue(playbackOptions.duration, 0.75);
 
-			midi.chordOn(channel, chord, currentVelocity(), startDelay);
+			midi.chordOn(channel, chord, velocityFor(playbackOptions), startDelay);
 			midi.chordOff(channel, chord, startDelay + duration);
 		}
 
@@ -232,7 +232,7 @@
 				return;
 			}
 
-			midi.chordOn(channel, chord, currentVelocity(), startDelay);
+			midi.chordOn(channel, chord, velocityFor(playbackOptions), startDelay);
 			midi.chordOff(channel, chord, startDelay + duration);
 		}
 
@@ -263,7 +263,7 @@
 			var startDelay = defaultValue(playbackOptions.delay, delay);
 			var duration = defaultValue(playbackOptions.duration, 0.55);
 
-			midi.noteOn(channel, noteNumber, currentVelocity(), startDelay);
+			midi.noteOn(channel, noteNumber, velocityFor(playbackOptions), startDelay);
 			midi.noteOff(channel, noteNumber, startDelay + duration);
 		}
 
@@ -348,6 +348,16 @@
 			}
 
 			return volumePercent;
+		}
+
+		function velocityFor(playbackOptions) {
+			var requested = playbackOptions && playbackOptions.velocity != null ? Number(playbackOptions.velocity) : null;
+
+			if (requested == null || isNaN(requested)) {
+				return currentVelocity();
+			}
+
+			return clamp(Math.round(requested * volumePercent / 100), 0, 127);
 		}
 
 		function setInstrument(instrumentId) {

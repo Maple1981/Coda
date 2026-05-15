@@ -6,6 +6,7 @@
 	var modalPlanner = global.CodaProgressionModalPlanner;
 	var patternSelector = global.CodaProgressionPatternSelector;
 	var phraseBlockSelector = global.CodaProgressionPhraseBlockSelector;
+	var styleService = global.CodaProgressionStyle;
 
 	function createPlan(options) {
 		var progressionState = options.progressionState;
@@ -50,6 +51,7 @@
 				rng: rng,
 				rules: options.rules
 			});
+		degrees = applyClassicMinorDominants(degrees, options.report, progressionState, mode);
 		degrees = applyModalInterchangeSources(degrees, options.report, progressionState, rng);
 		degrees = applyOpeningFunction(degrees, options.report, options.openingFunction, rng);
 
@@ -131,6 +133,29 @@
 		return result;
 	}
 
+	function applyClassicMinorDominants(degrees, report, progressionState, mode) {
+		var result = [];
+		var source = harmonicMinorDominantSource(report);
+
+		if (!styleService.isClassic(progressionState) || mode !== 'minor' || !source) {
+			return degrees;
+		}
+
+		for (var i = 0; i < (degrees || []).length; i++) {
+			var degree = extendObject(degrees[i], {});
+
+			if (shouldUseClassicMinorDominant(degree, report, source)) {
+				degree.source = 'interchange';
+				degree.sourceId = source.id;
+				degree.sourceScaleIndex = source.scaleIndex;
+			}
+
+			result.push(degree);
+		}
+
+		return result;
+	}
+
 	function chooseInterchangeSource(report, degreeIndex, rng) {
 		var sources = report && report.modalInterchangeSources ? report.modalInterchangeSources : [];
 		var candidates = [];
@@ -149,6 +174,29 @@
 		}
 
 		return candidates[Math.floor(rng() * candidates.length) % candidates.length];
+	}
+
+	function harmonicMinorDominantSource(report) {
+		var sources = report && report.modalInterchangeSources ? report.modalInterchangeSources : [];
+
+		for (var i = 0; i < sources.length; i++) {
+			if (Number(sources[i].scaleIndex) === 3 && sources[i].scaleChords && sources[i].scaleChords[4]) {
+				return sources[i];
+			}
+		}
+
+		return null;
+	}
+
+	function shouldUseClassicMinorDominant(degree, report, source) {
+		var baseChord = report && report.scaleChords ? report.scaleChords[4] : null;
+		var sourceChord = source && source.scaleChords ? source.scaleChords[4] : null;
+
+		return degree &&
+			degree.index === 4 &&
+			(!degree.source || degree.source === 'diatonic' || degree.source === 'parallel') &&
+			sourceChord &&
+			(!baseChord || sourceChord.nombre !== baseChord.nombre);
 	}
 
 	function progressionMode(report) {
@@ -286,6 +334,7 @@
 	}
 
 	global.CodaProgressionPlanner = {
+		applyClassicMinorDominants: applyClassicMinorDominants,
 		applyModalInterchangeSources: applyModalInterchangeSources,
 		applyOpeningFunction: applyOpeningFunction,
 		chooseInterchangeSource: chooseInterchangeSource,
@@ -293,6 +342,8 @@
 		degreeIndexesForFunction: degreeIndexesForFunction,
 		effectiveEndingCadence: effectiveEndingCadence,
 		fitDegreesToBars: fitDegreesToBars,
+		harmonicMinorDominantSource: harmonicMinorDominantSource,
+		shouldUseClassicMinorDominant: shouldUseClassicMinorDominant,
 		varyBlockOpening: varyBlockOpening,
 		voiceLeadingProfile: voiceLeadingProfile
 	};

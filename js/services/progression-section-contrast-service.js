@@ -46,6 +46,7 @@
 				id: 'B',
 				labelKey: 'progression.sectionB',
 				length: sectionB.measures ? sectionB.measures.length : 0,
+				state: cloneObject(sectionState),
 				startIndex: sectionAMeasures.length
 			}
 		];
@@ -55,13 +56,116 @@
 		return rebuilt;
 	}
 
+	function generateSection(options, dependencies) {
+		options = options || {};
+
+		if (options.sectionType === 'ap' || options.sectionType === 'A\'') {
+			if (!findSection(options.progression, 'A\'')) {
+				return generateAprimeSection(options, dependencies);
+			}
+
+			return findSection(options.progression, 'C') ? options.progression : generateCSection(options, dependencies);
+		}
+
+		if (options.sectionType === 'C' || options.sectionType === 'c') {
+			if (!findSection(options.progression, 'C')) {
+				return generateCSection(options, dependencies);
+			}
+
+			return findSection(options.progression, 'A\'') ? options.progression : generateAprimeSection(options, dependencies);
+		}
+
+		return generate(options, dependencies);
+	}
+
+	function generateAprimeSection(options, dependencies) {
+		var progression = options.progression || {};
+		var progressionState = cloneObject(options.progressionState || {});
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var sectionAMeasures = measuresForSection(progression, 'A', progressionState);
+		var sectionState = cloneObject(progressionState);
+		var generated;
+		var variation;
+
+		sectionState.bars = sectionAMeasures.length || progressionState.bars || 8;
+		generated = dependencies.generateProgressionFromState({
+			data: options.data,
+			domain: options.domain,
+			progressionState: sectionState,
+			report: options.report,
+			rng: rng
+		});
+		variation = createVariationMeasures(sectionAMeasures, generated.measures || [], rng);
+
+		return appendSection(progression, variation, {
+			contextLabel: contextLabelFromReport(options.report),
+			contextScaleIndex: options.report ? options.report.scaleIndex : null,
+			contextScaleName: options.report ? options.report.scaleName : '',
+			contextTonicName: options.report ? options.report.tonicName : '',
+			id: 'A\'',
+			labelKey: 'progression.sectionAprime',
+			state: cloneObject(sectionState),
+			variationOf: 'A'
+		}, dependencies);
+	}
+
+	function generateCSection(options, dependencies) {
+		var progression = options.progression || {};
+		var progressionState = cloneObject(options.progressionState || {});
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var referenceMeasures = measuresForLastSection(progression, progressionState);
+		var sectionState = cloneObject(progressionState);
+		var candidate;
+		var targetReport;
+		var sectionProgression;
+
+		options.buildScaleReport = dependencies.buildScaleReport;
+		sectionState.bars = referenceMeasures.length || progressionState.bars || 8;
+		candidate = chooseContrastCandidateExcluding(options, rng, existingSectionContexts(progression));
+		targetReport = candidate.report || options.report;
+		sectionProgression = dependencies.generateProgressionFromState({
+			data: options.data,
+			domain: options.domain,
+			openingFunction: candidate.openingFunction,
+			progressionState: sectionState,
+			report: targetReport,
+			rng: rng
+		});
+
+		return appendSection(progression, sectionProgression.measures || [], {
+			circleOfFifths: targetReport.circleOfFifths || null,
+			contrast: candidate.id,
+			contextLabel: candidate.label,
+			contextScaleIndex: targetReport.scaleIndex,
+			contextScaleName: targetReport.scaleName,
+			contextTonicName: targetReport.tonicName,
+			id: 'C',
+			labelKey: 'progression.sectionC',
+			state: cloneObject(sectionState)
+		}, dependencies);
+	}
+
 	function measuresForSectionA(progression, progressionState) {
+		return measuresForSection(progression, 'A', progressionState);
+	}
+
+	function measuresForSection(progression, id, progressionState) {
 		var measures = progression && progression.measures ? progression.measures : [];
-		var section = findSection(progression, 'A');
+		var section = findSection(progression, id);
 		var length = section ? section.length : Number(progressionState.bars) || measures.length;
 		var startIndex = section ? section.startIndex : 0;
 
 		return measures.slice(startIndex, startIndex + Math.min(length, measures.length));
+	}
+
+	function measuresForLastSection(progression, progressionState) {
+		var sections = progression && progression.sections ? progression.sections : [];
+
+		if (sections.length) {
+			return measuresForSection(progression, sections[sections.length - 1].id, progressionState);
+		}
+
+		return measuresForSectionA(progression, progressionState);
 	}
 
 	function chooseContrastCandidate(options, rng) {
@@ -144,6 +248,72 @@
 		return result;
 	}
 
+	function chooseContrastCandidateExcluding(options, rng, excludedContexts) {
+		var candidates = contrastCandidates(options);
+		var filtered = [];
+
+		for (var i = 0; i < candidates.length; i++) {
+			if (!isExcludedCandidate(candidates[i], excludedContexts)) {
+				filtered.push(candidates[i]);
+			}
+		}
+
+		if (!filtered.length) {
+			filtered = candidates;
+		}
+
+		if (!filtered.length) {
+			return sameKeySubdominant(options);
+		}
+
+		return filtered[Math.floor(rng() * filtered.length) % filtered.length] || sameKeySubdominant(options);
+	}
+
+	function contrastCandidates(options) {
+		var candidates = [];
+		var relative = relativeKey(options);
+		var parallel = parallelKey(options);
+		var circle = circleNeighborCandidates(options);
+
+		if (relative) {
+			candidates.push(relative);
+		}
+		if (parallel) {
+			candidates.push(parallel);
+		}
+
+		return candidates.concat(circle).concat([sameKeySubdominant(options)]);
+	}
+
+	function isExcludedCandidate(candidate, excludedContexts) {
+		var label = candidate && candidate.label ? candidate.label : '';
+
+		if (!label) {
+			return false;
+		}
+
+		for (var i = 0; i < (excludedContexts || []).length; i++) {
+			if (excludedContexts[i] === label) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function existingSectionContexts(progression) {
+		var sections = progression && progression.sections ? progression.sections : [];
+		var contexts = [];
+
+		for (var i = 0; i < sections.length; i++) {
+			if (sections[i].contextLabel) {
+				contexts.push(sections[i].contextLabel);
+			}
+		}
+
+		return contexts;
+	}
+
 	function buildCandidate(id, tonicIndex, scaleIndex, options) {
 		var data = options.data || {};
 		var scaleDefinition = data.scales ? data.scales[scaleIndex] : null;
@@ -185,6 +355,7 @@
 	function preferFlatsForCandidate(options, tonicIndex, scaleIndex, scaleDefinition) {
 		var data = options.data || {};
 		var tonicName = noteNameForIndex(data.notes || [], tonicIndex, false);
+		var flatTonicName = noteNameForIndex(data.notes || [], tonicIndex, true);
 		var preferFlats = options.domain && typeof options.domain.shouldPreferFlatsForKeySignature === 'function' ?
 			options.domain.shouldPreferFlatsForKeySignature({
 				scaleDefinition: scaleDefinition,
@@ -193,7 +364,29 @@
 			}) :
 			null;
 
+		if (preferFlats === false && flatTonicName && flatTonicName !== tonicName && isConventionalFlatKey(flatTonicName, scaleIndex) && !isConventionalSharpKey(tonicName, scaleIndex)) {
+			return true;
+		}
+
 		return preferFlats == null ? !!(options.selection && options.selection.preferFlats) : preferFlats;
+	}
+
+	function isConventionalFlatKey(tonicName, scaleIndex) {
+		var keyName = String(scaleIndex) === '0' ? tonicName : tonicName + 'm';
+		var flatKeys = String(scaleIndex) === '0' ?
+			['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'] :
+			['Dm', 'Gm', 'Cm', 'Fm', 'Bbm', 'Ebm', 'Abm'];
+
+		return flatKeys.indexOf(keyName) > -1;
+	}
+
+	function isConventionalSharpKey(tonicName, scaleIndex) {
+		var keyName = String(scaleIndex) === '0' ? tonicName : tonicName + 'm';
+		var sharpKeys = String(scaleIndex) === '0' ?
+			['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#'] :
+			['Am', 'Em', 'Bm', 'F#m', 'C#m', 'G#m', 'D#m', 'A#m'];
+
+		return sharpKeys.indexOf(keyName) > -1;
 	}
 
 	function annotateSectionMeasures(measures, sections) {
@@ -229,12 +422,118 @@
 		return result;
 	}
 
+	function createVariationMeasures(sourceMeasures, generatedMeasures, rng) {
+		var variation = cloneMeasures(sourceMeasures);
+		var count = variationChangeCount(variation.length, rng);
+		var used = {};
+		var index;
+
+		for (var i = 0; i < count && variation.length; i++) {
+			index = variationIndex(variation.length, rng, used);
+			used[index] = true;
+			if (generatedMeasures[index]) {
+				variation[index] = cloneService.cloneMeasure(generatedMeasures[index]);
+			}
+		}
+
+		return variation;
+	}
+
+	function variationChangeCount(length, rng) {
+		var max = length >= 12 ? 3 : (length >= 6 ? 2 : 1);
+
+		return 1 + Math.floor(rng() * max);
+	}
+
+	function variationIndex(length, rng, used) {
+		var min = length > 3 ? 1 : 0;
+		var max = length > 3 ? length - 2 : length - 1;
+		var index = min + Math.floor(rng() * Math.max(1, max - min + 1));
+		var guard = 0;
+
+		while (used[index] && guard < length) {
+			index += 1;
+			if (index > max) {
+				index = min;
+			}
+			guard += 1;
+		}
+
+		return index;
+	}
+
+	function appendSection(progression, sectionMeasures, sectionMetadata, dependencies) {
+		var previousSections = normalizedSections(progression);
+		var combined = cloneMeasures(progression.measures || []).concat(cloneMeasures(sectionMeasures || []));
+		var rebuilt = dependencies.rebuildProgressionTimeline(progression, combined);
+		var startIndex = combined.length - (sectionMeasures ? sectionMeasures.length : 0);
+
+		rebuilt.sections = previousSections.concat([extendObject(sectionMetadata, {
+			length: sectionMeasures ? sectionMeasures.length : 0,
+			startIndex: startIndex
+		})]);
+		annotateSectionMeasures(rebuilt.measures, rebuilt.sections);
+
+		return rebuilt;
+	}
+
+	function normalizedSections(progression) {
+		var sections = progression && progression.sections ? progression.sections : [];
+		var result = [];
+
+		if (!sections.length && progression && progression.measures && progression.measures.length) {
+			return [{
+				id: 'A',
+				labelKey: 'progression.sectionA',
+				length: progression.measures.length,
+				startIndex: 0
+			}];
+		}
+
+		for (var i = 0; i < sections.length; i++) {
+			result.push(cloneSection(sections[i]));
+		}
+
+		return result;
+	}
+
+	function cloneSection(section) {
+		var result = {};
+
+		for (var key in section || {}) {
+			if (Object.prototype.hasOwnProperty.call(section, key)) {
+				result[key] = key === 'state' ? cloneObject(section[key]) : section[key];
+			}
+		}
+
+		return result;
+	}
+
 	function cloneObject(value) {
 		var result = {};
 
 		for (var key in value || {}) {
 			if (Object.prototype.hasOwnProperty.call(value, key)) {
 				result[key] = value[key];
+			}
+		}
+
+		return result;
+	}
+
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target || {}) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values || {}) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
 			}
 		}
 
@@ -265,9 +564,13 @@
 		annotateSectionMeasures: annotateSectionMeasures,
 		circleNeighborCandidates: circleNeighborCandidates,
 		chooseContrastCandidate: chooseContrastCandidate,
+		chooseContrastCandidateExcluding: chooseContrastCandidateExcluding,
+		contrastCandidates: contrastCandidates,
 		contextLabelFromReport: contextLabelFromReport,
 		generate: generate,
+		generateSection: generateSection,
 		measuresForSectionA: measuresForSectionA,
+		measuresForSection: measuresForSection,
 		parallelKey: parallelKey,
 		relativeKey: relativeKey,
 		sameKeySubdominant: sameKeySubdominant,

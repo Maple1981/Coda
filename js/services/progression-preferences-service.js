@@ -8,9 +8,12 @@
 		{ id: 'progressionBpm', preference: 'progressionBpm', state: 'bpm' },
 		{ id: 'progressionChromaticism', preference: 'progressionChromaticism', state: 'chromaticism' },
 		{ id: 'progressionCounterpoint', preference: 'progressionCounterpoint', state: 'counterpoint' },
+		{ id: 'progressionHumanization', preference: 'progressionHumanization', state: 'humanization' },
+		{ id: 'progressionIntensity', preference: 'progressionIntensity', state: 'intensity' },
 		{ id: 'progressionMeter', preference: 'progressionMeter', state: 'meter' },
 		{ id: 'progressionModalInterchange', preference: 'progressionModalInterchange', state: 'modalInterchange' },
 		{ id: 'progressionStyle', preference: 'progressionStyle', state: 'style' },
+		{ id: 'progressionSwing', preference: 'progressionSwing', state: 'swing' },
 		{ id: 'progressionTensions', preference: 'progressionTensions', state: 'tensions' },
 		{ id: 'progressionVoicing', preference: 'progressionVoicing', state: 'voicing' },
 		{ id: 'progressionVoices', preference: 'progressionVoices', state: 'voices' }
@@ -22,7 +25,9 @@
 		preferences = preferences || {};
 
 		for (var i = 0; i < mappings.length; i++) {
-			state[mappings[i].state] = preferences[mappings[i].preference];
+			if (preferences[mappings[i].preference] !== undefined) {
+				state[mappings[i].state] = preferences[mappings[i].preference];
+			}
 		}
 
 		return state;

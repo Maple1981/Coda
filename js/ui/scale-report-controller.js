@@ -303,6 +303,7 @@
 				notation: notation,
 				notationStyle: uiState.getNotationStyle(),
 				onInstrumentNoteClick: playInstrumentNote(options.instrumentPlayback),
+				onScaleNoteClick: playScaleNote(options.instrumentPlayback, options.data),
 				renderers: options.renderers,
 				report: report
 			});
@@ -361,6 +362,17 @@
 				cancelProgressionStateUpdate();
 				updateProgressionStateFromControls();
 				generateProgressionSectionB();
+				recordHistorySnapshot();
+			});
+
+			on(query('#constructorProgresiones'), 'click', function (event) {
+				if (!closest(event.target, '#generateProgressionNextSection')) {
+					return;
+				}
+
+				cancelProgressionStateUpdate();
+				updateProgressionStateFromControls();
+				generateProgressionNextSection();
 				recordHistorySnapshot();
 			});
 		}
@@ -814,12 +826,15 @@
 					bpm: valueOf(query('#progressionBpm')),
 					counterpoint: valueOf(query('#progressionCounterpoint')),
 					format: valueOf(query('#interface input[type="radio"][name="formato"]:checked')),
+					humanization: valueOf(query('#progressionHumanization')),
+					intensity: valueOf(query('#progressionIntensity')),
 					instrument: valueOf(query('#instrumentoSonoro')),
 					meter: valueOf(query('#progressionMeter')),
 					modalInterchange: valueOf(query('#progressionModalInterchange')),
 					notacion: valueOf(query('#selectorNotacion')),
 					scale: valueOf(query('#escala')),
 					style: valueOf(query('#progressionStyle')),
+					swing: valueOf(query('#progressionSwing')),
 					tensions: valueOf(query('#progressionTensions')),
 					tonic: valueOf(query('#tonica')),
 					tuning: valueOf(query('#selectorAfinaciones')),
@@ -873,9 +888,12 @@
 			setValue(query('#progressionBars'), controls.bars);
 			setValue(query('#progressionBpm'), controls.bpm);
 			setValue(query('#progressionCounterpoint'), controls.counterpoint);
+			setValue(query('#progressionHumanization'), controls.humanization);
+			setValue(query('#progressionIntensity'), controls.intensity);
 			setValue(query('#progressionMeter'), controls.meter);
 			setValue(query('#progressionModalInterchange'), controls.modalInterchange);
 			setValue(query('#progressionStyle'), controls.style);
+			setValue(query('#progressionSwing'), controls.swing);
 			setValue(query('#progressionTensions'), controls.tensions);
 			setValue(query('#progressionVoicing'), controls.voicing);
 			setValue(query('#progressionVoices'), controls.voices);
@@ -982,6 +1000,64 @@
 			}
 		}
 
+		function generateProgressionNextSection() {
+			var sectionType = availableNextSectionType(valueOf(query('#progressionNextSectionType')), uiState.getProgression());
+
+			if (
+				options.application &&
+				typeof options.application.generateProgressionSection === 'function' &&
+				uiState.getProgression() &&
+				uiState.getReport() &&
+				uiState.getProgressionState() &&
+				sectionType
+			) {
+				setProgression(markProgressionAsUserEdited(options.application.generateProgressionSection({
+					data: options.data,
+					domain: options.domain,
+					progression: uiState.getProgression(),
+					progressionState: uiState.getProgressionState(),
+					report: uiState.getReport(),
+					sectionType: sectionType,
+					selection: uiState.getSelection()
+				})));
+			}
+		}
+
+		function availableNextSectionType(sectionType, progression) {
+			var hasAprime = hasProgressionSection(progression, 'A\'');
+			var hasC = hasProgressionSection(progression, 'C');
+
+			if ((sectionType === 'ap' || sectionType === 'A\'') && !hasAprime) {
+				return 'ap';
+			}
+
+			if ((sectionType === 'C' || sectionType === 'c') && !hasC) {
+				return 'C';
+			}
+
+			if (!hasAprime) {
+				return 'ap';
+			}
+
+			if (!hasC) {
+				return 'C';
+			}
+
+			return '';
+		}
+
+		function hasProgressionSection(progression, id) {
+			var sections = progression && progression.sections ? progression.sections : [];
+
+			for (var i = 0; i < sections.length; i++) {
+				if (sections[i].id === id) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
 		function setProgression(progression, renderOptions) {
 			renderOptions = renderOptions || {};
 			uiState.setProgression(progression);
@@ -1075,8 +1151,14 @@
 
 		function adjustedMeasuresForState(progression, state) {
 			var measures = cloneJson(progression.measures || []);
+			var sections = progression && progression.sections ? progression.sections : [];
+			var firstSection = sections.length ? sections[0] : null;
 			var targetBars = Math.max(1, Number(state.bars) || measures.length);
 			var generated;
+
+			if (sections.length > 1 && firstSection && Number(firstSection.length) === targetBars) {
+				return measures;
+			}
 
 			if (measures.length > targetBars) {
 				return measures.slice(0, targetBars);
@@ -1113,9 +1195,12 @@
 				modalInterchange: state.modalInterchange,
 				tensions: state.tensions
 			};
+			next.humanization = state.humanization;
+			next.intensity = state.intensity;
 			next.meter = state.meter;
 			next.secondsPerBeat = secondsPerBeat;
 			next.style = state.style;
+			next.swing = state.swing;
 			next.totalBeats = (next.measures ? next.measures.length : Number(state.bars) || 0) * state.beatsPerBar;
 			next.totalSeconds = next.totalBeats * secondsPerBeat;
 			next.voicing = state.voicing;
@@ -1130,11 +1215,19 @@
 			for (var i = 0; i < normalized.length; i++) {
 				normalized[i].articulation = state.articulation;
 				normalized[i].beatUnit = state.beatUnit;
+				normalized[i].beatsPerBar = state.beatsPerBar;
 				normalized[i].durationBeats = state.beatsPerBar;
+				normalized[i].humanization = state.humanization;
+				normalized[i].intensity = state.intensity;
+				normalized[i].swing = state.swing;
 				if (normalized[i].chords && normalized[i].chords.length) {
 					for (var j = 0; j < normalized[i].chords.length; j++) {
 						normalized[i].chords[j].articulation = state.articulation;
 						normalized[i].chords[j].beatUnit = state.beatUnit;
+						normalized[i].chords[j].beatsPerBar = state.beatsPerBar;
+						normalized[i].chords[j].humanization = state.humanization;
+						normalized[i].chords[j].intensity = state.intensity;
+						normalized[i].chords[j].swing = state.swing;
 					}
 				}
 			}
@@ -1359,6 +1452,37 @@
 				duration: 0.55
 			});
 		};
+	}
+
+	function playScaleNote(instrumentPlayback, data) {
+		return function (element) {
+			var midiNote;
+
+			if (!instrumentPlayback || !element) {
+				return;
+			}
+
+			midiNote = element.getAttribute('data-midi-note') || midiNoteForScaleNote(data, element.getAttribute('data-note-name'));
+			if (midiNote == null) {
+				return;
+			}
+
+			instrumentPlayback.playMidiNote(midiNote, {
+				duration: 0.55
+			});
+		};
+	}
+
+	function midiNoteForScaleNote(data, noteName) {
+		var notes = data && data.notes ? data.notes : [];
+
+		for (var i = 0; i < notes.length; i++) {
+			if (notes[i].nombre === noteName || notes[i].enarmonica === noteName) {
+				return 60 + i;
+			}
+		}
+
+		return null;
 	}
 
 	function savePreference(preferences, key, value) {

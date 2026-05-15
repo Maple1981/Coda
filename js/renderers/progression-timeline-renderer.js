@@ -33,6 +33,8 @@
 				length: 0,
 				startIndex: measures.length
 			}, options);
+		} else if (sections.length < 4) {
+			html += renderNextSectionHeader(sections);
 		}
 
 		return html;
@@ -79,6 +81,26 @@
 		if (section.id === 'B') {
 			html += '<button id="generateProgressionSectionB" class="progressionSectionRandomButton" type="button" title="" aria-label="" data-i18n-title="progression.generateSectionB"><span class="material-icons" aria-hidden="true">casino</span></button>';
 		}
+		html += '</div>';
+
+		return html;
+	}
+
+	function renderNextSectionHeader(sections) {
+		var hasAprime = hasSection(sections, 'A\'');
+		var hasC = hasSection(sections, 'C');
+		var html = '<div class="progressionSectionHeader progressionSectionHeader--next">';
+
+		html += '<h3 data-i18n="progression.nextSection"></h3>';
+		html += '<select id="progressionNextSectionType" class="progressionSectionTypeSelect" aria-label="" data-i18n-title="progression.nextSectionType">';
+		if (!hasAprime) {
+			html += '<option value="ap" data-i18n="progression.sectionAprime"></option>';
+		}
+		if (!hasC) {
+			html += '<option value="C" data-i18n="progression.sectionC"></option>';
+		}
+		html += '</select>';
+		html += '<button id="generateProgressionNextSection" class="progressionSectionRandomButton" type="button" title="" aria-label="" data-i18n-title="progression.generateNextSection"><span class="material-icons" aria-hidden="true">casino</span></button>';
 		html += '</div>';
 
 		return html;

@@ -103,6 +103,7 @@
 			selectedKey: report.circleOfFifths ? report.circleOfFifths.selectedKey : null
 		}));
 
+		attachScaleNoteEvents(options);
 		attachChordEvents(options);
 	}
 
@@ -251,6 +252,23 @@
 					options.onChordClick(chord);
 				}
 			});
+		});
+	}
+
+	function attachScaleNoteEvents(options) {
+		var scope = query('#notacion');
+
+		if (typeof options.onScaleNoteClick !== 'function' || !scope || scope.getAttribute('data-coda-scale-note-events') === 'true') {
+			return;
+		}
+
+		scope.setAttribute('data-coda-scale-note-events', 'true');
+		scope.addEventListener('click', function (event) {
+			var note = closestWithin(event.target, '.scaleDegreeNoteButton[data-note-name]', scope);
+
+			if (note) {
+				options.onScaleNoteClick(note);
+			}
 		});
 	}
 

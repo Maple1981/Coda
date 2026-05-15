@@ -20,6 +20,14 @@ El flujo principal del generador se reparte en módulos pequeños para evitar qu
 
 Las pruebas que necesitan cargar pilas largas de módulos deben usar `tests/helpers/script-loader.js` para leer el orden desde `js/bootstrap/script-manifest.js`, en lugar de duplicar listas extensas de scripts.
 
+## Forma y secciones
+
+La progresión se organiza en secciones musicales. La sección `A` nace de los controles globales del área de trabajo y funciona como punto de referencia formal. La sección `B` se genera como contraste: puede conservar la tonalidad con apertura de función subdominante, usar la relativa, la paralela o desplazarse a una vecina del círculo de quintas.
+
+Las secciones posteriores pueden añadir una `A'` o una `C`. La `A'` copia la estructura de `A` y sustituye de forma ligera entre uno y tres acordes, según la duración y el azar, para producir una variación reconocible. La `C` busca un contraste nuevo frente a los contextos ya usados por `A` y `B`, priorizando de nuevo opciones cercanas antes que saltos más bruscos.
+
+Cada sección generada guarda una copia del estado de escritura con el que nació: compases, compás, tempo, voces, disposición, articulación, estilo, intercambio, cromatismo, tensiones, contrapunto y parámetros expresivos. Ese dato prepara una futura tarjeta o menú contextual de sección para duplicar, regenerar solo ese bloque o cambiar su contraste sin depender siempre de los controles globales.
+
 ## Estilo de escritura
 
 El control **Estilo** distingue dos enfoques iniciales:
@@ -28,6 +36,8 @@ El control **Estilo** distingue dos enfoques iniciales:
 - **Clásico**: favorece cadencias auténticas al final de la progresión, usando el retorno dominante-tónica como cierre estructural.
 
 Esta distinción afecta a la selección de patrones completos y a los bloques de frase usados en progresiones largas. No cambia la escala ni los acordes disponibles; solo modifica la probabilidad y el tipo de cierre armónico elegido por el generador.
+
+En tonalidades menores, el estilo **Clásico** trata el quinto grado como dominante tonal. Por tanto, cuando la escala principal es menor natural o menor melódica descendente, el `V` o `V7` se toma de una fuente con sensible, preferentemente la menor armónica sobre la misma tónica. Esto evita cierres modales `v-i` en contextos que deben sonar funcionales y permite que aparezcan dominantes mayores o dominantes séptima como `G`/`G7` en `C` menor.
 
 ## Cadencias finales
 
@@ -103,6 +113,12 @@ El generador elige inversiones para reducir el desplazamiento entre voces consec
 - Séptimas: primera inversión `6/5`, segunda inversión `4/3`, tercera inversión `4/2`.
 
 La inversión se muestra junto al nombre del acorde y junto al grado armónico, por ejemplo `Cmaj7 4/3` y `Imaj7 4/3`. Internamente, cada compás conserva las notas por voz y sus alturas MIDI para que la preescucha y la exportación MIDI respeten mejor el voicing generado.
+
+## Expresión, preescucha y MIDI
+
+Los controles expresivos modifican tanto la preescucha como la exportación MIDI. **Intensidad** fija la velocidad base de los eventos `noteOn`; el valor `100 %` del volumen maestro sigue actuando como techo de salida, pero la progresión conserva su propia dinámica musical. **Humanización** añade pequeñas variaciones deterministas de tiempo y velocidad para evitar una ejecución completamente mecánica. **Swing** retrasa ligeramente las subdivisiones débiles cuando la posición rítmica lo permite.
+
+La exportación MIDI debe reflejar el estado editado, no solo el plan original: secciones `B`, `A'` y `C`, acordes añadidos dentro del compás, silencios, inversiones, suspensiones, tensiones, instrumento, tempo y compás. Las reglas de expresión se aplican sobre esos eventos finales para que el archivo exportado coincida con lo que se ha trabajado visualmente.
 
 ## Pedales, suspensiones y paralelas
 

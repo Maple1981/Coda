@@ -89,9 +89,10 @@
 
 	function appendChordEvents(events, measure, options) {
 		var notes = measure.midiNotes && measure.midiNotes.length ? measure.midiNotes.slice() : chordNotesToMidi(measure.notes || [], options.initialMidiNote);
-		var startTick = Math.round(measure.startBeat * options.ticksPerBeat);
+		var startTick = Math.max(0, Math.round(measure.startBeat * options.ticksPerBeat) + expressiveDelayTicks(measure, options));
 		var durationTicks = Math.max(1, Math.round(measure.durationBeats * options.ticksPerBeat * articulationFactor(measure.articulation)));
 		var arpeggioStep = measure.articulation === 'arpeggio' ? Math.max(1, Math.round(options.ticksPerBeat / 4)) : 0;
+		var velocity = expressiveVelocity(measure, options.velocity);
 
 		for (var i = 0; i < notes.length; i++) {
 			if (supportsPedalHold(options.instrument) && isPedalIn(notes[i], measure)) {
@@ -108,7 +109,7 @@
 				note: notes[i],
 				tick: noteStart,
 				type: 'noteOn',
-				velocity: options.velocity
+				velocity: velocity
 			});
 			events.push({
 				bar: measure.bar,
@@ -141,7 +142,7 @@
 				note: passingNotes[i].midiNote,
 				tick: noteStart,
 				type: 'noteOn',
-				velocity: Math.max(1, Math.round(options.velocity * 0.82))
+				velocity: Math.max(1, Math.round(expressiveVelocity(measure, options.velocity) * 0.82))
 			});
 			events.push({
 				bar: measure.bar,
@@ -344,6 +345,32 @@
 		return 1;
 	}
 
+	function expressiveVelocity(measure, fallbackVelocity) {
+		var base = measure && measure.intensity != null ? Number(measure.intensity) : fallbackVelocity;
+		var humanization = Math.max(0, Math.min(100, Number(measure && measure.humanization) || 0));
+		var offset = humanization ? deterministicOffset(measure, 9) * Math.min(12, humanization / 8) : 0;
+
+		return clamp(Math.round((isFinite(base) ? base : fallbackVelocity) + offset), 1, 127);
+	}
+
+	function expressiveDelayTicks(measure, options) {
+		var humanization = Math.max(0, Math.min(100, Number(measure && measure.humanization) || 0));
+		var swing = Math.max(0, Math.min(75, Number(measure && measure.swing) || 0));
+		var humanized = humanization ? deterministicOffset(measure, 17) * Math.min(options.ticksPerBeat * 0.08, humanization * 0.4) : 0;
+		var localBeat = Math.abs((Number(measure && measure.startBeat) || 0) % (Number(measure && measure.beatsPerBar) || 4));
+		var fractional = localBeat - Math.floor(localBeat);
+		var swingTicks = swing && Math.abs(fractional - 0.5) <= 0.01 ? options.ticksPerBeat * (swing / 100) * 0.33 : 0;
+
+		return Math.round(humanized + swingTicks);
+	}
+
+	function deterministicOffset(measure, salt) {
+		var seed = ((Number(measure && measure.bar) || 0) * 31) + salt;
+		var value = Math.sin(seed) * 10000;
+
+		return (value - Math.floor(value)) * 2 - 1;
+	}
+
 	function bpmToMicrosecondsPerBeat(bpm) {
 		return Math.round(60000000 / Math.max(1, numberOrDefault(bpm, 96)));
 	}
@@ -451,6 +478,8 @@
 		createProgressionMidiEvents: createProgressionMidiEvents,
 		createProgressionMidiFile: createProgressionMidiFile,
 		encodeMidiFile: encodeMidiFile,
+		expressiveDelayTicks: expressiveDelayTicks,
+		expressiveVelocity: expressiveVelocity,
 		mimeType: midiMimeType,
 		noteIndex: noteIndex,
 		secondsPerBeatForMeasure: secondsPerBeatForMeasure,

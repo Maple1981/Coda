@@ -23,10 +23,13 @@
 				modalInterchange: progressionState.modalInterchange,
 				tensions: progressionState.tensions
 			},
+			humanization: progressionState.humanization,
+			intensity: progressionState.intensity,
 			measures: options.measures || [],
 			meter: progressionState.meter,
 			secondsPerBeat: secondsPerBeat,
 			style: progressionState.style,
+			swing: progressionState.swing,
 			totalBeats: progressionState.bars * progressionState.beatsPerBar,
 			totalSeconds: progressionState.bars * progressionState.beatsPerBar * secondsPerBeat,
 			voicing: progressionState.voicing,

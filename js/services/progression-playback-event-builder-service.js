@@ -22,15 +22,17 @@
 		var midiNotes = timingService.notesForVoices(measure.midiNotes, measure.voices);
 		var midiNoteEvents = noteEventService.build(measure, duration, options);
 		var mode = measure.articulation === 'arpeggio' ? 'arpeggio' : 'chord';
+		var delay = Math.max(0, (measure.startSeconds || 0) - (startOffset || 0));
 		var event = {
 			arpeggioStep: timingService.arpeggioStepSeconds(measure),
 			bar: measure.bar,
 			degree: measure.degree,
-			delay: Math.max(0, (measure.startSeconds || 0) - (startOffset || 0)),
+			delay: Math.max(0, delay + expressiveDelay(measure, chordIndex)),
 			duration: duration,
 			index: index,
 			mode: mode,
-			notes: notes
+			notes: notes,
+			velocity: expressiveVelocity(measure, chordIndex)
 		};
 
 		if (chordIndex) {
@@ -48,8 +50,52 @@
 		return event;
 	}
 
+	function expressiveVelocity(measure, chordIndex) {
+		var base = Math.max(1, Math.min(127, Number(measure.intensity) || 80));
+		var humanization = Math.max(0, Math.min(100, Number(measure.humanization) || 0));
+		var offset = humanization ? deterministicOffset(measure, chordIndex, 9) * Math.min(12, humanization / 8) : 0;
+
+		return Math.max(1, Math.min(127, Math.round(base + offset)));
+	}
+
+	function expressiveDelay(measure, chordIndex) {
+		return humanizedDelay(measure, chordIndex) + swingDelay(measure);
+	}
+
+	function humanizedDelay(measure, chordIndex) {
+		var humanization = Math.max(0, Math.min(100, Number(measure.humanization) || 0));
+
+		if (!humanization) {
+			return 0;
+		}
+
+		return deterministicOffset(measure, chordIndex, 17) * Math.min(0.04, humanization / 2500);
+	}
+
+	function swingDelay(measure) {
+		var swing = Math.max(0, Math.min(75, Number(measure.swing) || 0));
+		var durationSeconds = Number(measure.durationSeconds) || 0;
+		var durationBeats = Number(measure.durationBeats) || 0;
+		var localBeat = Math.abs((Number(measure.startBeat) || 0) % (Number(measure.beatsPerBar) || 4));
+		var fractional = localBeat - Math.floor(localBeat);
+
+		if (!swing || Math.abs(fractional - 0.5) > 0.01 || !durationSeconds || !durationBeats) {
+			return 0;
+		}
+
+		return (durationSeconds / durationBeats) * (swing / 100) * 0.33;
+	}
+
+	function deterministicOffset(measure, chordIndex, salt) {
+		var seed = ((Number(measure.bar) || 0) * 31) + ((Number(chordIndex) || 0) * 11) + salt;
+		var value = Math.sin(seed) * 10000;
+
+		return (value - Math.floor(value)) * 2 - 1;
+	}
+
 	global.CodaProgressionPlaybackEventBuilder = {
 		buildMeasurePlaybackEvent: buildMeasurePlaybackEvent,
-		buildMeasurePlaybackEvents: buildMeasurePlaybackEvents
+		buildMeasurePlaybackEvents: buildMeasurePlaybackEvents,
+		expressiveVelocity: expressiveVelocity
 	};
 })(window);

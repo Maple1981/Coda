@@ -14,7 +14,7 @@
 			notes: options.data ? options.data.notes : [],
 			progression: options.progression,
 			ticksPerBeat: options.ticksPerBeat,
-			velocity: options.data && options.data.midi ? options.data.midi.velocity : 96
+			velocity: options.progression && options.progression.intensity ? options.progression.intensity : (options.data && options.data.midi ? options.data.midi.velocity : 96)
 		});
 	}
 
