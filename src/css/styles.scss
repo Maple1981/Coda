@@ -1305,6 +1305,11 @@ section#bienvenida .columnata article{
 	background:rgba(172, 72, 190, .12);
 }
 
+.measureChord.isSelected{
+	outline:2px solid $corporative_complementarybright_color;
+	outline-offset:2px;
+}
+
 .measureSplitActions{
 	position:absolute;
 	right:0;
@@ -1333,6 +1338,153 @@ section#bienvenida .columnata article{
 	border-color:$corporative_complementary_color;
 	color:$corporative_mainbright_color;
 	outline:none;
+}
+
+.progressionInspector{
+	margin:.85em 0 .7em 0;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:6px;
+	background:linear-gradient(
+		0deg,
+		rgba(21, 21, 21, .96) 0%,
+		rgba(17, 17, 17, .98) 100%
+	);
+	color:$basic_front_color;
+}
+
+.progressionInspector__inner{
+	padding:.8em .9em;
+}
+
+.progressionInspector__header{
+	display:flex;
+	align-items:center;
+	gap:.65em;
+}
+
+.progressionInspector__header .material-icons{
+	color:$corporative_complementarybright_color;
+	font-size:1.35em;
+}
+
+.progressionInspector__header h3{
+	margin:0;
+	color:$corporative_mainbright_color;
+	font-size:1em;
+	font-weight:700;
+}
+
+.progressionInspector__header p{
+	margin:.15em 0 0 0;
+	color:$neutral_color;
+	font-size:.82em;
+}
+
+.progressionInspector__grid{
+	display:grid;
+	grid-template-columns:repeat(4, minmax(0, 1fr));
+	gap:.5em .8em;
+	margin:.75em 0 0 0;
+}
+
+.progressionInspector__grid dt{
+	margin:0;
+	color:$neutral_color;
+	font-size:.72em;
+	text-transform:uppercase;
+}
+
+.progressionInspector__grid dd{
+	margin:0;
+	color:$basic_front_color;
+	font-size:.9em;
+	overflow-wrap:anywhere;
+}
+
+.progressionInspector__actions{
+	display:flex;
+	flex-wrap:wrap;
+	gap:.45em;
+	margin-top:.75em;
+}
+
+.progressionInspector__editor{
+	display:grid;
+	grid-template-columns:repeat(2, minmax(0, 1fr));
+	gap:.6em;
+	margin-top:.8em;
+}
+
+.progressionInspector__buttonGroup{
+	display:flex;
+	flex-wrap:wrap;
+	align-items:center;
+	gap:.35em;
+	padding:.45em;
+	border:1px solid rgba(197, 246, 255, .12);
+	border-radius:5px;
+}
+
+.progressionInspector__buttonGroup > span{
+	width:100%;
+	color:$neutral_color;
+	font-size:.72em;
+	font-weight:700;
+	text-transform:uppercase;
+}
+
+.progressionInspectorVariant{
+	min-width:2.8em;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:4px;
+	background:$basic_filldarkgrad_color;
+	color:$basic_front_color;
+	cursor:pointer;
+	font-size:.8em;
+	font-weight:700;
+	padding:.3em .45em;
+}
+
+.progressionInspectorVariant:hover,
+.progressionInspectorVariant:focus,
+.progressionInspectorVariant.isActive{
+	border-color:$corporative_complementary_color;
+	color:$corporative_complementarybright_color;
+	outline:none;
+}
+
+.progressionInspectorVariant.isActive{
+	background:rgba(172, 72, 190, .16);
+}
+
+.progressionInspectorAction{
+	display:inline-flex;
+	align-items:center;
+	gap:.3em;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:5px;
+	background:$basic_filldarkgrad_color;
+	color:$corporative_complementarybright_color;
+	cursor:pointer;
+	font-size:.82em;
+	font-weight:700;
+	padding:.35em .55em;
+}
+
+.progressionInspectorAction:hover,
+.progressionInspectorAction:focus{
+	border-color:$corporative_complementary_color;
+	color:$corporative_mainbright_color;
+	outline:none;
+}
+
+.progressionInspectorAction--danger{
+	color:#ff9f9f;
+}
+
+.progressionInspectorAction .material-icons{
+	font-size:1em;
+	line-height:1;
 }
 
 .progressionChordMenu{
@@ -1867,6 +2019,74 @@ body[data-theme="day"] .measureChordDragHandle:focus{
 body[data-theme="day"] .measure--split .measureChord.isChordDropTarget{
 	border-color:#7d2785;
 	background:rgba(125, 39, 133, .1);
+}
+
+body[data-theme="day"] .measureChord.isSelected{
+	outline-color:#7d2785;
+}
+
+body[data-theme="day"] .progressionInspector{
+	border-color:#b7c3ca;
+	background:linear-gradient(0deg, #f2f4f5 0%, #ffffff 100%);
+	color:#1f2528;
+}
+
+body[data-theme="day"] .progressionInspector__header .material-icons,
+body[data-theme="day"] .progressionInspectorAction{
+	color:#7d2785;
+}
+
+body[data-theme="day"] .progressionInspector__header h3{
+	color:#006e58;
+}
+
+body[data-theme="day"] .progressionInspector__header p,
+body[data-theme="day"] .progressionInspector__grid dt{
+	color:#5f676b;
+}
+
+body[data-theme="day"] .progressionInspector__grid dd{
+	color:#1f2528;
+}
+
+body[data-theme="day"] .progressionInspector__buttonGroup{
+	border-color:rgba(125, 39, 133, .18);
+}
+
+body[data-theme="day"] .progressionInspector__buttonGroup > span{
+	color:#5f676b;
+}
+
+body[data-theme="day"] .progressionInspectorVariant{
+	border-color:#b7c3ca;
+	background:#ffffff;
+	color:#1f2528;
+}
+
+body[data-theme="day"] .progressionInspectorVariant:hover,
+body[data-theme="day"] .progressionInspectorVariant:focus,
+body[data-theme="day"] .progressionInspectorVariant.isActive{
+	border-color:#7d2785;
+	color:#7d2785;
+}
+
+body[data-theme="day"] .progressionInspectorVariant.isActive{
+	background:rgba(125, 39, 133, .1);
+}
+
+body[data-theme="day"] .progressionInspectorAction{
+	border-color:#b7c3ca;
+	background:#eef1f2;
+}
+
+body[data-theme="day"] .progressionInspectorAction:hover,
+body[data-theme="day"] .progressionInspectorAction:focus{
+	border-color:#7d2785;
+	color:#006e58;
+}
+
+body[data-theme="day"] .progressionInspectorAction--danger{
+	color:#8f3f4a;
 }
 
 body[data-theme="day"] .progressionChordMenu{

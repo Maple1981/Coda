@@ -15,12 +15,20 @@
 		var listenButton = query('.transportButton--listen');
 		var exportButton = query('.transportButton--export');
 		var playbackHeadIndex = 0;
+		var inspector = null;
 
 		if (!root || root.getAttribute('data-coda-progression-transport') === 'true') {
 			return null;
 		}
 
 		root.setAttribute('data-coda-progression-transport', 'true');
+		inspector = global.CodaProgressionInspector ? global.CodaProgressionInspector.initialize({
+			getPlaybackHeadIndex: function () {
+				return playbackHeadIndex;
+			},
+			listenButton: listenButton,
+			transportOptions: options
+		}) : null;
 
 		transportButtons.bind({
 			exportButton: exportButton,
@@ -41,6 +49,7 @@
 				return playbackHeadIndex;
 			},
 			listenButton: listenButton,
+			inspector: inspector,
 			root: root,
 			setPlaybackHeadIndex: function (index) {
 				playbackHeadIndex = index;
@@ -77,6 +86,16 @@
 		return {
 			exportMidi: function () {
 				global.CodaProgressionMidiDownload.exportMidi(options);
+			},
+			refreshInspector: function () {
+				if (inspector && typeof inspector.refresh === 'function') {
+					inspector.refresh();
+				}
+			},
+			selectChord: function (measureIndex, chordIndex) {
+				if (inspector && typeof inspector.select === 'function') {
+					inspector.select(measureIndex, chordIndex);
+				}
 			},
 			setPlaybackHead: function (index) {
 				playbackHeadIndex = global.CodaProgressionTransportPlayback.normalizeHeadIndex(index, options.uiState ? options.uiState.getProgression() : null);

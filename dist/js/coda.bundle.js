@@ -1515,6 +1515,28 @@
 			'progression.help.voices': 'Número de voces simultáneas usadas para distribuir cada acorde.',
 			'progression.listen': 'Preescuchar',
 			'progression.loop': 'Bucle',
+			'progression.inspector.add': 'Añadir',
+			'progression.inspector.bar': 'Compás',
+			'progression.inspector.beat': 'pulso',
+			'progression.inspector.beats': 'pulsos',
+			'progression.inspector.change': 'Cambiar',
+			'progression.inspector.chromatic': 'Cromático',
+			'progression.inspector.degree': 'Grado',
+			'progression.inspector.diatonic': 'Diatónico',
+			'progression.inspector.duration': 'Duración',
+			'progression.inspector.empty': 'Selecciona un acorde de la progresión para ver sus detalles.',
+			'progression.inspector.function': 'Función',
+			'progression.inspector.inversion': 'Inversión',
+			'progression.inspector.moreChords': 'Más acordes',
+			'progression.inspector.notes': 'Notas',
+			'progression.inspector.remove': 'Quitar',
+			'progression.inspector.rootPosition': 'Fundamental',
+			'progression.inspector.rootPositionShort': 'Fund.',
+			'progression.inspector.section': 'Sección',
+			'progression.inspector.source': 'Origen',
+			'progression.inspector.title': 'Inspector de acorde',
+			'progression.inspector.voice': 'voz',
+			'progression.inspector.voices': 'voces',
 			'progression.metronome': 'Metrónomo',
 			'progression.meter': 'Compás',
 			'progression.modalInterchange': 'Intercambio',
@@ -1709,6 +1731,28 @@
 			'progression.help.voices': 'Number of simultaneous voices used to distribute each chord.',
 			'progression.listen': 'Preview',
 			'progression.loop': 'Loop',
+			'progression.inspector.add': 'Add',
+			'progression.inspector.bar': 'Bar',
+			'progression.inspector.beat': 'beat',
+			'progression.inspector.beats': 'beats',
+			'progression.inspector.change': 'Change',
+			'progression.inspector.chromatic': 'Chromatic',
+			'progression.inspector.degree': 'Degree',
+			'progression.inspector.diatonic': 'Diatonic',
+			'progression.inspector.duration': 'Duration',
+			'progression.inspector.empty': 'Select a chord in the progression to inspect its details.',
+			'progression.inspector.function': 'Function',
+			'progression.inspector.inversion': 'Inversion',
+			'progression.inspector.moreChords': 'More chords',
+			'progression.inspector.notes': 'Notes',
+			'progression.inspector.remove': 'Remove',
+			'progression.inspector.rootPosition': 'Root position',
+			'progression.inspector.rootPositionShort': 'Root',
+			'progression.inspector.section': 'Section',
+			'progression.inspector.source': 'Source',
+			'progression.inspector.title': 'Chord inspector',
+			'progression.inspector.voice': 'voice',
+			'progression.inspector.voices': 'voices',
 			'progression.metronome': 'Metronome',
 			'progression.meter': 'Meter',
 			'progression.modalInterchange': 'Interchange',
@@ -9831,6 +9875,198 @@
 
 ;
 
+/* Source: js/services/progression-inspector-service.js */
+// Keeps the selected progression chord inspector in sync with the timeline.
+(function (global) {
+	'use strict';
+
+	function initialize(options) {
+		var selected = {
+			chordIndex: 0,
+			measureIndex: 0
+		};
+
+		options = options || {};
+		bindActions(options, selected);
+		refresh(options, selected);
+
+		return {
+			refresh: function () {
+				refresh(options, selected);
+			},
+			select: function (measureIndex, chordIndex) {
+				selected.measureIndex = normalizeIndex(measureIndex);
+				selected.chordIndex = normalizeIndex(chordIndex);
+				refresh(options, selected);
+			},
+			selection: function () {
+				return {
+					chordIndex: selected.chordIndex,
+					measureIndex: selected.measureIndex
+				};
+			}
+		};
+	}
+
+	function bindActions(options, selected) {
+		var panel = inspectorPanel();
+
+		if (!panel || panel.getAttribute('data-coda-progression-inspector') === 'true') {
+			return;
+		}
+
+		panel.setAttribute('data-coda-progression-inspector', 'true');
+		panel.addEventListener('click', function (event) {
+			var actionButton = closest(event.target, '.progressionInspectorAction');
+			var action;
+
+			if (!actionButton) {
+				return;
+			}
+
+			action = actionButton.getAttribute('data-inspector-action');
+			prevent(event);
+			if (action === 'change') {
+				global.CodaProgressionTransportMenu.open(options.transportOptions, actionButton, selected.measureIndex, selected.chordIndex);
+			} else if (action === 'replace') {
+				replaceSelectedChord(options, selected, actionButton);
+			} else if (action === 'silence') {
+				replaceSelectedChord(options, selected, actionButton, {
+					kind: 'silence'
+				});
+			} else if (action === 'add' || action === 'remove') {
+				stopPlayback(options);
+				global.CodaProgressionTransportMenu.close();
+				global.CodaProgressionTransportActions.updateMeasureSplit(options.transportOptions, action, selected.measureIndex, selected.chordIndex);
+			}
+		});
+	}
+
+	function replaceSelectedChord(options, selected, actionButton, forcedReplacement) {
+		var selection = selectionData(currentProgression(options), selected);
+		var chord = selection.chord || {};
+		var replacement = forcedReplacement || {
+			degreeIndex: chord.degreeIndex,
+			inversionIndex: parseInt(actionButton.getAttribute('data-inversion-index'), 10) || 0,
+			kind: actionButton.getAttribute('data-chord-kind') || 'triad',
+			source: chord.source || 'diatonic',
+			sourceScaleIndex: chord.sourceScaleIndex
+		};
+
+		stopPlayback(options);
+		global.CodaProgressionTransportMenu.close();
+		global.CodaProgressionTransportActions.updateMeasureChordReplacement(options.transportOptions, selection.measureIndex, selection.chordIndex, replacement);
+	}
+
+	function refresh(options, selected) {
+		var panel = inspectorPanel();
+		var renderer = global.CodaRenderers && global.CodaRenderers.progressionInspector;
+		var progression = currentProgression(options);
+		var inspectorSelection = selectionData(progression, selected);
+
+		if (!panel || !renderer) {
+			return;
+		}
+
+		selected.measureIndex = inspectorSelection.measureIndex;
+		selected.chordIndex = inspectorSelection.chordIndex;
+		panel.innerHTML = renderer.render(inspectorSelection, renderOptions(options));
+		updateSelectedChordClass(inspectorSelection);
+	}
+
+	function selectionData(progression, selected) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var measureIndex = clamp(selected.measureIndex, measures.length);
+		var measure = measures[measureIndex] || null;
+		var chords = measure && measure.chords && measure.chords.length ? measure.chords : (measure ? [measure] : []);
+		var chordIndex = clamp(selected.chordIndex, chords.length);
+
+		return {
+			chord: chords[chordIndex] || null,
+			chordCount: chords.length || 0,
+			chordIndex: chordIndex,
+			measure: measure,
+			measureIndex: measureIndex
+		};
+	}
+
+	function renderOptions(options) {
+		var transportOptions = options.transportOptions || {};
+		var uiState = transportOptions.uiState;
+
+		return {
+			i18n: transportOptions.i18n,
+			notation: transportOptions.notation,
+			notationStyle: uiState && uiState.getNotationStyle ? uiState.getNotationStyle() : 'anglosaxon'
+		};
+	}
+
+	function currentProgression(options) {
+		return options.transportOptions && options.transportOptions.uiState ? options.transportOptions.uiState.getProgression() : null;
+	}
+
+	function updateSelectedChordClass(selection) {
+		var selectedChord;
+		var chords = global.document ? global.document.querySelectorAll('.measureChord.isSelected') : [];
+
+		Array.prototype.forEach.call(chords, function (chord) {
+			chord.classList.remove('isSelected');
+		});
+
+		selectedChord = query('.measure[data-progression-index="' + selection.measureIndex + '"] .measureChord[data-measure-chord-index="' + selection.chordIndex + '"]');
+		if (selectedChord) {
+			selectedChord.classList.add('isSelected');
+		}
+	}
+
+	function stopPlayback(options) {
+		var transportOptions = options.transportOptions || {};
+
+		if (global.CodaProgressionTransportPlayback && typeof global.CodaProgressionTransportPlayback.stop === 'function') {
+			global.CodaProgressionTransportPlayback.stop(transportOptions, options.listenButton, options.getPlaybackHeadIndex ? options.getPlaybackHeadIndex() : 0);
+		}
+	}
+
+	function inspectorPanel() {
+		return query('.progressionInspector');
+	}
+
+	function query(selector) {
+		return global.document ? global.document.querySelector(selector) : null;
+	}
+
+	function closest(target, selector) {
+		return target && typeof target.closest === 'function' ? target.closest(selector) : null;
+	}
+
+	function prevent(event) {
+		if (event && typeof event.preventDefault === 'function') {
+			event.preventDefault();
+		}
+	}
+
+	function normalizeIndex(index) {
+		var numericIndex = parseInt(index, 10);
+
+		return isFinite(numericIndex) && numericIndex >= 0 ? numericIndex : 0;
+	}
+
+	function clamp(index, length) {
+		if (!length) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(normalizeIndex(index), length - 1));
+	}
+
+	global.CodaProgressionInspector = {
+		initialize: initialize,
+		selectionData: selectionData
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-transport-actions-service.js */
 // Applies progression transport actions and reports updated progressions back to the UI.
 (function (global) {
@@ -10262,6 +10498,7 @@
 			}
 
 			clickedIndex = transportDom.measureIndex(measure);
+			selectInspectorChord(options, clickedIndex, transportDom.chordIndex(chordElement));
 			if (chordMenuButton) {
 				preventAndStop(event);
 				global.CodaProgressionTransportMenu.open(options.transportOptions, chordMenuButton, clickedIndex, transportDom.chordIndex(chordElement));
@@ -10287,6 +10524,12 @@
 			options.transportView.setPlaybackHead(clickedIndex, false);
 			global.CodaProgressionTransportPlayback.play(options.transportOptions, options.listenButton, clickedIndex, options.setPlaybackHeadIndex);
 		});
+	}
+
+	function selectInspectorChord(options, measureIndex, chordIndex) {
+		if (options.inspector && typeof options.inspector.select === 'function') {
+			options.inspector.select(measureIndex, chordIndex);
+		}
 	}
 
 	function isSamePlayingMeasure(options, clickedIndex) {
@@ -13266,6 +13509,211 @@
 
 ;
 
+/* Source: js/renderers/progression-inspector-renderer.js */
+// Renderer for the selected progression chord inspector.
+(function (global) {
+	'use strict';
+
+	var labels = global.CodaRenderers.progressionLabels;
+	var timeline = global.CodaRenderers.progressionTimeline;
+
+	function renderShell() {
+		return '<aside class="progressionInspector" aria-live="polite">' +
+			'<div class="progressionInspector__inner">' +
+			'<div class="progressionInspector__header">' +
+			'<span class="material-icons" aria-hidden="true">analytics</span>' +
+			'<div><h3 data-i18n="progression.inspector.title"></h3><p data-i18n="progression.inspector.empty"></p></div>' +
+			'</div>' +
+			'</div>' +
+			'</aside>';
+	}
+
+	function render(selection, options) {
+		var chord = selection && selection.chord ? selection.chord : null;
+		var measure = selection && selection.measure ? selection.measure : {};
+		var chordCount = selection && selection.chordCount ? selection.chordCount : 1;
+		var chordIndex = selection && selection.chordIndex ? selection.chordIndex : 0;
+		var label = chordLabel(chord, options);
+		var html = '<div class="progressionInspector__inner">';
+		var fields;
+
+		if (!chord) {
+			html += '<div class="progressionInspector__header">' +
+				'<span class="material-icons" aria-hidden="true">analytics</span>' +
+				'<div><h3>' + translate(options, 'progression.inspector.title') + '</h3><p>' + translate(options, 'progression.inspector.empty') + '</p></div>' +
+				'</div></div>';
+			return html;
+		}
+
+		fields = inspectorFields(chord, measure, selection, options);
+		html += '<div class="progressionInspector__header">' +
+			'<span class="material-icons" aria-hidden="true">analytics</span>' +
+			'<div><h3>' + labels.formatMusicalLabel(label) + '</h3><p>' + translate(options, 'progression.inspector.bar') + ' ' + labels.escapeHtml(measure.bar || selection.measureIndex + 1) + '</p></div>' +
+			'</div>';
+		html += '<dl class="progressionInspector__grid">';
+		for (var i = 0; i < fields.length; i++) {
+			html += '<dt>' + labels.escapeHtml(fields[i].label) + '</dt><dd>' + fields[i].value + '</dd>';
+		}
+		html += '</dl>';
+		html += renderQuickEditor(chord, options);
+		html += renderActions(chord, chordCount, chordIndex, options);
+		html += '</div>';
+
+		return html;
+	}
+
+	function inspectorFields(chord, measure, selection, options) {
+		var fields = [];
+		var notes = timeline.notesLabel(chord, options || {});
+		var source = timeline.sourceLabel(chord, options || {}) || defaultSourceLabel(chord, options);
+
+		addField(fields, translate(options, 'progression.inspector.degree'), chord.degree ? labels.formatMusicalLabel(chord.degree) : '');
+		addField(fields, translate(options, 'progression.inspector.function'), chord.tonalFunction);
+		addField(fields, translate(options, 'progression.inspector.inversion'), chord.inversion ? labels.formatMusicalLabel(chord.inversion) : rootPositionLabel(options));
+		addField(fields, translate(options, 'progression.inspector.source'), source);
+		addField(fields, translate(options, 'progression.inspector.notes'), notes);
+		addField(fields, translate(options, 'progression.inspector.section'), measure.sectionId || '');
+		addField(fields, translate(options, 'progression.inspector.duration'), durationLabel(chord, options));
+		addField(fields, translate(options, 'progression.inspector.voices'), voiceLabel(chord, options));
+
+		return fields;
+	}
+
+	function addField(fields, label, value) {
+		if (!value && value !== 0) {
+			return;
+		}
+
+		fields.push({
+			label: label,
+			value: String(value).indexOf('<') > -1 ? value : labels.escapeHtml(value)
+		});
+	}
+
+	function renderQuickEditor(chord, options) {
+		var html = '';
+
+		if (!canReplaceChord(chord)) {
+			return '';
+		}
+
+		html += '<div class="progressionInspector__editor">';
+		html += renderKindGroup(chord, 'triad', ['', '6', '6/4'], options);
+		html += renderKindGroup(chord, 'seventh', ['', '6/5', '4/3', '4/2'], options);
+		html += '</div>';
+
+		return html;
+	}
+
+	function renderKindGroup(chord, kind, inversions, options) {
+		var html = '<div class="progressionInspector__buttonGroup">';
+		var titleKey = kind === 'seventh' ? 'progression.chordMenu.seventh' : 'progression.chordMenu.triad';
+
+		html += '<span>' + translate(options, titleKey) + '</span>';
+		for (var i = 0; i < inversions.length; i++) {
+			html += renderReplaceButton(chord, kind, i, inversions[i], options);
+		}
+		html += '</div>';
+
+		return html;
+	}
+
+	function renderReplaceButton(chord, kind, inversionIndex, inversionLabel, options) {
+		var active = isActiveVariant(chord, kind, inversionIndex);
+		var label = inversionLabel || translate(options, 'progression.inspector.rootPositionShort');
+
+		return '<button type="button" class="progressionInspectorVariant' + (active ? ' isActive' : '') + '" data-inspector-action="replace" data-chord-kind="' + labels.escapeHtml(kind) + '" data-inversion-index="' + labels.escapeHtml(inversionIndex) + '" aria-pressed="' + (active ? 'true' : 'false') + '">' + labels.formatMusicalLabel(label) + '</button>';
+	}
+
+	function renderActions(chord, chordCount, chordIndex, options) {
+		var html = '<div class="progressionInspector__actions">';
+
+		html += '<button type="button" class="progressionInspectorAction" data-inspector-action="change"><span class="material-icons" aria-hidden="true">tune</span><span>' + translate(options, 'progression.inspector.moreChords') + '</span></button>';
+		if (canReplaceChord(chord)) {
+			html += '<button type="button" class="progressionInspectorAction" data-inspector-action="silence"><span class="material-icons" aria-hidden="true">volume_off</span><span>' + translate(options, 'progression.chordMenu.silence') + '</span></button>';
+		}
+		if (chordCount === 1 || (chordIndex > 0 && chordCount < 4)) {
+			html += '<button type="button" class="progressionInspectorAction" data-inspector-action="add"><span class="material-icons" aria-hidden="true">add</span><span>' + translate(options, 'progression.inspector.add') + '</span></button>';
+		}
+		if (chordCount > 1 && chordIndex > 0) {
+			html += '<button type="button" class="progressionInspectorAction progressionInspectorAction--danger" data-inspector-action="remove"><span class="material-icons" aria-hidden="true">remove</span><span>' + translate(options, 'progression.inspector.remove') + '</span></button>';
+		}
+		html += '</div>';
+
+		return html;
+	}
+
+	function canReplaceChord(chord) {
+		return !!(chord && !chord.isSilence && chord.degreeIndex != null);
+	}
+
+	function isActiveVariant(chord, kind, inversionIndex) {
+		var chordKind = chord && chord.kind ? chord.kind : (chord && chord.chordName && chord.chordName.indexOf('7') > -1 ? 'seventh' : 'triad');
+		var chordInversionIndex = Number(chord && chord.inversionIndex);
+
+		return chordKind === kind && chordInversionIndex === inversionIndex;
+	}
+
+	function chordLabel(chord, options) {
+		if (!chord) {
+			return '';
+		}
+
+		if (chord.isSilence) {
+			return translate(options, 'progression.chordMenu.silence');
+		}
+
+		return chord.displayName || chord.chordName || chord.label || '';
+	}
+
+	function defaultSourceLabel(chord, options) {
+		if (chord && chord.source === 'chromatic') {
+			return translate(options, 'progression.inspector.chromatic');
+		}
+
+		return translate(options, 'progression.inspector.diatonic');
+	}
+
+	function rootPositionLabel(options) {
+		return translate(options, 'progression.inspector.rootPosition');
+	}
+
+	function durationLabel(chord, options) {
+		var duration = Number(chord.durationBeats);
+
+		if (!isFinite(duration) || duration <= 0) {
+			return '';
+		}
+
+		return duration + ' ' + translate(options, duration === 1 ? 'progression.inspector.beat' : 'progression.inspector.beats');
+	}
+
+	function voiceLabel(chord, options) {
+		var voices = chord.voiceNotes || [];
+
+		if (!voices.length) {
+			return '';
+		}
+
+		return voices.length + ' ' + translate(options, voices.length === 1 ? 'progression.inspector.voice' : 'progression.inspector.voices');
+	}
+
+	function translate(options, key) {
+		return options && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(key) : key;
+	}
+
+	global.CodaRenderers = global.CodaRenderers || {};
+	global.CodaRenderers.progressionInspector = {
+		chordLabel: chordLabel,
+		canReplaceChord: canReplaceChord,
+		inspectorFields: inspectorFields,
+		render: render,
+		renderShell: renderShell
+	};
+})(window);
+
+;
+
 /* Source: js/renderers/progression-workbench-renderer.js */
 // Renderer inicial para el área de construcción de progresiones.
 (function (global) {
@@ -13273,6 +13721,7 @@
 
 	var controlsRenderer = global.CodaRenderers.progressionControls;
 	var timelineRenderer = global.CodaRenderers.progressionTimeline;
+	var inspectorRenderer = global.CodaRenderers.progressionInspector;
 
 	function render() {
 		var html = '';
@@ -13281,6 +13730,7 @@
 		html += controlsRenderer.renderPanels();
 		html += renderGenerateBar();
 		html += timelineRenderer.renderTimeline();
+		html += inspectorRenderer.renderShell();
 		html += renderTransportControls();
 
 		return html;
@@ -13905,6 +14355,8 @@
 		setText(i18n, '.transportButton--export span[data-i18n="progression.exportMidi"]', 'progression.exportMidi');
 		setText(i18n, '.metronomeControl span[data-i18n="progression.metronome"]', 'progression.metronome');
 		setText(i18n, '.loopControl span[data-i18n="progression.loop"]', 'progression.loop');
+		setText(i18n, '.progressionInspector h3[data-i18n="progression.inspector.title"]', 'progression.inspector.title');
+		setText(i18n, '.progressionInspector p[data-i18n="progression.inspector.empty"]', 'progression.inspector.empty');
 		setText(i18n, '.progressionSectionHeader h3[data-i18n="progression.sectionA"]', 'progression.sectionA');
 		setText(i18n, '.progressionSectionHeader h3[data-i18n="progression.sectionB"]', 'progression.sectionB');
 		setTitleAndLabel(i18n, '.progressionSectionCircleButton[data-i18n-title="circle.open"]', 'circle.open');
@@ -14966,12 +15418,20 @@
 		var listenButton = query('.transportButton--listen');
 		var exportButton = query('.transportButton--export');
 		var playbackHeadIndex = 0;
+		var inspector = null;
 
 		if (!root || root.getAttribute('data-coda-progression-transport') === 'true') {
 			return null;
 		}
 
 		root.setAttribute('data-coda-progression-transport', 'true');
+		inspector = global.CodaProgressionInspector ? global.CodaProgressionInspector.initialize({
+			getPlaybackHeadIndex: function () {
+				return playbackHeadIndex;
+			},
+			listenButton: listenButton,
+			transportOptions: options
+		}) : null;
 
 		transportButtons.bind({
 			exportButton: exportButton,
@@ -14992,6 +15452,7 @@
 				return playbackHeadIndex;
 			},
 			listenButton: listenButton,
+			inspector: inspector,
 			root: root,
 			setPlaybackHeadIndex: function (index) {
 				playbackHeadIndex = index;
@@ -15028,6 +15489,16 @@
 		return {
 			exportMidi: function () {
 				global.CodaProgressionMidiDownload.exportMidi(options);
+			},
+			refreshInspector: function () {
+				if (inspector && typeof inspector.refresh === 'function') {
+					inspector.refresh();
+				}
+			},
+			selectChord: function (measureIndex, chordIndex) {
+				if (inspector && typeof inspector.select === 'function') {
+					inspector.select(measureIndex, chordIndex);
+				}
 			},
 			setPlaybackHead: function (index) {
 				playbackHeadIndex = global.CodaProgressionTransportPlayback.normalizeHeadIndex(index, options.uiState ? options.uiState.getProgression() : null);
@@ -16599,6 +17070,9 @@
 
 			if (progressionTransportController && typeof progressionTransportController.setPlaybackHead === 'function') {
 				progressionTransportController.setPlaybackHead(renderOptions.playbackHeadIndex || 0);
+			}
+			if (progressionTransportController && typeof progressionTransportController.refreshInspector === 'function') {
+				progressionTransportController.refreshInspector();
 			}
 		}
 

@@ -24,6 +24,7 @@ const scaleChordsRenderer = context.window.CodaRenderers.scaleChords;
 const scaleSummaryRenderer = context.window.CodaRenderers.scaleSummary;
 const welcomeRenderer = context.window.CodaRenderers.welcome;
 const progressionWorkbenchRenderer = context.window.CodaRenderers.progressionWorkbench;
+const progressionInspectorRenderer = context.window.CodaRenderers.progressionInspector;
 const progressionChordMenuRenderer = context.window.CodaRenderers.progressionChordMenu;
 const notation = context.window.CodaNotation;
 const englishI18n = context.window.CodaI18n.create({
@@ -575,6 +576,41 @@ assert.ok(progressionWorkbenchRenderer.renderTimelineMeasures({
 		}
 	]
 }).indexOf('<strong>Imaj7</strong>') > -1);
+assert.ok(progressionWorkbenchRenderer.render().indexOf('progressionInspector') > -1);
+const renderedInspector = progressionInspectorRenderer.render({
+	chord: {
+		degree: 'Imaj7 4/3',
+		degreeIndex: 0,
+		displayName: 'Cmaj7 4/3',
+		durationBeats: 2,
+		inversion: '4/3',
+		inversionIndex: 2,
+		kind: 'seventh',
+		notes: ['C', 'E', 'G', 'B'],
+		tonalFunction: 'T',
+		voiceNotes: [{ note: 'C' }, { note: 'E' }, { note: 'G' }, { note: 'B' }]
+	},
+	chordCount: 2,
+	chordIndex: 1,
+	measure: {
+		bar: 3,
+		sectionId: 'B'
+	},
+	measureIndex: 2
+}, {
+	i18n: englishI18n,
+	notation: notation,
+	notationStyle: 'latin'
+});
+assert.ok(renderedInspector.indexOf('Cmaj7 <sub class="musicInversion">4/3</sub>') > -1);
+assert.ok(renderedInspector.indexOf('Do - Mi - Sol - Si') > -1);
+assert.ok(renderedInspector.indexOf('data-inspector-action="replace"') > -1);
+assert.ok(renderedInspector.indexOf('data-chord-kind="triad"') > -1);
+assert.ok(renderedInspector.indexOf('data-chord-kind="seventh"') > -1);
+assert.ok(renderedInspector.indexOf('aria-pressed="true"') > -1);
+assert.ok(renderedInspector.indexOf('Silence') > -1);
+assert.ok(renderedInspector.indexOf('Remove') > -1);
+assert.ok(renderedInspector.indexOf('Bar 3') > -1);
 
 context.window.document = createRendererDocument();
 const chordMenu = progressionChordMenuRenderer.render([

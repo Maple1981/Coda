@@ -67,10 +67,12 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/renderers/progression-label-renderer.js`: formateo HTML común de etiquetas musicales de progresiones, incluyendo subíndices de inversiones.
 - `js/renderers/progression-controls-renderer.js`: renderizado de los controles de tiempo, escritura y color armónico del constructor de progresiones.
 - `js/renderers/progression-timeline-renderer.js`: renderizado de compases, acordes, divisiones internas, grados, funciones e iconos de edición de la progresión.
+- `js/renderers/progression-inspector-renderer.js`: renderizado del inspector del acorde seleccionado en el constructor de progresiones.
 - `js/renderers/progression-workbench-renderer.js`: composición inicial del área de progresiones a partir de los renderers especializados.
 - `js/ui/ui-state.js`: factoría `CodaUiState.create(...)` para el estado mutable de pantalla.
 - `js/ui/progression-state-schema.js`: esquema estable de los controles del constructor de progresiones.
 - `js/ui/progression-state.js`: factoría y normalizador `CodaProgressionState` para leer los controles actuales de progresiones y producir un objeto estable.
+- `js/services/progression-inspector-service.js`: sincronización del acorde seleccionado con el inspector y acciones rápidas compatibles con el transporte de progresiones.
 - `js/ui/static-text-controller.js`: aplicación de textos estáticos y contenido largo traducido sobre el DOM.
 - `js/ui/volume-controller.js`: fader de volumen maestro de la cabecera. Ajusta el porcentaje global de preescucha sin cambiar las reglas musicales ni la exportación MIDI.
 - `js/ui/theme-controller.js`: conmutador de tema visual día/noche. Aplica `data-theme` sobre `body` y guarda la preferencia en cookie.

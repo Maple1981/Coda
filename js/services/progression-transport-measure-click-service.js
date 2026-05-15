@@ -16,6 +16,7 @@
 			}
 
 			clickedIndex = transportDom.measureIndex(measure);
+			selectInspectorChord(options, clickedIndex, transportDom.chordIndex(chordElement));
 			if (chordMenuButton) {
 				preventAndStop(event);
 				global.CodaProgressionTransportMenu.open(options.transportOptions, chordMenuButton, clickedIndex, transportDom.chordIndex(chordElement));
@@ -41,6 +42,12 @@
 			options.transportView.setPlaybackHead(clickedIndex, false);
 			global.CodaProgressionTransportPlayback.play(options.transportOptions, options.listenButton, clickedIndex, options.setPlaybackHeadIndex);
 		});
+	}
+
+	function selectInspectorChord(options, measureIndex, chordIndex) {
+		if (options.inspector && typeof options.inspector.select === 'function') {
+			options.inspector.select(measureIndex, chordIndex);
+		}
 	}
 
 	function isSamePlayingMeasure(options, clickedIndex) {

@@ -1009,6 +1009,9 @@
 			if (progressionTransportController && typeof progressionTransportController.setPlaybackHead === 'function') {
 				progressionTransportController.setPlaybackHead(renderOptions.playbackHeadIndex || 0);
 			}
+			if (progressionTransportController && typeof progressionTransportController.refreshInspector === 'function') {
+				progressionTransportController.refreshInspector();
+			}
 		}
 
 		function restoreInitialProgressionWorkspace(selection) {
