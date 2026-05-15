@@ -134,6 +134,36 @@ assert.equal(contrastingSectionProgression.sections[1].length, 4);
 assert.equal(contrastingSectionProgression.measures[4].bar, 5);
 assert.equal(contrastingSectionProgression.measures[4].sectionId, 'B');
 assert.equal(contrastingSectionProgression.measures[4].tonalFunction, 'SD');
+[
+	{ expected: 'relative', rng: sequenceRng([0.5, 0.1, 0.1, 0.1]) },
+	{ expected: 'parallel', rng: sequenceRng([0.75, 0.1, 0.1, 0.1]) },
+	{ expected: 'circle-neighbor', rng: sequenceRng([0.95, 0.1, 0.1, 0.1]) }
+].forEach(function (scenario) {
+	var contrasted = app.generateContrastingProgressionSection({
+		data: data,
+		domain: domain,
+		progression: cMajorProgressionPlan,
+		progressionState: {
+			articulation: 'legato',
+			bars: 4,
+			beatUnit: 4,
+			beatsPerBar: 3,
+			bpm: 120,
+			counterpoint: 30,
+			meter: '3/4',
+			modalInterchange: 10,
+			tensions: 40,
+			voices: 3
+		},
+		report: cMajorReport,
+		rng: scenario.rng,
+		selection: { preferFlats: false }
+	});
+
+	assert.equal(contrasted.sections[1].contrast, scenario.expected);
+	assert.equal(contrasted.measures.length, 8);
+	assert.equal(contrasted.measures[4].sectionId, 'B');
+});
 assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	articulation: 'legato',
 	bar: 2,

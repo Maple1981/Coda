@@ -9,6 +9,7 @@
 		var progressionState = cloneObject(options.progressionState || {});
 		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
 		var sectionAMeasures = measuresForSectionA(progression, progressionState);
+		options.buildScaleReport = dependencies.buildScaleReport;
 		var candidate = chooseContrastCandidate(options, rng);
 		var targetReport = candidate.report || options.report;
 		var sectionState = cloneObject(progressionState);
@@ -16,7 +17,6 @@
 		var combined;
 		var rebuilt;
 
-		options.buildScaleReport = dependencies.buildScaleReport;
 		sectionState.bars = sectionAMeasures.length || progressionState.bars || 8;
 		sectionB = dependencies.generateProgressionFromState({
 			data: options.data,

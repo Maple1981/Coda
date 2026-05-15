@@ -89,6 +89,22 @@ const cMajorChords = domain.buildScaleChords({
 	octaveSemitones: data.constants.octaveSemitones
 });
 
+const bMajor = domain.buildScale({
+	tonicIndex: noteIndex('B'),
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	notes: data.notes,
+	intervals: data.intervals,
+	octaveSemitones: data.constants.octaveSemitones,
+	preferFlats: false
+});
+
+const bMajorChords = domain.buildScaleChords({
+	scaleNotes: bMajor,
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	chordDefinitions: data.chords,
+	octaveSemitones: data.constants.octaveSemitones
+});
+
 const cMinorNatural = domain.buildScale({
 	tonicIndex: noteIndex('C'),
 	scaleDefinition: byName(data.scales, 'Menor natural'),
@@ -266,6 +282,18 @@ assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Función</td>') > -1);
 assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Paralela</td>') > -1);
 assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Paralela 7</td>') > -1);
 assert.ok(scaleChordsHtml.indexOf('<td class="cabecera">Paralela</td>') < scaleChordsHtml.indexOf('<td class="cabecera">Paralela 7</td>'));
+
+const bMajorScaleChordsHtml = scaleChordsRenderer.render({
+	mode: 'M',
+	parallelScaleChords: [],
+	scaleChords: bMajorChords,
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	scaleNotes: bMajor
+});
+assert.ok(bMajorScaleChordsHtml.indexOf('F#sus2') > -1);
+assert.ok(bMajorScaleChordsHtml.indexOf('F#sus4') > -1);
+assert.equal(scaleChordsRenderer.suspendedName('F#7', 'sus4'), 'F#sus4');
+assert.equal(scaleChordsRenderer.suspendedName('B♭7', 'sus2'), 'B♭sus2');
 
 const latinScaleChordsHtml = scaleChordsRenderer.render({
 	mode: 'M',

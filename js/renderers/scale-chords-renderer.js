@@ -122,6 +122,13 @@
 	}
 
 	function suspendedName(chordName, suspension) {
+		var root = chordRoot(chordName);
+		var resolvedSuspension = chordName.indexOf('dim7') >= 0 && suspension === 'sus4' ? 'sus2' : suspension;
+
+		if (root) {
+			return root + resolvedSuspension;
+		}
+
 		var name = chordName
 			.replace('maj7', suspension)
 			.replace('Maj7', suspension)
@@ -135,6 +142,12 @@
 		}
 
 		return name;
+	}
+
+	function chordRoot(chordName) {
+		var match = /^([A-G](#|b|\u266f|\u266d)?)/.exec(String(chordName || ''));
+
+		return match ? match[1] : '';
 	}
 
 	function formatDegreeForChord(degree, chordName) {
@@ -207,7 +220,9 @@
 	global.CodaRenderers = global.CodaRenderers || {};
 	global.CodaRenderers.scaleChords = {
 		buildRows: buildRows,
+		chordRoot: chordRoot,
 		formatDegreeForChord: formatDegreeForChord,
-		render: render
+		render: render,
+		suspendedName: suspendedName
 	};
 })(window);
