@@ -41,6 +41,7 @@ const rendered = {
 };
 const playbackInstruments = [];
 const savedPreferences = {};
+const savedWorkspaces = [];
 const options = {
 	application: context.window.CodaApplication,
 	chordPlayback: {
@@ -77,6 +78,14 @@ const options = {
 		}
 	},
 	progressionState: context.window.CodaProgressionState,
+	progressionWorkspaceStorage: {
+		buildWorkspace: context.window.CodaProgressionWorkspaceStorage.buildWorkspace,
+		matchesSelection: context.window.CodaProgressionWorkspaceStorage.matchesSelection,
+		write: function (workspace) {
+			savedWorkspaces.push(workspace);
+			return true;
+		}
+	},
 	renderers: {},
 	ui: createFakeUi(document, rendered)
 };
@@ -108,6 +117,9 @@ assert.equal(initialProgression.bars, 8);
 assert.equal(initialProgression.meter, '4/4');
 assert.equal(initialProgression.totalBeats, 32);
 assert.equal(initialProgression.totalSeconds, 16);
+assert.ok(savedWorkspaces.length > 0);
+assert.equal(savedWorkspaces[savedWorkspaces.length - 1].signature, '0|0|0');
+assert.equal(savedWorkspaces[savedWorkspaces.length - 1].progression.measures.length, 8);
 assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.degree; }), ['I', 'vi 6', 'ii', 'V 6/4', 'I 6', 'IV', 'V 6/4', 'I 6']);
 assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'Am', 'Dm', 'G', 'C', 'F', 'G', 'C']);
 assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'T', 'SD', 'D', 'T', 'SD', 'D', 'T']);
@@ -342,6 +354,20 @@ assert.equal(initialized.uiState.getProgression().measures.length, 16);
 assert.equal(initialized.uiState.getProgression().bars, 16);
 assert.equal(initialized.uiState.getProgression().measures[15].bar, 16);
 assert.equal(rendered.progression, progressionRendersBeforeEditedControlChange + 1);
+assert.equal(savedWorkspaces[savedWorkspaces.length - 1].progression.userEdited, true);
+assert.equal(savedWorkspaces[savedWorkspaces.length - 1].progression.measures[0].chords.length, 2);
+assert.equal(savedWorkspaces[savedWorkspaces.length - 1].progression.measures.length, 16);
+
+const workspaceCountBeforeSectionB = savedWorkspaces.length;
+document.getElementById('constructorProgresiones').dispatchEvent({
+	target: document.getElementById('generateProgressionSectionB'),
+	type: 'click'
+});
+assert.ok(savedWorkspaces.length > workspaceCountBeforeSectionB);
+assert.equal(savedWorkspaces[savedWorkspaces.length - 1].progression.userEdited, true);
+assert.ok(savedWorkspaces[savedWorkspaces.length - 1].progression.sections.some(function (section) {
+	return section.id === 'B';
+}));
 
 document.dispatchDocumentEvent({
 	target: document.getElementById('workbenchContextInstrumentToggle'),
@@ -479,6 +505,7 @@ function createFakeDocument() {
 	addElement('interface');
 	addElement('herramientasTeoricas');
 	addElement('constructorProgresiones');
+	addElement('generateProgressionSectionB');
 	addElement('progressionControls');
 	addElement('workbenchContext');
 	addElement('workbenchContextKeyToggle');

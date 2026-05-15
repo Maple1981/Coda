@@ -39,6 +39,7 @@ assert.ok(global.CodaMusicalContext.create);
 assert.ok(global.CodaNotation.formatNoteName);
 assert.ok(global.CodaPreferences.create);
 assert.ok(global.CodaProgressionPreferences.fromPreferences);
+assert.ok(global.CodaProgressionWorkspaceStorage.read);
 assert.ok(global.CodaProgressionStateNormalizer.normalize);
 assert.ok(global.CodaProgressionDegreeResolver.fromGeneratedPlan);
 assert.ok(global.CodaProgressionPitch.normalizePitchName);
@@ -209,6 +210,7 @@ assert.ok(manifestScripts.indexOf('js/i18n/i18n-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/musical-context-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/notation-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/preferences-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-workspace-storage-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-state-normalizer-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-degree-resolver-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-pitch-service.js') > -1);
@@ -471,6 +473,48 @@ assert.deepEqual(global.CodaProgressionPreferences.normalizeControls({
 	voicing: 'open',
 	voices: 4
 });
+
+const storageWrites = {};
+global.localStorage = {
+	getItem: function (key) {
+		return storageWrites[key] || null;
+	},
+	removeItem: function (key) {
+		delete storageWrites[key];
+	},
+	setItem: function (key, value) {
+		storageWrites[key] = String(value);
+	}
+};
+const workspace = global.CodaProgressionWorkspaceStorage.buildWorkspace({
+	progression: {
+		bars: 1,
+		measures: [{ bar: 1 }]
+	},
+	progressionState: {
+		bars: 1,
+		bpm: 120
+	},
+	selectedTuningIndex: 2,
+	selection: {
+		format: '1',
+		scaleIndex: 2,
+		tonicIndex: 5
+	}
+});
+assert.equal(workspace.signature, '5|2|1');
+assert.equal(global.CodaProgressionWorkspaceStorage.write(workspace), true);
+assert.equal(global.CodaProgressionWorkspaceStorage.read().signature, '5|2|1');
+assert.equal(global.CodaProgressionWorkspaceStorage.matchesSelection(workspace, {
+	format: '1',
+	scaleIndex: 2,
+	tonicIndex: 5
+}), true);
+assert.equal(global.CodaProgressionWorkspaceStorage.matchesSelection(workspace, {
+	format: '0',
+	scaleIndex: 2,
+	tonicIndex: 5
+}), false);
 assert.deepEqual(global.CodaProgressionStateNormalizer.normalize({
 	beatUnit: 8,
 	beatsPerBar: 7,
@@ -868,6 +912,17 @@ const englishI18n = global.CodaI18n.create({
 const preferences = global.CodaPreferences.create();
 let playbackOptions;
 let loadCalled = false;
+const initialProgressionWorkspace = {
+	progression: {
+		bars: 1,
+		measures: [{ bar: 1 }]
+	},
+	progressionState: {
+		bars: 1
+	},
+	signature: '5|2|1',
+	version: 1
+};
 
 const startResult = global.CodaBootstrap.start({
 	application: global.CodaApplication,
@@ -891,6 +946,7 @@ const startResult = global.CodaBootstrap.start({
 		bars: 16,
 		voicing: 'open'
 	},
+	initialProgressionWorkspace: initialProgressionWorkspace,
 	initialTheme: 'day',
 	initialVolume: 73,
 	midi: { plugin: {} },
@@ -953,6 +1009,7 @@ assert.deepEqual(controllerOptions.initialProgressionState, {
 	bars: 16,
 	voicing: 'open'
 });
+assert.equal(controllerOptions.initialProgressionWorkspace, initialProgressionWorkspace);
 assert.equal(controllerOptions.initialTheme, 'day');
 assert.equal(controllerOptions.initialVolume, 73);
 assert.equal(controllerOptions.instrumentPlayback, startResult.instrumentPlayback);
@@ -962,6 +1019,7 @@ assert.equal(controllerOptions.notation, global.CodaNotation);
 assert.equal(controllerOptions.playbackService, startResult.playbackService);
 assert.equal(controllerOptions.progressionPlayback, startResult.progressionPlayback);
 assert.equal(controllerOptions.progressionPreferences, global.CodaProgressionPreferences);
+assert.equal(controllerOptions.progressionWorkspaceStorage, global.CodaProgressionWorkspaceStorage);
 assert.equal(controllerOptions.progressionState, global.CodaProgressionState);
 assert.equal(controllerOptions.progressionTransport, global.CodaProgressionTransport);
 assert.equal(controllerOptions.randomSelectControl, global.CodaRandomSelect);

@@ -14,6 +14,7 @@
 		var progressionTransport = options.progressionTransport || global.CodaProgressionTransport;
 		var progressionTransportController = null;
 		var progressionState = options.progressionState || global.CodaProgressionState;
+		var progressionWorkspaceStorage = options.progressionWorkspaceStorage || global.CodaProgressionWorkspaceStorage;
 		var staticText = options.staticText || global.CodaStaticText;
 		var uiState = options.uiState || global.CodaUiState.create({
 			initialNotation: notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon',
@@ -29,6 +30,8 @@
 		};
 		var progressionStateInputTimer = null;
 		var progressionStateInputDelay = 160;
+		var initialProgressionWorkspace = options.initialProgressionWorkspace || null;
+		var initialProgressionWorkspaceRestored = false;
 		uiState.setNotationStyle(notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon');
 		var initialForm = resolveInitialForm(options.data, options.initialForm);
 
@@ -242,7 +245,9 @@
 				tonicName: musicalContext.tonicName
 			});
 			uiState.setReport(report);
-			syncProgressionPlan();
+			if (!restoreInitialProgressionWorkspace(selection)) {
+				syncProgressionPlan();
+			}
 
 			options.ui.renderScaleReport({
 				data: options.data,
@@ -965,20 +970,21 @@
 				uiState.getReport() &&
 				uiState.getProgressionState()
 			) {
-				setProgression(options.application.generateContrastingProgressionSection({
+				setProgression(markProgressionAsUserEdited(options.application.generateContrastingProgressionSection({
 					data: options.data,
 					domain: options.domain,
 					progression: uiState.getProgression(),
 					progressionState: uiState.getProgressionState(),
 					report: uiState.getReport(),
 					selection: uiState.getSelection()
-				}));
+				})));
 			}
 		}
 
 		function setProgression(progression, renderOptions) {
 			renderOptions = renderOptions || {};
 			uiState.setProgression(progression);
+			saveProgressionWorkspace();
 
 			if (progressionTransportController && typeof progressionTransportController.stop === 'function') {
 				progressionTransportController.stop();
@@ -1002,6 +1008,48 @@
 			if (progressionTransportController && typeof progressionTransportController.setPlaybackHead === 'function') {
 				progressionTransportController.setPlaybackHead(renderOptions.playbackHeadIndex || 0);
 			}
+		}
+
+		function restoreInitialProgressionWorkspace(selection) {
+			if (
+				initialProgressionWorkspaceRestored ||
+				!initialProgressionWorkspace ||
+				!progressionWorkspaceStorage ||
+				typeof progressionWorkspaceStorage.matchesSelection !== 'function' ||
+				!progressionWorkspaceStorage.matchesSelection(initialProgressionWorkspace, selection)
+			) {
+				initialProgressionWorkspaceRestored = true;
+				return false;
+			}
+
+			initialProgressionWorkspaceRestored = true;
+			restoreProgressionControls(initialProgressionWorkspace.progressionState);
+			uiState.setProgressionState(cloneJson(initialProgressionWorkspace.progressionState));
+			uiState.setSelectedTuningIndex(normalizeHistoryTuningIndex(initialProgressionWorkspace.selectedTuningIndex));
+			setProgression(cloneJson(initialProgressionWorkspace.progression), {
+				playbackHeadIndex: 0
+			});
+			return true;
+		}
+
+		function saveProgressionWorkspace() {
+			if (
+				!progressionWorkspaceStorage ||
+				typeof progressionWorkspaceStorage.buildWorkspace !== 'function' ||
+				typeof progressionWorkspaceStorage.write !== 'function' ||
+				!uiState.getProgression() ||
+				!uiState.getProgressionState() ||
+				!uiState.getSelection()
+			) {
+				return;
+			}
+
+			progressionWorkspaceStorage.write(progressionWorkspaceStorage.buildWorkspace({
+				progression: uiState.getProgression(),
+				progressionState: uiState.getProgressionState(),
+				selectedTuningIndex: uiState.getSelectedTuningIndex(),
+				selection: uiState.getSelection()
+			}));
 		}
 
 		function refreshEditedProgressionFromState() {

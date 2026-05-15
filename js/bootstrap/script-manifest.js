@@ -25,6 +25,7 @@
 			'js/services/notation-service.js',
 			'js/services/preferences-service.js',
 			'js/services/progression-preferences-service.js',
+			'js/services/progression-workspace-storage-service.js',
 			'js/services/progression-style-service.js',
 			'js/services/progression-state-normalizer-service.js',
 			'js/services/progression-degree-resolver-service.js',

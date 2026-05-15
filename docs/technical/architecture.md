@@ -41,6 +41,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/services/progression-chromatic-cadence-service.js`: generación de cadencias cromáticas tonales con sexta napolitana y acordes de sexta aumentada, siempre como preparación de dominante.
 - `js/services/musical-context-service.js`: construcción del contexto musical actual a partir de la selección de pantalla.
 - `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma, notación, tema visual, volumen maestro, tónica, escala, formato, instrumento sonoro y controles del constructor de progresiones.
+- `js/services/progression-workspace-storage-service.js`: persistencia local del trabajo actual del constructor de progresiones mediante `localStorage`, incluyendo secciones, acordes añadidos, reordenaciones y controles asociados.
 - `js/services/midi-export-service.js`: conversión de progresiones a eventos MIDI y bytes de archivo Standard MIDI File sin depender del DOM.
 - `js/application/scale-report-application.js`: construye informes de escala e instrumentos.
 - `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI y alturas MIDI de instrumentos a eventos de playback.
@@ -107,6 +108,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - Los eventos sobre acordes y notas de instrumento deben delegarse desde contenedores estables. Evitar reenlazar manejadores sobre cada celda renderizada.
 - Los reajustes de layout dependientes de medidas del DOM deben programarse con `requestAnimationFrame` mediante las funciones `schedule...` de `js/ui/scale-report-ui.js`.
 - Las preferencias ligeras pueden guardarse en la cookie `coda_preferences`; cualquier valor nuevo debe añadirse de forma compatible con los existentes. La selección principal del formulario debe restaurarse al arrancar sin forzar la recomendación automática de formato cuando el usuario ya había guardado una elección explícita.
+- El trabajo editable de progresiones debe guardarse en `coda_progression_workspace` mediante `localStorage`, no en cookie. Incluye la progresión completa y debe restaurarse solo cuando coincida con la tónica, escala y formato guardados para evitar mezclar material armónico de contextos distintos.
 - El orden de carga de módulos debe mantenerse en `js/bootstrap/script-manifest.js` y verificarse con `tests/architecture-tests.js`.
 - Las pruebas que cargan pilas largas de scripts deben usar `tests/helpers/script-loader.js` para leer rangos desde el manifest, evitando listas manuales que se desincronicen al añadir módulos.
 - Si una mejora requiere servidor, cuentas de usuario, sincronización externa o almacenamiento persistente, debe tratarse como cambio de alcance.

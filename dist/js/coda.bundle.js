@@ -2280,6 +2280,157 @@
 
 ;
 
+/* Source: js/services/progression-workspace-storage-service.js */
+// Local persistence for the current progression workspace.
+(function (global) {
+	'use strict';
+
+	var storageKey = 'coda_progression_workspace';
+	var version = 1;
+
+	function read() {
+		var storage = storageProvider();
+		var parsed;
+
+		if (!storage) {
+			return null;
+		}
+
+		try {
+			parsed = JSON.parse(storage.getItem(storageKey) || 'null');
+		} catch (error) {
+			return null;
+		}
+
+		return isValidWorkspace(parsed) ? parsed : null;
+	}
+
+	function write(workspace) {
+		var storage = storageProvider();
+		var normalized = sanitizeWorkspace(workspace);
+
+		if (!storage || !normalized) {
+			return false;
+		}
+
+		try {
+			storage.setItem(storageKey, JSON.stringify(normalized));
+			return true;
+		} catch (error) {
+			return false;
+		}
+	}
+
+	function clear() {
+		var storage = storageProvider();
+
+		if (!storage) {
+			return;
+		}
+
+		try {
+			storage.removeItem(storageKey);
+		} catch (error) {
+			return;
+		}
+	}
+
+	function buildWorkspace(options) {
+		options = options || {};
+
+		return sanitizeWorkspace({
+			progression: options.progression,
+			progressionState: options.progressionState,
+			selectedTuningIndex: options.selectedTuningIndex,
+			signature: contextSignature(options.selection),
+			updatedAt: new Date().toISOString(),
+			version: version
+		});
+	}
+
+	function matchesSelection(workspace, selection) {
+		return !!(workspace && workspace.signature && workspace.signature === contextSignature(selection));
+	}
+
+	function contextSignature(selection) {
+		selection = selection || {};
+
+		return [
+			selection.tonicIndex != null ? selection.tonicIndex : '',
+			selection.scaleIndex != null ? selection.scaleIndex : '',
+			selection.format != null ? selection.format : formatFromPreference(selection.preferFlats)
+		].join('|');
+	}
+
+	function formatFromPreference(preferFlats) {
+		if (preferFlats === true) {
+			return '1';
+		}
+
+		if (preferFlats === false) {
+			return '0';
+		}
+
+		return '';
+	}
+
+	function sanitizeWorkspace(workspace) {
+		if (!workspace || !workspace.progression || !workspace.progressionState || !workspace.signature) {
+			return null;
+		}
+
+		return {
+			progression: cloneJson(workspace.progression),
+			progressionState: cloneJson(workspace.progressionState),
+			selectedTuningIndex: normalizeTuningIndex(workspace.selectedTuningIndex),
+			signature: String(workspace.signature),
+			updatedAt: workspace.updatedAt || new Date().toISOString(),
+			version: version
+		};
+	}
+
+	function isValidWorkspace(workspace) {
+		return !!(
+			workspace &&
+			Number(workspace.version) === version &&
+			workspace.signature &&
+			workspace.progression &&
+			workspace.progressionState &&
+			workspace.progression.measures &&
+			workspace.progression.measures.length
+		);
+	}
+
+	function normalizeTuningIndex(value) {
+		var numericValue = Number(value);
+
+		return isFinite(numericValue) && numericValue >= 0 ? numericValue : 0;
+	}
+
+	function cloneJson(value) {
+		return value == null ? null : JSON.parse(JSON.stringify(value));
+	}
+
+	function storageProvider() {
+		try {
+			return global.localStorage || null;
+		} catch (error) {
+			return null;
+		}
+	}
+
+	global.CodaProgressionWorkspaceStorage = {
+		buildWorkspace: buildWorkspace,
+		clear: clear,
+		contextSignature: contextSignature,
+		matchesSelection: matchesSelection,
+		read: read,
+		write: write
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-style-service.js */
 // Normalized style checks for progression generation rules.
 (function (global) {
@@ -15152,6 +15303,7 @@
 		var progressionTransport = options.progressionTransport || global.CodaProgressionTransport;
 		var progressionTransportController = null;
 		var progressionState = options.progressionState || global.CodaProgressionState;
+		var progressionWorkspaceStorage = options.progressionWorkspaceStorage || global.CodaProgressionWorkspaceStorage;
 		var staticText = options.staticText || global.CodaStaticText;
 		var uiState = options.uiState || global.CodaUiState.create({
 			initialNotation: notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon',
@@ -15167,6 +15319,8 @@
 		};
 		var progressionStateInputTimer = null;
 		var progressionStateInputDelay = 160;
+		var initialProgressionWorkspace = options.initialProgressionWorkspace || null;
+		var initialProgressionWorkspaceRestored = false;
 		uiState.setNotationStyle(notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon');
 		var initialForm = resolveInitialForm(options.data, options.initialForm);
 
@@ -15380,7 +15534,9 @@
 				tonicName: musicalContext.tonicName
 			});
 			uiState.setReport(report);
-			syncProgressionPlan();
+			if (!restoreInitialProgressionWorkspace(selection)) {
+				syncProgressionPlan();
+			}
 
 			options.ui.renderScaleReport({
 				data: options.data,
@@ -16103,20 +16259,21 @@
 				uiState.getReport() &&
 				uiState.getProgressionState()
 			) {
-				setProgression(options.application.generateContrastingProgressionSection({
+				setProgression(markProgressionAsUserEdited(options.application.generateContrastingProgressionSection({
 					data: options.data,
 					domain: options.domain,
 					progression: uiState.getProgression(),
 					progressionState: uiState.getProgressionState(),
 					report: uiState.getReport(),
 					selection: uiState.getSelection()
-				}));
+				})));
 			}
 		}
 
 		function setProgression(progression, renderOptions) {
 			renderOptions = renderOptions || {};
 			uiState.setProgression(progression);
+			saveProgressionWorkspace();
 
 			if (progressionTransportController && typeof progressionTransportController.stop === 'function') {
 				progressionTransportController.stop();
@@ -16140,6 +16297,48 @@
 			if (progressionTransportController && typeof progressionTransportController.setPlaybackHead === 'function') {
 				progressionTransportController.setPlaybackHead(renderOptions.playbackHeadIndex || 0);
 			}
+		}
+
+		function restoreInitialProgressionWorkspace(selection) {
+			if (
+				initialProgressionWorkspaceRestored ||
+				!initialProgressionWorkspace ||
+				!progressionWorkspaceStorage ||
+				typeof progressionWorkspaceStorage.matchesSelection !== 'function' ||
+				!progressionWorkspaceStorage.matchesSelection(initialProgressionWorkspace, selection)
+			) {
+				initialProgressionWorkspaceRestored = true;
+				return false;
+			}
+
+			initialProgressionWorkspaceRestored = true;
+			restoreProgressionControls(initialProgressionWorkspace.progressionState);
+			uiState.setProgressionState(cloneJson(initialProgressionWorkspace.progressionState));
+			uiState.setSelectedTuningIndex(normalizeHistoryTuningIndex(initialProgressionWorkspace.selectedTuningIndex));
+			setProgression(cloneJson(initialProgressionWorkspace.progression), {
+				playbackHeadIndex: 0
+			});
+			return true;
+		}
+
+		function saveProgressionWorkspace() {
+			if (
+				!progressionWorkspaceStorage ||
+				typeof progressionWorkspaceStorage.buildWorkspace !== 'function' ||
+				typeof progressionWorkspaceStorage.write !== 'function' ||
+				!uiState.getProgression() ||
+				!uiState.getProgressionState() ||
+				!uiState.getSelection()
+			) {
+				return;
+			}
+
+			progressionWorkspaceStorage.write(progressionWorkspaceStorage.buildWorkspace({
+				progression: uiState.getProgression(),
+				progressionState: uiState.getProgressionState(),
+				selectedTuningIndex: uiState.getSelectedTuningIndex(),
+				selection: uiState.getSelection()
+			}));
 		}
 
 		function refreshEditedProgressionFromState() {
@@ -17172,6 +17371,7 @@
 			initialForm: options.initialForm,
 			initialNotation: options.initialNotation,
 			initialProgressionState: options.initialProgressionState,
+			initialProgressionWorkspace: options.initialProgressionWorkspace,
 			initialTheme: options.initialTheme,
 			initialVolume: options.initialVolume,
 			instrumentPlayback: instrumentPlayback,
@@ -17187,6 +17387,7 @@
 			progressionPlayback: progressionPlayback,
 			progressionState: options.progressionState || global.CodaProgressionState,
 			progressionTransport: options.progressionTransport || global.CodaProgressionTransport,
+			progressionWorkspaceStorage: options.progressionWorkspaceStorage || global.CodaProgressionWorkspaceStorage,
 			randomSelectControl: options.randomSelectControl || global.CodaRandomSelect,
 			renderers: options.renderers,
 			staticText: options.staticText || global.CodaStaticText,
@@ -17240,6 +17441,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	var preferences = CodaPreferences.create();
 	var storedPreferences = preferences.read();
+	var storedProgressionWorkspace = CodaProgressionWorkspaceStorage.read();
 	var languageSelector = document.getElementById('selectorIdioma');
 	var i18n = CodaI18n.create({
 		initialLanguage: storedPreferences.language || (languageSelector ? languageSelector.value : 'es'),
@@ -17262,6 +17464,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		},
 		initialNotation: storedPreferences.notation,
 		initialProgressionState: CodaProgressionPreferences.fromPreferences(storedPreferences),
+		initialProgressionWorkspace: storedProgressionWorkspace,
 		initialTheme: storedPreferences.theme,
 		initialVolume: storedPreferences.volume,
 		musicalContextFactory: CodaMusicalContext,
@@ -17270,6 +17473,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		playbackFactory: CodaPlayback,
 		preferences: preferences,
 		progressionTransport: CodaProgressionTransport,
+		progressionWorkspaceStorage: CodaProgressionWorkspaceStorage,
 		progressionState: CodaProgressionState,
 		renderers: CodaRenderers,
 		staticText: CodaStaticText,

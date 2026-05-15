@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	var preferences = CodaPreferences.create();
 	var storedPreferences = preferences.read();
+	var storedProgressionWorkspace = CodaProgressionWorkspaceStorage.read();
 	var languageSelector = document.getElementById('selectorIdioma');
 	var i18n = CodaI18n.create({
 		initialLanguage: storedPreferences.language || (languageSelector ? languageSelector.value : 'es'),
@@ -31,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		},
 		initialNotation: storedPreferences.notation,
 		initialProgressionState: CodaProgressionPreferences.fromPreferences(storedPreferences),
+		initialProgressionWorkspace: storedProgressionWorkspace,
 		initialTheme: storedPreferences.theme,
 		initialVolume: storedPreferences.volume,
 		musicalContextFactory: CodaMusicalContext,
@@ -39,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		playbackFactory: CodaPlayback,
 		preferences: preferences,
 		progressionTransport: CodaProgressionTransport,
+		progressionWorkspaceStorage: CodaProgressionWorkspaceStorage,
 		progressionState: CodaProgressionState,
 		renderers: CodaRenderers,
 		staticText: CodaStaticText,

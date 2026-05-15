@@ -137,3 +137,4 @@ Flujos mínimos a comprobar tras cambios de arquitectura o UI:
 - Cambiar el selector de idioma entre español e inglés y comprobar que se actualizan cabecera, formulario, área de progresiones, textos de ayuda, novedades, tablas e instrumento.
 - Cambiar el selector de notación entre anglosajona y latina; comprobar que tónica, escala generada, acordes, instrumento y círculo de quintas cambian la representación visible de las notas.
 - Recargar la página y comprobar que la cookie `coda_preferences` conserva idioma, notación, tema visual, volumen maestro, tónica, escala, formato, instrumento sonoro y controles del constructor de progresiones.
+- Añadir acordes a compases, reordenarlos, generar una sección B, recargar la página y comprobar que `localStorage.coda_progression_workspace` restaura el trabajo de progresión para la misma tónica, escala y formato.
