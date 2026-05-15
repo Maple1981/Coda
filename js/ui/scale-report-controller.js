@@ -366,7 +366,8 @@
 				var trigger = closest(event.target, '#toggleCircleOfFifths') ||
 					closest(event.target, '#toggleCircleOfFifthsFromContext') ||
 					closest(event.target, '#toggleCircleOfFifthsFromForm') ||
-					closest(event.target, '#workbenchContextKeyToggle');
+					closest(event.target, '#workbenchContextKeyToggle') ||
+					closest(event.target, '.progressionSectionCircleButton');
 
 				if (trigger) {
 					toggleCircleOfFifthsPopover(trigger);
@@ -571,13 +572,15 @@
 
 		function openCircleOfFifthsPopover(trigger) {
 			var popover = query('#circleOfFifthsPopover');
+			var circle = circleOfFifthsForTrigger(trigger);
 			var triggerId = getCircleOfFifthsTriggerId(trigger);
 			var shouldResetPosition = !!trigger && (triggerId !== circleOfFifthsAnchorId || !circleOfFifthsDragged);
 
-			if (!popover || !uiState.getReport() || !uiState.getReport().circleOfFifths) {
+			if (!popover || !circle) {
 				return;
 			}
 
+			renderCircleOfFifths(circle);
 			popover.hidden = false;
 
 			if (shouldResetPosition) {
@@ -590,7 +593,52 @@
 		}
 
 		function getCircleOfFifthsTriggerId(trigger) {
-			return trigger && trigger.id ? trigger.id : '';
+			var sectionId = trigger && trigger.getAttribute ? trigger.getAttribute('data-section-circle') : '';
+
+			if (trigger && trigger.id) {
+				return trigger.id;
+			}
+
+			return sectionId ? 'section-' + sectionId : '';
+		}
+
+		function renderCircleOfFifths(circle) {
+			var container = query('#circuloQuintas');
+
+			if (!container || !circle || !options.renderers || !options.renderers.circleOfFifths) {
+				return;
+			}
+
+			container.innerHTML = options.renderers.circleOfFifths.render({
+				notation: notation,
+				notationStyle: uiState.getNotationStyle(),
+				orderedKeys: circle.orderedKeys,
+				selectedKey: circle.selectedKey
+			});
+		}
+
+		function circleOfFifthsForTrigger(trigger) {
+			var sectionId = trigger && trigger.getAttribute ? trigger.getAttribute('data-section-circle') : '';
+			var section = sectionId ? progressionSection(sectionId) : null;
+
+			if (section && section.circleOfFifths) {
+				return section.circleOfFifths;
+			}
+
+			return uiState.getReport() ? uiState.getReport().circleOfFifths : null;
+		}
+
+		function progressionSection(sectionId) {
+			var progression = uiState.getProgression();
+			var sections = progression && progression.sections ? progression.sections : [];
+
+			for (var i = 0; i < sections.length; i++) {
+				if (sections[i].id === sectionId) {
+					return sections[i];
+				}
+			}
+
+			return null;
 		}
 
 		function closeCircleOfFifthsPopover() {
@@ -614,6 +662,9 @@
 			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromContext'), expanded);
 			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromForm'), expanded);
 			updateCircleToggleExpanded(query('#workbenchContextKeyToggle'), expanded);
+			forEachElement('.progressionSectionCircleButton', function (button) {
+				updateCircleToggleExpanded(button, expanded);
+			});
 		}
 
 		function updateCircleToggleExpanded(button, expanded) {
@@ -932,6 +983,7 @@
 					notation: notation,
 					notationStyle: uiState.getNotationStyle(),
 					progression: uiState.getProgression(),
+					report: uiState.getReport(),
 					renderers: options.renderers
 				});
 			}

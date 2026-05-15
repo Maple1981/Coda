@@ -68,6 +68,7 @@
 			'js/services/progression-pattern-weight-service.js',
 			'js/services/progression-pattern-selector-service.js',
 			'js/services/progression-phrase-block-selector-service.js',
+			'js/services/progression-modal-planner-service.js',
 			'js/services/progression-planner-service.js',
 			'js/services/progression-builder-service.js',
 			'js/services/progression-section-contrast-service.js',

@@ -22,7 +22,7 @@
 			baseNotes = suspensionService.suspendedNotes(baseNotes, suspension.note);
 		}
 
-		tensionOptions = context.options.includeTensions ? tensionService.addToNotes(baseNotes, {
+		tensionOptions = context.options.includeTensions && !context.options.preventTensions ? tensionService.addToNotes(baseNotes, {
 			degreeIndex: resolvedDegree.degreeIndex,
 			kind: useSeventh ? 'seventh' : 'triad',
 			rng: context.options.rng,

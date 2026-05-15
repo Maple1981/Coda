@@ -131,6 +131,11 @@ assert.equal(contrastingSectionProgression.measures.length, 8);
 assert.deepEqual(contrastingSectionProgression.sections.map(function (section) { return section.id; }), ['A', 'B']);
 assert.equal(contrastingSectionProgression.sections[0].length, 4);
 assert.equal(contrastingSectionProgression.sections[1].length, 4);
+assert.equal(contrastingSectionProgression.sections[1].contextTonicName, 'C');
+assert.equal(contrastingSectionProgression.sections[1].contextScaleIndex, 0);
+assert.equal(contrastingSectionProgression.sections[1].contextScaleName, 'Mayor');
+assert.equal(contrastingSectionProgression.sections[1].contextLabel, 'C Mayor');
+assert.equal(contrastingSectionProgression.sections[1].circleOfFifths.selectedKey, 'C');
 assert.equal(contrastingSectionProgression.measures[4].bar, 5);
 assert.equal(contrastingSectionProgression.measures[4].sectionId, 'B');
 assert.equal(contrastingSectionProgression.measures[4].tonalFunction, 'SD');
@@ -161,6 +166,8 @@ assert.equal(contrastingSectionProgression.measures[4].tonalFunction, 'SD');
 	});
 
 	assert.equal(contrasted.sections[1].contrast, scenario.expected);
+	assert.ok(contrasted.sections[1].contextTonicName);
+	assert.ok(contrasted.sections[1].circleOfFifths);
 	assert.equal(contrasted.measures.length, 8);
 	assert.equal(contrasted.measures[4].sectionId, 'B');
 });
@@ -682,6 +689,77 @@ assert.equal(modernCadenceProgression.generation.cadence, 'half');
 assert.deepEqual(modernCadenceProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['ii7 sus2', 'V7 4/3 sus4']);
 assert.equal(classicCadenceProgression.generation.cadence, 'authentic');
 assert.deepEqual(classicCadenceProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['V 6', 'I']);
+const cadentialSixFourProgression = app.generateProgressionFromState({
+	progressionState: {
+		bars: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 100,
+		meter: '4/4',
+		style: 'classic',
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0, 0, 0]),
+	rules: forcedCadenceRules
+});
+assert.equal(cadentialSixFourProgression.generation.cadence, 'cadential64');
+assert.deepEqual(cadentialSixFourProgression.measures.map(function (measure) { return measure.degree; }), ['I', 'I 6/4', 'V7', 'I']);
+assert.deepEqual(cadentialSixFourProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'C', 'G7', 'C']);
+assert.deepEqual(cadentialSixFourProgression.measures.map(function (measure) { return measure.chordKind; }), ['triad', 'triad', 'seventh', 'triad']);
+assert.deepEqual(cadentialSixFourProgression.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'D', 'D', 'T']);
+assert.equal(cadentialSixFourProgression.measures[1].inversion, '6/4');
+assert.equal(cadentialSixFourProgression.measures[1].cadentialRole, 'cadential64');
+assert.equal(cadentialSixFourProgression.measures[2].cadentialRole, 'cadential-dominant');
+assert.deepEqual(cadentialSixFourProgression.measures[1].notes, ['G', 'C', 'E', 'C']);
+const cadentialSixFourPredominantProgression = app.generateProgressionFromState({
+	progressionState: {
+		bars: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 100,
+		meter: '4/4',
+		style: 'classic',
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0, 0, 0, 0.8, 0]),
+	rules: forcedCadenceRules
+});
+assert.equal(cadentialSixFourPredominantProgression.generation.cadence, 'cadential64');
+assert.deepEqual(cadentialSixFourPredominantProgression.measures.map(function (measure) { return measure.degree; }), ['IV', 'I 6/4', 'V7', 'I']);
+assert.equal(cadentialSixFourPredominantProgression.measures[0].cadentialRole, 'cadential-predominant');
+const dDorianReport = app.buildScaleReport({
+	data: data,
+	domain: domain,
+	preferFlats: false,
+	scaleIndex: 14,
+	scaleName: 'Modo dórico',
+	tonicIndex: noteIndex('D'),
+	tonicName: 'D'
+});
+const dDorianModalProgression = app.generateProgressionFromState({
+	data: data,
+	progressionState: {
+		bars: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 80,
+		meter: '4/4',
+		style: 'classic',
+		tensions: 80,
+		voices: 4
+	},
+	report: dDorianReport,
+	rng: sequenceRng([0.4, 0.99, 0.99, 0.99, 0.99])
+});
+assert.equal(dDorianModalProgression.generation.cadence, 'modal');
+assert.equal(dDorianModalProgression.generation.patternId, 'dorian-modal-vamp');
+assert.deepEqual(dDorianModalProgression.measures.map(function (measure) { return measure.degree; }), ['i', 'ii', 'IV', 'i']);
+assert.deepEqual(dDorianModalProgression.measures.map(function (measure) { return measure.chordName; }), ['Dm', 'Em', 'G', 'Dm']);
+assert.deepEqual(dDorianModalProgression.measures.map(function (measure) { return measure.modalRole || ''; }), ['tonic', 'modal-color', 'modal-cadential', 'tonic']);
+assert.ok(dDorianModalProgression.measures.every(function (measure) { return measure.chordName !== 'G7'; }));
+assert.equal(dDorianModalProgression.generation.voiceLeading, 'modal-pedal-stepwise');
 
 const reorderedProgression = app.reorderProgressionMeasures(cMajorProgressionPlan, 1, 3);
 assert.deepEqual(reorderedProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'G', 'C', 'F']);

@@ -216,6 +216,7 @@
 	escalas.push({"nombre" : "Super locria", "patron" : "0-1-2-1-2-2-2"});
 	escalas.push({"nombre" : "Ultra locria", "patron" : "0-1-2-1-2-2-1"});
 	escalas.push({"nombre" : "Whole-tone", "patron" : "0-2-2-2-2-2-1"});
+	escalas.push({"nombre" : "Dórica b2", "patron" : "0-1-2-2-2-2-1"});
 
 	global.CodaDataCatalogs.scales = escalas;
 })(window);
@@ -380,6 +381,83 @@
 	var catalogs = global.CodaDataCatalogs = global.CodaDataCatalogs || {};
 
 	catalogs.progressionRules = {
+		cadences: [
+			{
+				cadence: 'cadential64',
+				counterpoint: 88,
+				degrees: [0, 0, 4, 0],
+				id: 'cadential-six-four',
+				label: 'Cadencia 6/4',
+				modes: ['major', 'minor'],
+				roles: ['', 'cadential64', 'dominant', 'resolution'],
+				weight: 10
+			}
+		],
+		modalFutureRules: [
+			{
+				active: false,
+				id: 'modal-final-melodies',
+				label: 'Melodías finales modales',
+				notes: 'Explorar cierres melódicos que caen desde la tónica hacia la quinta, o comienzan desde una nota inferior a la tónica, sin convertir el final en una cadencia tonal.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'modal-two-chord-trick',
+				label: 'Truco de dos acordes',
+				notes: 'Usar pares de acordes que expongan la nota característica del modo, preferentemente con pocas notas comunes para establecer color modal inmediato.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'modal-center-shift',
+				label: 'Desplazamiento de centro manteniendo el modo',
+				notes: 'Reutilizar un mismo modo sobre otros centros relacionados para crear desplazamientos modales sin caer en función dominante-tónica.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'modal-deception',
+				label: 'Engaño modal',
+				notes: 'Comenzar una frase en un grado distinto de la tónica modal para ocultar el centro, y revelarlo después mediante bajo, pedal o nota característica.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'aeolian-color-power',
+				label: 'Poder del modo eólico',
+				notes: 'Explotar pedales, movimientos por grado conjunto y semitonos II-III y V-VI para obtener oscuridad modal sin sensible tonal.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'locrian-without-fifth',
+				label: 'Locrio sin quinta',
+				notes: 'Estabilizar el acorde de tónica locrio omitiendo su quinta disminuida, tanto en tríadas como en cuatríadas.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'modal-semitone-gestures',
+				label: 'Gestos modales por semitono',
+				notes: 'Favorecer movimientos como i-bII en frigio, II-bIII y V-bVI en eólico, evitando el gesto sensible-tónica tonal.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'modal-modulation',
+				label: 'Modulación entre modos',
+				notes: 'Cambiar de modo con la misma tónica, mantener modo con otra tónica o cambiar ambas dimensiones introduciendo gradualmente las alteraciones nuevas.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'modal-tonal-hybrid',
+				label: 'Modalidad y tonalidad híbridas',
+				notes: 'Permitir pasajes modales que retrasan, suavizan o culminan en cadencias tonales, sin convertir el núcleo modal en progresión funcional por defecto.',
+				priority: 'future'
+			}
+		],
 		phraseBlocks: [
 			{
 				cadence: 'half',
@@ -1359,6 +1437,7 @@
 			'data.scales.52': 'Superlocria',
 			'data.scales.53': 'Ultralocria',
 			'data.scales.54': 'Tonos enteros',
+			'data.scales.55': 'Dórica ♭2',
 			'data.tunings.0': 'Estándar E',
 			'data.tunings.1': 'Afinación E♭',
 			'data.tunings.2': 'Drop D♭',
@@ -1548,6 +1627,7 @@
 			'data.scales.52': 'Super Locrian',
 			'data.scales.53': 'Ultra Locrian',
 			'data.scales.54': 'Whole-tone',
+			'data.scales.55': 'Dorian ♭2',
 			'data.tunings.0': 'Standard E',
 			'data.tunings.1': 'E♭ tuning',
 			'data.tunings.2': 'Drop D♭',
@@ -2295,13 +2375,20 @@
 					scaleChords[degrees[i].index];
 
 			resolved.push({
+				cadentialRole: degrees[i].cadentialRole || '',
 				chord: chord,
 				degree: scaleNotes[degrees[i].index] ? scaleNotes[degrees[i].index].grado : '',
 				degreeIndex: degrees[i].index,
+				forceInversionIndex: degrees[i].forceInversionIndex,
+				forceKind: degrees[i].forceKind,
+				modalRole: degrees[i].modalRole || '',
+				preventSuspension: !!degrees[i].preventSuspension,
+				preventTensions: !!degrees[i].preventTensions,
 				source: source ? 'interchange' : degrees[i].source || 'diatonic',
 				sourceId: source ? source.id : degrees[i].sourceId,
 				sourceScaleIndex: source ? source.scaleIndex : degrees[i].sourceScaleIndex,
-				sourceTonicName: source ? source.tonicName : ''
+				sourceTonicName: source ? source.tonicName : '',
+				tonalFunctionOverride: degrees[i].tonalFunctionOverride || ''
 			});
 		}
 
@@ -5105,6 +5192,10 @@
 			return false;
 		}
 
+		if (context.options.avoidDominantSeventh && isDominantSeventhChord(resolvedDegree.chord)) {
+			return false;
+		}
+
 		if (isTonicBoundary(context.index, context.resolvedDegrees.length, degreeIndex)) {
 			return false;
 		}
@@ -5175,6 +5266,10 @@
 		return [chord.fundamental, chord.tercera, chord.quinta, chord.septima];
 	}
 
+	function isDominantSeventhChord(chord) {
+		return !!(chord && /(^|[^a-z])7$/.test(String(chord.nombre || '')) && String(chord.nombre || '').indexOf('maj7') === -1);
+	}
+
 	function triadNotes(chord) {
 		if (!chord) {
 			return [];
@@ -5191,6 +5286,7 @@
 
 	global.CodaProgressionSeventhDecision = {
 		chordNotes: chordNotes,
+		isDominantSeventhChord: isDominantSeventhChord,
 		shouldUseSeventh: shouldUseSeventh,
 		triadNotes: triadNotes
 	};
@@ -5223,7 +5319,7 @@
 			baseNotes = suspensionService.suspendedNotes(baseNotes, suspension.note);
 		}
 
-		tensionOptions = context.options.includeTensions ? tensionService.addToNotes(baseNotes, {
+		tensionOptions = context.options.includeTensions && !context.options.preventTensions ? tensionService.addToNotes(baseNotes, {
 			degreeIndex: resolvedDegree.degreeIndex,
 			kind: useSeventh ? 'seventh' : 'triad',
 			rng: context.options.rng,
@@ -5302,9 +5398,10 @@
 		for (var i = 0; i < resolvedDegrees.length; i++) {
 			var startBeat = i * progressionState.beatsPerBar;
 			var durationBeats = progressionState.beatsPerBar;
+			var chordOptions = optionsForDegree(options, resolvedDegrees[i]);
 			var chordPlan = chordPlanService.build({
 				index: i,
-				options: options,
+				options: chordOptions,
 				previousPlan: previousPlan,
 				progressionState: progressionState,
 				resolvedDegree: resolvedDegrees[i],
@@ -5333,10 +5430,18 @@
 				startBeat: startBeat,
 				startSeconds: startBeat * secondsPerBeat,
 				suspension: chordPlan.suspension,
-				tonalFunction: tonalFunctionForDegree(options.scaleDefinition, resolvedDegrees[i].degreeIndex),
+				tonalFunction: resolvedDegrees[i].tonalFunctionOverride || tonalFunctionForDegree(options.scaleDefinition, resolvedDegrees[i].degreeIndex),
 				voiceNotes: chordPlan.voiceNotes,
 				voices: progressionState.voices
 			};
+
+			if (resolvedDegrees[i].cadentialRole) {
+				measure.cadentialRole = resolvedDegrees[i].cadentialRole;
+			}
+
+			if (resolvedDegrees[i].modalRole) {
+				measure.modalRole = resolvedDegrees[i].modalRole;
+			}
 
 			if (resolvedDegrees[i].sourceScaleIndex != null) {
 				measure.sourceScaleIndex = resolvedDegrees[i].sourceScaleIndex;
@@ -5371,8 +5476,38 @@
 		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
 	}
 
+	function optionsForDegree(options, resolvedDegree) {
+		var result = {};
+		var key;
+
+		for (key in options) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		if (resolvedDegree.forceKind) {
+			result.forceKind = resolvedDegree.forceKind;
+		}
+
+		if (resolvedDegree.forceInversionIndex != null) {
+			result.forceInversionIndex = resolvedDegree.forceInversionIndex;
+		}
+
+		if (resolvedDegree.preventSuspension) {
+			result.preventSuspension = true;
+		}
+
+		if (resolvedDegree.preventTensions) {
+			result.preventTensions = true;
+		}
+
+		return result;
+	}
+
 	global.CodaProgressionMeasureBuilder = {
 		build: build,
+		optionsForDegree: optionsForDegree,
 		sourceScaleNotesByIndex: sourceScaleNotesByIndex,
 		tonalFunctionForDegree: tonalFunctionForDegree
 	};
@@ -5411,7 +5546,7 @@
 
 		if (options.generationPlan) {
 			progression.generation = {
-				cadence: options.generationPlan.pattern.cadence,
+				cadence: options.generationPlan.finalCadence === 'cadential64' ? options.generationPlan.finalCadence : options.generationPlan.pattern.cadence,
 				form: options.generationPlan.pattern.form,
 				patternId: options.generationPlan.pattern.id,
 				style: progressionState.style,
@@ -5437,6 +5572,10 @@
 	var styleService = global.CodaProgressionStyle;
 
 	function finalCadenceForPattern(pattern, progressionState, rng) {
+		if (shouldUseCadentialSixFour(pattern, progressionState, rng)) {
+			return 'cadential64';
+		}
+
 		if (styleService.isModern(progressionState)) {
 			return modernFinalCadence(pattern, rng);
 		}
@@ -5446,6 +5585,36 @@
 		}
 
 		return 'authentic';
+	}
+
+	function shouldUseCadentialSixFour(pattern, progressionState, rng) {
+		var probability = cadentialSixFourProbability(pattern, progressionState);
+		var value;
+
+		if (probability <= 0) {
+			return false;
+		}
+
+		value = typeof rng === 'function' ? rng() : Math.random();
+
+		return value < probability;
+	}
+
+	function cadentialSixFourProbability(pattern, progressionState) {
+		var counterpoint = numberOrDefault(progressionState && progressionState.counterpoint, 0);
+		var probability = styleService.isClassic(progressionState) ? 0.12 : 0.025;
+
+		if (pattern && pattern.cadence && !isAuthenticCadence(pattern.cadence)) {
+			return 0;
+		}
+
+		probability += counterpoint / (styleService.isClassic(progressionState) ? 260 : 780);
+
+		if (pattern && isAuthenticCadence(pattern.cadence)) {
+			probability += styleService.isClassic(progressionState) ? 0.1 : 0.025;
+		}
+
+		return Math.min(styleService.isClassic(progressionState) ? 0.58 : 0.18, probability);
 	}
 
 	function modernFinalCadence(pattern, rng) {
@@ -5482,39 +5651,147 @@
 		return 'deceptive';
 	}
 
-	function forceCadentialEnding(degrees, pattern) {
+	function forceCadentialEnding(degrees, pattern, options) {
+		var cadence;
+
+		options = options || {};
+		cadence = options.cadence || (pattern ? pattern.cadence : '');
+
 		if (degrees.length < 2) {
 			return;
 		}
 
-		if (pattern.cadence === 'authentic') {
+		if (cadence === 'cadential64') {
+			forceCadentialSixFourEnding(degrees, options);
+		} else if (cadence === 'authentic') {
 			degrees[degrees.length - 2] = { index: 4, source: 'diatonic' };
 			degrees[degrees.length - 1] = { index: 0, source: 'diatonic' };
-		} else if (pattern.cadence === 'plagal' || pattern.cadence === 'mixed-plagal') {
-			degrees[degrees.length - 2] = { index: 3, source: pattern.cadence === 'mixed-plagal' ? 'parallel' : 'diatonic' };
+		} else if (cadence === 'plagal' || cadence === 'mixed-plagal') {
+			degrees[degrees.length - 2] = { index: 3, source: cadence === 'mixed-plagal' ? 'parallel' : 'diatonic' };
 			degrees[degrees.length - 1] = { index: 0, source: 'diatonic' };
-		} else if (pattern.cadence === 'deceptive') {
+		} else if (cadence === 'deceptive') {
 			degrees[degrees.length - 2] = { index: 4, source: 'diatonic' };
 			degrees[degrees.length - 1] = { index: 5, source: 'diatonic' };
-		} else if (pattern.cadence === 'half') {
+		} else if (cadence === 'half') {
 			degrees[degrees.length - 1] = { index: 4, source: 'diatonic' };
 		}
 	}
 
+	function forceCadentialSixFourEnding(degrees, options) {
+		var start = Math.max(0, degrees.length - 4);
+		var dominantKind = cadentialDominantKind(options.progressionState, options.rng);
+		var variant = cadentialSixFourVariant(options.mode, options.rng);
+		var openingDegree = cadentialSixFourOpeningDegree(variant, options.mode, options.rng);
+
+		if (degrees.length < 4) {
+			forceCadentialEnding(degrees, { cadence: 'authentic' });
+			return;
+		}
+
+		degrees[start] = {
+			cadentialRole: variant === 'predominant-before' ? 'cadential-predominant' : 'cadential-tonic',
+			forceInversionIndex: 0,
+			forceKind: 'triad',
+			index: openingDegree,
+			preventSuspension: true,
+			preventTensions: true,
+			source: 'diatonic'
+		};
+		degrees[start + 1] = {
+			cadentialRole: 'cadential64',
+			forceInversionIndex: 2,
+			forceKind: 'triad',
+			index: 0,
+			preventSuspension: true,
+			preventTensions: true,
+			source: 'diatonic',
+			tonalFunctionOverride: 'D'
+		};
+		degrees[start + 2] = {
+			cadentialRole: 'cadential-dominant',
+			forceInversionIndex: 0,
+			forceKind: dominantKind,
+			index: 4,
+			preventSuspension: true,
+			preventTensions: true,
+			source: 'diatonic',
+			tonalFunctionOverride: 'D'
+		};
+		degrees[start + 3] = {
+			cadentialRole: 'cadential-resolution',
+			forceInversionIndex: 0,
+			forceKind: 'triad',
+			index: 0,
+			preventSuspension: true,
+			preventTensions: true,
+			source: 'diatonic'
+		};
+	}
+
+	function cadentialSixFourVariant(mode, rng) {
+		var value = typeof rng === 'function' ? rng() : Math.random();
+
+		if (value < 0.62) {
+			return 'tonic-before';
+		}
+
+		return 'predominant-before';
+	}
+
+	function cadentialSixFourOpeningDegree(variant, mode, rng) {
+		var candidates;
+
+		if (variant !== 'predominant-before') {
+			return 0;
+		}
+
+		candidates = mode === 'minor' ? [3, 1, 5] : [3, 1];
+
+		return candidates[Math.floor((typeof rng === 'function' ? rng() : Math.random()) * candidates.length) % candidates.length];
+	}
+
+	function cadentialDominantKind(progressionState, rng) {
+		var counterpoint = numberOrDefault(progressionState && progressionState.counterpoint, 0);
+		var voices = numberOrDefault(progressionState && progressionState.voices, 4);
+		var probability = voices >= 4 ? 0.55 : 0.28;
+		var value;
+
+		probability += counterpoint / 420;
+		value = typeof rng === 'function' ? rng() : Math.random();
+
+		return value < Math.min(0.82, probability) ? 'seventh' : 'triad';
+	}
+
 	function matchesCadence(block, cadence) {
+		if (cadence === 'cadential64') {
+			return block.cadence === 'authentic';
+		}
+
 		return block.cadence === cadence || (cadence === 'mixed-plagal' && block.cadence === 'plagal');
 	}
 
 	function isAuthenticCadence(cadence) {
-		return cadence === 'authentic';
+		return cadence === 'authentic' || cadence === 'cadential64';
+	}
+
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
 	}
 
 	global.CodaProgressionCadencePlanner = {
+		cadentialDominantKind: cadentialDominantKind,
+		cadentialSixFourOpeningDegree: cadentialSixFourOpeningDegree,
+		cadentialSixFourProbability: cadentialSixFourProbability,
+		cadentialSixFourVariant: cadentialSixFourVariant,
 		chooseIntermediateCadence: chooseIntermediateCadence,
 		finalCadenceForPattern: finalCadenceForPattern,
 		forceCadentialEnding: forceCadentialEnding,
+		forceCadentialSixFourEnding: forceCadentialSixFourEnding,
 		isAuthenticCadence: isAuthenticCadence,
-		matchesCadence: matchesCadence
+		matchesCadence: matchesCadence,
+		shouldUseCadentialSixFour: shouldUseCadentialSixFour
 	};
 })(window);
 
@@ -5839,12 +6116,205 @@
 
 ;
 
+/* Source: js/services/progression-modal-planner-service.js */
+// Modal progression planning for Greek modes.
+(function (global) {
+	'use strict';
+
+	var profiles = {
+		13: {
+			cadentialDegrees: [4],
+			finalCadence: [4, 0],
+			id: 'ionian',
+			patterns: [[0, 3, 0, 4], [0, 4, 3, 0]],
+			tonicQuality: 'major'
+		},
+		14: {
+			cadentialDegrees: [3],
+			finalCadence: [3, 0],
+			id: 'dorian',
+			patterns: [[0, 3, 0, 1], [0, 1, 3, 0], [0, 3, 0, 3]],
+			tonicQuality: 'minor'
+		},
+		15: {
+			cadentialDegrees: [1],
+			finalCadence: [1, 0],
+			id: 'phrygian',
+			patterns: [[0, 1, 0, 6], [0, 3, 1, 0], [0, 1, 0, 1]],
+			tonicQuality: 'minor'
+		},
+		16: {
+			cadentialDegrees: [1],
+			finalCadence: [1, 0],
+			id: 'lydian',
+			patterns: [[0, 1, 0, 6], [0, 1, 3, 0], [0, 6, 1, 0]],
+			tonicQuality: 'major'
+		},
+		17: {
+			cadentialDegrees: [6, 3],
+			finalCadence: [6, 3, 0],
+			id: 'mixolydian',
+			patterns: [[0, 6, 3, 0], [0, 6, 0, 4], [0, 4, 6, 0]],
+			tonicQuality: 'major'
+		},
+		18: {
+			cadentialDegrees: [4, 5, 6],
+			finalCadence: [5, 6, 0],
+			id: 'aeolian',
+			patterns: [[0, 6, 5, 6], [0, 6, 5, 4], [5, 6, 0, 0]],
+			tonicQuality: 'minor'
+		},
+		19: {
+			cadentialDegrees: [1],
+			finalCadence: [1, 0],
+			id: 'locrian',
+			patterns: [[0, 1, 0, 5], [0, 3, 1, 0], [1, 0, 5, 0]],
+			tonicQuality: 'diminished'
+		}
+	};
+
+	function isGreekMode(report) {
+		return !!profileForReport(report);
+	}
+
+	function createPlan(options) {
+		var progressionState = options.progressionState || {};
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var profile = profileForReport(options.report);
+		var bars = Math.max(1, numberOrDefault(progressionState.bars, 8));
+		var indexes = modalDegreeIndexes(profile, bars, rng);
+		var degrees = [];
+
+		for (var i = 0; i < indexes.length; i++) {
+			degrees.push(modalDegree(profile, indexes[i], i, indexes.length));
+		}
+
+		return {
+			degrees: degrees,
+			finalCadence: 'modal',
+			pattern: {
+				cadence: 'modal',
+				form: 'modal-vamp',
+				id: profile.id + '-modal-vamp'
+			},
+			voiceLeading: modalVoiceLeadingProfile(progressionState)
+		};
+	}
+
+	function modalDegreeIndexes(profile, bars, rng) {
+		var pattern = choosePattern(profile, rng);
+		var indexes = [];
+
+		if (bars === 1) {
+			return [0];
+		}
+
+		if (bars === 2) {
+			return [profile.finalCadence[0], 0];
+		}
+
+		while (indexes.length < bars) {
+			indexes = indexes.concat(pattern);
+		}
+
+		indexes = indexes.slice(0, bars);
+		applyFinalCadence(indexes, profile);
+
+		return indexes;
+	}
+
+	function choosePattern(profile, rng) {
+		var patterns = profile.patterns || [[0, 3, 4, 0]];
+
+		return patterns[Math.floor(rng() * patterns.length) % patterns.length];
+	}
+
+	function applyFinalCadence(indexes, profile) {
+		var finalCadence = profile.finalCadence || [profile.cadentialDegrees[0], 0];
+		var start = Math.max(0, indexes.length - finalCadence.length);
+
+		for (var i = 0; i < finalCadence.length && start + i < indexes.length; i++) {
+			indexes[start + i] = finalCadence[i];
+		}
+	}
+
+	function modalDegree(profile, index, position, length) {
+		var role = modalRole(profile, index, position, length);
+		var degree = {
+			forceInversionIndex: 0,
+			index: index,
+			modalRole: role,
+			source: 'diatonic'
+		};
+
+		if (role === 'tonic' || role === 'modal-cadential') {
+			degree.preventTensions = true;
+		}
+
+		if (role === 'modal-cadential' || role === 'avoid') {
+			degree.forceKind = 'triad';
+			degree.preventSuspension = true;
+		}
+
+		return degree;
+	}
+
+	function modalRole(profile, index, position, length) {
+		if (index === 0) {
+			return 'tonic';
+		}
+
+		if (position === length - 1) {
+			return 'tonic';
+		}
+
+		if ((profile.cadentialDegrees || []).indexOf(index) > -1) {
+			return 'modal-cadential';
+		}
+
+		return 'modal-color';
+	}
+
+	function profileForReport(report) {
+		var index = report ? Number(report.scaleIndex) : NaN;
+
+		return profiles[index] || null;
+	}
+
+	function modalVoiceLeadingProfile(progressionState) {
+		if (numberOrDefault(progressionState.counterpoint, 0) >= 70) {
+			return 'modal-pedal-stepwise';
+		}
+
+		return 'modal-pedal';
+	}
+
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
+	global.CodaProgressionModalPlanner = {
+		applyFinalCadence: applyFinalCadence,
+		createPlan: createPlan,
+		isGreekMode: isGreekMode,
+		modalDegree: modalDegree,
+		modalDegreeIndexes: modalDegreeIndexes,
+		modalRole: modalRole,
+		profileForReport: profileForReport
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-planner-service.js */
 // Harmonic phrase and cadence planner for generated progressions.
 (function (global) {
 	'use strict';
 
 	var cadencePlanner = global.CodaProgressionCadencePlanner;
+	var modalPlanner = global.CodaProgressionModalPlanner;
 	var patternSelector = global.CodaProgressionPatternSelector;
 	var phraseBlockSelector = global.CodaProgressionPhraseBlockSelector;
 
@@ -5852,29 +6322,64 @@
 		var progressionState = options.progressionState;
 		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
 		var mode = progressionMode(options.report);
+		var modalPlan;
+
+		if (modalPlanner && modalPlanner.isGreekMode(options.report)) {
+			modalPlan = modalPlanner.createPlan({
+				progressionState: progressionState,
+				report: options.report,
+				rng: rng,
+				rules: options.rules
+			});
+
+			return modalPlan;
+		}
+
 		var pattern = patternSelector.choose({
 			mode: mode,
 			progressionState: progressionState,
 			rng: rng,
 			rules: options.rules
 		});
+		var finalCadence = cadencePlanner.finalCadenceForPattern(pattern, progressionState, rng);
+		var endingCadence = effectiveEndingCadence(pattern, finalCadence);
 		var degrees = progressionState.bars >= 8 ?
 			composePhraseBlocks({
+				finalCadence: endingCadence,
 				mode: mode,
 				pattern: pattern,
 				progressionState: progressionState,
 				rng: rng,
 				rules: options.rules
 			}) :
-			fitDegreesToBars(pattern, progressionState.bars);
+			fitDegreesToBars(pattern, progressionState.bars, {
+				cadence: endingCadence,
+				mode: mode,
+				progressionState: progressionState,
+				rng: rng,
+				rules: options.rules
+			});
 		degrees = applyModalInterchangeSources(degrees, options.report, progressionState, rng);
 		degrees = applyOpeningFunction(degrees, options.report, options.openingFunction, rng);
 
 		return {
 			degrees: degrees,
+			finalCadence: finalCadence,
 			pattern: pattern,
 			voiceLeading: voiceLeadingProfile(progressionState)
 		};
+	}
+
+	function effectiveEndingCadence(pattern, finalCadence) {
+		if (finalCadence === 'cadential64') {
+			return finalCadence;
+		}
+
+		if (pattern && pattern.cadence && !cadencePlanner.isAuthenticCadence(pattern.cadence)) {
+			return pattern.cadence;
+		}
+
+		return finalCadence;
 	}
 
 	function applyOpeningFunction(degrees, report, openingFunction, rng) {
@@ -5958,7 +6463,7 @@
 		return report && report.mode === 'M' ? 'major' : 'minor';
 	}
 
-	function fitDegreesToBars(pattern, bars) {
+	function fitDegreesToBars(pattern, bars, cadenceOptions) {
 		var fitted = [];
 		var sourceDegrees = pattern.degrees || [0, 3, 4, 0];
 		var normalizedBars = numberOrDefault(bars, sourceDegrees.length);
@@ -5971,7 +6476,7 @@
 			});
 		}
 
-		cadencePlanner.forceCadentialEnding(fitted, pattern);
+		cadencePlanner.forceCadentialEnding(fitted, pattern, cadenceOptions || {});
 
 		return fitted;
 	}
@@ -5986,7 +6491,7 @@
 			var remainingBars = bars - degrees.length;
 			var blockLength = Math.min(4, remainingBars);
 			var isFinalBlock = blockIndex === blockCount - 1;
-			var cadence = isFinalBlock ? cadencePlanner.finalCadenceForPattern(options.pattern, options.progressionState, options.rng) : cadencePlanner.chooseIntermediateCadence(options.rng);
+			var cadence = isFinalBlock ? options.finalCadence : cadencePlanner.chooseIntermediateCadence(options.rng);
 			var block = phraseBlockSelector.choose({
 				cadence: cadence,
 				mode: options.mode,
@@ -5995,10 +6500,21 @@
 				rng: options.rng,
 				rules: options.rules
 			});
+			var fittedBlock = phraseBlockSelector.fitBlockToBars(block, blockLength);
+
+			if (isFinalBlock) {
+				cadencePlanner.forceCadentialEnding(fittedBlock, block, {
+					cadence: cadence,
+					mode: options.mode,
+					progressionState: options.progressionState,
+					rng: options.rng,
+					rules: options.rules
+				});
+			}
 
 			previousBlockId = block.id;
 			degrees = degrees.concat(varyBlockOpening(
-				phraseBlockSelector.fitBlockToBars(block, blockLength),
+				fittedBlock,
 				blockIndex,
 				options.mode,
 				options.rng
@@ -6082,6 +6598,7 @@
 		chooseInterchangeSource: chooseInterchangeSource,
 		createPlan: createPlan,
 		degreeIndexesForFunction: degreeIndexesForFunction,
+		effectiveEndingCadence: effectiveEndingCadence,
 		fitDegreesToBars: fitDegreesToBars,
 		varyBlockOpening: varyBlockOpening,
 		voiceLeadingProfile: voiceLeadingProfile
@@ -6152,6 +6669,7 @@
 				includeTensions: true,
 				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
 				interchangeSources: options.report.modalInterchangeSources || [],
+				avoidDominantSeventh: isModalReport(options.report),
 				rng: rng,
 				scaleDefinition: options.report.scaleDefinition,
 				scaleNotes: options.report.scaleNotes
@@ -6166,6 +6684,10 @@
 		fromState: fromState,
 		generate: generate
 	};
+
+	function isModalReport(report) {
+		return !!(report && report.scaleDefinition && report.scaleDefinition.modal === 'true');
+	}
 })(window);
 
 ;
@@ -6210,8 +6732,12 @@
 				startIndex: 0
 			},
 			{
+				circleOfFifths: targetReport.circleOfFifths || null,
 				contrast: candidate.id,
 				contextLabel: candidate.label,
+				contextScaleIndex: targetReport.scaleIndex,
+				contextScaleName: targetReport.scaleName,
+				contextTonicName: targetReport.tonicName,
 				id: 'B',
 				labelKey: 'progression.sectionB',
 				length: sectionB.measures ? sectionB.measures.length : 0,
@@ -6258,7 +6784,7 @@
 	function sameKeySubdominant(options) {
 		return {
 			id: 'same-sd',
-			label: '',
+			label: contextLabelFromReport(options.report),
 			openingFunction: 'SD',
 			report: options.report
 		};
@@ -6347,6 +6873,10 @@
 		};
 	}
 
+	function contextLabelFromReport(report) {
+		return report && report.tonicName && report.scaleName ? report.tonicName + ' ' + report.scaleName : '';
+	}
+
 	function preferFlatsForCandidate(options, tonicIndex, scaleIndex, scaleDefinition) {
 		var data = options.data || {};
 		var tonicName = noteNameForIndex(data.notes || [], tonicIndex, false);
@@ -6430,6 +6960,7 @@
 		annotateSectionMeasures: annotateSectionMeasures,
 		circleNeighborCandidates: circleNeighborCandidates,
 		chooseContrastCandidate: chooseContrastCandidate,
+		contextLabelFromReport: contextLabelFromReport,
 		generate: generate,
 		measuresForSectionA: measuresForSectionA,
 		parallelKey: parallelKey,
@@ -11658,7 +12189,7 @@
 		var html = '';
 
 		for (var i = 0; i < sections.length; i++) {
-			html += renderSectionHeader(sections[i]);
+			html += renderSectionHeader(sections[i], options);
 			for (var j = sections[i].startIndex; j < sections[i].startIndex + sections[i].length && j < measures.length; j++) {
 				html += renderMeasure(measures[j], j, options);
 			}
@@ -11670,7 +12201,7 @@
 				labelKey: 'progression.sectionB',
 				length: 0,
 				startIndex: measures.length
-			});
+			}, options);
 		}
 
 		return html;
@@ -11703,19 +12234,42 @@
 		return false;
 	}
 
-	function renderSectionHeader(section) {
+	function renderSectionHeader(section, options) {
 		var html = '<div class="progressionSectionHeader" data-progression-section="' + labels.escapeHtml(section.id) + '">';
+		var contextLabel = sectionContextLabel(section, options || {});
 
 		html += '<h3 data-i18n="' + labels.escapeHtml(section.labelKey) + '"></h3>';
+		if (contextLabel) {
+			html += '<span class="progressionSectionContext">' + labels.escapeHtml(contextLabel) + '</span>';
+		}
+		if (section.id === 'B' && section.circleOfFifths && options.showCircleOfFifths !== false) {
+			html += '<button class="progressionSectionCircleButton" type="button" title="" aria-label="" aria-controls="circleOfFifthsPopover" aria-expanded="false" data-section-circle="B" data-i18n-title="circle.open"><span class="material-icons" aria-hidden="true">donut_large</span></button>';
+		}
 		if (section.id === 'B') {
 			html += '<button id="generateProgressionSectionB" class="progressionSectionRandomButton" type="button" title="" aria-label="" data-i18n-title="progression.generateSectionB"><span class="material-icons" aria-hidden="true">casino</span></button>';
-		}
-		if (section.contextLabel) {
-			html += '<span class="progressionSectionContext">' + labels.escapeHtml(section.contextLabel) + '</span>';
 		}
 		html += '</div>';
 
 		return html;
+	}
+
+	function sectionContextLabel(section, options) {
+		var tonicName = section.contextTonicName || '';
+		var scaleName = section.contextScaleName || '';
+
+		if (section.contextScaleIndex != null && options.i18n && typeof options.i18n.t === 'function') {
+			scaleName = options.i18n.t('data.scales.' + section.contextScaleIndex);
+		}
+
+		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
+			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
+		}
+
+		if (tonicName || scaleName) {
+			return [tonicName, scaleName].filter(Boolean).join(' ');
+		}
+
+		return section.contextLabel || '';
 	}
 
 	function hasRenderableMeasures(measures) {
@@ -11827,6 +12381,7 @@
 		renderMeasure: renderMeasure,
 		renderMeasureChord: renderMeasureChord,
 		renderSectionHeader: renderSectionHeader,
+		sectionContextLabel: sectionContextLabel,
 		sourceLabel: sourceLabel,
 		renderTimeline: renderTimeline,
 		renderTimelineMeasures: renderTimelineMeasures,
@@ -12472,6 +13027,7 @@
 		setText(i18n, '.loopControl span[data-i18n="progression.loop"]', 'progression.loop');
 		setText(i18n, '.progressionSectionHeader h3[data-i18n="progression.sectionA"]', 'progression.sectionA');
 		setText(i18n, '.progressionSectionHeader h3[data-i18n="progression.sectionB"]', 'progression.sectionB');
+		setTitleAndLabel(i18n, '.progressionSectionCircleButton[data-i18n-title="circle.open"]', 'circle.open');
 		setTitleAndLabel(i18n, '#generateProgressionSectionB[data-i18n-title="progression.generateSectionB"]', 'progression.generateSectionB');
 		setTitleAndLabel(i18n, '.measureChordMenuButton[data-i18n-title="progression.changeMeasureChord"]', 'progression.changeMeasureChord');
 		setTitleAndLabel(i18n, '.measureDragHandle[data-i18n-title="progression.dragMeasure"]', 'progression.dragMeasure');
@@ -13744,7 +14300,8 @@
 		timeline.innerHTML = options.renderers.progressionWorkbench.renderTimelineMeasures(options.progression, {
 			i18n: options.i18n,
 			notation: options.notation,
-			notationStyle: options.notationStyle
+			notationStyle: options.notationStyle,
+			showCircleOfFifths: !!(options.report && options.report.circleOfFifths)
 		});
 	}
 
@@ -14520,7 +15077,8 @@
 				var trigger = closest(event.target, '#toggleCircleOfFifths') ||
 					closest(event.target, '#toggleCircleOfFifthsFromContext') ||
 					closest(event.target, '#toggleCircleOfFifthsFromForm') ||
-					closest(event.target, '#workbenchContextKeyToggle');
+					closest(event.target, '#workbenchContextKeyToggle') ||
+					closest(event.target, '.progressionSectionCircleButton');
 
 				if (trigger) {
 					toggleCircleOfFifthsPopover(trigger);
@@ -14725,13 +15283,15 @@
 
 		function openCircleOfFifthsPopover(trigger) {
 			var popover = query('#circleOfFifthsPopover');
+			var circle = circleOfFifthsForTrigger(trigger);
 			var triggerId = getCircleOfFifthsTriggerId(trigger);
 			var shouldResetPosition = !!trigger && (triggerId !== circleOfFifthsAnchorId || !circleOfFifthsDragged);
 
-			if (!popover || !uiState.getReport() || !uiState.getReport().circleOfFifths) {
+			if (!popover || !circle) {
 				return;
 			}
 
+			renderCircleOfFifths(circle);
 			popover.hidden = false;
 
 			if (shouldResetPosition) {
@@ -14744,7 +15304,52 @@
 		}
 
 		function getCircleOfFifthsTriggerId(trigger) {
-			return trigger && trigger.id ? trigger.id : '';
+			var sectionId = trigger && trigger.getAttribute ? trigger.getAttribute('data-section-circle') : '';
+
+			if (trigger && trigger.id) {
+				return trigger.id;
+			}
+
+			return sectionId ? 'section-' + sectionId : '';
+		}
+
+		function renderCircleOfFifths(circle) {
+			var container = query('#circuloQuintas');
+
+			if (!container || !circle || !options.renderers || !options.renderers.circleOfFifths) {
+				return;
+			}
+
+			container.innerHTML = options.renderers.circleOfFifths.render({
+				notation: notation,
+				notationStyle: uiState.getNotationStyle(),
+				orderedKeys: circle.orderedKeys,
+				selectedKey: circle.selectedKey
+			});
+		}
+
+		function circleOfFifthsForTrigger(trigger) {
+			var sectionId = trigger && trigger.getAttribute ? trigger.getAttribute('data-section-circle') : '';
+			var section = sectionId ? progressionSection(sectionId) : null;
+
+			if (section && section.circleOfFifths) {
+				return section.circleOfFifths;
+			}
+
+			return uiState.getReport() ? uiState.getReport().circleOfFifths : null;
+		}
+
+		function progressionSection(sectionId) {
+			var progression = uiState.getProgression();
+			var sections = progression && progression.sections ? progression.sections : [];
+
+			for (var i = 0; i < sections.length; i++) {
+				if (sections[i].id === sectionId) {
+					return sections[i];
+				}
+			}
+
+			return null;
 		}
 
 		function closeCircleOfFifthsPopover() {
@@ -14768,6 +15373,9 @@
 			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromContext'), expanded);
 			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromForm'), expanded);
 			updateCircleToggleExpanded(query('#workbenchContextKeyToggle'), expanded);
+			forEachElement('.progressionSectionCircleButton', function (button) {
+				updateCircleToggleExpanded(button, expanded);
+			});
 		}
 
 		function updateCircleToggleExpanded(button, expanded) {
@@ -15086,6 +15694,7 @@
 					notation: notation,
 					notationStyle: uiState.getNotationStyle(),
 					progression: uiState.getProgression(),
+					report: uiState.getReport(),
 					renderers: options.renderers
 				});
 			}

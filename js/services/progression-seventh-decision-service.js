@@ -17,6 +17,10 @@
 			return false;
 		}
 
+		if (context.options.avoidDominantSeventh && isDominantSeventhChord(resolvedDegree.chord)) {
+			return false;
+		}
+
 		if (isTonicBoundary(context.index, context.resolvedDegrees.length, degreeIndex)) {
 			return false;
 		}
@@ -87,6 +91,10 @@
 		return [chord.fundamental, chord.tercera, chord.quinta, chord.septima];
 	}
 
+	function isDominantSeventhChord(chord) {
+		return !!(chord && /(^|[^a-z])7$/.test(String(chord.nombre || '')) && String(chord.nombre || '').indexOf('maj7') === -1);
+	}
+
 	function triadNotes(chord) {
 		if (!chord) {
 			return [];
@@ -103,6 +111,7 @@
 
 	global.CodaProgressionSeventhDecision = {
 		chordNotes: chordNotes,
+		isDominantSeventhChord: isDominantSeventhChord,
 		shouldUseSeventh: shouldUseSeventh,
 		triadNotes: triadNotes
 	};

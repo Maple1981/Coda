@@ -3,6 +3,7 @@
 	'use strict';
 
 	var cadencePlanner = global.CodaProgressionCadencePlanner;
+	var modalPlanner = global.CodaProgressionModalPlanner;
 	var patternSelector = global.CodaProgressionPatternSelector;
 	var phraseBlockSelector = global.CodaProgressionPhraseBlockSelector;
 
@@ -10,29 +11,64 @@
 		var progressionState = options.progressionState;
 		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
 		var mode = progressionMode(options.report);
+		var modalPlan;
+
+		if (modalPlanner && modalPlanner.isGreekMode(options.report)) {
+			modalPlan = modalPlanner.createPlan({
+				progressionState: progressionState,
+				report: options.report,
+				rng: rng,
+				rules: options.rules
+			});
+
+			return modalPlan;
+		}
+
 		var pattern = patternSelector.choose({
 			mode: mode,
 			progressionState: progressionState,
 			rng: rng,
 			rules: options.rules
 		});
+		var finalCadence = cadencePlanner.finalCadenceForPattern(pattern, progressionState, rng);
+		var endingCadence = effectiveEndingCadence(pattern, finalCadence);
 		var degrees = progressionState.bars >= 8 ?
 			composePhraseBlocks({
+				finalCadence: endingCadence,
 				mode: mode,
 				pattern: pattern,
 				progressionState: progressionState,
 				rng: rng,
 				rules: options.rules
 			}) :
-			fitDegreesToBars(pattern, progressionState.bars);
+			fitDegreesToBars(pattern, progressionState.bars, {
+				cadence: endingCadence,
+				mode: mode,
+				progressionState: progressionState,
+				rng: rng,
+				rules: options.rules
+			});
 		degrees = applyModalInterchangeSources(degrees, options.report, progressionState, rng);
 		degrees = applyOpeningFunction(degrees, options.report, options.openingFunction, rng);
 
 		return {
 			degrees: degrees,
+			finalCadence: finalCadence,
 			pattern: pattern,
 			voiceLeading: voiceLeadingProfile(progressionState)
 		};
+	}
+
+	function effectiveEndingCadence(pattern, finalCadence) {
+		if (finalCadence === 'cadential64') {
+			return finalCadence;
+		}
+
+		if (pattern && pattern.cadence && !cadencePlanner.isAuthenticCadence(pattern.cadence)) {
+			return pattern.cadence;
+		}
+
+		return finalCadence;
 	}
 
 	function applyOpeningFunction(degrees, report, openingFunction, rng) {
@@ -116,7 +152,7 @@
 		return report && report.mode === 'M' ? 'major' : 'minor';
 	}
 
-	function fitDegreesToBars(pattern, bars) {
+	function fitDegreesToBars(pattern, bars, cadenceOptions) {
 		var fitted = [];
 		var sourceDegrees = pattern.degrees || [0, 3, 4, 0];
 		var normalizedBars = numberOrDefault(bars, sourceDegrees.length);
@@ -129,7 +165,7 @@
 			});
 		}
 
-		cadencePlanner.forceCadentialEnding(fitted, pattern);
+		cadencePlanner.forceCadentialEnding(fitted, pattern, cadenceOptions || {});
 
 		return fitted;
 	}
@@ -144,7 +180,7 @@
 			var remainingBars = bars - degrees.length;
 			var blockLength = Math.min(4, remainingBars);
 			var isFinalBlock = blockIndex === blockCount - 1;
-			var cadence = isFinalBlock ? cadencePlanner.finalCadenceForPattern(options.pattern, options.progressionState, options.rng) : cadencePlanner.chooseIntermediateCadence(options.rng);
+			var cadence = isFinalBlock ? options.finalCadence : cadencePlanner.chooseIntermediateCadence(options.rng);
 			var block = phraseBlockSelector.choose({
 				cadence: cadence,
 				mode: options.mode,
@@ -153,10 +189,21 @@
 				rng: options.rng,
 				rules: options.rules
 			});
+			var fittedBlock = phraseBlockSelector.fitBlockToBars(block, blockLength);
+
+			if (isFinalBlock) {
+				cadencePlanner.forceCadentialEnding(fittedBlock, block, {
+					cadence: cadence,
+					mode: options.mode,
+					progressionState: options.progressionState,
+					rng: options.rng,
+					rules: options.rules
+				});
+			}
 
 			previousBlockId = block.id;
 			degrees = degrees.concat(varyBlockOpening(
-				phraseBlockSelector.fitBlockToBars(block, blockLength),
+				fittedBlock,
 				blockIndex,
 				options.mode,
 				options.rng
@@ -240,6 +287,7 @@
 		chooseInterchangeSource: chooseInterchangeSource,
 		createPlan: createPlan,
 		degreeIndexesForFunction: degreeIndexesForFunction,
+		effectiveEndingCadence: effectiveEndingCadence,
 		fitDegreesToBars: fitDegreesToBars,
 		varyBlockOpening: varyBlockOpening,
 		voiceLeadingProfile: voiceLeadingProfile

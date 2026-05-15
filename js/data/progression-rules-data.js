@@ -7,6 +7,83 @@
 	var catalogs = global.CodaDataCatalogs = global.CodaDataCatalogs || {};
 
 	catalogs.progressionRules = {
+		cadences: [
+			{
+				cadence: 'cadential64',
+				counterpoint: 88,
+				degrees: [0, 0, 4, 0],
+				id: 'cadential-six-four',
+				label: 'Cadencia 6/4',
+				modes: ['major', 'minor'],
+				roles: ['', 'cadential64', 'dominant', 'resolution'],
+				weight: 10
+			}
+		],
+		modalFutureRules: [
+			{
+				active: false,
+				id: 'modal-final-melodies',
+				label: 'Melodías finales modales',
+				notes: 'Explorar cierres melódicos que caen desde la tónica hacia la quinta, o comienzan desde una nota inferior a la tónica, sin convertir el final en una cadencia tonal.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'modal-two-chord-trick',
+				label: 'Truco de dos acordes',
+				notes: 'Usar pares de acordes que expongan la nota característica del modo, preferentemente con pocas notas comunes para establecer color modal inmediato.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'modal-center-shift',
+				label: 'Desplazamiento de centro manteniendo el modo',
+				notes: 'Reutilizar un mismo modo sobre otros centros relacionados para crear desplazamientos modales sin caer en función dominante-tónica.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'modal-deception',
+				label: 'Engaño modal',
+				notes: 'Comenzar una frase en un grado distinto de la tónica modal para ocultar el centro, y revelarlo después mediante bajo, pedal o nota característica.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'aeolian-color-power',
+				label: 'Poder del modo eólico',
+				notes: 'Explotar pedales, movimientos por grado conjunto y semitonos II-III y V-VI para obtener oscuridad modal sin sensible tonal.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'locrian-without-fifth',
+				label: 'Locrio sin quinta',
+				notes: 'Estabilizar el acorde de tónica locrio omitiendo su quinta disminuida, tanto en tríadas como en cuatríadas.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'modal-semitone-gestures',
+				label: 'Gestos modales por semitono',
+				notes: 'Favorecer movimientos como i-bII en frigio, II-bIII y V-bVI en eólico, evitando el gesto sensible-tónica tonal.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'modal-modulation',
+				label: 'Modulación entre modos',
+				notes: 'Cambiar de modo con la misma tónica, mantener modo con otra tónica o cambiar ambas dimensiones introduciendo gradualmente las alteraciones nuevas.',
+				priority: 'future'
+			},
+			{
+				active: false,
+				id: 'modal-tonal-hybrid',
+				label: 'Modalidad y tonalidad híbridas',
+				notes: 'Permitir pasajes modales que retrasan, suavizan o culminan en cadencias tonales, sin convertir el núcleo modal en progresión funcional por defecto.',
+				priority: 'future'
+			}
+		],
 		phraseBlocks: [
 			{
 				cadence: 'half',

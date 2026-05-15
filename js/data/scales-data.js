@@ -64,6 +64,7 @@
 	escalas.push({"nombre" : "Super locria", "patron" : "0-1-2-1-2-2-2"});
 	escalas.push({"nombre" : "Ultra locria", "patron" : "0-1-2-1-2-2-1"});
 	escalas.push({"nombre" : "Whole-tone", "patron" : "0-2-2-2-2-2-1"});
+	escalas.push({"nombre" : "Dórica b2", "patron" : "0-1-2-2-2-2-1"});
 
 	global.CodaDataCatalogs.scales = escalas;
 })(window);

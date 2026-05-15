@@ -470,6 +470,51 @@ assert.ok(renderedProgressionTimeline.indexOf('data-i18n-title="progression.chan
 assert.ok(renderedProgressionTimeline.indexOf('<strong>Cmaj7 add9</strong>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<em class="measureDegree">Imaj7</em>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<span class="measureFunction">T</span>') > -1);
+const sectionBContextTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
+	measures: [
+		{ bar: 1, chordName: 'C' },
+		{ bar: 2, chordName: 'F', sectionId: 'B' }
+	],
+	sections: [
+		{ id: 'A', labelKey: 'progression.sectionA', length: 1, startIndex: 0 },
+		{
+			circleOfFifths: data.circleOfFifths,
+			contextScaleIndex: 0,
+			contextScaleName: 'Mayor',
+			contextTonicName: 'C',
+			id: 'B',
+			labelKey: 'progression.sectionB',
+			length: 1,
+			startIndex: 1
+		}
+	]
+}, {
+	i18n: englishI18n,
+	notation: notation,
+	notationStyle: 'latin'
+});
+assert.ok(sectionBContextTimeline.indexOf('progressionSectionCircleButton') > -1);
+assert.ok(sectionBContextTimeline.indexOf('data-section-circle="B"') > -1);
+assert.ok(sectionBContextTimeline.indexOf('Do Major') > -1);
+assert.ok(sectionBContextTimeline.indexOf('progressionSectionContext') < sectionBContextTimeline.indexOf('progressionSectionCircleButton'));
+assert.equal(progressionWorkbenchRenderer.renderTimelineMeasures({
+	measures: [
+		{ bar: 1, chordName: 'C' },
+		{ bar: 2, chordName: 'F', sectionId: 'B' }
+	],
+	sections: [
+		{ id: 'A', labelKey: 'progression.sectionA', length: 1, startIndex: 0 },
+		{
+			circleOfFifths: data.circleOfFifths,
+			contextScaleIndex: 0,
+			contextTonicName: 'C',
+			id: 'B',
+			labelKey: 'progression.sectionB',
+			length: 1,
+			startIndex: 1
+		}
+	]
+}, { showCircleOfFifths: false }).indexOf('progressionSectionCircleButton'), -1);
 const invertedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [
 		{

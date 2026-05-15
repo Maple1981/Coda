@@ -16,9 +16,10 @@
 		for (var i = 0; i < resolvedDegrees.length; i++) {
 			var startBeat = i * progressionState.beatsPerBar;
 			var durationBeats = progressionState.beatsPerBar;
+			var chordOptions = optionsForDegree(options, resolvedDegrees[i]);
 			var chordPlan = chordPlanService.build({
 				index: i,
-				options: options,
+				options: chordOptions,
 				previousPlan: previousPlan,
 				progressionState: progressionState,
 				resolvedDegree: resolvedDegrees[i],
@@ -47,10 +48,18 @@
 				startBeat: startBeat,
 				startSeconds: startBeat * secondsPerBeat,
 				suspension: chordPlan.suspension,
-				tonalFunction: tonalFunctionForDegree(options.scaleDefinition, resolvedDegrees[i].degreeIndex),
+				tonalFunction: resolvedDegrees[i].tonalFunctionOverride || tonalFunctionForDegree(options.scaleDefinition, resolvedDegrees[i].degreeIndex),
 				voiceNotes: chordPlan.voiceNotes,
 				voices: progressionState.voices
 			};
+
+			if (resolvedDegrees[i].cadentialRole) {
+				measure.cadentialRole = resolvedDegrees[i].cadentialRole;
+			}
+
+			if (resolvedDegrees[i].modalRole) {
+				measure.modalRole = resolvedDegrees[i].modalRole;
+			}
 
 			if (resolvedDegrees[i].sourceScaleIndex != null) {
 				measure.sourceScaleIndex = resolvedDegrees[i].sourceScaleIndex;
@@ -85,8 +94,38 @@
 		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
 	}
 
+	function optionsForDegree(options, resolvedDegree) {
+		var result = {};
+		var key;
+
+		for (key in options) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		if (resolvedDegree.forceKind) {
+			result.forceKind = resolvedDegree.forceKind;
+		}
+
+		if (resolvedDegree.forceInversionIndex != null) {
+			result.forceInversionIndex = resolvedDegree.forceInversionIndex;
+		}
+
+		if (resolvedDegree.preventSuspension) {
+			result.preventSuspension = true;
+		}
+
+		if (resolvedDegree.preventTensions) {
+			result.preventTensions = true;
+		}
+
+		return result;
+	}
+
 	global.CodaProgressionMeasureBuilder = {
 		build: build,
+		optionsForDegree: optionsForDegree,
 		sourceScaleNotesByIndex: sourceScaleNotesByIndex,
 		tonalFunctionForDegree: tonalFunctionForDegree
 	};

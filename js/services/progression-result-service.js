@@ -28,7 +28,7 @@
 
 		if (options.generationPlan) {
 			progression.generation = {
-				cadence: options.generationPlan.pattern.cadence,
+				cadence: options.generationPlan.finalCadence === 'cadential64' ? options.generationPlan.finalCadence : options.generationPlan.pattern.cadence,
 				form: options.generationPlan.pattern.form,
 				patternId: options.generationPlan.pattern.id,
 				style: progressionState.style,

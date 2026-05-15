@@ -79,6 +79,8 @@ assert.ok(global.CodaProgressionMeasureBuilder.build);
 assert.ok(global.CodaProgressionResult.build);
 assert.ok(global.CodaProgressionStyle.isModern);
 assert.ok(global.CodaProgressionCadencePlanner.finalCadenceForPattern);
+assert.ok(global.CodaProgressionCadencePlanner.forceCadentialSixFourEnding);
+assert.ok(global.CodaProgressionModalPlanner.createPlan);
 assert.ok(global.CodaProgressionPatternWeight.adjustedPatternWeight);
 assert.ok(global.CodaProgressionPatternSelector.choose);
 assert.ok(global.CodaProgressionPhraseBlockSelector.choose);
@@ -249,6 +251,7 @@ assert.ok(manifestScripts.indexOf('js/services/progression-cadence-planner-servi
 assert.ok(manifestScripts.indexOf('js/services/progression-pattern-weight-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-pattern-selector-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-phrase-block-selector-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-modal-planner-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-planner-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-builder-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-section-contrast-service.js') > -1);
@@ -699,7 +702,7 @@ assert.deepEqual(global.CodaProgressionPlanner.createPlan({
 		tensions: 35
 	},
 	report: { mode: 'M' },
-	rng: function () { return 0; },
+	rng: function () { return 0.99; },
 	rules: {
 		patterns: [
 			{
@@ -721,6 +724,38 @@ assert.deepEqual(global.CodaProgressionPlanner.createPlan({
 	{ index: 4, source: 'diatonic' },
 	{ index: 0, source: 'diatonic' }
 ]);
+const cadentialSixFourPlan = global.CodaProgressionPlanner.createPlan({
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		counterpoint: 100,
+		modalInterchange: 10,
+		style: 'classic',
+		tensions: 35,
+		voices: 4
+	},
+	report: { mode: 'M' },
+	rng: sequenceRng([0, 0, 0]),
+	rules: {
+		patterns: [
+			{
+				cadence: 'authentic',
+				counterpoint: 80,
+				degrees: [0, 1, 4, 0],
+				form: 'test',
+				id: 'test-authentic',
+				modes: ['major'],
+				modalColor: 10,
+				tensionAffinity: 35,
+				weight: 1
+			}
+		]
+	}
+});
+assert.equal(cadentialSixFourPlan.finalCadence, 'cadential64');
+assert.equal(cadentialSixFourPlan.degrees[1].forceInversionIndex, 2);
+assert.equal(cadentialSixFourPlan.degrees[1].tonalFunctionOverride, 'D');
+assert.equal(cadentialSixFourPlan.degrees[2].forceKind, 'seventh');
 const variedTonicBlock = global.CodaProgressionPlanner.varyBlockOpening([
 	{ index: 0, source: 'diatonic' },
 	{ index: 3, source: 'diatonic' }
@@ -854,6 +889,13 @@ assert.equal(playbackOptions.instrument, global.CodaData.midiInstruments[0].id);
 assert.equal(playbackOptions.instruments, global.CodaData.midiInstruments);
 assert.equal(playbackOptions.volumePercent, 73);
 assert.ok(global.CodaData.progressionRules.patterns.length > 0);
+assert.ok(global.CodaData.progressionRules.modalFutureRules.length >= 8);
+assert.ok(global.CodaData.progressionRules.modalFutureRules.every(function (rule) {
+	return rule.active === false && rule.priority === 'future';
+}));
+assert.ok(global.CodaData.progressionRules.modalFutureRules.some(function (rule) {
+	return rule.id === 'modal-deception';
+}));
 assert.equal(controllerOptions.application, global.CodaApplication);
 assert.equal(controllerOptions.changelogDialog.initialize != null, true);
 assert.equal(controllerOptions.chordPlayback, startResult.chordPlayback);

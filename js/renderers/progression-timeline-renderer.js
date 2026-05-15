@@ -20,7 +20,7 @@
 		var html = '';
 
 		for (var i = 0; i < sections.length; i++) {
-			html += renderSectionHeader(sections[i]);
+			html += renderSectionHeader(sections[i], options);
 			for (var j = sections[i].startIndex; j < sections[i].startIndex + sections[i].length && j < measures.length; j++) {
 				html += renderMeasure(measures[j], j, options);
 			}
@@ -32,7 +32,7 @@
 				labelKey: 'progression.sectionB',
 				length: 0,
 				startIndex: measures.length
-			});
+			}, options);
 		}
 
 		return html;
@@ -65,19 +65,42 @@
 		return false;
 	}
 
-	function renderSectionHeader(section) {
+	function renderSectionHeader(section, options) {
 		var html = '<div class="progressionSectionHeader" data-progression-section="' + labels.escapeHtml(section.id) + '">';
+		var contextLabel = sectionContextLabel(section, options || {});
 
 		html += '<h3 data-i18n="' + labels.escapeHtml(section.labelKey) + '"></h3>';
+		if (contextLabel) {
+			html += '<span class="progressionSectionContext">' + labels.escapeHtml(contextLabel) + '</span>';
+		}
+		if (section.id === 'B' && section.circleOfFifths && options.showCircleOfFifths !== false) {
+			html += '<button class="progressionSectionCircleButton" type="button" title="" aria-label="" aria-controls="circleOfFifthsPopover" aria-expanded="false" data-section-circle="B" data-i18n-title="circle.open"><span class="material-icons" aria-hidden="true">donut_large</span></button>';
+		}
 		if (section.id === 'B') {
 			html += '<button id="generateProgressionSectionB" class="progressionSectionRandomButton" type="button" title="" aria-label="" data-i18n-title="progression.generateSectionB"><span class="material-icons" aria-hidden="true">casino</span></button>';
-		}
-		if (section.contextLabel) {
-			html += '<span class="progressionSectionContext">' + labels.escapeHtml(section.contextLabel) + '</span>';
 		}
 		html += '</div>';
 
 		return html;
+	}
+
+	function sectionContextLabel(section, options) {
+		var tonicName = section.contextTonicName || '';
+		var scaleName = section.contextScaleName || '';
+
+		if (section.contextScaleIndex != null && options.i18n && typeof options.i18n.t === 'function') {
+			scaleName = options.i18n.t('data.scales.' + section.contextScaleIndex);
+		}
+
+		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
+			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
+		}
+
+		if (tonicName || scaleName) {
+			return [tonicName, scaleName].filter(Boolean).join(' ');
+		}
+
+		return section.contextLabel || '';
 	}
 
 	function hasRenderableMeasures(measures) {
@@ -189,6 +212,7 @@
 		renderMeasure: renderMeasure,
 		renderMeasureChord: renderMeasureChord,
 		renderSectionHeader: renderSectionHeader,
+		sectionContextLabel: sectionContextLabel,
 		sourceLabel: sourceLabel,
 		renderTimeline: renderTimeline,
 		renderTimelineMeasures: renderTimelineMeasures,

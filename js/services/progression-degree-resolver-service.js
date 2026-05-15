@@ -29,13 +29,20 @@
 					scaleChords[degrees[i].index];
 
 			resolved.push({
+				cadentialRole: degrees[i].cadentialRole || '',
 				chord: chord,
 				degree: scaleNotes[degrees[i].index] ? scaleNotes[degrees[i].index].grado : '',
 				degreeIndex: degrees[i].index,
+				forceInversionIndex: degrees[i].forceInversionIndex,
+				forceKind: degrees[i].forceKind,
+				modalRole: degrees[i].modalRole || '',
+				preventSuspension: !!degrees[i].preventSuspension,
+				preventTensions: !!degrees[i].preventTensions,
 				source: source ? 'interchange' : degrees[i].source || 'diatonic',
 				sourceId: source ? source.id : degrees[i].sourceId,
 				sourceScaleIndex: source ? source.scaleIndex : degrees[i].sourceScaleIndex,
-				sourceTonicName: source ? source.tonicName : ''
+				sourceTonicName: source ? source.tonicName : '',
+				tonalFunctionOverride: degrees[i].tonalFunctionOverride || ''
 			});
 		}
 

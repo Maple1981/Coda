@@ -29,6 +29,36 @@ El control **Estilo** distingue dos enfoques iniciales:
 
 Esta distinción afecta a la selección de patrones completos y a los bloques de frase usados en progresiones largas. No cambia la escala ni los acordes disponibles; solo modifica la probabilidad y el tipo de cierre armónico elegido por el generador.
 
+## Cadencias finales
+
+El catálogo técnico de progresiones incluye una pequeña biblioteca de cadencias finales en `js/data/progression-rules-data.js`. El planificador las usa como cierres ponderados y, cuando procede, añade metadatos por grado para forzar inversiones, evitar suspensiones aleatorias o fijar la función tonal mostrada.
+
+La **cadencia 6/4** se modela principalmente como `I-I 6/4-V-I`. El segundo acorde es la tónica en segunda inversión, pero se marca internamente con función dominante porque actúa como una suspensión cadencial sobre el quinto grado: el bajo pasa al grado 5, mientras los grados 1 y 3 de las voces superiores preparan la resolución hacia el dominante. El dominante siguiente puede generarse como tríada `V` o como cuatríada `V7`; en ambos casos se evita añadir tensiones o suspensiones accidentales para que el gesto cadencial quede claro.
+
+También existe una variante en la que el `I 6/4` queda precedido por un predominante diatónico, especialmente `IV` o `ii`, y en modo menor también `VI`. Así pueden aparecer cierres del tipo `IV-I 6/4-V-I` o `ii-I 6/4-V-I`, manteniendo la consideración funcional dominante para el `I 6/4`. Las variantes donde un predominante aparece después del `I 6/4`, como `I-I 6/4-ii-V`, quedan reservadas para una futura división interna de compás, porque necesitan más de un acorde dentro del tramo cadencial para conservar también la resolución final.
+
+El **6/4 auxiliar** se distingue del cadencial. En este uso, el bajo se mantiene como pedal y se superpone un acorde en segunda inversión que comparte ese mismo bajo, por ejemplo `Cm-Fm/C` o `Dº-G7/D`. El generador ya puede producir inversiones `6/4` por conducción parsimoniosa; solo se les asigna función dominante cuando forman parte explícita de la cadencia 6/4.
+
+El estilo **Clásico** y un valor alto de **Contrapunto** aumentan la probabilidad de que esta cadencia aparezca al final de la sección, pero no la fuerzan siempre. En estilo moderno queda como una posibilidad mucho más rara, subordinada a la preferencia general por semicadencias, cadencias plagales y cadencias rotas.
+
+## Armonía modal básica
+
+Cuando la escala elegida es un modo griego, el generador cambia de arquitectura armónica. En lugar de buscar progresión funcional hacia dominante y tónica, usa un plan modal específico: centro estable, retorno frecuente al acorde de tónica, ausencia de cadencias `V-I` tonales y preferencia por bajos que se mueven por segunda o tercera.
+
+Los patrones modales se construyen como vamps o puentes alrededor de la tónica y de uno o varios acordes cadenciales modales. Estos acordes exponen la nota característica del modo en factores triádicos y reafirman el centro sin usar la lógica de dominante tonal. La primera base implementada usa estos focos: jónico `V`, dórico `IV`, frigio `♭II`, lidio `II`, mixolidio `♭VII-IV`, eólico `v/♭VI/♭VII` y locrio `♭II`.
+
+En progresiones modales se evita añadir séptimas dominantes cuando el acorde resultante sería propio del sistema tonal. Por ejemplo, el `IV` dórico o el `II` lidio se prefieren como tríadas para mostrar la nota característica del modo sin convertir el gesto en una dominante funcional. Las tensiones y suspensiones quedan subordinadas a esta lectura modal: la tónica y los acordes cadenciales modales reducen adornos accidentales para preservar la identidad del modo.
+
+El **6/4 auxiliar** pertenece bien a este terreno modal cuando mantiene un bajo pedal y coloca encima una segunda inversión que comparte ese bajo, como `Cm-Fm/C`. De momento, el motor puede producir inversiones `6/4` por conducción parsimoniosa; una futura mejora puede etiquetar explícitamente estos casos como auxiliares cuando el bajo actúe como pedal modal.
+
+## Segunda capa modal futura
+
+Además de las reglas modales básicas ya activas, el catálogo técnico conserva una segunda capa de ideas marcadas como futuras en `js/data/progression-rules-data.js`. Estas reglas no tienen prioridad en el generador actual y no alteran todavía la selección de progresiones; funcionan como apuntes estructurados para ampliar la escritura modal cuando el núcleo tonal y modal sea más estable.
+
+Las reglas futuras incluyen melodías finales modales, el truco de dos acordes característicos, desplazamientos de centro manteniendo el modo, engaños modales, gestos propios del eólico, estabilización del locrio sin quinta, movimientos modales por semitono, modulación entre modos y mezclas controladas entre modalidad y tonalidad. La intención es que estas ideas se conviertan más adelante en heurísticas ponderadas, no en obligaciones rígidas.
+
+Cuando se activen, deberán seguir dos límites: conservar la gravitación modal hacia la tónica y evitar que los recursos de color acaben imponiendo una lectura funcional `V-I` salvo que se esté modelando deliberadamente una mezcla modal-tonal. En particular, los gestos por semitono deben diferenciarse de la sensible tonal, y los cambios de modo deben introducir las alteraciones nuevas de forma gradual para no romper el centro auditivo sin intención.
+
 ## Intercambio modal
 
 El control **Intercambio** regula la probabilidad de usar acordes préstamo. El reemplazo se hace siempre sobre el mismo grado armónico: si el plan contiene un IV, el préstamo busca otros acordes construidos sobre el IV de una escala fuente relacionada.

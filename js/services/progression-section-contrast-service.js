@@ -37,8 +37,12 @@
 				startIndex: 0
 			},
 			{
+				circleOfFifths: targetReport.circleOfFifths || null,
 				contrast: candidate.id,
 				contextLabel: candidate.label,
+				contextScaleIndex: targetReport.scaleIndex,
+				contextScaleName: targetReport.scaleName,
+				contextTonicName: targetReport.tonicName,
 				id: 'B',
 				labelKey: 'progression.sectionB',
 				length: sectionB.measures ? sectionB.measures.length : 0,
@@ -85,7 +89,7 @@
 	function sameKeySubdominant(options) {
 		return {
 			id: 'same-sd',
-			label: '',
+			label: contextLabelFromReport(options.report),
 			openingFunction: 'SD',
 			report: options.report
 		};
@@ -174,6 +178,10 @@
 		};
 	}
 
+	function contextLabelFromReport(report) {
+		return report && report.tonicName && report.scaleName ? report.tonicName + ' ' + report.scaleName : '';
+	}
+
 	function preferFlatsForCandidate(options, tonicIndex, scaleIndex, scaleDefinition) {
 		var data = options.data || {};
 		var tonicName = noteNameForIndex(data.notes || [], tonicIndex, false);
@@ -257,6 +265,7 @@
 		annotateSectionMeasures: annotateSectionMeasures,
 		circleNeighborCandidates: circleNeighborCandidates,
 		chooseContrastCandidate: chooseContrastCandidate,
+		contextLabelFromReport: contextLabelFromReport,
 		generate: generate,
 		measuresForSectionA: measuresForSectionA,
 		parallelKey: parallelKey,

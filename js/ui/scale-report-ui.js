@@ -116,7 +116,8 @@
 		timeline.innerHTML = options.renderers.progressionWorkbench.renderTimelineMeasures(options.progression, {
 			i18n: options.i18n,
 			notation: options.notation,
-			notationStyle: options.notationStyle
+			notationStyle: options.notationStyle,
+			showCircleOfFifths: !!(options.report && options.report.circleOfFifths)
 		});
 	}
 

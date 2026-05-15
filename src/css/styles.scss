@@ -1394,6 +1394,7 @@ section#bienvenida .columnata article{
 	text-transform:none;
 }
 
+.progressionSectionCircleButton,
 .progressionSectionRandomButton{
 	width:2em;
 	height:2em;
@@ -1407,6 +1408,8 @@ section#bienvenida .columnata article{
 	cursor:pointer;
 }
 
+.progressionSectionCircleButton:hover,
+.progressionSectionCircleButton:focus,
 .progressionSectionRandomButton:hover,
 .progressionSectionRandomButton:focus{
 	border-color:$corporative_complementary_color;
@@ -1414,6 +1417,7 @@ section#bienvenida .columnata article{
 	outline:none;
 }
 
+.progressionSectionCircleButton .material-icons,
 .progressionSectionRandomButton .material-icons{
 	font-size:1.05em;
 	line-height:1;
@@ -1877,12 +1881,15 @@ body[data-theme="day"] .progressionSectionHeader h3{
 	color:#006e58;
 }
 
+body[data-theme="day"] .progressionSectionCircleButton,
 body[data-theme="day"] .progressionSectionRandomButton{
 	background:#ffffff;
 	border-color:#b7c3ca;
 	color:#7d2785;
 }
 
+body[data-theme="day"] .progressionSectionCircleButton:hover,
+body[data-theme="day"] .progressionSectionCircleButton:focus,
 body[data-theme="day"] .progressionSectionRandomButton:hover,
 body[data-theme="day"] .progressionSectionRandomButton:focus{
 	border-color:#7d2785;

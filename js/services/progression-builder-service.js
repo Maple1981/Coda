@@ -59,6 +59,7 @@
 				includeTensions: true,
 				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
 				interchangeSources: options.report.modalInterchangeSources || [],
+				avoidDominantSeventh: isModalReport(options.report),
 				rng: rng,
 				scaleDefinition: options.report.scaleDefinition,
 				scaleNotes: options.report.scaleNotes
@@ -73,4 +74,8 @@
 		fromState: fromState,
 		generate: generate
 	};
+
+	function isModalReport(report) {
+		return !!(report && report.scaleDefinition && report.scaleDefinition.modal === 'true');
+	}
 })(window);
