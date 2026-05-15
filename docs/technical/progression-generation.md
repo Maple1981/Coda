@@ -41,6 +41,16 @@ El **6/4 auxiliar** se distingue del cadencial. En este uso, el bajo se mantiene
 
 El estilo **Clásico** y un valor alto de **Contrapunto** aumentan la probabilidad de que esta cadencia aparezca al final de la sección, pero no la fuerzan siempre. En estilo moderno queda como una posibilidad mucho más rara, subordinada a la preferencia general por semicadencias, cadencias plagales y cadencias rotas.
 
+## Cromatismo cadencial
+
+El control **Cromatismo** regula la probabilidad de introducir notas ajenas a la escala dentro de cierres tonales. De momento actúa de forma conservadora: solo interviene cuando la progresión trabaja en armonía funcional y favorece acordes cromáticos de preparación de dominante, no cambios arbitrarios en cualquier punto de la frase.
+
+La **sexta napolitana** se modela como un acorde mayor sobre el `♭II`, normalmente en primera inversión (`N6`). Conserva función de subdominante y tiende a resolver hacia `V`, `V7` o hacia una cadencia con `I 6/4` intermedio. En `C` menor o mayor, el caso básico sería `D♭/F-G7-C` o `D♭/F-C/G-G7-C`.
+
+Los **acordes de sexta aumentada** se modelan como sonoridades de área subdominante que contienen `♭6`, `1` y `#4`, con variantes italiana, francesa y suiza. Su destino preferente es el dominante; cuando el contexto lo favorece, pueden resolver primero en un `I 6/4` cadencial para suavizar la conducción de voces antes de alcanzar `V` o `V7`.
+
+Estas cadencias cromáticas tienen más peso con valores altos de **Cromatismo**, con estilo **Clásico** y con mayor **Contrapunto**, porque necesitan una conducción clara de las notas alteradas hacia el dominante. No se aplican al inicio de la progresión ni al núcleo modal básico, donde podrían destruir la gravitación modal y convertir el resultado en una progresión funcional.
+
 ## Armonía modal básica
 
 Cuando la escala elegida es un modo griego, el generador cambia de arquitectura armónica. En lugar de buscar progresión funcional hacia dominante y tónica, usa un plan modal específico: centro estable, retorno frecuente al acorde de tónica, ausencia de cadencias `V-I` tonales y preferencia por bajos que se mueven por segunda o tercera.

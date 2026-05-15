@@ -23,7 +23,7 @@ El playback actual usa Web Audio y soundfonts locales. No necesita cámara, micr
 
 ## Preferencias locales
 
-La cookie funcional `coda_preferences` solo debe guardar valores ligeros de interfaz: idioma, notación, tema, volumen, tónica, escala, formato e instrumento sonoro. `js/services/preferences-service.js` centraliza la validación para que una cookie manipulada no pueda forzar índices fuera de rango, valores desconocidos o rutas de soundfont inesperadas.
+La cookie funcional `coda_preferences` solo debe guardar valores ligeros de interfaz: idioma, notación, tema, volumen, tónica, escala, formato, instrumento sonoro y controles del constructor de progresiones. `js/services/preferences-service.js` centraliza la validación para que una cookie manipulada no pueda forzar índices fuera de rango, valores desconocidos o rutas de soundfont inesperadas.
 
 ## HTML confiable
 

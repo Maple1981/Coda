@@ -1490,6 +1490,9 @@
 			'progression.chordMenu.seventh': 'Cuatríada',
 			'progression.chordMenu.silence': 'Silencio',
 			'progression.chordMenu.triad': 'Tríada',
+			'progression.chromatic.neapolitan': 'Sexta napolitana',
+			'progression.chromatic.augmentedSixth': 'Sexta aumentada',
+			'progression.chromaticism': 'Cromatismo',
 			'progression.counterpoint': 'Contrapunto',
 			'progression.addMeasureChord': 'Añadir acorde al compás',
 			'progression.dragMeasure': 'Reordenar compás',
@@ -1503,6 +1506,7 @@
 			'progression.help.bars': 'Longitud total de la progresión generada.',
 			'progression.help.bpm': 'Velocidad de reproducción y exportación MIDI, entre 20 y 200 BPM.',
 			'progression.help.counterpoint': 'Controla el movimiento parsimonioso de voces, su independencia melódica, y el grado de adhesión a las reglas clásicas de contrapunto, como la evitación de quintas y octavas paralelas.',
+			'progression.help.chromaticism': 'Añade notas ajenas a la escala y acordes de sexta napolitana o de los varios tipos de sexta aumentada.',
 			'progression.help.meter': 'Organización rítmica de cada compás.',
 			'progression.help.modalInterchange': 'Controla la frecuencia de acordes préstamo por intercambio modal de escalas, tonalidades o modos relacionados.',
 			'progression.help.style': 'El estilo moderno evita cadencias auténticas; el clásico favorece su aparición al final de bloques de secuencia.',
@@ -1680,6 +1684,9 @@
 			'progression.chordMenu.seventh': 'Seventh chord',
 			'progression.chordMenu.silence': 'Silence',
 			'progression.chordMenu.triad': 'Triad',
+			'progression.chromatic.neapolitan': 'Neapolitan sixth',
+			'progression.chromatic.augmentedSixth': 'Augmented sixth',
+			'progression.chromaticism': 'Chromaticism',
 			'progression.counterpoint': 'Counterpoint',
 			'progression.addMeasureChord': 'Add chord to bar',
 			'progression.dragMeasure': 'Reorder bar',
@@ -1693,6 +1700,7 @@
 			'progression.help.bars': 'Total length of the generated progression.',
 			'progression.help.bpm': 'Playback and MIDI export tempo, from 20 to 200 BPM.',
 			'progression.help.counterpoint': 'Controls parsimonious voice movement, melodic independence, and adherence to classical counterpoint rules, such as avoiding parallel fifths and octaves.',
+			'progression.help.chromaticism': 'Adds notes outside the scale and Neapolitan-sixth or augmented-sixth chords.',
 			'progression.help.meter': 'Rhythmic organization of each bar.',
 			'progression.help.modalInterchange': 'Controls how often borrowed chords appear through modal interchange from related scales, keys or modes.',
 			'progression.help.style': 'Modern style avoids authentic cadences; classical style favors them at the end of sequence blocks.',
@@ -2038,6 +2046,7 @@
 			progressionArticulation: allowList(['sustain', 'legato', 'staccato', 'arpeggio']),
 			progressionBars: allowList(['2', '4', '6', '8', '12', '16', '32']),
 			progressionBpm: integerRange(20, 200),
+			progressionChromaticism: integerRange(0, 100),
 			progressionCounterpoint: integerRange(0, 100),
 			progressionMeter: allowList(['4/4', '3/4', '6/8']),
 			progressionModalInterchange: integerRange(0, 100),
@@ -2045,7 +2054,7 @@
 			progressionTensions: integerRange(0, 100),
 			progressionVoicing: allowList(['closed', 'open']),
 			progressionVoices: integerRange(1, 6),
-			scaleIndex: integerRange(0, 54),
+			scaleIndex: integerRange(0, 55),
 			theme: allowList(['night', 'day']),
 			tonicIndex: integerRange(0, 11),
 			volume: integerRange(0, 100)
@@ -2169,6 +2178,7 @@
 		{ id: 'progressionArticulation', preference: 'progressionArticulation', state: 'articulation' },
 		{ id: 'progressionBars', preference: 'progressionBars', state: 'bars' },
 		{ id: 'progressionBpm', preference: 'progressionBpm', state: 'bpm' },
+		{ id: 'progressionChromaticism', preference: 'progressionChromaticism', state: 'chromaticism' },
 		{ id: 'progressionCounterpoint', preference: 'progressionCounterpoint', state: 'counterpoint' },
 		{ id: 'progressionMeter', preference: 'progressionMeter', state: 'meter' },
 		{ id: 'progressionModalInterchange', preference: 'progressionModalInterchange', state: 'modalInterchange' },
@@ -2312,6 +2322,7 @@
 			beatUnit: numberOrDefault(progressionState.beatUnit, meterPart(progressionState.meter, 1, 4)),
 			beatsPerBar: numberOrDefault(progressionState.beatsPerBar, meterPart(progressionState.meter, 0, 4)),
 			bpm: numberOrDefault(progressionState.bpm, 120),
+			chromaticism: numberOrDefault(progressionState.chromaticism, 10),
 			counterpoint: numberOrDefault(progressionState.counterpoint, 20),
 			meter: progressionState.meter || '4/4',
 			modalInterchange: numberOrDefault(progressionState.modalInterchange, 25),
@@ -2370,14 +2381,18 @@
 			var source = interchangeSourceForDegree(interchangeSources, degrees[i]);
 			var chord = source && source.scaleChords && source.scaleChords[degrees[i].index] ?
 				source.scaleChords[degrees[i].index] :
-				degrees[i].source === 'parallel' && parallelChords[degrees[i].index] ?
-					parallelChords[degrees[i].index] :
-					scaleChords[degrees[i].index];
+				degrees[i].chord ?
+					degrees[i].chord :
+					degrees[i].source === 'parallel' && parallelChords[degrees[i].index] ?
+						parallelChords[degrees[i].index] :
+						scaleChords[degrees[i].index];
 
 			resolved.push({
 				cadentialRole: degrees[i].cadentialRole || '',
+				chromaticRole: degrees[i].chromaticRole || '',
 				chord: chord,
-				degree: scaleNotes[degrees[i].index] ? scaleNotes[degrees[i].index].grado : '',
+				degree: degrees[i].degreeDisplayName || (scaleNotes[degrees[i].index] ? scaleNotes[degrees[i].index].grado : ''),
+				degreeDisplayName: degrees[i].degreeDisplayName || '',
 				degreeIndex: degrees[i].index,
 				forceInversionIndex: degrees[i].forceInversionIndex,
 				forceKind: degrees[i].forceKind,
@@ -2386,6 +2401,7 @@
 				preventTensions: !!degrees[i].preventTensions,
 				source: source ? 'interchange' : degrees[i].source || 'diatonic',
 				sourceId: source ? source.id : degrees[i].sourceId,
+				sourceLabelKey: degrees[i].sourceLabelKey || '',
 				sourceScaleIndex: source ? source.scaleIndex : degrees[i].sourceScaleIndex,
 				sourceTonicName: source ? source.tonicName : '',
 				tonalFunctionOverride: degrees[i].tonalFunctionOverride || ''
@@ -5263,6 +5279,10 @@
 			return [];
 		}
 
+		if (chord.factorNotes && chord.factorNotes.length) {
+			return chord.factorNotes.slice();
+		}
+
 		return [chord.fundamental, chord.tercera, chord.quinta, chord.septima];
 	}
 
@@ -5273,6 +5293,10 @@
 	function triadNotes(chord) {
 		if (!chord) {
 			return [];
+		}
+
+		if (chord.factorNotes && chord.factorNotes.length) {
+			return chord.factorNotes.slice(0, 3);
 		}
 
 		return [chord.fundamental, chord.tercera, chord.quinta];
@@ -5341,11 +5365,11 @@
 			voicing: context.progressionState.voicing,
 			voices: context.progressionState.voices
 		});
-		chordName = useSeventh ? chord.nombre : formattingService.triadName(chord);
+		chordName = chord.displayName || (useSeventh ? chord.nombre : formattingService.triadName(chord));
 
 		return {
 			chordName: chordName,
-			degree: formattingService.formatDegreeForMeasure(resolvedDegree.degree, chord, useSeventh),
+			degree: resolvedDegree.degreeDisplayName || formattingService.formatDegreeForMeasure(resolvedDegree.degree, chord, useSeventh),
 			inversionIndex: voicing.inversionIndex,
 			inversionLabel: voicing.inversionLabel,
 			kind: useSeventh ? 'seventh' : 'triad',
@@ -5439,8 +5463,16 @@
 				measure.cadentialRole = resolvedDegrees[i].cadentialRole;
 			}
 
+			if (resolvedDegrees[i].chromaticRole) {
+				measure.chromaticRole = resolvedDegrees[i].chromaticRole;
+			}
+
 			if (resolvedDegrees[i].modalRole) {
 				measure.modalRole = resolvedDegrees[i].modalRole;
+			}
+
+			if (resolvedDegrees[i].sourceLabelKey) {
+				measure.sourceLabelKey = resolvedDegrees[i].sourceLabelKey;
 			}
 
 			if (resolvedDegrees[i].sourceScaleIndex != null) {
@@ -5520,6 +5552,12 @@
 (function (global) {
 	'use strict';
 
+	var explicitCadences = {
+		augmented6: true,
+		cadential64: true,
+		neapolitan: true
+	};
+
 	function build(options) {
 		var progressionState = options.progressionState;
 		var secondsPerBeat = options.secondsPerBeat;
@@ -5530,6 +5568,7 @@
 			beatsPerBar: progressionState.beatsPerBar,
 			bpm: progressionState.bpm,
 			harmonicColor: {
+				chromaticism: progressionState.chromaticism,
 				counterpoint: progressionState.counterpoint,
 				modalInterchange: progressionState.modalInterchange,
 				tensions: progressionState.tensions
@@ -5546,7 +5585,7 @@
 
 		if (options.generationPlan) {
 			progression.generation = {
-				cadence: options.generationPlan.finalCadence === 'cadential64' ? options.generationPlan.finalCadence : options.generationPlan.pattern.cadence,
+				cadence: explicitCadences[options.generationPlan.finalCadence] ? options.generationPlan.finalCadence : options.generationPlan.pattern.cadence,
 				form: options.generationPlan.pattern.form,
 				patternId: options.generationPlan.pattern.id,
 				style: progressionState.style,
@@ -5564,14 +5603,338 @@
 
 ;
 
+/* Source: js/services/progression-chromatic-cadence-service.js */
+// Cadencias cromáticas: sexta napolitana y sextas aumentadas.
+(function (global) {
+	'use strict';
+
+	var OCTAVE = 12;
+
+	function shouldUseChromaticCadence(pattern, progressionState, rng) {
+		var probability = chromaticCadenceProbability(pattern, progressionState);
+		var value;
+
+		if (probability <= 0) {
+			return false;
+		}
+
+		value = typeof rng === 'function' ? rng() : Math.random();
+
+		return value < probability;
+	}
+
+	function chromaticCadenceProbability(pattern, progressionState) {
+		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
+		var counterpoint = numberOrDefault(progressionState && progressionState.counterpoint, 0);
+		var probability;
+
+		if (chromaticism < 25) {
+			return 0;
+		}
+
+		probability = (chromaticism - 25) / 105;
+		probability += counterpoint / 480;
+
+		if (progressionState && progressionState.style === 'classic') {
+			probability += 0.1;
+		}
+
+		if (pattern && pattern.cadence && pattern.cadence !== 'authentic' && pattern.cadence !== 'half') {
+			probability *= pattern.cadence === 'plagal' ? 0.62 : 0.72;
+		}
+
+		return Math.min(chromaticism >= 95 ? 0.86 : 0.62, Math.max(0, probability));
+	}
+
+	function chooseChromaticCadenceType(progressionState, rng) {
+		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
+		var value = typeof rng === 'function' ? rng() : Math.random();
+
+		if (value < (chromaticism >= 75 ? 0.42 : 0.58)) {
+			return 'neapolitan';
+		}
+
+		return 'augmented6';
+	}
+
+	function forceChromaticEnding(degrees, options) {
+		var cadence = options.cadence;
+
+		if (cadence === 'neapolitan') {
+			forceNeapolitanEnding(degrees, options);
+		} else if (cadence === 'augmented6') {
+			forceAugmentedSixthEnding(degrees, options);
+		}
+	}
+
+	function forceNeapolitanEnding(degrees, options) {
+		var start = degrees.length >= 4 && shouldUseCadentialBridge(options.progressionState, options.rng) ? degrees.length - 4 : degrees.length - 3;
+
+		if (degrees.length < 3) {
+			forceShortAuthenticEnding(degrees);
+			return;
+		}
+
+		degrees[start] = neapolitanDegree(options.report);
+		if (degrees.length - start === 4) {
+			degrees[start + 1] = cadentialSixFourDegree();
+			degrees[start + 2] = dominantDegree(options);
+			degrees[start + 3] = tonicResolutionDegree();
+		} else {
+			degrees[start + 1] = dominantDegree(options);
+			degrees[start + 2] = tonicResolutionDegree();
+		}
+	}
+
+	function forceAugmentedSixthEnding(degrees, options) {
+		var start = degrees.length >= 4 && shouldUseCadentialBridge(options.progressionState, options.rng) ? degrees.length - 4 : degrees.length - 3;
+
+		if (degrees.length < 3) {
+			forceShortAuthenticEnding(degrees);
+			return;
+		}
+
+		degrees[start] = augmentedSixthDegree(options.report, options.rng);
+		if (degrees.length - start === 4) {
+			degrees[start + 1] = cadentialSixFourDegree();
+			degrees[start + 2] = dominantDegree(options);
+			degrees[start + 3] = tonicResolutionDegree();
+		} else {
+			degrees[start + 1] = dominantDegree(options);
+			degrees[start + 2] = tonicResolutionDegree();
+		}
+	}
+
+	function neapolitanDegree(report) {
+		var tonicIndex = tonicIndexFromReport(report);
+		var root = noteName(tonicIndex + 1, 'flat');
+		var third = noteName(tonicIndex + 5, 'flat');
+		var fifth = noteName(tonicIndex + 8, 'flat');
+
+		return {
+			chord: {
+				factorNotes: [root, third, fifth],
+				fundamental: root,
+				nombre: root,
+				quinta: fifth,
+				septima: noteName(tonicIndex, 'flat'),
+				tercera: third
+			},
+			chromaticRole: 'neapolitan',
+			degreeDisplayName: '\u266dII',
+			forceInversionIndex: 1,
+			forceKind: 'triad',
+			index: 1,
+			preventSuspension: true,
+			preventTensions: true,
+			source: 'chromatic',
+			sourceLabelKey: 'progression.chromatic.neapolitan',
+			tonalFunctionOverride: 'SD'
+		};
+	}
+
+	function augmentedSixthDegree(report, rng) {
+		var tonicIndex = tonicIndexFromReport(report);
+		var variant = augmentedSixthVariant(rng);
+		var notes = augmentedSixthNotes(tonicIndex, variant);
+
+		return {
+			chord: {
+				factorNotes: notes,
+				fundamental: notes[0],
+				nombre: variant.label,
+				quinta: notes[2],
+				septima: notes[3],
+				tercera: notes[1]
+			},
+			chromaticRole: variant.id,
+			degreeDisplayName: variant.label,
+			forceInversionIndex: 0,
+			forceKind: 'seventh',
+			index: 5,
+			preventSuspension: true,
+			preventTensions: true,
+			source: 'chromatic',
+			sourceLabelKey: 'progression.chromatic.augmentedSixth',
+			tonalFunctionOverride: 'SD'
+		};
+	}
+
+	function augmentedSixthVariant(rng) {
+		var value = typeof rng === 'function' ? rng() : Math.random();
+
+		if (value < 0.34) {
+			return { id: 'italian6', label: 'It+6' };
+		}
+
+		if (value < 0.68) {
+			return { id: 'french43', label: 'Fr+6' };
+		}
+
+		return { id: 'swiss65', label: 'Sw+6' };
+	}
+
+	function augmentedSixthNotes(tonicIndex, variant) {
+		var flatSix = noteName(tonicIndex + 8, 'flat');
+		var tonic = noteName(tonicIndex, 'sharp');
+		var sharpFour = noteName(tonicIndex + 6, 'sharp');
+
+		if (variant.id === 'italian6') {
+			return [flatSix, tonic, tonic, sharpFour];
+		}
+
+		if (variant.id === 'french43') {
+			return [flatSix, tonic, noteName(tonicIndex + 2, 'sharp'), sharpFour];
+		}
+
+		return [flatSix, tonic, noteName(tonicIndex + 3, 'flat'), sharpFour];
+	}
+
+	function cadentialSixFourDegree() {
+		return {
+			cadentialRole: 'cadential64',
+			forceInversionIndex: 2,
+			forceKind: 'triad',
+			index: 0,
+			preventSuspension: true,
+			preventTensions: true,
+			source: 'diatonic',
+			tonalFunctionOverride: 'D'
+		};
+	}
+
+	function dominantDegree(options) {
+		return {
+			cadentialRole: 'cadential-dominant',
+			forceInversionIndex: 0,
+			forceKind: dominantKind(options.progressionState, options.rng),
+			index: 4,
+			preventSuspension: true,
+			preventTensions: true,
+			source: 'diatonic',
+			tonalFunctionOverride: 'D'
+		};
+	}
+
+	function tonicResolutionDegree() {
+		return {
+			cadentialRole: 'cadential-resolution',
+			forceInversionIndex: 0,
+			forceKind: 'triad',
+			index: 0,
+			preventSuspension: true,
+			preventTensions: true,
+			source: 'diatonic'
+		};
+	}
+
+	function forceShortAuthenticEnding(degrees) {
+		if (!degrees || degrees.length < 2) {
+			return;
+		}
+
+		degrees[degrees.length - 2] = dominantDegree({});
+		degrees[degrees.length - 1] = tonicResolutionDegree();
+	}
+
+	function dominantKind(progressionState, rng) {
+		var voices = numberOrDefault(progressionState && progressionState.voices, 4);
+		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
+		var value = typeof rng === 'function' ? rng() : Math.random();
+		var probability = voices >= 4 ? 0.58 : 0.32;
+
+		probability += chromaticism / 450;
+
+		return value < Math.min(0.82, probability) ? 'seventh' : 'triad';
+	}
+
+	function shouldUseCadentialBridge(progressionState, rng) {
+		var counterpoint = numberOrDefault(progressionState && progressionState.counterpoint, 0);
+		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
+		var value = typeof rng === 'function' ? rng() : Math.random();
+		var probability = 0.18 + counterpoint / 360 + chromaticism / 500;
+
+		if (progressionState && progressionState.style === 'classic') {
+			probability += 0.12;
+		}
+
+		return value < Math.min(0.58, probability);
+	}
+
+	function tonicIndexFromReport(report) {
+		var data = global.CodaData || {};
+		var byName = data.indexes && data.indexes.notes ? data.indexes.notes.indexByName : null;
+		var tonicIndex = Number(report && report.tonicIndex);
+
+		if (isFinite(tonicIndex)) {
+			return tonicIndex;
+		}
+
+		if (byName && report && report.tonicName != null && byName[report.tonicName] != null) {
+			return byName[report.tonicName];
+		}
+
+		return 0;
+	}
+
+	function noteName(index, spelling) {
+		var data = global.CodaData || {};
+		var notes = data.notes || [];
+		var note = notes[normalizeIndex(index)];
+
+		if (!note) {
+			return 'C';
+		}
+
+		if (spelling === 'flat' && note.enarmonica) {
+			return note.enarmonica;
+		}
+
+		return note.nombre;
+	}
+
+	function normalizeIndex(index) {
+		var normalized = Number(index) % OCTAVE;
+
+		return normalized < 0 ? normalized + OCTAVE : normalized;
+	}
+
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
+	global.CodaProgressionChromaticCadence = {
+		augmentedSixthDegree: augmentedSixthDegree,
+		augmentedSixthNotes: augmentedSixthNotes,
+		augmentedSixthVariant: augmentedSixthVariant,
+		chromaticCadenceProbability: chromaticCadenceProbability,
+		chooseChromaticCadenceType: chooseChromaticCadenceType,
+		forceAugmentedSixthEnding: forceAugmentedSixthEnding,
+		forceChromaticEnding: forceChromaticEnding,
+		forceNeapolitanEnding: forceNeapolitanEnding,
+		neapolitanDegree: neapolitanDegree,
+		shouldUseCadentialBridge: shouldUseCadentialBridge,
+		shouldUseChromaticCadence: shouldUseChromaticCadence
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-cadence-planner-service.js */
 // Cadence decisions and cadential endings for generated progressions.
 (function (global) {
 	'use strict';
 
+	var chromaticCadenceService = global.CodaProgressionChromaticCadence;
 	var styleService = global.CodaProgressionStyle;
 
 	function finalCadenceForPattern(pattern, progressionState, rng) {
+		if (chromaticCadenceService && chromaticCadenceService.shouldUseChromaticCadence(pattern, progressionState, rng)) {
+			return chromaticCadenceService.chooseChromaticCadenceType(progressionState, rng);
+		}
+
 		if (shouldUseCadentialSixFour(pattern, progressionState, rng)) {
 			return 'cadential64';
 		}
@@ -5663,6 +6026,8 @@
 
 		if (cadence === 'cadential64') {
 			forceCadentialSixFourEnding(degrees, options);
+		} else if (cadence === 'neapolitan' || cadence === 'augmented6') {
+			chromaticCadenceService.forceChromaticEnding(degrees, options);
 		} else if (cadence === 'authentic') {
 			degrees[degrees.length - 2] = { index: 4, source: 'diatonic' };
 			degrees[degrees.length - 1] = { index: 0, source: 'diatonic' };
@@ -6349,6 +6714,7 @@
 				mode: mode,
 				pattern: pattern,
 				progressionState: progressionState,
+				report: options.report,
 				rng: rng,
 				rules: options.rules
 			}) :
@@ -6356,6 +6722,7 @@
 				cadence: endingCadence,
 				mode: mode,
 				progressionState: progressionState,
+				report: options.report,
 				rng: rng,
 				rules: options.rules
 			});
@@ -6371,7 +6738,7 @@
 	}
 
 	function effectiveEndingCadence(pattern, finalCadence) {
-		if (finalCadence === 'cadential64') {
+		if (finalCadence === 'cadential64' || finalCadence === 'neapolitan' || finalCadence === 'augmented6') {
 			return finalCadence;
 		}
 
@@ -6422,7 +6789,8 @@
 		for (var i = 0; i < (degrees || []).length; i++) {
 			var degree = extendObject(degrees[i], {});
 			var isBorrowedMarker = degree.source === 'parallel';
-			var shouldTryInterchange = i > 0 && (isBorrowedMarker || (chance > 0 && rng() < chance));
+			var canInterchange = !degree.source || degree.source === 'diatonic' || degree.source === 'parallel';
+			var shouldTryInterchange = canInterchange && i > 0 && (isBorrowedMarker || (chance > 0 && rng() < chance));
 			var source = shouldTryInterchange ? chooseInterchangeSource(report, degree.index, rng) : null;
 
 			if (source) {
@@ -6507,6 +6875,7 @@
 					cadence: cadence,
 					mode: options.mode,
 					progressionState: options.progressionState,
+					report: options.report,
 					rng: options.rng,
 					rules: options.rules
 				});
@@ -12136,6 +12505,7 @@
 
 		html += '<legend><span data-i18n="progression.harmonicColor"></span></legend>';
 		html += renderControl('progression.modalInterchange', '<input id="progressionModalInterchange" type="range" value="25" min="0" max="100" step="1" />', '#progressionModalInterchange', null, 'progression.help.modalInterchange');
+		html += renderControl('progression.chromaticism', '<input id="progressionChromaticism" type="range" value="10" min="0" max="100" step="1" />', '#progressionChromaticism', null, 'progression.help.chromaticism');
 		html += renderControl('progression.tensions', '<input id="progressionTensions" type="range" value="35" min="0" max="100" step="1" />', '#progressionTensions', null, 'progression.help.tensions');
 		html += renderControl('progression.counterpoint', '<input id="progressionCounterpoint" type="range" value="20" min="0" max="100" step="1" />', '#progressionCounterpoint', null, 'progression.help.counterpoint');
 		html += '</fieldset>';
@@ -12354,6 +12724,10 @@
 		var scaleIndex = chord.sourceScaleIndex;
 		var scaleName = scaleIndex != null && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t('data.scales.' + scaleIndex) : '';
 		var tonicName = chord.sourceTonicName || '';
+
+		if (chord.source === 'chromatic') {
+			return chord.sourceLabelKey && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(chord.sourceLabelKey) : '';
+		}
 
 		if (chord.source !== 'interchange' || !scaleName) {
 			return '';
@@ -12709,6 +13083,7 @@
 		articulation: 'sustain',
 		bars: 8,
 		bpm: 120,
+		chromaticism: 10,
 		counterpoint: 20,
 		meter: '4/4',
 		modalInterchange: 25,
@@ -12728,6 +13103,7 @@
 			beatsPerBar: meterBeats(pick(values.meter, allowedMeters, fallback.meter)),
 			beatUnit: meterUnit(pick(values.meter, allowedMeters, fallback.meter)),
 			bpm: clampInteger(values.bpm, 20, 200, fallback.bpm),
+			chromaticism: clampInteger(values.chromaticism, 0, 100, fallback.chromaticism),
 			counterpoint: clampInteger(values.counterpoint, 0, 100, fallback.counterpoint),
 			meter: pick(values.meter, allowedMeters, fallback.meter),
 			modalInterchange: clampInteger(values.modalInterchange, 0, 100, fallback.modalInterchange),
@@ -12745,6 +13121,7 @@
 			beatsPerBar: value.beatsPerBar,
 			beatUnit: value.beatUnit,
 			bpm: value.bpm,
+			chromaticism: value.chromaticism,
 			counterpoint: value.counterpoint,
 			meter: value.meter,
 			modalInterchange: value.modalInterchange,
@@ -12828,6 +13205,7 @@
 			articulation: valueOf(root, 'progressionArticulation'),
 			bars: valueOf(root, 'progressionBars'),
 			bpm: valueOf(root, 'progressionBpm'),
+			chromaticism: valueOf(root, 'progressionChromaticism'),
 			counterpoint: valueOf(root, 'progressionCounterpoint'),
 			meter: valueOf(root, 'progressionMeter'),
 			modalInterchange: valueOf(root, 'progressionModalInterchange'),
@@ -12998,6 +13376,7 @@
 		setText(i18n, 'span[data-i18n="progression.style"]', 'progression.style');
 		setText(i18n, 'span[data-i18n="progression.harmonicColor"]', 'progression.harmonicColor');
 		setText(i18n, 'span[data-i18n="progression.modalInterchange"]', 'progression.modalInterchange');
+		setText(i18n, 'span[data-i18n="progression.chromaticism"]', 'progression.chromaticism');
 		setText(i18n, 'span[data-i18n="progression.tensions"]', 'progression.tensions');
 		setText(i18n, 'span[data-i18n="progression.counterpoint"]', 'progression.counterpoint');
 		applyProgressionHelpTooltips(i18n);

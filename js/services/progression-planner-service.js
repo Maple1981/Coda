@@ -38,6 +38,7 @@
 				mode: mode,
 				pattern: pattern,
 				progressionState: progressionState,
+				report: options.report,
 				rng: rng,
 				rules: options.rules
 			}) :
@@ -45,6 +46,7 @@
 				cadence: endingCadence,
 				mode: mode,
 				progressionState: progressionState,
+				report: options.report,
 				rng: rng,
 				rules: options.rules
 			});
@@ -60,7 +62,7 @@
 	}
 
 	function effectiveEndingCadence(pattern, finalCadence) {
-		if (finalCadence === 'cadential64') {
+		if (finalCadence === 'cadential64' || finalCadence === 'neapolitan' || finalCadence === 'augmented6') {
 			return finalCadence;
 		}
 
@@ -111,7 +113,8 @@
 		for (var i = 0; i < (degrees || []).length; i++) {
 			var degree = extendObject(degrees[i], {});
 			var isBorrowedMarker = degree.source === 'parallel';
-			var shouldTryInterchange = i > 0 && (isBorrowedMarker || (chance > 0 && rng() < chance));
+			var canInterchange = !degree.source || degree.source === 'diatonic' || degree.source === 'parallel';
+			var shouldTryInterchange = canInterchange && i > 0 && (isBorrowedMarker || (chance > 0 && rng() < chance));
 			var source = shouldTryInterchange ? chooseInterchangeSource(report, degree.index, rng) : null;
 
 			if (source) {
@@ -196,6 +199,7 @@
 					cadence: cadence,
 					mode: options.mode,
 					progressionState: options.progressionState,
+					report: options.report,
 					rng: options.rng,
 					rules: options.rules
 				});

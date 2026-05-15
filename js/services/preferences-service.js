@@ -64,6 +64,7 @@
 			progressionArticulation: allowList(['sustain', 'legato', 'staccato', 'arpeggio']),
 			progressionBars: allowList(['2', '4', '6', '8', '12', '16', '32']),
 			progressionBpm: integerRange(20, 200),
+			progressionChromaticism: integerRange(0, 100),
 			progressionCounterpoint: integerRange(0, 100),
 			progressionMeter: allowList(['4/4', '3/4', '6/8']),
 			progressionModalInterchange: integerRange(0, 100),
@@ -71,7 +72,7 @@
 			progressionTensions: integerRange(0, 100),
 			progressionVoicing: allowList(['closed', 'open']),
 			progressionVoices: integerRange(1, 6),
-			scaleIndex: integerRange(0, 54),
+			scaleIndex: integerRange(0, 55),
 			theme: allowList(['night', 'day']),
 			tonicIndex: integerRange(0, 11),
 			volume: integerRange(0, 100)

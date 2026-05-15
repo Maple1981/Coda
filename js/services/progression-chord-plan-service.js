@@ -44,11 +44,11 @@
 			voicing: context.progressionState.voicing,
 			voices: context.progressionState.voices
 		});
-		chordName = useSeventh ? chord.nombre : formattingService.triadName(chord);
+		chordName = chord.displayName || (useSeventh ? chord.nombre : formattingService.triadName(chord));
 
 		return {
 			chordName: chordName,
-			degree: formattingService.formatDegreeForMeasure(resolvedDegree.degree, chord, useSeventh),
+			degree: resolvedDegree.degreeDisplayName || formattingService.formatDegreeForMeasure(resolvedDegree.degree, chord, useSeventh),
 			inversionIndex: voicing.inversionIndex,
 			inversionLabel: voicing.inversionLabel,
 			kind: useSeventh ? 'seventh' : 'triad',

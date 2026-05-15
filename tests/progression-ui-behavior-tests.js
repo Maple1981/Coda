@@ -95,6 +95,7 @@ assert.deepEqual(initialState, {
 	beatsPerBar: 4,
 	beatUnit: 4,
 	bpm: 120,
+	chromaticism: 10,
 	counterpoint: 20,
 	meter: '4/4',
 	modalInterchange: 25,
@@ -150,6 +151,7 @@ assert.deepEqual(savedPreferences, {
 	progressionArticulation: 'staccato',
 	progressionBars: '4',
 	progressionBpm: '120',
+	progressionChromaticism: '10',
 	progressionCounterpoint: '20',
 	progressionMeter: '3/4',
 	progressionModalInterchange: '25',
@@ -213,6 +215,7 @@ assert.deepEqual(changedProgression.measures[1], {
 	voices: 3
 });
 assert.deepEqual(changedProgression.harmonicColor, {
+	chromaticism: 10,
 	counterpoint: 20,
 	modalInterchange: 25,
 	tensions: 60
@@ -464,6 +467,7 @@ function createFakeDocument() {
 	addElement('progressionArticulation', 'sustain');
 	addElement('progressionBars', '8');
 	addElement('progressionBpm', '120');
+	addElement('progressionChromaticism', '10');
 	addElement('progressionCounterpoint', '20');
 	addElement('progressionMeter', '4/4');
 	addElement('progressionModalInterchange', '25');

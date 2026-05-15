@@ -13,6 +13,7 @@
 			beatUnit: numberOrDefault(progressionState.beatUnit, meterPart(progressionState.meter, 1, 4)),
 			beatsPerBar: numberOrDefault(progressionState.beatsPerBar, meterPart(progressionState.meter, 0, 4)),
 			bpm: numberOrDefault(progressionState.bpm, 120),
+			chromaticism: numberOrDefault(progressionState.chromaticism, 10),
 			counterpoint: numberOrDefault(progressionState.counterpoint, 20),
 			meter: progressionState.meter || '4/4',
 			modalInterchange: numberOrDefault(progressionState.modalInterchange, 25),

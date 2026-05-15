@@ -24,14 +24,18 @@
 			var source = interchangeSourceForDegree(interchangeSources, degrees[i]);
 			var chord = source && source.scaleChords && source.scaleChords[degrees[i].index] ?
 				source.scaleChords[degrees[i].index] :
-				degrees[i].source === 'parallel' && parallelChords[degrees[i].index] ?
-					parallelChords[degrees[i].index] :
-					scaleChords[degrees[i].index];
+				degrees[i].chord ?
+					degrees[i].chord :
+					degrees[i].source === 'parallel' && parallelChords[degrees[i].index] ?
+						parallelChords[degrees[i].index] :
+						scaleChords[degrees[i].index];
 
 			resolved.push({
 				cadentialRole: degrees[i].cadentialRole || '',
+				chromaticRole: degrees[i].chromaticRole || '',
 				chord: chord,
-				degree: scaleNotes[degrees[i].index] ? scaleNotes[degrees[i].index].grado : '',
+				degree: degrees[i].degreeDisplayName || (scaleNotes[degrees[i].index] ? scaleNotes[degrees[i].index].grado : ''),
+				degreeDisplayName: degrees[i].degreeDisplayName || '',
 				degreeIndex: degrees[i].index,
 				forceInversionIndex: degrees[i].forceInversionIndex,
 				forceKind: degrees[i].forceKind,
@@ -40,6 +44,7 @@
 				preventTensions: !!degrees[i].preventTensions,
 				source: source ? 'interchange' : degrees[i].source || 'diatonic',
 				sourceId: source ? source.id : degrees[i].sourceId,
+				sourceLabelKey: degrees[i].sourceLabelKey || '',
 				sourceScaleIndex: source ? source.scaleIndex : degrees[i].sourceScaleIndex,
 				sourceTonicName: source ? source.tonicName : '',
 				tonalFunctionOverride: degrees[i].tonalFunctionOverride || ''

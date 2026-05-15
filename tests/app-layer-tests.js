@@ -210,6 +210,7 @@ assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	voices: 3
 });
 assert.deepEqual(cMajorProgressionPlan.harmonicColor, {
+	chromaticism: 10,
 	counterpoint: 30,
 	modalInterchange: 10,
 	tensions: 40
@@ -456,6 +457,48 @@ assert.equal(cMajorInEMinor.degree, 'VImaj7');
 assert.deepEqual(eMinorChordMenu[2].items.map(function (item) {
 	return item.commonToneCount;
 }), [3, 2, 1, 1]);
+
+const eMinorChromaticProgression = app.generateProgressionFromState({
+	data: data,
+	domain: domain,
+	progressionState: {
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		chromaticism: 100,
+		counterpoint: 40,
+		meter: '4/4',
+		modalInterchange: 25,
+		style: 'modern',
+		tensions: 35,
+		voices: 4
+	},
+	report: eMinorReport,
+	rules: {
+		patterns: [
+			{
+				cadence: 'half',
+				counterpoint: 40,
+				degrees: [0, 3, 1, 4],
+				form: 'chromatic-test',
+				id: 'chromatic-test',
+				modes: ['minor'],
+				modalColor: 25,
+				tensionAffinity: 35,
+				weight: 1
+			}
+		]
+	},
+	rng: sequenceRng([0, 0, 0, 1, 0])
+});
+assert.equal(eMinorChromaticProgression.generation.cadence, 'neapolitan');
+assert.ok(eMinorChromaticProgression.measures.some(function (measure) {
+	return measure.source === 'chromatic' && measure.chromaticRole === 'neapolitan';
+}));
+assert.ok(eMinorChromaticProgression.measures.some(function (measure) {
+	return measure.sourceLabelKey === 'progression.chromatic.neapolitan';
+}));
 
 const replacedSeventhProgression = app.replaceProgressionMeasureChord(cMajorProgressionPlan, 0, 0, {
 	degreeIndex: 4,

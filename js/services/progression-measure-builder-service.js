@@ -57,8 +57,16 @@
 				measure.cadentialRole = resolvedDegrees[i].cadentialRole;
 			}
 
+			if (resolvedDegrees[i].chromaticRole) {
+				measure.chromaticRole = resolvedDegrees[i].chromaticRole;
+			}
+
 			if (resolvedDegrees[i].modalRole) {
 				measure.modalRole = resolvedDegrees[i].modalRole;
+			}
+
+			if (resolvedDegrees[i].sourceLabelKey) {
+				measure.sourceLabelKey = resolvedDegrees[i].sourceLabelKey;
 			}
 
 			if (resolvedDegrees[i].sourceScaleIndex != null) {

@@ -88,6 +88,10 @@
 			return [];
 		}
 
+		if (chord.factorNotes && chord.factorNotes.length) {
+			return chord.factorNotes.slice();
+		}
+
 		return [chord.fundamental, chord.tercera, chord.quinta, chord.septima];
 	}
 
@@ -98,6 +102,10 @@
 	function triadNotes(chord) {
 		if (!chord) {
 			return [];
+		}
+
+		if (chord.factorNotes && chord.factorNotes.length) {
+			return chord.factorNotes.slice(0, 3);
 		}
 
 		return [chord.fundamental, chord.tercera, chord.quinta];

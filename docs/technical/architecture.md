@@ -38,8 +38,9 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/services/data-index-service.js`: creación de `CodaData.indexes` y de índices no enumerables en las colecciones principales.
 - `js/services/progression-object-service.js`: utilidades compartidas de copia superficial y clonación de colecciones de objetos usadas por el motor de progresiones.
 - `js/services/progression-modal-planner-service.js`: planificación específica para modos griegos. Prioriza centro modal, tónica recurrente, acordes cadenciales modales, movimiento de bajo por segunda o tercera y evitación de gestos funcionales dominantes.
+- `js/services/progression-chromatic-cadence-service.js`: generación de cadencias cromáticas tonales con sexta napolitana y acordes de sexta aumentada, siempre como preparación de dominante.
 - `js/services/musical-context-service.js`: construcción del contexto musical actual a partir de la selección de pantalla.
-- `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma, notación, tema visual, volumen maestro, tónica, escala, formato e instrumento sonoro.
+- `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma, notación, tema visual, volumen maestro, tónica, escala, formato, instrumento sonoro y controles del constructor de progresiones.
 - `js/services/midi-export-service.js`: conversión de progresiones a eventos MIDI y bytes de archivo Standard MIDI File sin depender del DOM.
 - `js/application/scale-report-application.js`: construye informes de escala e instrumentos.
 - `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI y alturas MIDI de instrumentos a eventos de playback.

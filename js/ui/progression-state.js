@@ -28,6 +28,7 @@
 			articulation: valueOf(root, 'progressionArticulation'),
 			bars: valueOf(root, 'progressionBars'),
 			bpm: valueOf(root, 'progressionBpm'),
+			chromaticism: valueOf(root, 'progressionChromaticism'),
 			counterpoint: valueOf(root, 'progressionCounterpoint'),
 			meter: valueOf(root, 'progressionMeter'),
 			modalInterchange: valueOf(root, 'progressionModalInterchange'),

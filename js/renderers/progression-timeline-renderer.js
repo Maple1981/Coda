@@ -186,6 +186,10 @@
 		var scaleName = scaleIndex != null && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t('data.scales.' + scaleIndex) : '';
 		var tonicName = chord.sourceTonicName || '';
 
+		if (chord.source === 'chromatic') {
+			return chord.sourceLabelKey && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(chord.sourceLabelKey) : '';
+		}
+
 		if (chord.source !== 'interchange' || !scaleName) {
 			return '';
 		}

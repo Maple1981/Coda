@@ -78,6 +78,7 @@ assert.ok(global.CodaProgressionChordPlan.build);
 assert.ok(global.CodaProgressionMeasureBuilder.build);
 assert.ok(global.CodaProgressionResult.build);
 assert.ok(global.CodaProgressionStyle.isModern);
+assert.ok(global.CodaProgressionChromaticCadence.neapolitanDegree);
 assert.ok(global.CodaProgressionCadencePlanner.finalCadenceForPattern);
 assert.ok(global.CodaProgressionCadencePlanner.forceCadentialSixFourEnding);
 assert.ok(global.CodaProgressionModalPlanner.createPlan);
@@ -246,6 +247,7 @@ assert.ok(manifestScripts.indexOf('js/services/progression-seventh-decision-serv
 assert.ok(manifestScripts.indexOf('js/services/progression-chord-plan-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-measure-builder-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-result-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-chromatic-cadence-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-style-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-cadence-planner-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-pattern-weight-service.js') > -1);
@@ -371,6 +373,7 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	progressionArticulation: 'arpeggio',
 	progressionBars: '16',
 	progressionBpm: '132',
+	progressionChromaticism: '55',
 	progressionCounterpoint: '65',
 	progressionMeter: '6/8',
 	progressionModalInterchange: '40',
@@ -392,6 +395,7 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	progressionArticulation: 'arpeggio',
 	progressionBars: '16',
 	progressionBpm: 132,
+	progressionChromaticism: 55,
 	progressionCounterpoint: 65,
 	progressionMeter: '6/8',
 	progressionModalInterchange: 40,
@@ -429,6 +433,7 @@ assert.deepEqual(global.CodaProgressionPreferences.fromPreferences({
 	progressionArticulation: 'arpeggio',
 	progressionBars: '16',
 	progressionBpm: 132,
+	progressionChromaticism: 55,
 	progressionCounterpoint: 65,
 	progressionMeter: '6/8',
 	progressionModalInterchange: 40,
@@ -440,6 +445,7 @@ assert.deepEqual(global.CodaProgressionPreferences.fromPreferences({
 	articulation: 'arpeggio',
 	bars: '16',
 	bpm: 132,
+	chromaticism: 55,
 	counterpoint: 65,
 	meter: '6/8',
 	modalInterchange: 40,
@@ -456,6 +462,7 @@ assert.deepEqual(global.CodaProgressionPreferences.normalizeControls({
 	articulation: 'sustain',
 	bars: 16,
 	bpm: 132,
+	chromaticism: 10,
 	counterpoint: 20,
 	meter: '4/4',
 	modalInterchange: 25,
@@ -477,6 +484,7 @@ assert.deepEqual(global.CodaProgressionStateNormalizer.normalize({
 	beatUnit: 8,
 	beatsPerBar: 7,
 	bpm: 132,
+	chromaticism: 10,
 	counterpoint: 20,
 	meter: '7/8',
 	modalInterchange: 25,
@@ -677,6 +685,7 @@ const progressionResult = global.CodaProgressionResult.build({
 		beatUnit: 4,
 		beatsPerBar: 4,
 		bpm: 120,
+		chromaticism: 10,
 		counterpoint: 20,
 		meter: '4/4',
 		modalInterchange: 25,
@@ -689,7 +698,7 @@ const progressionResult = global.CodaProgressionResult.build({
 });
 assert.equal(progressionResult.totalSeconds, 2);
 assert.equal(progressionResult.generation.patternId, 'test-pattern');
-assert.deepEqual(progressionResult.harmonicColor, { counterpoint: 20, modalInterchange: 25, tensions: 35 });
+assert.deepEqual(progressionResult.harmonicColor, { chromaticism: 10, counterpoint: 20, modalInterchange: 25, tensions: 35 });
 assert.equal(global.CodaProgressionMidiFile.findInstrument(global.CodaData, 'string_ensemble_1').program, 48);
 assert.equal(global.CodaProgressionMidiFile.findInstrument(global.CodaData, 'missing').id, global.CodaData.midiInstruments[0].id);
 assert.deepEqual(global.CodaProgressionPlanner.createPlan({
@@ -756,6 +765,37 @@ assert.equal(cadentialSixFourPlan.finalCadence, 'cadential64');
 assert.equal(cadentialSixFourPlan.degrees[1].forceInversionIndex, 2);
 assert.equal(cadentialSixFourPlan.degrees[1].tonalFunctionOverride, 'D');
 assert.equal(cadentialSixFourPlan.degrees[2].forceKind, 'seventh');
+const neapolitanDegree = global.CodaProgressionChromaticCadence.neapolitanDegree({ tonicIndex: 0 });
+assert.deepEqual(neapolitanDegree.chord.factorNotes, ['Db', 'F', 'Ab']);
+assert.equal(neapolitanDegree.forceInversionIndex, 1);
+assert.equal(neapolitanDegree.degreeDisplayName, '♭II');
+assert.equal(global.CodaProgressionCadencePlanner.finalCadenceForPattern({
+	cadence: 'authentic'
+}, {
+	chromaticism: 100,
+	counterpoint: 80,
+	style: 'classic'
+}, sequenceRng([0, 0])), 'neapolitan');
+const chromaticEndingDegrees = [
+	{ index: 0, source: 'diatonic' },
+	{ index: 1, source: 'diatonic' },
+	{ index: 4, source: 'diatonic' },
+	{ index: 0, source: 'diatonic' }
+];
+global.CodaProgressionCadencePlanner.forceCadentialEnding(chromaticEndingDegrees, { cadence: 'neapolitan' }, {
+	cadence: 'neapolitan',
+	progressionState: {
+		chromaticism: 100,
+		counterpoint: 90,
+		style: 'classic',
+		voices: 4
+	},
+	report: { tonicIndex: 0 },
+	rng: sequenceRng([1, 0])
+});
+assert.equal(chromaticEndingDegrees[1].chromaticRole, 'neapolitan');
+assert.equal(chromaticEndingDegrees[1].tonalFunctionOverride, 'SD');
+assert.equal(chromaticEndingDegrees[2].index, 4);
 const variedTonicBlock = global.CodaProgressionPlanner.varyBlockOpening([
 	{ index: 0, source: 'diatonic' },
 	{ index: 3, source: 'diatonic' }

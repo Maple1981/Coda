@@ -40,6 +40,7 @@
 
 		html += '<legend><span data-i18n="progression.harmonicColor"></span></legend>';
 		html += renderControl('progression.modalInterchange', '<input id="progressionModalInterchange" type="range" value="25" min="0" max="100" step="1" />', '#progressionModalInterchange', null, 'progression.help.modalInterchange');
+		html += renderControl('progression.chromaticism', '<input id="progressionChromaticism" type="range" value="10" min="0" max="100" step="1" />', '#progressionChromaticism', null, 'progression.help.chromaticism');
 		html += renderControl('progression.tensions', '<input id="progressionTensions" type="range" value="35" min="0" max="100" step="1" />', '#progressionTensions', null, 'progression.help.tensions');
 		html += renderControl('progression.counterpoint', '<input id="progressionCounterpoint" type="range" value="20" min="0" max="100" step="1" />', '#progressionCounterpoint', null, 'progression.help.counterpoint');
 		html += '</fieldset>';

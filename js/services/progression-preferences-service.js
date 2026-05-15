@@ -6,6 +6,7 @@
 		{ id: 'progressionArticulation', preference: 'progressionArticulation', state: 'articulation' },
 		{ id: 'progressionBars', preference: 'progressionBars', state: 'bars' },
 		{ id: 'progressionBpm', preference: 'progressionBpm', state: 'bpm' },
+		{ id: 'progressionChromaticism', preference: 'progressionChromaticism', state: 'chromaticism' },
 		{ id: 'progressionCounterpoint', preference: 'progressionCounterpoint', state: 'counterpoint' },
 		{ id: 'progressionMeter', preference: 'progressionMeter', state: 'meter' },
 		{ id: 'progressionModalInterchange', preference: 'progressionModalInterchange', state: 'modalInterchange' },

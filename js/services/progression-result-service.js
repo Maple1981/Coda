@@ -2,6 +2,12 @@
 (function (global) {
 	'use strict';
 
+	var explicitCadences = {
+		augmented6: true,
+		cadential64: true,
+		neapolitan: true
+	};
+
 	function build(options) {
 		var progressionState = options.progressionState;
 		var secondsPerBeat = options.secondsPerBeat;
@@ -12,6 +18,7 @@
 			beatsPerBar: progressionState.beatsPerBar,
 			bpm: progressionState.bpm,
 			harmonicColor: {
+				chromaticism: progressionState.chromaticism,
 				counterpoint: progressionState.counterpoint,
 				modalInterchange: progressionState.modalInterchange,
 				tensions: progressionState.tensions
@@ -28,7 +35,7 @@
 
 		if (options.generationPlan) {
 			progression.generation = {
-				cadence: options.generationPlan.finalCadence === 'cadential64' ? options.generationPlan.finalCadence : options.generationPlan.pattern.cadence,
+				cadence: explicitCadences[options.generationPlan.finalCadence] ? options.generationPlan.finalCadence : options.generationPlan.pattern.cadence,
 				form: options.generationPlan.pattern.form,
 				patternId: options.generationPlan.pattern.id,
 				style: progressionState.style,

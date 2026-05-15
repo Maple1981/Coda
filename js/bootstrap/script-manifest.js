@@ -64,6 +64,7 @@
 			'js/services/progression-chord-plan-service.js',
 			'js/services/progression-measure-builder-service.js',
 			'js/services/progression-result-service.js',
+			'js/services/progression-chromatic-cadence-service.js',
 			'js/services/progression-cadence-planner-service.js',
 			'js/services/progression-pattern-weight-service.js',
 			'js/services/progression-pattern-selector-service.js',

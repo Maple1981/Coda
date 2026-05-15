@@ -2,9 +2,14 @@
 (function (global) {
 	'use strict';
 
+	var chromaticCadenceService = global.CodaProgressionChromaticCadence;
 	var styleService = global.CodaProgressionStyle;
 
 	function finalCadenceForPattern(pattern, progressionState, rng) {
+		if (chromaticCadenceService && chromaticCadenceService.shouldUseChromaticCadence(pattern, progressionState, rng)) {
+			return chromaticCadenceService.chooseChromaticCadenceType(progressionState, rng);
+		}
+
 		if (shouldUseCadentialSixFour(pattern, progressionState, rng)) {
 			return 'cadential64';
 		}
@@ -96,6 +101,8 @@
 
 		if (cadence === 'cadential64') {
 			forceCadentialSixFourEnding(degrees, options);
+		} else if (cadence === 'neapolitan' || cadence === 'augmented6') {
+			chromaticCadenceService.forceChromaticEnding(degrees, options);
 		} else if (cadence === 'authentic') {
 			degrees[degrees.length - 2] = { index: 4, source: 'diatonic' };
 			degrees[degrees.length - 1] = { index: 0, source: 'diatonic' };

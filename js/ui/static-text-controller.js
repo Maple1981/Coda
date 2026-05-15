@@ -128,6 +128,7 @@
 		setText(i18n, 'span[data-i18n="progression.style"]', 'progression.style');
 		setText(i18n, 'span[data-i18n="progression.harmonicColor"]', 'progression.harmonicColor');
 		setText(i18n, 'span[data-i18n="progression.modalInterchange"]', 'progression.modalInterchange');
+		setText(i18n, 'span[data-i18n="progression.chromaticism"]', 'progression.chromaticism');
 		setText(i18n, 'span[data-i18n="progression.tensions"]', 'progression.tensions');
 		setText(i18n, 'span[data-i18n="progression.counterpoint"]', 'progression.counterpoint');
 		applyProgressionHelpTooltips(i18n);
