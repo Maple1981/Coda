@@ -256,6 +256,8 @@
 				onChordClick: playChord(options.chordPlayback),
 				onChordMouseOut: clearChordHighlight(),
 				onChordMouseOver: highlightChord(),
+				onScaleNoteClick: playScaleNote(options.instrumentPlayback, options.data),
+				onScalePlaybackClick: playScaleSequence(options.instrumentPlayback, uiState),
 				i18n: i18n,
 				notation: notation,
 				notationStyle: uiState.getNotationStyle(),
@@ -303,7 +305,6 @@
 				notation: notation,
 				notationStyle: uiState.getNotationStyle(),
 				onInstrumentNoteClick: playInstrumentNote(options.instrumentPlayback),
-				onScaleNoteClick: playScaleNote(options.instrumentPlayback, options.data),
 				renderers: options.renderers,
 				report: report
 			});
@@ -1471,6 +1472,53 @@
 				duration: 0.55
 			});
 		};
+	}
+
+	function playScaleSequence(instrumentPlayback, uiState) {
+		return function (element) {
+			var midiNotes;
+			var stepMs = scaleStepMs(uiState);
+			var duration = scaleNoteDuration(stepMs);
+
+			if (!instrumentPlayback || !element) {
+				return;
+			}
+
+			midiNotes = String(element.getAttribute('data-midi-notes') || '')
+				.split(',')
+				.map(function (value) { return Number(value); })
+				.filter(function (value) { return isFinite(value); });
+
+			for (var i = 0; i < midiNotes.length; i++) {
+				scheduleScaleNote(instrumentPlayback, midiNotes[i], i * stepMs, duration);
+			}
+		};
+	}
+
+	function scaleStepMs(uiState) {
+		var state = uiState && typeof uiState.getProgressionState === 'function' ? uiState.getProgressionState() : null;
+		var bpm = Number(state && state.bpm) || Number(valueOf(query('#progressionBpm'))) || 120;
+
+		return Math.max(1, Math.round(60000 / Math.max(20, Math.min(200, bpm))));
+	}
+
+	function scaleNoteDuration(stepMs) {
+		return Math.max(0.08, (Number(stepMs) || 500) / 1000 * 0.82);
+	}
+
+	function scheduleScaleNote(instrumentPlayback, midiNote, delayMs, duration) {
+		if (typeof global.setTimeout === 'function') {
+			global.setTimeout(function () {
+				instrumentPlayback.playMidiNote(midiNote, {
+					duration: duration
+				});
+			}, delayMs);
+			return;
+		}
+
+		instrumentPlayback.playMidiNote(midiNote, {
+			duration: duration
+		});
 	}
 
 	function midiNoteForScaleNote(data, noteName) {

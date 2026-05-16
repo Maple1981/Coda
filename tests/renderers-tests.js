@@ -139,9 +139,14 @@ assert.ok(scaleSummaryHtml.indexOf('<span id="A_m_" class="revamp estiloEnlace">
 assert.ok(scaleSummaryHtml.indexOf('<span id="C_m" class="revamp estiloEnlace">Cm</span>') > -1);
 assert.ok(scaleSummaryHtml.indexOf('<ul class="notasEscala">') > -1);
 assert.ok(scaleSummaryHtml.indexOf('C<sup>I</sup>') > -1);
+assert.ok(scaleSummaryHtml.indexOf('class="scaleDegreePlayButton"') > -1);
+assert.ok(scaleSummaryHtml.indexOf('title="Reproducir escala"') > -1);
+assert.ok(scaleSummaryHtml.indexOf('data-midi-notes="60,62,64,65,67,69,71,72"') > -1);
 assert.ok(scaleSummaryHtml.indexOf('class="scaleDegreeNoteButton"') > -1);
 assert.ok(scaleSummaryHtml.indexOf('data-note-name="C"') > -1);
 assert.ok(scaleSummaryHtml.indexOf('data-midi-note="60"') > -1);
+assert.ok(scaleSummaryHtml.indexOf('data-midi-note="72"') > -1);
+assert.equal((scaleSummaryHtml.match(/class="scaleDegreeNoteButton"/g) || []).length, 8);
 
 const circleHtml = circleOfFifthsRenderer.render({
 	orderedKeys: data.circleOfFifths.slice(0, 12),

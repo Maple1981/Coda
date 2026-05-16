@@ -1588,6 +1588,7 @@
 			'scaleSummary.expandDetails': 'Expandir detalles de escala',
 			'scaleSummary.mainNote': 'Nota principal',
 			'scaleSummary.parallelKey': 'Tonalidad paralela',
+			'scaleSummary.playScale': 'Reproducir escala',
 			'scaleSummary.relativeKey': 'Tonalidad relativa',
 			'scaleSummary.secondaryNote': 'Nota secundaria',
 			'settings.label': 'Configuración',
@@ -1816,6 +1817,7 @@
 			'scaleSummary.expandDetails': 'Expand scale details',
 			'scaleSummary.mainNote': 'Main note',
 			'scaleSummary.parallelKey': 'Parallel key',
+			'scaleSummary.playScale': 'Play scale',
 			'scaleSummary.relativeKey': 'Relative key',
 			'scaleSummary.secondaryNote': 'Secondary note',
 			'settings.label': 'Settings',
@@ -13123,8 +13125,10 @@
 				visibleNotes.push(options.scaleNotes[i]);
 			}
 		}
+		appendUpperTonic(visibleNotes, options);
 
 		var html = '';
+		html += renderScalePlayButton(options, visibleNotes);
 		for (var j = 0; j < visibleNotes.length; j++) {
 			var note = visibleNotes[j];
 			var cssClass = note.tipo != null ? ' class="' + note.tipo + '"' : '';
@@ -13139,6 +13143,39 @@
 		}
 
 		return html;
+	}
+
+	function renderScalePlayButton(options, visibleNotes) {
+		var midiNotes = [];
+		var title = t(options, 'scaleSummary.playScale');
+
+		for (var i = 0; i < visibleNotes.length; i++) {
+			if (visibleNotes[i].midiNote != null) {
+				midiNotes.push(visibleNotes[i].midiNote);
+			}
+		}
+
+		if (!midiNotes.length) {
+			return '';
+		}
+
+		return '<li class="scalePlaybackItem"><button class="scaleDegreePlayButton" type="button" data-midi-notes="' +
+			escapeHtml(midiNotes.join(',')) + '" title="' + escapeHtml(title) + '" aria-label="' + escapeHtml(title) +
+			'"><span class="material-icons" aria-hidden="true">play_arrow</span></button></li>';
+	}
+
+	function appendUpperTonic(visibleNotes, options) {
+		var tonic = options.scaleNotes && options.scaleNotes.length ? options.scaleNotes[0] : null;
+
+		if (!tonic || options.isDegreeSuppressed(0)) {
+			return;
+		}
+
+		visibleNotes.push({
+			grado: tonic.grado,
+			midiNote: tonic.midiNote != null ? Number(tonic.midiNote) + 12 : null,
+			nombre: tonic.nombre
+		});
 	}
 
 	function findRelativeKey(options) {
@@ -13182,6 +13219,7 @@
 			'scaleSummary.expandDetails': 'Expandir detalles de escala',
 			'scaleSummary.mainNote': 'Nota principal',
 			'scaleSummary.parallelKey': 'Tonalidad paralela',
+			'scaleSummary.playScale': 'Reproducir escala',
 			'scaleSummary.relativeKey': 'Tonalidad relativa',
 			'scaleSummary.secondaryNote': 'Nota secundaria'
 		};
@@ -16887,7 +16925,15 @@
 
 		scope.setAttribute('data-coda-scale-note-events', 'true');
 		scope.addEventListener('click', function (event) {
-			var note = closestWithin(event.target, '.scaleDegreeNoteButton[data-note-name]', scope);
+			var playScale = closestWithin(event.target, '.scaleDegreePlayButton[data-midi-notes]', scope);
+			var note;
+
+			if (playScale && typeof options.onScalePlaybackClick === 'function') {
+				options.onScalePlaybackClick(playScale);
+				return;
+			}
+
+			note = closestWithin(event.target, '.scaleDegreeNoteButton[data-note-name]', scope);
 
 			if (note) {
 				options.onScaleNoteClick(note);
@@ -17424,6 +17470,8 @@
 				onChordClick: playChord(options.chordPlayback),
 				onChordMouseOut: clearChordHighlight(),
 				onChordMouseOver: highlightChord(),
+				onScaleNoteClick: playScaleNote(options.instrumentPlayback, options.data),
+				onScalePlaybackClick: playScaleSequence(options.instrumentPlayback, uiState),
 				i18n: i18n,
 				notation: notation,
 				notationStyle: uiState.getNotationStyle(),
@@ -17471,7 +17519,6 @@
 				notation: notation,
 				notationStyle: uiState.getNotationStyle(),
 				onInstrumentNoteClick: playInstrumentNote(options.instrumentPlayback),
-				onScaleNoteClick: playScaleNote(options.instrumentPlayback, options.data),
 				renderers: options.renderers,
 				report: report
 			});
@@ -18639,6 +18686,53 @@
 				duration: 0.55
 			});
 		};
+	}
+
+	function playScaleSequence(instrumentPlayback, uiState) {
+		return function (element) {
+			var midiNotes;
+			var stepMs = scaleStepMs(uiState);
+			var duration = scaleNoteDuration(stepMs);
+
+			if (!instrumentPlayback || !element) {
+				return;
+			}
+
+			midiNotes = String(element.getAttribute('data-midi-notes') || '')
+				.split(',')
+				.map(function (value) { return Number(value); })
+				.filter(function (value) { return isFinite(value); });
+
+			for (var i = 0; i < midiNotes.length; i++) {
+				scheduleScaleNote(instrumentPlayback, midiNotes[i], i * stepMs, duration);
+			}
+		};
+	}
+
+	function scaleStepMs(uiState) {
+		var state = uiState && typeof uiState.getProgressionState === 'function' ? uiState.getProgressionState() : null;
+		var bpm = Number(state && state.bpm) || Number(valueOf(query('#progressionBpm'))) || 120;
+
+		return Math.max(1, Math.round(60000 / Math.max(20, Math.min(200, bpm))));
+	}
+
+	function scaleNoteDuration(stepMs) {
+		return Math.max(0.08, (Number(stepMs) || 500) / 1000 * 0.82);
+	}
+
+	function scheduleScaleNote(instrumentPlayback, midiNote, delayMs, duration) {
+		if (typeof global.setTimeout === 'function') {
+			global.setTimeout(function () {
+				instrumentPlayback.playMidiNote(midiNote, {
+					duration: duration
+				});
+			}, delayMs);
+			return;
+		}
+
+		instrumentPlayback.playMidiNote(midiNote, {
+			duration: duration
+		});
 	}
 
 	function midiNoteForScaleNote(data, noteName) {

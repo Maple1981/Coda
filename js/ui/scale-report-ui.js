@@ -264,7 +264,15 @@
 
 		scope.setAttribute('data-coda-scale-note-events', 'true');
 		scope.addEventListener('click', function (event) {
-			var note = closestWithin(event.target, '.scaleDegreeNoteButton[data-note-name]', scope);
+			var playScale = closestWithin(event.target, '.scaleDegreePlayButton[data-midi-notes]', scope);
+			var note;
+
+			if (playScale && typeof options.onScalePlaybackClick === 'function') {
+				options.onScalePlaybackClick(playScale);
+				return;
+			}
+
+			note = closestWithin(event.target, '.scaleDegreeNoteButton[data-note-name]', scope);
 
 			if (note) {
 				options.onScaleNoteClick(note);

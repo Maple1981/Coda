@@ -1331,6 +1331,43 @@ section#notacion ul li sup {
   font-size: .7em;
 }
 
+section#notacion .scalePlaybackItem {
+  margin-right: .55em;
+}
+
+section#notacion .scaleDegreePlayButton {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  width: 1.4em;
+  height: 1.4em;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #111;
+  color: #d85ee0;
+  padding: 0;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+section#notacion .scaleDegreePlayButton .material-icons {
+  font-size: 1em;
+  line-height: 1;
+}
+
+section#notacion .scaleDegreePlayButton:hover,
+section#notacion .scaleDegreePlayButton:focus {
+  border-color: #00ff95;
+  color: #00ff95;
+  outline: none;
+}
+
 section#notacion .scaleDegreeNoteButton {
   display: -webkit-inline-box;
   display: -ms-inline-flexbox;

@@ -636,6 +636,37 @@ section#notacion{
 		font-size:.7em;
 	}
 
+	.scalePlaybackItem{
+		margin-right:.55em;
+	}
+
+	.scaleDegreePlayButton{
+		display:inline-flex;
+		align-items:center;
+		justify-content:center;
+		width:1.4em;
+		height:1.4em;
+		border:1px solid $basic_fillbrightgrad_color;
+		border-radius:4px;
+		background:$basic_fill_color;
+		color:$corporative_complementarybright_color;
+		padding:0;
+		vertical-align:middle;
+		cursor:pointer;
+	}
+
+	.scaleDegreePlayButton .material-icons{
+		font-size:1em;
+		line-height:1;
+	}
+
+	.scaleDegreePlayButton:hover,
+	.scaleDegreePlayButton:focus{
+		border-color:$corporative_main_color;
+		color:$corporative_main_color;
+		outline:none;
+	}
+
 	.scaleDegreeNoteButton{
 		display:inline-flex;
 		align-items:flex-start;

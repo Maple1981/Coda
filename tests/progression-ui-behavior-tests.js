@@ -11,11 +11,12 @@ const context = {
 context.window.window = context.window;
 context.window.addEventListener = function () {};
 const pendingTimers = [];
-context.window.setTimeout = function (callback) {
+context.window.setTimeout = function (callback, delay) {
 	const timer = {
 		callback: callback,
 		cleared: false
 	};
+	timer.delay = delay || 0;
 	pendingTimers.push(timer);
 	return timer;
 };
@@ -37,9 +38,11 @@ context.window.document = document;
 const rendered = {
 	instrument: 0,
 	progression: 0,
-	scaleReport: 0
+	scaleReport: 0,
+	scaleReportOptions: null
 };
 const playbackInstruments = [];
+const playedScaleMidiNotes = [];
 const savedPreferences = {};
 const savedWorkspaces = [];
 const options = {
@@ -57,7 +60,9 @@ const options = {
 	},
 	initialNotation: 'anglosaxon',
 	instrumentPlayback: {
-		playMidiNote: function () {}
+		playMidiNote: function (midiNote) {
+			playedScaleMidiNotes.push(midiNote);
+		}
 	},
 	keyNavigation: {
 		applyRecommendedNotation: function () {},
@@ -97,6 +102,22 @@ const initialProgression = initialized.uiState.getProgression();
 assert.equal(rendered.scaleReport, 1);
 assert.equal(rendered.instrument, 1);
 assert.equal(rendered.progression, 1);
+assert.equal(typeof rendered.scaleReportOptions.onScaleNoteClick, 'function');
+rendered.scaleReportOptions.onScaleNoteClick({
+	getAttribute: function (name) {
+		return name === 'data-midi-note' ? '60' : '';
+	}
+});
+assert.equal(playedScaleMidiNotes[0], '60');
+assert.equal(typeof rendered.scaleReportOptions.onScalePlaybackClick, 'function');
+rendered.scaleReportOptions.onScalePlaybackClick({
+	getAttribute: function (name) {
+		return name === 'data-midi-notes' ? '60,62,64' : '';
+	}
+});
+assert.deepEqual(pendingTimers.map(function (timer) { return timer.delay; }), [0, 500, 1000]);
+runPendingTimers();
+assert.deepEqual(playedScaleMidiNotes, ['60', 60, 62, 64]);
 assert.equal(playbackInstruments[playbackInstruments.length - 1], 'acoustic_grand_piano');
 assert.deepEqual(initialState, {
 	articulation: 'sustain',
@@ -438,8 +459,9 @@ function createFakeUi(fakeDocument, renderedCounter) {
 		renderProgression: function () {
 			renderedCounter.progression += 1;
 		},
-		renderScaleReport: function () {
+		renderScaleReport: function (renderOptions) {
 			renderedCounter.scaleReport += 1;
+			renderedCounter.scaleReportOptions = renderOptions;
 		},
 		scheduleDashboardWorkspaceHeight: function () {},
 		scheduleInstrumentScale: function () {},

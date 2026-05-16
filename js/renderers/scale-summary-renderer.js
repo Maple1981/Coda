@@ -60,8 +60,10 @@
 				visibleNotes.push(options.scaleNotes[i]);
 			}
 		}
+		appendUpperTonic(visibleNotes, options);
 
 		var html = '';
+		html += renderScalePlayButton(options, visibleNotes);
 		for (var j = 0; j < visibleNotes.length; j++) {
 			var note = visibleNotes[j];
 			var cssClass = note.tipo != null ? ' class="' + note.tipo + '"' : '';
@@ -76,6 +78,39 @@
 		}
 
 		return html;
+	}
+
+	function renderScalePlayButton(options, visibleNotes) {
+		var midiNotes = [];
+		var title = t(options, 'scaleSummary.playScale');
+
+		for (var i = 0; i < visibleNotes.length; i++) {
+			if (visibleNotes[i].midiNote != null) {
+				midiNotes.push(visibleNotes[i].midiNote);
+			}
+		}
+
+		if (!midiNotes.length) {
+			return '';
+		}
+
+		return '<li class="scalePlaybackItem"><button class="scaleDegreePlayButton" type="button" data-midi-notes="' +
+			escapeHtml(midiNotes.join(',')) + '" title="' + escapeHtml(title) + '" aria-label="' + escapeHtml(title) +
+			'"><span class="material-icons" aria-hidden="true">play_arrow</span></button></li>';
+	}
+
+	function appendUpperTonic(visibleNotes, options) {
+		var tonic = options.scaleNotes && options.scaleNotes.length ? options.scaleNotes[0] : null;
+
+		if (!tonic || options.isDegreeSuppressed(0)) {
+			return;
+		}
+
+		visibleNotes.push({
+			grado: tonic.grado,
+			midiNote: tonic.midiNote != null ? Number(tonic.midiNote) + 12 : null,
+			nombre: tonic.nombre
+		});
 	}
 
 	function findRelativeKey(options) {
@@ -119,6 +154,7 @@
 			'scaleSummary.expandDetails': 'Expandir detalles de escala',
 			'scaleSummary.mainNote': 'Nota principal',
 			'scaleSummary.parallelKey': 'Tonalidad paralela',
+			'scaleSummary.playScale': 'Reproducir escala',
 			'scaleSummary.relativeKey': 'Tonalidad relativa',
 			'scaleSummary.secondaryNote': 'Nota secundaria'
 		};
