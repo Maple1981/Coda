@@ -14,10 +14,16 @@ La atribución documental de estos archivos se mantiene en [`docs/ATTRIBUTIONS.m
 - `acoustic_guitar_nylon`: guitarra clásica. Corresponde a la vista de guitarra.
 - `drawbar_organ`: órgano drawbar. Usa la vista de piano y queda disponible para progresiones y sonidos sostenidos.
 - `string_ensemble_1`: cuerdas. Usa la vista de piano y queda disponible para progresiones y arreglos.
+- `percussive_organ`: órgano percutivo. No aparece en el selector principal; se carga como preset alternativo cuando el órgano drawbar usa articulación Staccato o Arpegio.
+- `pizzicato_strings`: cuerdas en pizzicato. No aparece en el selector principal; se carga como preset alternativo cuando las cuerdas usan articulación Staccato o Arpegio.
+
+Los presets alternativos de articulación se declaran en `js/data/midi-data.js` mediante `articulationInstruments`. La interfaz conserva el instrumento elegido por el usuario, pero la preescucha y la exportación MIDI pueden usar un preset corto asociado para que Staccato y Arpegio tengan un ataque más definido.
 
 ## Regla de carga
 
 El motor de playback debe seguir cargando soundfonts de forma diferida. Cambiar el instrumento en la interfaz solo selecciona el preset activo; el archivo de soundfont se carga con la primera preescucha que lo necesite.
+
+Cuando una progresión necesita presets alternativos de articulación, la preescucha debe cargarlos antes de iniciar el transporte. Así se evita que el primer compás con Staccato o Arpegio suene tarde por una descarga diferida.
 
 Los soundfonts se cargan como scripts locales desde `soundfont/`. No deben inyectarse como texto JavaScript obtenido por XHR, porque eso obligaría a relajar `script-src` en la política CSP. Los identificadores de instrumento y formato deben mantenerse como tokens simples (`a-z`, `0-9` y guion bajo) antes de construir la ruta del archivo.
 

@@ -36,8 +36,8 @@
 			activeRun = run;
 			playbackCallbacks.run(callbacks.onStart, progression, startIndex);
 
-			if (shouldLoadBeforePlayback()) {
-				playbackService.load(function () {
+			if (shouldLoadBeforePlayback(schedule)) {
+				loadBeforePlayback(schedule, function () {
 					startRunPlayback(run, progression, schedule, scheduledMeasures);
 				});
 				return true;
@@ -70,11 +70,49 @@
 			return activeRun != null;
 		}
 
-		function shouldLoadBeforePlayback() {
-			return playbackService &&
-				typeof playbackService.isReady === 'function' &&
-				typeof playbackService.load === 'function' &&
-				!playbackService.isReady();
+		function shouldLoadBeforePlayback(schedule) {
+			if (!playbackService || typeof playbackService.isReady !== 'function') {
+				return false;
+			}
+
+			if (!playbackService.isReady()) {
+				return true;
+			}
+
+			return requiredInstrumentIds(schedule).some(function (instrumentId) {
+				return typeof playbackService.isInstrumentReady === 'function' && !playbackService.isInstrumentReady(instrumentId);
+			});
+		}
+
+		function loadBeforePlayback(schedule, callback) {
+			var instrumentIds = requiredInstrumentIds(schedule);
+
+			if (playbackService && typeof playbackService.getInstrument === 'function') {
+				instrumentIds.unshift(playbackService.getInstrument());
+			}
+
+			if (playbackService && typeof playbackService.loadInstruments === 'function') {
+				playbackService.loadInstruments(instrumentIds, callback);
+				return;
+			}
+
+			if (playbackService && typeof playbackService.load === 'function') {
+				playbackService.load(callback);
+			}
+		}
+
+		function requiredInstrumentIds(schedule) {
+			var ids = [];
+			var seen = {};
+
+			for (var i = 0; i < (schedule || []).length; i++) {
+				if (schedule[i].playbackInstrumentId && !seen[schedule[i].playbackInstrumentId]) {
+					seen[schedule[i].playbackInstrumentId] = true;
+					ids.push(schedule[i].playbackInstrumentId);
+				}
+			}
+
+			return ids;
 		}
 
 		function playbackInstrumentAttributes() {

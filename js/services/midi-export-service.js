@@ -3,6 +3,7 @@
 	'use strict';
 
 	var arpeggioPatterns = global.CodaProgressionArpeggioPatterns;
+	var articulationInstruments = global.CodaProgressionArticulationInstruments;
 	var defaultTicksPerBeat = 480;
 	var midiMimeType = 'audio/midi';
 	var noteIndexes = {
@@ -70,6 +71,7 @@
 			appendMeasureEvents(events, measures[i], {
 				channel: channel,
 				initialMidiNote: initialMidiNote,
+				articulationInstruments: options.articulationInstruments || [],
 				instrument: instrument,
 				nextMeasure: measures[i + 1] || null,
 				ticksPerBeat: ticksPerBeat,
@@ -95,6 +97,9 @@
 		var arpeggioStep = isArpeggioArticulation(measure.articulation) ? Math.max(1, Math.round(options.ticksPerBeat / 4)) : 0;
 		var order = isArpeggioArticulation(measure.articulation) ? arpeggioOrderIndexes(notes.length, measure.articulation, measure.bar) : arpeggioPatterns.ascendingIndexes(notes.length);
 		var velocity = expressiveVelocity(measure, options.velocity);
+		var playbackInstrument = articulationInstruments.resolveInstrument(options.instrument, measure.articulation, options.articulationInstruments);
+
+		appendProgramChange(events, playbackInstrument, options.channel, startTick);
 
 		if (measure.articulation === 'staccato') {
 			appendStaccatoChordEvents(events, notes, measure, options, startTick, velocity);
@@ -166,6 +171,19 @@
 				});
 			}
 		}
+	}
+
+	function appendProgramChange(events, instrument, channel, tick) {
+		if (!instrument || instrument.program === undefined) {
+			return;
+		}
+
+		events.push({
+			channel: channel,
+			program: clamp(numberOrDefault(instrument.program, 0), 0, 127),
+			tick: tick,
+			type: 'programChange'
+		});
 	}
 
 	function appendPassingNoteEvents(events, measure, options, startTick) {

@@ -24,7 +24,7 @@
 	function create(options) {
 		var midi = options.midi;
 		var notes = options.notes || [];
-		var instruments = options.instruments || [];
+		var instruments = (options.instruments || []).concat(options.articulationInstruments || []);
 		var channel = defaultValue(options.channel, 0);
 		var baseVelocity = defaultValue(options.velocity, 127);
 		var volumePercent = normalizeVolumePercent(defaultValue(options.volumePercent, 100));
@@ -38,6 +38,28 @@
 
 		function load(callback) {
 			return loadInstrument(activeInstrument, callback);
+		}
+
+		function loadInstruments(instrumentIds, callback) {
+			var pending = uniqueInstrumentIds(instrumentIds);
+			var remaining = pending.length;
+
+			if (!remaining) {
+				runCallback(callback);
+				return true;
+			}
+
+			for (var i = 0; i < pending.length; i++) {
+				loadInstrument(pending[i], function () {
+					remaining -= 1;
+
+					if (remaining === 0) {
+						runCallback(callback);
+					}
+				});
+			}
+
+			return true;
 		}
 
 		function loadInstrument(instrumentId, callback) {
@@ -182,13 +204,14 @@
 
 		function playChordFromNames(noteNames, playbackOptions) {
 			playbackOptions = playbackOptions || {};
+			var instrumentId = playbackInstrumentId(playbackOptions);
 
 			if (!midi) {
 				return;
 			}
 
-			if (!isReady()) {
-				load(function () {
+			if (!isInstrumentReady(instrumentId)) {
+				loadInstrument(instrumentId, function () {
 					playChordFromNames(noteNames, playbackOptions);
 				});
 				return;
@@ -202,19 +225,21 @@
 			var startDelay = defaultValue(playbackOptions.delay, delay);
 			var duration = defaultValue(playbackOptions.duration, 0.75);
 
+			applyInstrument(instrumentId);
 			midi.chordOn(channel, chord, velocityFor(playbackOptions), startDelay);
 			midi.chordOff(channel, chord, startDelay + duration);
 		}
 
 		function playMidiChord(midiNotes, playbackOptions) {
 			playbackOptions = playbackOptions || {};
+			var instrumentId = playbackInstrumentId(playbackOptions);
 
 			if (!midi) {
 				return;
 			}
 
-			if (!isReady()) {
-				load(function () {
+			if (!isInstrumentReady(instrumentId)) {
+				loadInstrument(instrumentId, function () {
 					playMidiChord(midiNotes, playbackOptions);
 				});
 				return;
@@ -232,19 +257,21 @@
 				return;
 			}
 
+			applyInstrument(instrumentId);
 			midi.chordOn(channel, chord, velocityFor(playbackOptions), startDelay);
 			midi.chordOff(channel, chord, startDelay + duration);
 		}
 
 		function playMidiNote(midiNote, playbackOptions) {
 			playbackOptions = playbackOptions || {};
+			var instrumentId = playbackInstrumentId(playbackOptions);
 
 			if (!midi) {
 				return;
 			}
 
-			if (!isReady()) {
-				load(function () {
+			if (!isInstrumentReady(instrumentId)) {
+				loadInstrument(instrumentId, function () {
 					playMidiNote(midiNote, playbackOptions);
 				});
 				return;
@@ -263,6 +290,7 @@
 			var startDelay = defaultValue(playbackOptions.delay, delay);
 			var duration = defaultValue(playbackOptions.duration, 0.55);
 
+			applyInstrument(instrumentId);
 			midi.noteOn(channel, noteNumber, velocityFor(playbackOptions), startDelay);
 			midi.noteOff(channel, noteNumber, startDelay + duration);
 		}
@@ -378,6 +406,7 @@
 			var instrument = findInstrument(activeInstrument);
 
 			return {
+				articulationInstruments: instrument.articulationInstruments || null,
 				family: instrument.family || '',
 				id: instrument.id || activeInstrument,
 				pedalBehavior: instrument.pedalBehavior || (instrument.sustained ? 'sustain' : 'reattack'),
@@ -411,6 +440,28 @@
 			return loadedInstruments[activeInstrument] === true;
 		}
 
+		function isInstrumentReady(instrumentId) {
+			return loadedInstruments[instrumentId || activeInstrument] === true;
+		}
+
+		function playbackInstrumentId(playbackOptions) {
+			return playbackOptions && playbackOptions.instrumentId ? playbackOptions.instrumentId : activeInstrument;
+		}
+
+		function uniqueInstrumentIds(instrumentIds) {
+			var seen = {};
+			var result = [];
+
+			for (var i = 0; i < (instrumentIds || []).length; i++) {
+				if (instrumentIds[i] && !seen[instrumentIds[i]]) {
+					seen[instrumentIds[i]] = true;
+					result.push(instrumentIds[i]);
+				}
+			}
+
+			return result;
+		}
+
 		function isLoading() {
 			for (var instrumentId in loadingInstruments) {
 				if (loadingInstruments[instrumentId]) {
@@ -423,9 +474,11 @@
 
 		return {
 			load: load,
+			loadInstruments: loadInstruments,
 			isReady: function () {
 				return isReady();
 			},
+			isInstrumentReady: isInstrumentReady,
 			isLoading: function () {
 				return isLoading();
 			},

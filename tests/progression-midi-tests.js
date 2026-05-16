@@ -260,6 +260,24 @@ assert.equal(firstStaccatoOff.tick, 216);
 assert.deepEqual(staccatoNoteOns.slice(0, 8).map(function (event) { return event.tick; }), [0, 0, 0, 0, 480, 480, 480, 480]);
 assert.equal(staccatoNoteOns.length, 32);
 
+const pizzicatoStaccatoFile = app.buildProgressionMidiFile({
+	data: data,
+	midiInstrument: 'string_ensemble_1',
+	progression: app.buildProgressionFromState({
+		domain: domain,
+		progressionState: progressionState.normalize({
+			articulation: 'staccato',
+			bars: 1,
+			bpm: 120,
+			meter: '4/4'
+		}),
+		report: cMajorReport
+	})
+});
+assert.ok(pizzicatoStaccatoFile.events.some(function (event) {
+	return event.type === 'programChange' && event.program === 45;
+}));
+
 const oddMeterStaccatoEvents = midiExport.createProgressionMidiEvents({
 	initialMidiNote: 60,
 	progression: {
@@ -306,6 +324,29 @@ const arpeggioNoteOns = arpeggioEvents.filter(function (event) {
 assert.deepEqual(arpeggioNoteOns.map(function (event) { return event.note; }), [60, 64, 67, 72, 67, 64]);
 assert.deepEqual(arpeggioNoteOns.map(function (event) { return event.tick; }), [0, 120, 240, 360, 480, 600]);
 assert.deepEqual(midiExport.arpeggioOrderIndexes(4, 'arpeggio_down_up'), [3, 2, 1, 0, 1, 2]);
+
+const percussiveOrganArpeggioFile = app.buildProgressionMidiFile({
+	data: data,
+	midiInstrument: 'drawbar_organ',
+	progression: {
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		measures: [
+			{
+				articulation: 'arpeggio_up',
+				bar: 1,
+				degree: 'I',
+				durationBeats: 4,
+				midiNotes: [60, 64, 67],
+				startBeat: 0
+			}
+		]
+	}
+});
+assert.ok(percussiveOrganArpeggioFile.events.some(function (event) {
+	return event.type === 'programChange' && event.program === 17;
+}));
 
 const expressiveEvents = midiExport.createProgressionMidiEvents({
 	initialMidiNote: 60,

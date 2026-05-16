@@ -10,6 +10,7 @@
 			channel: options.data && options.data.midi ? options.data.midi.channel : 0,
 			fileName: options.fileName,
 			initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
+			articulationInstruments: options.data && options.data.midiPlaybackInstruments ? options.data.midiPlaybackInstruments : [],
 			instrument: instrument,
 			notes: options.data ? options.data.notes : [],
 			progression: options.progression,

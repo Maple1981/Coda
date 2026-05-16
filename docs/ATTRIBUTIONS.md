@@ -31,6 +31,8 @@ Instrumentos distribuidos actualmente:
 - `acoustic_grand_piano`
 - `acoustic_guitar_nylon`
 - `drawbar_organ`
+- `percussive_organ`
+- `pizzicato_strings`
 - `string_ensemble_1`
 - `synth_drum`
 

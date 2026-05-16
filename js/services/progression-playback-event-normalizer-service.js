@@ -29,6 +29,14 @@
 			immediateEvent.midiNoteEvents = event.midiNoteEvents;
 		}
 
+		if (event.playbackInstrumentId) {
+			immediateEvent.playbackInstrumentId = event.playbackInstrumentId;
+		}
+
+		if (event.velocity != null) {
+			immediateEvent.velocity = event.velocity;
+		}
+
 		return immediateEvent;
 	}
 

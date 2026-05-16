@@ -1051,6 +1051,7 @@ assert.equal(global.CodaData.indexes.chords.byName.Dominante.abreviatura, '7');
 assert.equal(playbackOptions.channel, global.CodaData.midi.channel);
 assert.equal(playbackOptions.instrument, global.CodaData.midiInstruments[0].id);
 assert.equal(playbackOptions.instruments, global.CodaData.midiInstruments);
+assert.equal(playbackOptions.articulationInstruments, global.CodaData.midiPlaybackInstruments);
 assert.equal(playbackOptions.volumePercent, 73);
 assert.ok(global.CodaData.progressionRules.patterns.length > 0);
 assert.ok(global.CodaData.progressionRules.modalFutureRules.length >= 8);

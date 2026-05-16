@@ -19,6 +19,7 @@ function runScript(relativePath) {
 runScript('js/services/progression-metronome-schedule-service.js');
 runScript('js/services/progression-playback-note-event-service.js');
 runScript('js/services/progression-arpeggio-pattern-service.js');
+runScript('js/services/progression-articulation-instrument-service.js');
 runScript('js/services/progression-playback-timing-service.js');
 runScript('js/services/progression-playback-event-builder-service.js');
 runScript('js/services/progression-playback-schedule-service.js');
@@ -299,6 +300,29 @@ assert.deepEqual(staccatoSchedule[0].midiNoteEvents.slice(0, 6), [
 	{ delay: 0.5, duration: 0.225, kind: 'staccato', midiNote: 64 },
 	{ delay: 0.5, duration: 0.225, kind: 'staccato', midiNote: 67 }
 ]);
+const shortPresetSchedule = app.buildProgressionPlaybackSchedule({
+	measures: [
+		{
+			articulation: 'arpeggio_up',
+			bar: 1,
+			degree: 'I',
+			durationSeconds: 2,
+			midiNotes: [60, 64, 67],
+			notes: ['C', 'E', 'G'],
+			startSeconds: 0,
+			voices: 3
+		}
+	]
+}, {
+	instrument: {
+		articulationInstruments: {
+			arpeggio: 'pizzicato_strings',
+			staccato: 'pizzicato_strings'
+		},
+		id: 'string_ensemble_1'
+	}
+});
+assert.equal(shortPresetSchedule[0].playbackInstrumentId, 'pizzicato_strings');
 
 const partialSchedule = app.buildProgressionPlaybackSchedule(progression, { startIndex: 1 });
 assert.deepEqual(partialSchedule.map(function (event) { return event.bar; }), [2, 3]);
@@ -417,6 +441,25 @@ assert.equal(completed, false);
 runTimersAt(6000);
 assert.equal(completed, true);
 assert.equal(playback.isPlaying(), false);
+
+const shortPresetNoteCalls = [];
+context.window.CodaProgressionEventPlayer.play({
+	playMidiNote: function (note, options) {
+		shortPresetNoteCalls.push({ note: note, options: options });
+	}
+}, context.window.CodaProgressionEventPlayer.asImmediateEvent({
+	arpeggioStep: 0.1,
+	delay: 0,
+	duration: 1,
+	mode: 'arpeggio',
+	midiNotes: [60, 64, 67],
+	playbackInstrumentId: 'pizzicato_strings'
+}));
+assert.deepEqual(shortPresetNoteCalls.map(function (call) { return call.options.instrumentId; }), [
+	'pizzicato_strings',
+	'pizzicato_strings',
+	'pizzicato_strings'
+]);
 
 playback.play(progression);
 const chordCallsBeforeStop = chordCalls.length;

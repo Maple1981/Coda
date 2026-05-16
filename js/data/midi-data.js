@@ -40,6 +40,10 @@
 		{
 			id: 'drawbar_organ',
 			nombre: 'Órgano drawbar',
+			articulationInstruments: {
+				arpeggio: 'percussive_organ',
+				staccato: 'percussive_organ'
+			},
 			family: 'organ',
 			pedalBehavior: 'sustain',
 			program: 16,
@@ -52,6 +56,10 @@
 		{
 			id: 'string_ensemble_1',
 			nombre: 'Cuerdas',
+			articulationInstruments: {
+				arpeggio: 'pizzicato_strings',
+				staccato: 'pizzicato_strings'
+			},
 			family: 'strings',
 			pedalBehavior: 'sustain',
 			program: 48,
@@ -60,6 +68,33 @@
 			usage: ['progressions'],
 			viewInstrument: '1',
 			sustained: true
+		}
+	];
+
+	global.CodaDataCatalogs.midiPlaybackInstruments = [
+		{
+			id: 'percussive_organ',
+			nombre: 'Órgano percutivo',
+			family: 'organ',
+			pedalBehavior: 'reattack',
+			program: 17,
+			soundEnvelope: 'percussive',
+			supportsPedalHold: false,
+			usage: ['articulation-playback'],
+			viewInstrument: '1',
+			sustained: false
+		},
+		{
+			id: 'pizzicato_strings',
+			nombre: 'Cuerdas pizzicato',
+			family: 'strings',
+			pedalBehavior: 'reattack',
+			program: 45,
+			soundEnvelope: 'plucked',
+			supportsPedalHold: false,
+			usage: ['articulation-playback'],
+			viewInstrument: '1',
+			sustained: false
 		}
 	];
 })(window);

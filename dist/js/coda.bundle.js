@@ -63,6 +63,10 @@
 		{
 			id: 'drawbar_organ',
 			nombre: 'Órgano drawbar',
+			articulationInstruments: {
+				arpeggio: 'percussive_organ',
+				staccato: 'percussive_organ'
+			},
 			family: 'organ',
 			pedalBehavior: 'sustain',
 			program: 16,
@@ -75,6 +79,10 @@
 		{
 			id: 'string_ensemble_1',
 			nombre: 'Cuerdas',
+			articulationInstruments: {
+				arpeggio: 'pizzicato_strings',
+				staccato: 'pizzicato_strings'
+			},
 			family: 'strings',
 			pedalBehavior: 'sustain',
 			program: 48,
@@ -83,6 +91,33 @@
 			usage: ['progressions'],
 			viewInstrument: '1',
 			sustained: true
+		}
+	];
+
+	global.CodaDataCatalogs.midiPlaybackInstruments = [
+		{
+			id: 'percussive_organ',
+			nombre: 'Órgano percutivo',
+			family: 'organ',
+			pedalBehavior: 'reattack',
+			program: 17,
+			soundEnvelope: 'percussive',
+			supportsPedalHold: false,
+			usage: ['articulation-playback'],
+			viewInstrument: '1',
+			sustained: false
+		},
+		{
+			id: 'pizzicato_strings',
+			nombre: 'Cuerdas pizzicato',
+			family: 'strings',
+			pedalBehavior: 'reattack',
+			program: 45,
+			soundEnvelope: 'plucked',
+			supportsPedalHold: false,
+			usage: ['articulation-playback'],
+			viewInstrument: '1',
+			sustained: false
 		}
 	];
 })(window);
@@ -1213,6 +1248,7 @@
 		constants: catalogs.constants,
 		midi: catalogs.midi,
 		midiInstruments: catalogs.midiInstruments,
+		midiPlaybackInstruments: catalogs.midiPlaybackInstruments || [],
 		notes: catalogs.notes,
 		intervals: catalogs.intervals,
 		scales: catalogs.scales,
@@ -8763,12 +8799,78 @@
 
 ;
 
+/* Source: js/services/progression-articulation-instrument-service.js */
+// Resolucion de presets alternativos para articulaciones cortas.
+(function (global) {
+	'use strict';
+
+	function resolveInstrument(instrument, articulation, playbackInstruments) {
+		var baseInstrument = instrument || {};
+		var targetId = resolveInstrumentId(baseInstrument, articulation);
+
+		if (!targetId) {
+			return baseInstrument;
+		}
+
+		return findInstrument(playbackInstruments, targetId) || {
+			baseInstrumentId: baseInstrument.id,
+			id: targetId,
+			pedalBehavior: 'reattack',
+			soundEnvelope: 'percussive',
+			supportsPedalHold: false,
+			sustained: false
+		};
+	}
+
+	function resolveInstrumentId(instrument, articulation) {
+		var key = articulationKey(articulation);
+		var mappings = instrument && instrument.articulationInstruments;
+
+		return key && mappings ? mappings[key] : '';
+	}
+
+	function articulationKey(articulation) {
+		if (articulation === 'staccato') {
+			return 'staccato';
+		}
+
+		if (isArpeggioArticulation(articulation)) {
+			return 'arpeggio';
+		}
+
+		return '';
+	}
+
+	function isArpeggioArticulation(articulation) {
+		return String(articulation || '').indexOf('arpeggio') === 0;
+	}
+
+	function findInstrument(instruments, instrumentId) {
+		for (var i = 0; i < (instruments || []).length; i++) {
+			if (instruments[i].id === instrumentId) {
+				return instruments[i];
+			}
+		}
+
+		return null;
+	}
+
+	global.CodaProgressionArticulationInstruments = {
+		articulationKey: articulationKey,
+		resolveInstrument: resolveInstrument,
+		resolveInstrumentId: resolveInstrumentId
+	};
+})(window);
+
+;
+
 /* Source: js/services/midi-export-service.js */
 // Servicio puro de exportación MIDI. Convierte progresiones en eventos MIDI y bytes SMF.
 (function (global) {
 	'use strict';
 
 	var arpeggioPatterns = global.CodaProgressionArpeggioPatterns;
+	var articulationInstruments = global.CodaProgressionArticulationInstruments;
 	var defaultTicksPerBeat = 480;
 	var midiMimeType = 'audio/midi';
 	var noteIndexes = {
@@ -8836,6 +8938,7 @@
 			appendMeasureEvents(events, measures[i], {
 				channel: channel,
 				initialMidiNote: initialMidiNote,
+				articulationInstruments: options.articulationInstruments || [],
 				instrument: instrument,
 				nextMeasure: measures[i + 1] || null,
 				ticksPerBeat: ticksPerBeat,
@@ -8861,6 +8964,9 @@
 		var arpeggioStep = isArpeggioArticulation(measure.articulation) ? Math.max(1, Math.round(options.ticksPerBeat / 4)) : 0;
 		var order = isArpeggioArticulation(measure.articulation) ? arpeggioOrderIndexes(notes.length, measure.articulation, measure.bar) : arpeggioPatterns.ascendingIndexes(notes.length);
 		var velocity = expressiveVelocity(measure, options.velocity);
+		var playbackInstrument = articulationInstruments.resolveInstrument(options.instrument, measure.articulation, options.articulationInstruments);
+
+		appendProgramChange(events, playbackInstrument, options.channel, startTick);
 
 		if (measure.articulation === 'staccato') {
 			appendStaccatoChordEvents(events, notes, measure, options, startTick, velocity);
@@ -8932,6 +9038,19 @@
 				});
 			}
 		}
+	}
+
+	function appendProgramChange(events, instrument, channel, tick) {
+		if (!instrument || instrument.program === undefined) {
+			return;
+		}
+
+		events.push({
+			channel: channel,
+			program: clamp(numberOrDefault(instrument.program, 0), 0, 127),
+			tick: tick,
+			type: 'programChange'
+		});
 	}
 
 	function appendPassingNoteEvents(events, measure, options, startTick) {
@@ -9330,6 +9449,7 @@
 			channel: options.data && options.data.midi ? options.data.midi.channel : 0,
 			fileName: options.fileName,
 			initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
+			articulationInstruments: options.data && options.data.midiPlaybackInstruments ? options.data.midiPlaybackInstruments : [],
 			instrument: instrument,
 			notes: options.data ? options.data.notes : [],
 			progression: options.progression,
@@ -9714,6 +9834,7 @@
 	'use strict';
 
 	var noteEventService = global.CodaProgressionPlaybackNoteEvents;
+	var articulationInstruments = global.CodaProgressionArticulationInstruments;
 	var timingService = global.CodaProgressionPlaybackTiming;
 
 	function buildMeasurePlaybackEvents(measure, index, startOffset, options) {
@@ -9755,6 +9876,8 @@
 			event.arpeggioOrder = timingService.arpeggioOrderIndexes(midiNotes.length || notes.length, measure.articulation, measure.bar);
 		}
 
+		addPlaybackInstrument(event, measure, options);
+
 		if (midiNotes.length) {
 			event.midiNotes = midiNotes;
 		}
@@ -9764,6 +9887,14 @@
 		}
 
 		return event;
+	}
+
+	function addPlaybackInstrument(event, measure, options) {
+		var instrumentId = articulationInstruments.resolveInstrumentId(options ? options.instrument : null, measure.articulation);
+
+		if (instrumentId) {
+			event.playbackInstrumentId = instrumentId;
+		}
 	}
 
 	function expressiveVelocity(measure, chordIndex) {
@@ -9922,6 +10053,14 @@
 			immediateEvent.midiNoteEvents = event.midiNoteEvents;
 		}
 
+		if (event.playbackInstrumentId) {
+			immediateEvent.playbackInstrumentId = event.playbackInstrumentId;
+		}
+
+		if (event.velocity != null) {
+			immediateEvent.velocity = event.velocity;
+		}
+
 		return immediateEvent;
 	}
 
@@ -9945,7 +10084,8 @@
 		if (typeof playbackService.playMidiChord === 'function') {
 			options = withVelocity({
 				delay: event.delay,
-				duration: event.duration
+				duration: event.duration,
+				instrumentId: event.playbackInstrumentId
 			}, event.velocity);
 			playbackService.playMidiChord(event.midiNotes, options);
 			return true;
@@ -9958,7 +10098,8 @@
 		for (var i = 0; i < event.midiNotes.length; i++) {
 			playbackService.playMidiNote(event.midiNotes[i], withVelocity({
 				delay: event.delay,
-				duration: event.duration
+				duration: event.duration,
+				instrumentId: event.playbackInstrumentId
 			}, event.velocity));
 		}
 
@@ -9973,7 +10114,8 @@
 		for (var i = 0; i < event.midiNoteEvents.length; i++) {
 			playbackService.playMidiNote(event.midiNoteEvents[i].midiNote, withVelocity({
 				delay: event.delay + (event.midiNoteEvents[i].delay || 0),
-				duration: event.midiNoteEvents[i].duration
+				duration: event.midiNoteEvents[i].duration,
+				instrumentId: event.playbackInstrumentId
 			}, event.midiNoteEvents[i].velocity || event.velocity));
 		}
 
@@ -10000,7 +10142,8 @@
 
 			playbackService.playMidiNote(midiNotes[noteIndex], withVelocity({
 				delay: event.delay + (event.arpeggioStep * i),
-				duration: Math.max(0.1, event.duration - (event.arpeggioStep * i))
+				duration: Math.max(0.1, event.duration - (event.arpeggioStep * i)),
+				instrumentId: event.playbackInstrumentId
 			}, event.velocity));
 		}
 
@@ -10014,13 +10157,18 @@
 
 		playbackService.playChordFromNames(event.notes, withVelocity({
 			delay: event.delay,
-			duration: event.duration
+			duration: event.duration,
+			instrumentId: event.playbackInstrumentId
 		}, event.velocity));
 
 		return true;
 	}
 
 	function withVelocity(options, velocity) {
+		if (!options.instrumentId) {
+			delete options.instrumentId;
+		}
+
 		if (velocity != null) {
 			options.velocity = velocity;
 		}
@@ -13277,8 +13425,8 @@
 			activeRun = run;
 			playbackCallbacks.run(callbacks.onStart, progression, startIndex);
 
-			if (shouldLoadBeforePlayback()) {
-				playbackService.load(function () {
+			if (shouldLoadBeforePlayback(schedule)) {
+				loadBeforePlayback(schedule, function () {
 					startRunPlayback(run, progression, schedule, scheduledMeasures);
 				});
 				return true;
@@ -13311,11 +13459,49 @@
 			return activeRun != null;
 		}
 
-		function shouldLoadBeforePlayback() {
-			return playbackService &&
-				typeof playbackService.isReady === 'function' &&
-				typeof playbackService.load === 'function' &&
-				!playbackService.isReady();
+		function shouldLoadBeforePlayback(schedule) {
+			if (!playbackService || typeof playbackService.isReady !== 'function') {
+				return false;
+			}
+
+			if (!playbackService.isReady()) {
+				return true;
+			}
+
+			return requiredInstrumentIds(schedule).some(function (instrumentId) {
+				return typeof playbackService.isInstrumentReady === 'function' && !playbackService.isInstrumentReady(instrumentId);
+			});
+		}
+
+		function loadBeforePlayback(schedule, callback) {
+			var instrumentIds = requiredInstrumentIds(schedule);
+
+			if (playbackService && typeof playbackService.getInstrument === 'function') {
+				instrumentIds.unshift(playbackService.getInstrument());
+			}
+
+			if (playbackService && typeof playbackService.loadInstruments === 'function') {
+				playbackService.loadInstruments(instrumentIds, callback);
+				return;
+			}
+
+			if (playbackService && typeof playbackService.load === 'function') {
+				playbackService.load(callback);
+			}
+		}
+
+		function requiredInstrumentIds(schedule) {
+			var ids = [];
+			var seen = {};
+
+			for (var i = 0; i < (schedule || []).length; i++) {
+				if (schedule[i].playbackInstrumentId && !seen[schedule[i].playbackInstrumentId]) {
+					seen[schedule[i].playbackInstrumentId] = true;
+					ids.push(schedule[i].playbackInstrumentId);
+				}
+			}
+
+			return ids;
 		}
 
 		function playbackInstrumentAttributes() {
@@ -19723,7 +19909,7 @@
 	function create(options) {
 		var midi = options.midi;
 		var notes = options.notes || [];
-		var instruments = options.instruments || [];
+		var instruments = (options.instruments || []).concat(options.articulationInstruments || []);
 		var channel = defaultValue(options.channel, 0);
 		var baseVelocity = defaultValue(options.velocity, 127);
 		var volumePercent = normalizeVolumePercent(defaultValue(options.volumePercent, 100));
@@ -19737,6 +19923,28 @@
 
 		function load(callback) {
 			return loadInstrument(activeInstrument, callback);
+		}
+
+		function loadInstruments(instrumentIds, callback) {
+			var pending = uniqueInstrumentIds(instrumentIds);
+			var remaining = pending.length;
+
+			if (!remaining) {
+				runCallback(callback);
+				return true;
+			}
+
+			for (var i = 0; i < pending.length; i++) {
+				loadInstrument(pending[i], function () {
+					remaining -= 1;
+
+					if (remaining === 0) {
+						runCallback(callback);
+					}
+				});
+			}
+
+			return true;
 		}
 
 		function loadInstrument(instrumentId, callback) {
@@ -19881,13 +20089,14 @@
 
 		function playChordFromNames(noteNames, playbackOptions) {
 			playbackOptions = playbackOptions || {};
+			var instrumentId = playbackInstrumentId(playbackOptions);
 
 			if (!midi) {
 				return;
 			}
 
-			if (!isReady()) {
-				load(function () {
+			if (!isInstrumentReady(instrumentId)) {
+				loadInstrument(instrumentId, function () {
 					playChordFromNames(noteNames, playbackOptions);
 				});
 				return;
@@ -19901,19 +20110,21 @@
 			var startDelay = defaultValue(playbackOptions.delay, delay);
 			var duration = defaultValue(playbackOptions.duration, 0.75);
 
+			applyInstrument(instrumentId);
 			midi.chordOn(channel, chord, velocityFor(playbackOptions), startDelay);
 			midi.chordOff(channel, chord, startDelay + duration);
 		}
 
 		function playMidiChord(midiNotes, playbackOptions) {
 			playbackOptions = playbackOptions || {};
+			var instrumentId = playbackInstrumentId(playbackOptions);
 
 			if (!midi) {
 				return;
 			}
 
-			if (!isReady()) {
-				load(function () {
+			if (!isInstrumentReady(instrumentId)) {
+				loadInstrument(instrumentId, function () {
 					playMidiChord(midiNotes, playbackOptions);
 				});
 				return;
@@ -19931,19 +20142,21 @@
 				return;
 			}
 
+			applyInstrument(instrumentId);
 			midi.chordOn(channel, chord, velocityFor(playbackOptions), startDelay);
 			midi.chordOff(channel, chord, startDelay + duration);
 		}
 
 		function playMidiNote(midiNote, playbackOptions) {
 			playbackOptions = playbackOptions || {};
+			var instrumentId = playbackInstrumentId(playbackOptions);
 
 			if (!midi) {
 				return;
 			}
 
-			if (!isReady()) {
-				load(function () {
+			if (!isInstrumentReady(instrumentId)) {
+				loadInstrument(instrumentId, function () {
 					playMidiNote(midiNote, playbackOptions);
 				});
 				return;
@@ -19962,6 +20175,7 @@
 			var startDelay = defaultValue(playbackOptions.delay, delay);
 			var duration = defaultValue(playbackOptions.duration, 0.55);
 
+			applyInstrument(instrumentId);
 			midi.noteOn(channel, noteNumber, velocityFor(playbackOptions), startDelay);
 			midi.noteOff(channel, noteNumber, startDelay + duration);
 		}
@@ -20077,6 +20291,7 @@
 			var instrument = findInstrument(activeInstrument);
 
 			return {
+				articulationInstruments: instrument.articulationInstruments || null,
 				family: instrument.family || '',
 				id: instrument.id || activeInstrument,
 				pedalBehavior: instrument.pedalBehavior || (instrument.sustained ? 'sustain' : 'reattack'),
@@ -20110,6 +20325,28 @@
 			return loadedInstruments[activeInstrument] === true;
 		}
 
+		function isInstrumentReady(instrumentId) {
+			return loadedInstruments[instrumentId || activeInstrument] === true;
+		}
+
+		function playbackInstrumentId(playbackOptions) {
+			return playbackOptions && playbackOptions.instrumentId ? playbackOptions.instrumentId : activeInstrument;
+		}
+
+		function uniqueInstrumentIds(instrumentIds) {
+			var seen = {};
+			var result = [];
+
+			for (var i = 0; i < (instrumentIds || []).length; i++) {
+				if (instrumentIds[i] && !seen[instrumentIds[i]]) {
+					seen[instrumentIds[i]] = true;
+					result.push(instrumentIds[i]);
+				}
+			}
+
+			return result;
+		}
+
 		function isLoading() {
 			for (var instrumentId in loadingInstruments) {
 				if (loadingInstruments[instrumentId]) {
@@ -20122,9 +20359,11 @@
 
 		return {
 			load: load,
+			loadInstruments: loadInstruments,
 			isReady: function () {
 				return isReady();
 			},
+			isInstrumentReady: isInstrumentReady,
 			isLoading: function () {
 				return isLoading();
 			},
@@ -20167,6 +20406,7 @@
 			channel: data.midi.channel,
 			delay: data.midi.delay,
 			initialMidiNote: data.midi.initialMidiNote,
+			articulationInstruments: data.midiPlaybackInstruments,
 			instruments: data.midiInstruments,
 			instrument: defaultMidiInstrument.id,
 			midi: options.midi,

@@ -3,6 +3,7 @@
 	'use strict';
 
 	var noteEventService = global.CodaProgressionPlaybackNoteEvents;
+	var articulationInstruments = global.CodaProgressionArticulationInstruments;
 	var timingService = global.CodaProgressionPlaybackTiming;
 
 	function buildMeasurePlaybackEvents(measure, index, startOffset, options) {
@@ -44,6 +45,8 @@
 			event.arpeggioOrder = timingService.arpeggioOrderIndexes(midiNotes.length || notes.length, measure.articulation, measure.bar);
 		}
 
+		addPlaybackInstrument(event, measure, options);
+
 		if (midiNotes.length) {
 			event.midiNotes = midiNotes;
 		}
@@ -53,6 +56,14 @@
 		}
 
 		return event;
+	}
+
+	function addPlaybackInstrument(event, measure, options) {
+		var instrumentId = articulationInstruments.resolveInstrumentId(options ? options.instrument : null, measure.articulation);
+
+		if (instrumentId) {
+			event.playbackInstrumentId = instrumentId;
+		}
 	}
 
 	function expressiveVelocity(measure, chordIndex) {

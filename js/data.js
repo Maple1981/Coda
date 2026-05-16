@@ -9,6 +9,7 @@
 		constants: catalogs.constants,
 		midi: catalogs.midi,
 		midiInstruments: catalogs.midiInstruments,
+		midiPlaybackInstruments: catalogs.midiPlaybackInstruments || [],
 		notes: catalogs.notes,
 		intervals: catalogs.intervals,
 		scales: catalogs.scales,

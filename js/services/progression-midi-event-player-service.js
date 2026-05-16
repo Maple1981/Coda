@@ -10,7 +10,8 @@
 		if (typeof playbackService.playMidiChord === 'function') {
 			options = withVelocity({
 				delay: event.delay,
-				duration: event.duration
+				duration: event.duration,
+				instrumentId: event.playbackInstrumentId
 			}, event.velocity);
 			playbackService.playMidiChord(event.midiNotes, options);
 			return true;
@@ -23,7 +24,8 @@
 		for (var i = 0; i < event.midiNotes.length; i++) {
 			playbackService.playMidiNote(event.midiNotes[i], withVelocity({
 				delay: event.delay,
-				duration: event.duration
+				duration: event.duration,
+				instrumentId: event.playbackInstrumentId
 			}, event.velocity));
 		}
 
@@ -38,7 +40,8 @@
 		for (var i = 0; i < event.midiNoteEvents.length; i++) {
 			playbackService.playMidiNote(event.midiNoteEvents[i].midiNote, withVelocity({
 				delay: event.delay + (event.midiNoteEvents[i].delay || 0),
-				duration: event.midiNoteEvents[i].duration
+				duration: event.midiNoteEvents[i].duration,
+				instrumentId: event.playbackInstrumentId
 			}, event.midiNoteEvents[i].velocity || event.velocity));
 		}
 
@@ -65,7 +68,8 @@
 
 			playbackService.playMidiNote(midiNotes[noteIndex], withVelocity({
 				delay: event.delay + (event.arpeggioStep * i),
-				duration: Math.max(0.1, event.duration - (event.arpeggioStep * i))
+				duration: Math.max(0.1, event.duration - (event.arpeggioStep * i)),
+				instrumentId: event.playbackInstrumentId
 			}, event.velocity));
 		}
 
@@ -79,13 +83,18 @@
 
 		playbackService.playChordFromNames(event.notes, withVelocity({
 			delay: event.delay,
-			duration: event.duration
+			duration: event.duration,
+			instrumentId: event.playbackInstrumentId
 		}, event.velocity));
 
 		return true;
 	}
 
 	function withVelocity(options, velocity) {
+		if (!options.instrumentId) {
+			delete options.instrumentId;
+		}
+
 		if (velocity != null) {
 			options.velocity = velocity;
 		}

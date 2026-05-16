@@ -80,6 +80,7 @@
 			'js/services/progression-chord-menu-option-service.js',
 			'js/services/progression-chord-menu-service.js',
 			'js/services/progression-arpeggio-pattern-service.js',
+			'js/services/progression-articulation-instrument-service.js',
 			'js/services/midi-export-service.js',
 			'js/services/progression-midi-file-service.js',
 			'js/services/progression-midi-download-service.js',
