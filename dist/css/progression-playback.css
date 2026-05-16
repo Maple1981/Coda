@@ -100,7 +100,7 @@
 
 .measure--split .measureChord {
   min-height: 3.1em;
-  padding: 0.45em 1.85em 0.45em 0.55em;
+  padding: calc(0.45em + 3px) calc(1.85em + 3px) calc(0.45em + 3px) calc(0.55em + 3px);
   border: 1px solid rgba(197, 246, 255, 0.18);
   border-radius: 5px;
   background: rgba(197, 246, 255, 0.04);
@@ -116,8 +116,16 @@
 }
 
 .measureChord.isSelected {
-  outline: 2px solid #d85ee0;
-  outline-offset: 2px;
+  border-color: rgba(172, 72, 190, 0.28);
+  outline: 1px solid rgba(172, 72, 190, 0.38);
+  outline-offset: 1px;
+  padding: calc(0.45em + 3px) calc(1.85em + 3px) calc(0.45em + 3px) calc(0.55em + 3px);
+  box-shadow: none;
+}
+
+.measure--split .measureChord.isSelected {
+  border-color: rgba(172, 72, 190, 0.28);
+  box-shadow: none;
 }
 
 .measureChordQuickToggle {
@@ -656,6 +664,19 @@ body[data-theme="day"] .measureNotes {
   color: #59656b;
 }
 
+body[data-theme="day"] .measureChord .measureNotes {
+  color: #252b2f;
+}
+
+body[data-theme="day"] .loopControl {
+  color: #1f2528;
+  font-size: 0.88em;
+}
+
+body[data-theme="day"] .loopControl input {
+  accent-color: #00764f;
+}
+
 body[data-theme="day"] .measure--split .measureChord {
   border-color: rgba(125, 39, 133, 0.18);
   background: rgba(125, 39, 133, 0.05);
@@ -700,7 +721,16 @@ body[data-theme="day"] .measure--split .measureChord.isChordDropTarget {
 }
 
 body[data-theme="day"] .measureChord.isSelected {
-  outline-color: #7d2785;
+  border-color: rgba(125, 39, 133, 0.28);
+  outline: 1px solid rgba(125, 39, 133, 0.34);
+  outline-offset: 1px;
+  padding: calc(0.45em + 3px) calc(1.85em + 3px) calc(0.45em + 3px) calc(0.55em + 3px);
+  box-shadow: none;
+}
+
+body[data-theme="day"] .measure--split .measureChord.isSelected {
+  border-color: rgba(125, 39, 133, 0.28);
+  box-shadow: none;
 }
 
 body[data-theme="day"] .measureChordQuickToggle {

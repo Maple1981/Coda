@@ -1453,7 +1453,7 @@ section#bienvenida .columnata article{
 
 .measure--split .measureChord{
 	min-height:3.1em;
-	padding:.45em 1.85em .45em .55em;
+	padding:calc(.45em + 3px) calc(1.85em + 3px) calc(.45em + 3px) calc(.55em + 3px);
 	border:1px solid rgba(197, 246, 255, .18);
 	border-radius:5px;
 	background:rgba(197, 246, 255, .04);
@@ -1469,8 +1469,16 @@ section#bienvenida .columnata article{
 }
 
 .measureChord.isSelected{
-	outline:1px solid rgba($corporative_complementarybright_color, .56);
-	outline-offset:2px;
+	border-color:rgba(172, 72, 190, .28);
+	outline:1px solid rgba(172, 72, 190, .38);
+	outline-offset:1px;
+	padding:calc(.45em + 3px) calc(1.85em + 3px) calc(.45em + 3px) calc(.55em + 3px);
+	box-shadow:none;
+}
+
+.measure--split .measureChord.isSelected{
+	border-color:rgba(172, 72, 190, .28);
+	box-shadow:none;
 }
 
 .measureChordQuickToggle{
@@ -2255,10 +2263,36 @@ body[data-theme="day"] .measureNotes{
 	color:#59656b;
 }
 
+body[data-theme="day"] .measureChord .measureNotes{
+	color:#252b2f;
+}
+
+body[data-theme="day"] section#notacion .scaleDegreePlayButton{
+	background:#ffffff;
+	border-color:#b7c3ca;
+	color:#00764f;
+}
+
+body[data-theme="day"] section#notacion .scaleDegreePlayButton:hover,
+body[data-theme="day"] section#notacion .scaleDegreePlayButton:focus{
+	background:#00ff95;
+	border-color:#00b875;
+	color:#111111;
+}
+
 body[data-theme="day"] .transportControls{
 	border-color:#b7c3ca;
 	background:linear-gradient(0deg, #f2f4f5 0%, #ffffff 100%);
 	box-shadow:0 -12px 26px rgba(31, 37, 40, .14);
+}
+
+body[data-theme="day"] .loopControl{
+	color:#1f2528;
+	font-size:.88em;
+}
+
+body[data-theme="day"] .loopControl input{
+	accent-color:#00764f;
 }
 
 body[data-theme="day"] .workbenchControlHeader{
@@ -2352,7 +2386,16 @@ body[data-theme="day"] .measure--split .measureChord.isChordDropTarget{
 }
 
 body[data-theme="day"] .measureChord.isSelected{
-	outline-color:rgba(125, 39, 133, .52);
+	border-color:rgba(125, 39, 133, .28);
+	outline:1px solid rgba(125, 39, 133, .34);
+	outline-offset:1px;
+	padding:calc(.45em + 3px) calc(1.85em + 3px) calc(.45em + 3px) calc(.55em + 3px);
+	box-shadow:none;
+}
+
+body[data-theme="day"] .measure--split .measureChord.isSelected{
+	border-color:rgba(125, 39, 133, .28);
+	box-shadow:none;
 }
 
 body[data-theme="day"] .measureChordQuickToggle{

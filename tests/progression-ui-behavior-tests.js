@@ -6,6 +6,10 @@ const { createScriptLoader } = require('./helpers/script-loader');
 const root = path.resolve(__dirname, '..');
 const context = {
 	console,
+	Event: function (eventName, options) {
+		this.type = eventName;
+		this.bubbles = options && options.bubbles === true;
+	},
 	window: {}
 };
 context.window.window = context.window;
@@ -412,6 +416,56 @@ assert.ok(initialized.uiState.getProgression().sections.some(function (section) 
 }));
 assert.equal(savedWorkspaces[savedWorkspaces.length - 1].progression.measures.length, sectionProgressionLength);
 
+const knobInput = createFakeElement('testKnobInput', '50');
+const knob = createFakeElement('testKnob');
+knobInput.min = '0';
+knobInput.max = '100';
+knobInput.step = '1';
+knobInput.focus = function () {
+	this.focused = true;
+};
+knobInput.classList.add('knobControl__input');
+knobInput.closest = function (selector) {
+	return selector === '.knobControl' ? knob : null;
+};
+knob.querySelector = function (selector) {
+	return selector === '.knobControl__input' ? knobInput : null;
+};
+knob.style = {
+	setProperty: function (name, value) {
+		this[name] = value;
+	}
+};
+
+document.dispatchDocumentEvent({
+	deltaY: -100,
+	preventDefault: function () {
+		this.preventDefaultCalled = true;
+	},
+	target: {
+		closest: function (selector) {
+			return selector === '.knobControl' ? knob : null;
+		}
+	},
+	type: 'wheel'
+});
+assert.equal(knobInput.value, '55');
+
+document.dispatchDocumentEvent({
+	deltaY: 100,
+	preventDefault: function () {
+		this.preventDefaultCalled = true;
+	},
+	shiftKey: true,
+	target: {
+		closest: function (selector) {
+			return selector === '.knobControl' ? knob : null;
+		}
+	},
+	type: 'wheel'
+});
+assert.equal(knobInput.value, '54');
+
 document.dispatchDocumentEvent({
 	target: document.getElementById('workbenchContextInstrumentToggle'),
 	type: 'click'
@@ -658,6 +712,11 @@ function createFakeElement(id, value) {
 			attributes[name] = String(nextValue);
 		},
 		textContent: '',
-		value: value || ''
+		value: value || '',
+		style: {
+			setProperty: function (name, nextValue) {
+				this[name] = nextValue;
+			}
+		}
 	};
 }

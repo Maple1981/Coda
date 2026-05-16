@@ -16142,6 +16142,18 @@
 			startDrag(knob, event);
 		});
 
+		root.addEventListener('wheel', function (event) {
+			var knob = closest(event.target, '.knobControl');
+
+			if (!knob || event.target && event.target.closest && event.target.closest('button')) {
+				return;
+			}
+
+			adjustByWheel(knob, event);
+		}, {
+			passive: false
+		});
+
 		refreshAll(root);
 	}
 
@@ -16185,6 +16197,36 @@
 
 		global.addEventListener('pointermove', move);
 		global.addEventListener('pointerup', end);
+	}
+
+	function adjustByWheel(knob, event) {
+		var input = knob ? knob.querySelector('.knobControl__input') : null;
+		var min;
+		var max;
+		var step;
+		var direction;
+		var value;
+
+		if (!input) {
+			return;
+		}
+
+		event.preventDefault();
+		input.focus();
+
+		min = numberOr(input.min, 0);
+		max = numberOr(input.max, min);
+		step = Math.max(numberOr(input.step, 1), 1);
+		direction = wheelDirection(event);
+
+		if (direction === 0) {
+			return;
+		}
+
+		value = numberOr(input.value, min) + (direction * step * (event.shiftKey ? 1 : 5));
+		setInputValue(input, quantize(value, min, max, step));
+		dispatch(input, 'input');
+		dispatch(input, 'change');
 	}
 
 	function resetToZero(knob, event) {
@@ -16251,6 +16293,16 @@
 		var steps = Math.round((value - min) / step);
 
 		return Math.max(min, Math.min(max, min + (steps * step)));
+	}
+
+	function wheelDirection(event) {
+		var delta = event && event.deltaY !== 0 ? event.deltaY : event.deltaX;
+
+		if (!delta) {
+			return 0;
+		}
+
+		return delta > 0 ? -1 : 1;
 	}
 
 	function dispatch(element, eventName) {
