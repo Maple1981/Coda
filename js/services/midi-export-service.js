@@ -96,6 +96,12 @@
 		var order = isArpeggioArticulation(measure.articulation) ? arpeggioOrderIndexes(notes.length, measure.articulation, measure.bar) : arpeggioPatterns.ascendingIndexes(notes.length);
 		var velocity = expressiveVelocity(measure, options.velocity);
 
+		if (measure.articulation === 'staccato') {
+			appendStaccatoChordEvents(events, notes, measure, options, startTick, velocity);
+			appendPassingNoteEvents(events, measure, options, startTick);
+			return;
+		}
+
 		for (var i = 0; i < order.length; i++) {
 			var noteIndex = Math.max(0, Math.min(notes.length - 1, order[i]));
 			var note = notes[noteIndex];
@@ -128,6 +134,38 @@
 		}
 
 		appendPassingNoteEvents(events, measure, options, startTick);
+	}
+
+	function appendStaccatoChordEvents(events, notes, measure, options, startTick, velocity) {
+		var pulseCount = pulseCountForMeasure(measure);
+		var pulseTicks = Math.max(1, Math.round((Number(measure.durationBeats) || pulseCount) * options.ticksPerBeat / pulseCount));
+		var durationTicks = Math.max(1, Math.round(pulseTicks * 0.45));
+
+		for (var pulseIndex = 0; pulseIndex < pulseCount; pulseIndex++) {
+			for (var noteIndex = 0; noteIndex < notes.length; noteIndex++) {
+				var noteStart = startTick + (pulseTicks * pulseIndex);
+				var noteEnd = noteStart + durationTicks;
+
+				events.push({
+					bar: measure.bar,
+					channel: options.channel,
+					degree: measure.degree,
+					note: notes[noteIndex],
+					tick: noteStart,
+					type: 'noteOn',
+					velocity: velocity
+				});
+				events.push({
+					bar: measure.bar,
+					channel: options.channel,
+					degree: measure.degree,
+					note: notes[noteIndex],
+					tick: noteEnd,
+					type: 'noteOff',
+					velocity: 0
+				});
+			}
+		}
 	}
 
 	function appendPassingNoteEvents(events, measure, options, startTick) {
@@ -166,6 +204,10 @@
 		var durationBeats = Number(measure.durationBeats) || 0;
 
 		return durationSeconds > 0 && durationBeats > 0 ? durationSeconds / durationBeats : 0.5;
+	}
+
+	function pulseCountForMeasure(measure) {
+		return Math.max(1, Math.round(Number(measure && measure.durationBeats) || Number(measure && measure.beatsPerBar) || 1));
 	}
 
 	function isPedalIn(midiNote, measure) {

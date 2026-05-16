@@ -15,7 +15,7 @@
 
 		html += '<legend><span data-i18n="progression.time"></span></legend>';
 		html += renderControl('progression.bars', '<select id="progressionBars"><option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="8" selected="selected">8</option><option value="12">12</option><option value="16">16</option><option value="32">32</option></select>', '#progressionBars', null, 'progression.help.bars');
-		html += renderControl('progression.meter', '<select id="progressionMeter"><option value="4/4">4/4</option><option value="3/4">3/4</option><option value="6/8">6/8</option></select>', '#progressionMeter', null, 'progression.help.meter');
+		html += renderControl('progression.meter', renderMeterSelect(), '#progressionMeter', null, 'progression.help.meter');
 		html += renderControl(null, '<input id="progressionBpm" type="number" value="120" min="20" max="200" step="1" />', '#progressionBpm', 'BPM', 'progression.help.bpm');
 		html += '</fieldset>';
 
@@ -38,6 +38,21 @@
 		html += '</fieldset>';
 
 		return html;
+	}
+
+	function renderMeterSelect() {
+		return '<select id="progressionMeter">' +
+			'<option value="4/4">4/4</option>' +
+			'<option value="3/4">3/4</option>' +
+			'<option value="5/4">5/4</option>' +
+			'<option value="7/4">7/4</option>' +
+			'<option value="11/4">11/4</option>' +
+			'<option value="5/8">5/8</option>' +
+			'<option value="6/8">6/8</option>' +
+			'<option value="7/8">7/8</option>' +
+			'<option value="9/8">9/8</option>' +
+			'<option value="12/8">12/8</option>' +
+			'</select>';
 	}
 
 	function renderColorPanel() {
@@ -95,6 +110,7 @@
 	global.CodaRenderers.progressionControls = {
 		renderColorPanel: renderColorPanel,
 		renderControl: renderControl,
+		renderMeterSelect: renderMeterSelect,
 		renderKnobControl: renderKnobControl,
 		renderPanels: renderPanels,
 		renderArticulationSelect: renderArticulationSelect,

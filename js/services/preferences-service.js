@@ -79,7 +79,7 @@
 			progressionCounterpoint: integerRange(0, 100),
 			progressionHumanization: integerRange(0, 100),
 			progressionIntensity: integerRange(1, 127),
-			progressionMeter: allowList(['4/4', '3/4', '6/8']),
+			progressionMeter: allowList(['4/4', '3/4', '5/4', '7/4', '11/4', '5/8', '6/8', '7/8', '9/8', '12/8']),
 			progressionModalInterchange: integerRange(0, 100),
 			progressionStyle: allowList(['modern', 'classic']),
 			progressionSwing: integerRange(0, 75),

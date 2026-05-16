@@ -2155,7 +2155,7 @@
 			progressionCounterpoint: integerRange(0, 100),
 			progressionHumanization: integerRange(0, 100),
 			progressionIntensity: integerRange(1, 127),
-			progressionMeter: allowList(['4/4', '3/4', '6/8']),
+			progressionMeter: allowList(['4/4', '3/4', '5/4', '7/4', '11/4', '5/8', '6/8', '7/8', '9/8', '12/8']),
 			progressionModalInterchange: integerRange(0, 100),
 			progressionStyle: allowList(['modern', 'classic']),
 			progressionSwing: integerRange(0, 75),
@@ -8862,6 +8862,12 @@
 		var order = isArpeggioArticulation(measure.articulation) ? arpeggioOrderIndexes(notes.length, measure.articulation, measure.bar) : arpeggioPatterns.ascendingIndexes(notes.length);
 		var velocity = expressiveVelocity(measure, options.velocity);
 
+		if (measure.articulation === 'staccato') {
+			appendStaccatoChordEvents(events, notes, measure, options, startTick, velocity);
+			appendPassingNoteEvents(events, measure, options, startTick);
+			return;
+		}
+
 		for (var i = 0; i < order.length; i++) {
 			var noteIndex = Math.max(0, Math.min(notes.length - 1, order[i]));
 			var note = notes[noteIndex];
@@ -8894,6 +8900,38 @@
 		}
 
 		appendPassingNoteEvents(events, measure, options, startTick);
+	}
+
+	function appendStaccatoChordEvents(events, notes, measure, options, startTick, velocity) {
+		var pulseCount = pulseCountForMeasure(measure);
+		var pulseTicks = Math.max(1, Math.round((Number(measure.durationBeats) || pulseCount) * options.ticksPerBeat / pulseCount));
+		var durationTicks = Math.max(1, Math.round(pulseTicks * 0.45));
+
+		for (var pulseIndex = 0; pulseIndex < pulseCount; pulseIndex++) {
+			for (var noteIndex = 0; noteIndex < notes.length; noteIndex++) {
+				var noteStart = startTick + (pulseTicks * pulseIndex);
+				var noteEnd = noteStart + durationTicks;
+
+				events.push({
+					bar: measure.bar,
+					channel: options.channel,
+					degree: measure.degree,
+					note: notes[noteIndex],
+					tick: noteStart,
+					type: 'noteOn',
+					velocity: velocity
+				});
+				events.push({
+					bar: measure.bar,
+					channel: options.channel,
+					degree: measure.degree,
+					note: notes[noteIndex],
+					tick: noteEnd,
+					type: 'noteOff',
+					velocity: 0
+				});
+			}
+		}
 	}
 
 	function appendPassingNoteEvents(events, measure, options, startTick) {
@@ -8932,6 +8970,10 @@
 		var durationBeats = Number(measure.durationBeats) || 0;
 
 		return durationSeconds > 0 && durationBeats > 0 ? durationSeconds / durationBeats : 0.5;
+	}
+
+	function pulseCountForMeasure(measure) {
+		return Math.max(1, Math.round(Number(measure && measure.durationBeats) || Number(measure && measure.beatsPerBar) || 1));
 	}
 
 	function isPedalIn(midiNote, measure) {
@@ -9443,6 +9485,10 @@
 		var events = [];
 		var melodicEvents = passingNoteEvents(measure);
 
+		if (measure && measure.articulation === 'staccato') {
+			return staccatoNoteEvents(midiNotes, measure).concat(melodicEvents);
+		}
+
 		if (!hasPedals(measure) || !supportsPedalHold(options ? options.instrument : null)) {
 			return melodicEvents.length ? chordNoteEvents(midiNotes, duration).concat(melodicEvents) : [];
 		}
@@ -9459,6 +9505,26 @@
 		}
 
 		return events.concat(melodicEvents);
+	}
+
+	function staccatoNoteEvents(midiNotes, measure) {
+		var pulseCount = pulseCountForMeasure(measure);
+		var pulseSeconds = pulseSecondsForMeasure(measure, pulseCount);
+		var duration = Math.max(0.05, pulseSeconds * 0.45);
+		var events = [];
+
+		for (var pulseIndex = 0; pulseIndex < pulseCount; pulseIndex++) {
+			for (var noteIndex = 0; noteIndex < midiNotes.length; noteIndex++) {
+				events.push({
+					delay: pulseSeconds * pulseIndex,
+					duration: duration,
+					kind: 'staccato',
+					midiNote: midiNotes[noteIndex]
+				});
+			}
+		}
+
+		return events;
 	}
 
 	function chordNoteEvents(midiNotes, duration) {
@@ -9488,6 +9554,20 @@
 		}
 
 		return events;
+	}
+
+	function pulseCountForMeasure(measure) {
+		return Math.max(1, Math.round(Number(measure && measure.durationBeats) || Number(measure && measure.beatsPerBar) || 1));
+	}
+
+	function pulseSecondsForMeasure(measure, pulseCount) {
+		var durationSeconds = Number(measure && measure.durationSeconds) || 0;
+
+		if (durationSeconds > 0 && pulseCount > 0) {
+			return durationSeconds / pulseCount;
+		}
+
+		return 0.5;
 	}
 
 	function hasPedals(measure) {
@@ -9533,6 +9613,7 @@
 		build: build,
 		chordNoteEvents: chordNoteEvents,
 		passingNoteEvents: passingNoteEvents,
+		pulseCountForMeasure: pulseCountForMeasure,
 		supportsPedalHold: supportsPedalHold
 	};
 })(window);
@@ -14356,7 +14437,7 @@
 
 		html += '<legend><span data-i18n="progression.time"></span></legend>';
 		html += renderControl('progression.bars', '<select id="progressionBars"><option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="8" selected="selected">8</option><option value="12">12</option><option value="16">16</option><option value="32">32</option></select>', '#progressionBars', null, 'progression.help.bars');
-		html += renderControl('progression.meter', '<select id="progressionMeter"><option value="4/4">4/4</option><option value="3/4">3/4</option><option value="6/8">6/8</option></select>', '#progressionMeter', null, 'progression.help.meter');
+		html += renderControl('progression.meter', renderMeterSelect(), '#progressionMeter', null, 'progression.help.meter');
 		html += renderControl(null, '<input id="progressionBpm" type="number" value="120" min="20" max="200" step="1" />', '#progressionBpm', 'BPM', 'progression.help.bpm');
 		html += '</fieldset>';
 
@@ -14379,6 +14460,21 @@
 		html += '</fieldset>';
 
 		return html;
+	}
+
+	function renderMeterSelect() {
+		return '<select id="progressionMeter">' +
+			'<option value="4/4">4/4</option>' +
+			'<option value="3/4">3/4</option>' +
+			'<option value="5/4">5/4</option>' +
+			'<option value="7/4">7/4</option>' +
+			'<option value="11/4">11/4</option>' +
+			'<option value="5/8">5/8</option>' +
+			'<option value="6/8">6/8</option>' +
+			'<option value="7/8">7/8</option>' +
+			'<option value="9/8">9/8</option>' +
+			'<option value="12/8">12/8</option>' +
+			'</select>';
 	}
 
 	function renderColorPanel() {
@@ -14436,6 +14532,7 @@
 	global.CodaRenderers.progressionControls = {
 		renderColorPanel: renderColorPanel,
 		renderControl: renderControl,
+		renderMeterSelect: renderMeterSelect,
 		renderKnobControl: renderKnobControl,
 		renderPanels: renderPanels,
 		renderArticulationSelect: renderArticulationSelect,
@@ -15394,7 +15491,7 @@
 		'arpeggio_random'
 	];
 	var allowedBars = [2, 4, 6, 8, 12, 16, 32];
-	var allowedMeters = ['4/4', '3/4', '6/8'];
+	var allowedMeters = ['4/4', '3/4', '5/4', '7/4', '11/4', '5/8', '6/8', '7/8', '9/8', '12/8'];
 	var allowedStyles = ['modern', 'classic'];
 	var allowedVoicings = ['closed', 'open'];
 	var defaults = {

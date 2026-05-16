@@ -15,7 +15,7 @@
 		'arpeggio_random'
 	];
 	var allowedBars = [2, 4, 6, 8, 12, 16, 32];
-	var allowedMeters = ['4/4', '3/4', '6/8'];
+	var allowedMeters = ['4/4', '3/4', '5/4', '7/4', '11/4', '5/8', '6/8', '7/8', '9/8', '12/8'];
 	var allowedStyles = ['modern', 'classic'];
 	var allowedVoicings = ['closed', 'open'];
 	var defaults = {

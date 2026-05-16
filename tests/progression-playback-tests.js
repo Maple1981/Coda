@@ -274,6 +274,32 @@ assert.deepEqual(passingPlaybackCalls, [
 	{ note: 62, options: { delay: 3, duration: 0.25 } }
 ]);
 
+const staccatoSchedule = app.buildProgressionPlaybackSchedule({
+	measures: [
+		{
+			articulation: 'staccato',
+			bar: 1,
+			beatsPerBar: 7,
+			degree: 'I',
+			durationBeats: 7,
+			durationSeconds: 3.5,
+			midiNotes: [60, 64, 67],
+			notes: ['C', 'E', 'G'],
+			startSeconds: 0,
+			voices: 3
+		}
+	]
+});
+assert.equal(staccatoSchedule[0].midiNoteEvents.length, 21);
+assert.deepEqual(staccatoSchedule[0].midiNoteEvents.slice(0, 6), [
+	{ delay: 0, duration: 0.225, kind: 'staccato', midiNote: 60 },
+	{ delay: 0, duration: 0.225, kind: 'staccato', midiNote: 64 },
+	{ delay: 0, duration: 0.225, kind: 'staccato', midiNote: 67 },
+	{ delay: 0.5, duration: 0.225, kind: 'staccato', midiNote: 60 },
+	{ delay: 0.5, duration: 0.225, kind: 'staccato', midiNote: 64 },
+	{ delay: 0.5, duration: 0.225, kind: 'staccato', midiNote: 67 }
+]);
+
 const partialSchedule = app.buildProgressionPlaybackSchedule(progression, { startIndex: 1 });
 assert.deepEqual(partialSchedule.map(function (event) { return event.bar; }), [2, 3]);
 assert.deepEqual(partialSchedule.map(function (event) { return event.delay; }), [0, 2]);

@@ -84,7 +84,7 @@ assert.deepEqual(progressionState.normalize({
 	counterpoint: '-4',
 	humanization: '200',
 	intensity: '999',
-	meter: '5/4',
+	meter: '13/16',
 	modalInterchange: 'bad',
 	style: 'missing',
 	swing: '99',

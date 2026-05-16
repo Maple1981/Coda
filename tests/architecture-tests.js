@@ -439,7 +439,7 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	progressionCounterpoint: -1,
 	progressionHumanization: 101,
 	progressionIntensity: 128,
-	progressionMeter: '5/4',
+	progressionMeter: '13/16',
 	progressionModalInterchange: 101,
 	progressionStyle: 'atonal',
 	progressionSwing: 76,

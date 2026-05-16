@@ -7,6 +7,10 @@
 		var events = [];
 		var melodicEvents = passingNoteEvents(measure);
 
+		if (measure && measure.articulation === 'staccato') {
+			return staccatoNoteEvents(midiNotes, measure).concat(melodicEvents);
+		}
+
 		if (!hasPedals(measure) || !supportsPedalHold(options ? options.instrument : null)) {
 			return melodicEvents.length ? chordNoteEvents(midiNotes, duration).concat(melodicEvents) : [];
 		}
@@ -23,6 +27,26 @@
 		}
 
 		return events.concat(melodicEvents);
+	}
+
+	function staccatoNoteEvents(midiNotes, measure) {
+		var pulseCount = pulseCountForMeasure(measure);
+		var pulseSeconds = pulseSecondsForMeasure(measure, pulseCount);
+		var duration = Math.max(0.05, pulseSeconds * 0.45);
+		var events = [];
+
+		for (var pulseIndex = 0; pulseIndex < pulseCount; pulseIndex++) {
+			for (var noteIndex = 0; noteIndex < midiNotes.length; noteIndex++) {
+				events.push({
+					delay: pulseSeconds * pulseIndex,
+					duration: duration,
+					kind: 'staccato',
+					midiNote: midiNotes[noteIndex]
+				});
+			}
+		}
+
+		return events;
 	}
 
 	function chordNoteEvents(midiNotes, duration) {
@@ -52,6 +76,20 @@
 		}
 
 		return events;
+	}
+
+	function pulseCountForMeasure(measure) {
+		return Math.max(1, Math.round(Number(measure && measure.durationBeats) || Number(measure && measure.beatsPerBar) || 1));
+	}
+
+	function pulseSecondsForMeasure(measure, pulseCount) {
+		var durationSeconds = Number(measure && measure.durationSeconds) || 0;
+
+		if (durationSeconds > 0 && pulseCount > 0) {
+			return durationSeconds / pulseCount;
+		}
+
+		return 0.5;
 	}
 
 	function hasPedals(measure) {
@@ -97,6 +135,7 @@
 		build: build,
 		chordNoteEvents: chordNoteEvents,
 		passingNoteEvents: passingNoteEvents,
+		pulseCountForMeasure: pulseCountForMeasure,
 		supportsPedalHold: supportsPedalHold
 	};
 })(window);
