@@ -36,6 +36,8 @@
 			velocity: expressiveVelocity(measure, chordIndex)
 		};
 
+		setHiddenStartOffset(event, startOffset || 0);
+
 		if (chordIndex) {
 			event.chordIndex = chordIndex;
 		}
@@ -64,6 +66,20 @@
 		if (instrumentId) {
 			event.playbackInstrumentId = instrumentId;
 		}
+	}
+
+	function setHiddenStartOffset(event, startOffset) {
+		if (typeof Object.defineProperty === 'function') {
+			Object.defineProperty(event, 'startOffset', {
+				configurable: true,
+				enumerable: false,
+				value: startOffset,
+				writable: true
+			});
+			return;
+		}
+
+		event.startOffset = startOffset;
 	}
 
 	function expressiveVelocity(measure, chordIndex) {
@@ -112,6 +128,7 @@
 	global.CodaProgressionPlaybackEventBuilder = {
 		buildMeasurePlaybackEvent: buildMeasurePlaybackEvent,
 		buildMeasurePlaybackEvents: buildMeasurePlaybackEvents,
+		expressiveDelay: expressiveDelay,
 		expressiveVelocity: expressiveVelocity
 	};
 })(window);

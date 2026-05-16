@@ -62,10 +62,23 @@
 
 	function createPlaybackCallback(args, event) {
 		return function () {
+			var nextEvent;
+
 			if (args.getActiveRun() === args.run) {
-				args.eventPlayer.play(args.playbackService, args.eventPlayer.asImmediateEvent(event));
+				nextEvent = refreshPlaybackEvent(args, event);
+				args.eventPlayer.play(args.playbackService, args.eventPlayer.asImmediateEvent(nextEvent));
 			}
 		};
+	}
+
+	function refreshPlaybackEvent(args, event) {
+		if (!args.playbackSchedule || typeof args.playbackSchedule.refreshPlaybackEvent !== 'function') {
+			return event;
+		}
+
+		return args.playbackSchedule.refreshPlaybackEvent(event, args.progression, {
+			instrument: args.getPlaybackInstrumentAttributes ? args.getPlaybackInstrumentAttributes() : null
+		});
 	}
 
 	function createMetronomeCallback(args, event) {

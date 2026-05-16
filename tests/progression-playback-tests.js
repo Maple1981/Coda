@@ -593,6 +593,72 @@ hotMetronomeTimers.filter(function (timer) {
 });
 assert.equal(hotMetronomeCalls.length, 1);
 
+const liveProgression = {
+	measures: [
+		{
+			articulation: 'sustain',
+			bar: 1,
+			degree: 'I',
+			durationSeconds: 2,
+			notes: ['C', 'E', 'G'],
+			startSeconds: 0,
+			voices: 3
+		},
+		{
+			articulation: 'sustain',
+			bar: 2,
+			degree: 'V',
+			durationSeconds: 2,
+			intensity: 70,
+			notes: ['G', 'B', 'D'],
+			startSeconds: 2,
+			voices: 3
+		}
+	]
+};
+const liveChordCalls = [];
+const liveTimers = [];
+const livePlayback = app.createProgressionPlayback({
+	playbackService: {
+		playChordFromNames: function (notes, options) {
+			liveChordCalls.push({
+				notes: notes,
+				options: options
+			});
+		},
+		stopAllNotes: function () {}
+	},
+	timerApi: {
+		clearTimeout: function () {},
+		setTimeout: function (callback, milliseconds) {
+			liveTimers.push({
+				callback: callback,
+				milliseconds: milliseconds
+			});
+			return liveTimers.length;
+		}
+	}
+});
+
+livePlayback.play(liveProgression);
+liveProgression.measures[1].intensity = 112;
+liveProgression.measures[1].humanization = 0;
+liveTimers.filter(function (timer) {
+	return timer.milliseconds === 2000;
+}).forEach(function (timer) {
+	timer.callback();
+});
+assert.deepEqual(liveChordCalls, [
+	{
+		notes: ['G', 'B', 'D'],
+		options: {
+			delay: 0,
+			duration: 1.9,
+			velocity: 112
+		}
+	}
+]);
+
 console.log('Progression playback tests passed');
 
 function runTimersAt(milliseconds) {

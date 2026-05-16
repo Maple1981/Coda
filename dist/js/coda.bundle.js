@@ -9867,6 +9867,8 @@
 			velocity: expressiveVelocity(measure, chordIndex)
 		};
 
+		setHiddenStartOffset(event, startOffset || 0);
+
 		if (chordIndex) {
 			event.chordIndex = chordIndex;
 		}
@@ -9895,6 +9897,20 @@
 		if (instrumentId) {
 			event.playbackInstrumentId = instrumentId;
 		}
+	}
+
+	function setHiddenStartOffset(event, startOffset) {
+		if (typeof Object.defineProperty === 'function') {
+			Object.defineProperty(event, 'startOffset', {
+				configurable: true,
+				enumerable: false,
+				value: startOffset,
+				writable: true
+			});
+			return;
+		}
+
+		event.startOffset = startOffset;
 	}
 
 	function expressiveVelocity(measure, chordIndex) {
@@ -9943,6 +9959,7 @@
 	global.CodaProgressionPlaybackEventBuilder = {
 		buildMeasurePlaybackEvent: buildMeasurePlaybackEvent,
 		buildMeasurePlaybackEvents: buildMeasurePlaybackEvents,
+		expressiveDelay: expressiveDelay,
 		expressiveVelocity: expressiveVelocity
 	};
 })(window);
@@ -10008,6 +10025,36 @@
 		return timingService.articulationDurationFactor(articulation);
 	}
 
+	function refreshPlaybackEvent(event, progression, options) {
+		var measure = measureForPlaybackEvent(event, progression);
+		var refreshed;
+
+		if (!measure) {
+			return event;
+		}
+
+		refreshed = eventBuilder.buildMeasurePlaybackEvent(measure, event.index, event.startOffset || 0, options || {}, event.chordIndex || 0);
+		refreshed.delay = Math.max(0, (refreshed.delay || 0) - (event.delay || 0));
+
+		return refreshed;
+	}
+
+	function measureForPlaybackEvent(event, progression) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var measure = measures[event && event.index];
+		var chordIndex = event && event.chordIndex ? event.chordIndex : 0;
+
+		if (!measure) {
+			return null;
+		}
+
+		if (measure.chords && measure.chords.length) {
+			return measure.chords[chordIndex] || measure.chords[0];
+		}
+
+		return measure;
+	}
+
 	global.CodaProgressionPlaybackSchedule = {
 		articulationDurationFactor: articulationDurationFactor,
 		buildProgressionMetronomeSchedule: buildProgressionMetronomeSchedule,
@@ -10015,7 +10062,8 @@
 		buildScheduledMeasures: buildScheduledMeasures,
 		normalizeStartIndex: normalizeStartIndex,
 		notesForVoices: notesForVoices,
-		playbackTotalSeconds: playbackTotalSeconds
+		playbackTotalSeconds: playbackTotalSeconds,
+		refreshPlaybackEvent: refreshPlaybackEvent
 	};
 })(window);
 
@@ -10392,10 +10440,23 @@
 
 	function createPlaybackCallback(args, event) {
 		return function () {
+			var nextEvent;
+
 			if (args.getActiveRun() === args.run) {
-				args.eventPlayer.play(args.playbackService, args.eventPlayer.asImmediateEvent(event));
+				nextEvent = refreshPlaybackEvent(args, event);
+				args.eventPlayer.play(args.playbackService, args.eventPlayer.asImmediateEvent(nextEvent));
 			}
 		};
+	}
+
+	function refreshPlaybackEvent(args, event) {
+		if (!args.playbackSchedule || typeof args.playbackSchedule.refreshPlaybackEvent !== 'function') {
+			return event;
+		}
+
+		return args.playbackSchedule.refreshPlaybackEvent(event, args.progression, {
+			instrument: args.getPlaybackInstrumentAttributes ? args.getPlaybackInstrumentAttributes() : null
+		});
 	}
 
 	function createMetronomeCallback(args, event) {
@@ -13518,6 +13579,7 @@
 				getActiveRun: function () {
 					return activeRun;
 				},
+				getPlaybackInstrumentAttributes: playbackInstrumentAttributes,
 				playAgain: play,
 				playbackCallbacks: playbackCallbacks,
 				playbackSchedule: playbackSchedule,
@@ -17433,6 +17495,11 @@
 			exportMidi: function () {
 				global.CodaProgressionMidiDownload.exportMidi(options);
 			},
+			isPlaying: function () {
+				return options.progressionPlayback &&
+					typeof options.progressionPlayback.isPlaying === 'function' &&
+					options.progressionPlayback.isPlaying();
+			},
 			refreshInspector: function () {
 				if (inspector && typeof inspector.refresh === 'function') {
 					inspector.refresh();
@@ -18358,13 +18425,23 @@
 			}
 
 			controls.setAttribute('data-coda-progression-state', 'true');
-			controls.addEventListener('input', function () {
+			controls.addEventListener('input', function (event) {
 				updateProgressionExpressiveControls();
+				if (shouldApplyLiveExpression(event.target)) {
+					cancelProgressionStateUpdate();
+					applyLiveProgressionExpression();
+					return;
+				}
 				scheduleProgressionStateUpdate();
 			});
-			controls.addEventListener('change', function () {
+			controls.addEventListener('change', function (event) {
 				cancelProgressionStateUpdate();
 				updateProgressionExpressiveControls();
+				if (shouldApplyLiveExpression(event.target)) {
+					applyLiveProgressionExpression();
+					recordHistorySnapshot();
+					return;
+				}
 				updateProgressionStateFromControls();
 				recordHistorySnapshot();
 			});
@@ -19215,6 +19292,69 @@
 			}
 			refreshed.userEdited = true;
 			setProgression(refreshed);
+		}
+
+		function applyLiveProgressionExpression() {
+			var progression;
+			var state;
+
+			if (!progressionState || typeof progressionState.readFromControls !== 'function') {
+				return false;
+			}
+
+			progression = uiState.getProgression();
+			state = progressionState.readFromControls(global.document);
+			uiState.setProgressionState(state);
+
+			if (progression) {
+				applyExpressionStateToProgression(progression, state);
+				saveProgressionWorkspace();
+			}
+
+			saveProgressionPreferences(preferences, progressionPreferences);
+			return true;
+		}
+
+		function applyExpressionStateToProgression(progression, state) {
+			progression.humanization = state.humanization;
+			progression.intensity = state.intensity;
+			progression.swing = state.swing;
+
+			applyExpressionStateToMeasures(progression.measures || [], state);
+		}
+
+		function applyExpressionStateToMeasures(measures, state) {
+			for (var i = 0; i < measures.length; i++) {
+				measures[i].humanization = state.humanization;
+				measures[i].intensity = state.intensity;
+				measures[i].swing = state.swing;
+
+				if (measures[i].chords && measures[i].chords.length) {
+					applyExpressionStateToMeasures(measures[i].chords, state);
+				}
+			}
+		}
+
+		function shouldApplyLiveExpression(target) {
+			return isLiveExpressionControl(target) && isProgressionPlaying();
+		}
+
+		function isLiveExpressionControl(target) {
+			var id = target && target.id;
+
+			return id === 'progressionIntensity' ||
+				id === 'progressionHumanization' ||
+				id === 'progressionSwing';
+		}
+
+		function isProgressionPlaying() {
+			if (progressionTransportController && typeof progressionTransportController.isPlaying === 'function') {
+				return progressionTransportController.isPlaying();
+			}
+
+			return options.progressionPlayback &&
+				typeof options.progressionPlayback.isPlaying === 'function' &&
+				options.progressionPlayback.isPlaying();
 		}
 
 		function adjustedMeasuresForState(progression, state) {

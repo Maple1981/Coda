@@ -87,6 +87,11 @@
 			exportMidi: function () {
 				global.CodaProgressionMidiDownload.exportMidi(options);
 			},
+			isPlaying: function () {
+				return options.progressionPlayback &&
+					typeof options.progressionPlayback.isPlaying === 'function' &&
+					options.progressionPlayback.isPlaying();
+			},
 			refreshInspector: function () {
 				if (inspector && typeof inspector.refresh === 'function') {
 					inspector.refresh();

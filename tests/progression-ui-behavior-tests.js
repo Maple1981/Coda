@@ -49,6 +49,8 @@ const playbackInstruments = [];
 const playedScaleMidiNotes = [];
 const savedPreferences = {};
 const savedWorkspaces = [];
+let playbackPlaying = false;
+let transportStops = 0;
 const options = {
 	application: context.window.CodaApplication,
 	chordPlayback: {
@@ -87,6 +89,21 @@ const options = {
 		}
 	},
 	progressionState: context.window.CodaProgressionState,
+	progressionTransport: {
+		initialize: function () {
+			return {
+				isPlaying: function () {
+					return playbackPlaying;
+				},
+				refreshInspector: function () {},
+				setPlaybackHead: function () {},
+				stop: function () {
+					transportStops += 1;
+					playbackPlaying = false;
+				}
+			};
+		}
+	},
 	progressionWorkspaceStorage: {
 		buildWorkspace: context.window.CodaProgressionWorkspaceStorage.buildWorkspace,
 		matchesSelection: context.window.CodaProgressionWorkspaceStorage.matchesSelection,
@@ -435,6 +452,39 @@ assert.equal(initialized.uiState.getProgression().userEdited, true);
 assert.deepEqual(initialized.uiState.getProgression().measures.map(function (measure) {
 	return measure.degree;
 }), randomGeneratedDegrees);
+
+const liveProgression = initialized.uiState.getProgression();
+const liveProgressionRendersBefore = rendered.progression;
+const liveWorkspaceCountBefore = savedWorkspaces.length;
+const liveStopsBefore = transportStops;
+playbackPlaying = true;
+document.getElementById('progressionIntensity').value = '111';
+document.querySelector('.progressionControls').dispatchEvent({
+	target: document.getElementById('progressionIntensity'),
+	type: 'input'
+});
+assert.equal(initialized.uiState.getProgressionState().intensity, 111);
+assert.strictEqual(initialized.uiState.getProgression(), liveProgression);
+assert.equal(initialized.uiState.getProgression().intensity, 111);
+assert.ok(initialized.uiState.getProgression().measures.every(function (measure) {
+	return measure.intensity === 111;
+}));
+assert.equal(rendered.progression, liveProgressionRendersBefore);
+assert.equal(transportStops, liveStopsBefore);
+assert.ok(savedWorkspaces.length > liveWorkspaceCountBefore);
+document.getElementById('progressionSwing').value = '33';
+document.getElementById('progressionHumanization').value = '22';
+document.querySelector('.progressionControls').dispatchEvent({
+	target: document.getElementById('progressionSwing'),
+	type: 'change'
+});
+assert.equal(initialized.uiState.getProgressionState().swing, 33);
+assert.equal(initialized.uiState.getProgressionState().humanization, 22);
+assert.equal(initialized.uiState.getProgression().swing, 33);
+assert.equal(initialized.uiState.getProgression().humanization, 22);
+assert.equal(rendered.progression, liveProgressionRendersBefore);
+assert.equal(transportStops, liveStopsBefore);
+playbackPlaying = false;
 
 const knobInput = createFakeElement('testKnobInput', '50');
 const knob = createFakeElement('testKnob');

@@ -327,13 +327,23 @@
 			}
 
 			controls.setAttribute('data-coda-progression-state', 'true');
-			controls.addEventListener('input', function () {
+			controls.addEventListener('input', function (event) {
 				updateProgressionExpressiveControls();
+				if (shouldApplyLiveExpression(event.target)) {
+					cancelProgressionStateUpdate();
+					applyLiveProgressionExpression();
+					return;
+				}
 				scheduleProgressionStateUpdate();
 			});
-			controls.addEventListener('change', function () {
+			controls.addEventListener('change', function (event) {
 				cancelProgressionStateUpdate();
 				updateProgressionExpressiveControls();
+				if (shouldApplyLiveExpression(event.target)) {
+					applyLiveProgressionExpression();
+					recordHistorySnapshot();
+					return;
+				}
 				updateProgressionStateFromControls();
 				recordHistorySnapshot();
 			});
@@ -1184,6 +1194,69 @@
 			}
 			refreshed.userEdited = true;
 			setProgression(refreshed);
+		}
+
+		function applyLiveProgressionExpression() {
+			var progression;
+			var state;
+
+			if (!progressionState || typeof progressionState.readFromControls !== 'function') {
+				return false;
+			}
+
+			progression = uiState.getProgression();
+			state = progressionState.readFromControls(global.document);
+			uiState.setProgressionState(state);
+
+			if (progression) {
+				applyExpressionStateToProgression(progression, state);
+				saveProgressionWorkspace();
+			}
+
+			saveProgressionPreferences(preferences, progressionPreferences);
+			return true;
+		}
+
+		function applyExpressionStateToProgression(progression, state) {
+			progression.humanization = state.humanization;
+			progression.intensity = state.intensity;
+			progression.swing = state.swing;
+
+			applyExpressionStateToMeasures(progression.measures || [], state);
+		}
+
+		function applyExpressionStateToMeasures(measures, state) {
+			for (var i = 0; i < measures.length; i++) {
+				measures[i].humanization = state.humanization;
+				measures[i].intensity = state.intensity;
+				measures[i].swing = state.swing;
+
+				if (measures[i].chords && measures[i].chords.length) {
+					applyExpressionStateToMeasures(measures[i].chords, state);
+				}
+			}
+		}
+
+		function shouldApplyLiveExpression(target) {
+			return isLiveExpressionControl(target) && isProgressionPlaying();
+		}
+
+		function isLiveExpressionControl(target) {
+			var id = target && target.id;
+
+			return id === 'progressionIntensity' ||
+				id === 'progressionHumanization' ||
+				id === 'progressionSwing';
+		}
+
+		function isProgressionPlaying() {
+			if (progressionTransportController && typeof progressionTransportController.isPlaying === 'function') {
+				return progressionTransportController.isPlaying();
+			}
+
+			return options.progressionPlayback &&
+				typeof options.progressionPlayback.isPlaying === 'function' &&
+				options.progressionPlayback.isPlaying();
 		}
 
 		function adjustedMeasuresForState(progression, state) {

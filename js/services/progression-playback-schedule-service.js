@@ -56,6 +56,36 @@
 		return timingService.articulationDurationFactor(articulation);
 	}
 
+	function refreshPlaybackEvent(event, progression, options) {
+		var measure = measureForPlaybackEvent(event, progression);
+		var refreshed;
+
+		if (!measure) {
+			return event;
+		}
+
+		refreshed = eventBuilder.buildMeasurePlaybackEvent(measure, event.index, event.startOffset || 0, options || {}, event.chordIndex || 0);
+		refreshed.delay = Math.max(0, (refreshed.delay || 0) - (event.delay || 0));
+
+		return refreshed;
+	}
+
+	function measureForPlaybackEvent(event, progression) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var measure = measures[event && event.index];
+		var chordIndex = event && event.chordIndex ? event.chordIndex : 0;
+
+		if (!measure) {
+			return null;
+		}
+
+		if (measure.chords && measure.chords.length) {
+			return measure.chords[chordIndex] || measure.chords[0];
+		}
+
+		return measure;
+	}
+
 	global.CodaProgressionPlaybackSchedule = {
 		articulationDurationFactor: articulationDurationFactor,
 		buildProgressionMetronomeSchedule: buildProgressionMetronomeSchedule,
@@ -63,6 +93,7 @@
 		buildScheduledMeasures: buildScheduledMeasures,
 		normalizeStartIndex: normalizeStartIndex,
 		notesForVoices: notesForVoices,
-		playbackTotalSeconds: playbackTotalSeconds
+		playbackTotalSeconds: playbackTotalSeconds,
+		refreshPlaybackEvent: refreshPlaybackEvent
 	};
 })(window);

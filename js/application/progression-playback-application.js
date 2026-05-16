@@ -129,6 +129,7 @@
 				getActiveRun: function () {
 					return activeRun;
 				},
+				getPlaybackInstrumentAttributes: playbackInstrumentAttributes,
 				playAgain: play,
 				playbackCallbacks: playbackCallbacks,
 				playbackSchedule: playbackSchedule,
