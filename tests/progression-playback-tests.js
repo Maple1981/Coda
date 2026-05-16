@@ -284,7 +284,7 @@ assert.deepEqual(app.buildScheduledProgressionMeasures(progression, 1).map(funct
 assert.deepEqual(app.notesForVoices(['C', 'E', 'G', 'B'], 1), ['C']);
 assert.deepEqual(app.notesForVoices(['C', 'E', 'G', 'B'], 6), ['C', 'E', 'G', 'B']);
 assert.deepEqual(app.notesForVoices(['C', 'E', 'G', 'B', 'D', 'A'], 6), ['C', 'E', 'G', 'B', 'D', 'A']);
-assert.equal(app.articulationDurationFactor('legato'), 1);
+assert.equal(app.articulationDurationFactor('unknown'), 0.95);
 assert.equal(app.articulationDurationFactor('staccato'), 0.45);
 
 const chordCalls = [];

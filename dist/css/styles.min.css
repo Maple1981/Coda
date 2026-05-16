@@ -1,4 +1,4 @@
-﻿* {
+* {
   margin: 0;
   padding: 0;
   border: 0;
@@ -642,6 +642,27 @@ body[data-theme="day"] .transportControls {
   background: linear-gradient(0deg, #f2f4f5 0%, #ffffff 100%);
   -webkit-box-shadow: 0 -12px 26px rgba(31, 37, 40, 0.14);
           box-shadow: 0 -12px 26px rgba(31, 37, 40, 0.14);
+}
+
+body[data-theme="day"] .workbenchControlHeader {
+  color: #1f2528;
+}
+
+body[data-theme="day"] .knobControl__dial {
+  border-color: #b7c3ca;
+  background: radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.95), transparent 14px), linear-gradient(145deg, #dfe5e9, #f8fafb);
+  -webkit-box-shadow: inset 0 0 0 4px rgba(125, 39, 133, 0.11), 0 5px 10px rgba(54, 66, 72, 0.14);
+          box-shadow: inset 0 0 0 4px rgba(125, 39, 133, 0.11), 0 5px 10px rgba(54, 66, 72, 0.14);
+}
+
+body[data-theme="day"] .knobControl__input:focus + .knobControl__dial {
+  border-color: #7d2785;
+  -webkit-box-shadow: inset 0 0 0 4px rgba(125, 39, 133, 0.14), 0 0 0 2px rgba(125, 39, 133, 0.2), 0 5px 10px rgba(54, 66, 72, 0.14);
+          box-shadow: inset 0 0 0 4px rgba(125, 39, 133, 0.14), 0 0 0 2px rgba(125, 39, 133, 0.2), 0 5px 10px rgba(54, 66, 72, 0.14);
+}
+
+body[data-theme="day"] .knobControl__value {
+  color: #00764f;
 }
 
 body[data-theme="day"] .measureFunction {
@@ -1956,8 +1977,65 @@ section#bienvenida .columnata article {
   gap: .55em;
   -webkit-box-align: center;
       -ms-flex-align: center;
-          align-items: center;
+  align-items: center;
   font-size: .9em;
+}
+
+.progressionExpressiveControls[hidden] {
+  display: none;
+}
+
+.progressionExpressiveControls {
+  display: -ms-grid;
+  display: grid;
+  -ms-grid-columns: (minmax(0, 1fr))[3];
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .65em;
+  margin-top: .15em;
+}
+
+.progressionControls .workbenchControl--knob {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: start;
+      -ms-flex-pack: start;
+          justify-content: flex-start;
+  gap: .28em;
+  min-width: 0;
+}
+
+.workbenchControlHeader {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  gap: .35em;
+  width: 100%;
+  min-width: 0;
+  color: #eee;
+  font-size: .88em;
+  text-align: center;
+}
+
+.progressionControls .workbenchControlHeader .randomSelectButton {
+  -webkit-box-flex: 0;
+      -ms-flex: 0 0 auto;
+          flex: 0 0 auto;
+  width: 1.55em;
+  height: 1.55em;
 }
 
 .progressionControls input[type="number"],
@@ -1982,6 +2060,70 @@ section#bienvenida .columnata article {
 .progressionControls .randomSelectButton {
   width: 1.75em;
   height: 1.75em;
+}
+
+.knobControl {
+  --knob-angle: -135deg;
+  position: relative;
+  display: -ms-grid;
+  display: grid;
+  place-items: center;
+  gap: .24em;
+  width: 100%;
+  min-width: 0;
+}
+
+.knobControl__input {
+  position: absolute;
+  width: 38px !important;
+  height: 38px;
+  opacity: 0;
+  cursor: ns-resize;
+  z-index: 2;
+}
+
+.knobControl__dial {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  margin: 1px 0;
+  border: 1px solid #444;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, rgba(238, 238, 238, 0.18), transparent 14px), linear-gradient(145deg, #151515, #111);
+  -webkit-box-shadow: inset 0 0 0 4px rgba(166, 34, 174, 0.14), 0 5px 10px rgba(0, 0, 0, 0.28);
+          box-shadow: inset 0 0 0 4px rgba(166, 34, 174, 0.14), 0 5px 10px rgba(0, 0, 0, 0.28);
+  cursor: ns-resize;
+}
+
+.knobControl__indicator {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 12px;
+  margin-left: -1.5px;
+  margin-top: -12px;
+  border-radius: 999px;
+  background: #d85ee0;
+  -webkit-box-shadow: 0 0 8px rgba(216, 94, 224, 0.55);
+          box-shadow: 0 0 8px rgba(216, 94, 224, 0.55);
+  -webkit-transform: rotate(var(--knob-angle));
+          transform: rotate(var(--knob-angle));
+  -webkit-transform-origin: 50% 100%;
+          transform-origin: 50% 100%;
+}
+
+.knobControl__input:focus + .knobControl__dial {
+  border-color: #d85ee0;
+  -webkit-box-shadow: inset 0 0 0 4px rgba(166, 34, 174, 0.18), 0 0 0 2px rgba(216, 94, 224, 0.22), 0 5px 10px rgba(0, 0, 0, 0.28);
+          box-shadow: inset 0 0 0 4px rgba(166, 34, 174, 0.18), 0 0 0 2px rgba(216, 94, 224, 0.22), 0 5px 10px rgba(0, 0, 0, 0.28);
+}
+
+.knobControl__value {
+  color: #a3ffd9;
+  font-size: .7em;
+  line-height: 1;
+  min-height: 1em;
 }
 
 .progressionGenerateBar {
@@ -3206,3 +3348,4 @@ footer ul#redesSociales li {
     grid-template-columns: 1fr;
   }
 }
+/*# sourceMappingURL=styles.css.map */

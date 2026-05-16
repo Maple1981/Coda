@@ -14,7 +14,7 @@
 			result += 0.02;
 		}
 
-		if (progressionState.articulation === 'sustain' || progressionState.articulation === 'legato') {
+		if (progressionState.articulation === 'sustain') {
 			result += 0.02;
 		} else if (progressionState.articulation === 'staccato') {
 			result -= 0.035;

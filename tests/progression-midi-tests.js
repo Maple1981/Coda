@@ -309,7 +309,7 @@ const editedMidiFile = app.buildProgressionMidiFile({
 				bar: 1,
 				chords: [
 					{
-						articulation: 'legato',
+						articulation: 'sustain',
 						bar: 1,
 						degree: 'Iadd9 6/4 sus4',
 						durationBeats: 2,

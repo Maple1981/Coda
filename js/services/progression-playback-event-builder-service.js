@@ -21,7 +21,7 @@
 		var notes = timingService.notesForVoices(measure.notes, measure.voices);
 		var midiNotes = timingService.notesForVoices(measure.midiNotes, measure.voices);
 		var midiNoteEvents = noteEventService.build(measure, duration, options);
-		var mode = measure.articulation === 'arpeggio' ? 'arpeggio' : 'chord';
+		var mode = timingService.isArpeggioArticulation(measure.articulation) ? 'arpeggio' : 'chord';
 		var delay = Math.max(0, (measure.startSeconds || 0) - (startOffset || 0));
 		var event = {
 			arpeggioStep: timingService.arpeggioStepSeconds(measure),

@@ -1197,6 +1197,44 @@ section#bienvenida .columnata article{
 	font-size:.9em;
 }
 
+.progressionExpressiveControls[hidden]{
+	display:none;
+}
+
+.progressionExpressiveControls{
+	display:grid;
+	grid-template-columns:repeat(3, minmax(0, 1fr));
+	gap:.65em;
+	margin-top:.15em;
+}
+
+.progressionControls .workbenchControl--knob{
+	display:flex;
+	flex-direction:column;
+	align-items:center;
+	justify-content:flex-start;
+	gap:.28em;
+	min-width:0;
+}
+
+.workbenchControlHeader{
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	gap:.35em;
+	width:100%;
+	min-width:0;
+	color:$basic_front_color;
+	font-size:.88em;
+	text-align:center;
+}
+
+.progressionControls .workbenchControlHeader .randomSelectButton{
+	flex:0 0 auto;
+	width:1.55em;
+	height:1.55em;
+}
+
 .progressionControls input[type="number"],
 .progressionControls select{
 	box-sizing:border-box;
@@ -1218,6 +1256,66 @@ section#bienvenida .columnata article{
 .progressionControls .randomSelectButton{
 	width:1.75em;
 	height:1.75em;
+}
+
+.knobControl{
+	--knob-angle:-135deg;
+	position:relative;
+	display:grid;
+	place-items:center;
+	gap:.24em;
+	width:100%;
+	min-width:0;
+}
+
+.knobControl__input{
+	position:absolute;
+	width:38px !important;
+	height:38px;
+	opacity:0;
+	cursor:ns-resize;
+	z-index:2;
+}
+
+.knobControl__dial{
+	position:relative;
+	width:34px;
+	height:34px;
+	margin:1px 0;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:50%;
+	background:
+		radial-gradient(circle at 35% 28%, rgba($basic_front_color, .18), transparent 14px),
+		linear-gradient(145deg, $basic_filldarkgrad_color, $basic_fill_color);
+	box-shadow:inset 0 0 0 4px rgba($corporative_complementary_color, .14), 0 5px 10px rgba(0, 0, 0, .28);
+	cursor:ns-resize;
+}
+
+.knobControl__indicator{
+	position:absolute;
+	left:50%;
+	top:50%;
+	width:3px;
+	height:12px;
+	margin-left:-1.5px;
+	margin-top:-12px;
+	border-radius:999px;
+	background:$corporative_complementarybright_color;
+	box-shadow:0 0 8px rgba($corporative_complementarybright_color, .55);
+	transform:rotate(var(--knob-angle));
+	transform-origin:50% 100%;
+}
+
+.knobControl__input:focus + .knobControl__dial{
+	border-color:$corporative_complementarybright_color;
+	box-shadow:inset 0 0 0 4px rgba($corporative_complementary_color, .18), 0 0 0 2px rgba($corporative_complementarybright_color, .22), 0 5px 10px rgba(0, 0, 0, .28);
+}
+
+.knobControl__value{
+	color:$corporative_mainbright_color;
+	font-size:.7em;
+	line-height:1;
+	min-height:1em;
 }
 
 .progressionGenerateBar{
@@ -2145,6 +2243,27 @@ body[data-theme="day"] .transportControls{
 	border-color:#b7c3ca;
 	background:linear-gradient(0deg, #f2f4f5 0%, #ffffff 100%);
 	box-shadow:0 -12px 26px rgba(31, 37, 40, .14);
+}
+
+body[data-theme="day"] .workbenchControlHeader{
+	color:#1f2528;
+}
+
+body[data-theme="day"] .knobControl__dial{
+	border-color:#b7c3ca;
+	background:
+		radial-gradient(circle at 35% 28%, rgba(255, 255, 255, .95), transparent 14px),
+		linear-gradient(145deg, #dfe5e9, #f8fafb);
+	box-shadow:inset 0 0 0 4px rgba(125, 39, 133, .11), 0 5px 10px rgba(54, 66, 72, .14);
+}
+
+body[data-theme="day"] .knobControl__input:focus + .knobControl__dial{
+	border-color:#7d2785;
+	box-shadow:inset 0 0 0 4px rgba(125, 39, 133, .14), 0 0 0 2px rgba(125, 39, 133, .2), 0 5px 10px rgba(54, 66, 72, .14);
+}
+
+body[data-theme="day"] .knobControl__value{
+	color:#00764f;
 }
 
 body[data-theme="day"] .workbenchContextKey{

@@ -31,6 +31,7 @@
 		};
 		var progressionStateInputTimer = null;
 		var progressionStateInputDelay = 160;
+		var expressiveControlsVisible = null;
 		var initialProgressionWorkspace = options.initialProgressionWorkspace || null;
 		var initialProgressionWorkspaceRestored = false;
 		uiState.setNotationStyle(notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon');
@@ -75,6 +76,11 @@
 				i18n: i18n
 			});
 		}
+		if (global.CodaKnobControl) {
+			global.CodaKnobControl.initialize({
+				root: global.document
+			});
+		}
 		if (options.dashboardResizer) {
 			options.dashboardResizer.initialize({
 				preferences: preferences,
@@ -82,6 +88,7 @@
 			});
 		}
 		restoreProgressionControls(normalizeInitialProgressionControls(options.initialProgressionState, progressionState, progressionPreferences));
+		updateProgressionExpressiveControls();
 		syncProgressionState();
 		bindProgressionState();
 		bindProgressionTransport();
@@ -321,10 +328,12 @@
 
 			controls.setAttribute('data-coda-progression-state', 'true');
 			controls.addEventListener('input', function () {
+				updateProgressionExpressiveControls();
 				scheduleProgressionStateUpdate();
 			});
 			controls.addEventListener('change', function () {
 				cancelProgressionStateUpdate();
+				updateProgressionExpressiveControls();
 				updateProgressionStateFromControls();
 				recordHistorySnapshot();
 			});
@@ -882,6 +891,7 @@
 		function restoreProgressionControls(controls) {
 			if (progressionPreferences && typeof progressionPreferences.writeControls === 'function') {
 				progressionPreferences.writeControls(global.document, controls);
+				updateProgressionExpressiveControls();
 				return;
 			}
 
@@ -898,6 +908,32 @@
 			setValue(query('#progressionTensions'), controls.tensions);
 			setValue(query('#progressionVoicing'), controls.voicing);
 			setValue(query('#progressionVoices'), controls.voices);
+			updateProgressionExpressiveControls();
+		}
+
+		function updateProgressionExpressiveControls() {
+			var details = query('.progressionExpressiveControls');
+			var articulation = valueOf(query('#progressionArticulation'));
+			var visible = articulation === 'staccato' || isArpeggioArticulation(articulation);
+
+			if (details) {
+				details.hidden = !visible;
+				details.setAttribute('aria-hidden', visible ? 'false' : 'true');
+			}
+
+			if (global.CodaKnobControl && typeof global.CodaKnobControl.refreshAll === 'function') {
+				global.CodaKnobControl.refreshAll(global.document);
+			}
+
+			if (visible !== expressiveControlsVisible && options.ui && typeof options.ui.scheduleDashboardWorkspaceHeight === 'function') {
+				options.ui.scheduleDashboardWorkspaceHeight();
+			}
+
+			expressiveControlsVisible = visible;
+		}
+
+		function isArpeggioArticulation(articulation) {
+			return String(articulation || '').indexOf('arpeggio') === 0;
 		}
 
 		function updateHistoryButtons() {

@@ -1451,6 +1451,7 @@
 			'extended.secondarySubdominants': 'Subdominantes secundarios (SD)',
 			'extended.title': 'Armonía extendida de {tonic} {scale}',
 			'extended.tritoneSubstitutes': 'Tritonos sustitutos (D)',
+			'footer.author': 'Javier Arce, 2013-2026.',
 			'footer.beta': '<strong>CODA está en fase beta</strong>. Puede contener errores. Por favor, todavía no te tomes la aplicación demasiado en serio.',
 			'footer.contact': 'Si tienes algún consejo, idea de mejora o crítica furibunda, puedes contactar conmigo a través de <a href="https://github.com/Maple1981/" title="Ver perfil de Javier Arce en GitHub" target="_blank" rel="noopener noreferrer">GitHub</a> o de <a href="https://soundcloud.com/coronaboreal" title="Escuchar a Javier Arce en SoundCloud" target="_blank" rel="noopener noreferrer">SoundCloud</a>.',
 			'footer.github': 'Ver repositorio GitHub',
@@ -1477,7 +1478,6 @@
 			'progression.aria': 'Visualizador de progresión',
 			'progression.articulation': 'Articulación',
 			'progression.articulation.arpeggio': 'Arpegio',
-			'progression.articulation.legato': 'Legato',
 			'progression.articulation.staccato': 'Staccato',
 			'progression.articulation.sustain': 'Sostenido',
 			'progression.bars': 'Compases',
@@ -1680,6 +1680,7 @@
 			'extended.secondarySubdominants': 'Secondary subdominants (SD)',
 			'extended.title': 'Extended harmony for {tonic} {scale}',
 			'extended.tritoneSubstitutes': 'Tritone substitutes (D)',
+			'footer.author': 'Javier Arce, 2013-2026.',
 			'footer.beta': '<strong>CODA is in beta</strong>. It may contain errors. Please do not take the application too seriously yet.',
 			'footer.contact': 'If you have advice, an improvement idea or fierce criticism, you can contact me through <a href="https://github.com/Maple1981/" title="View Javier Arce on GitHub" target="_blank" rel="noopener noreferrer">GitHub</a> or <a href="https://soundcloud.com/coronaboreal" title="Listen to Javier Arce on SoundCloud" target="_blank" rel="noopener noreferrer">SoundCloud</a>.',
 			'footer.github': 'View GitHub repository',
@@ -1706,7 +1707,6 @@
 			'progression.aria': 'Progression viewer',
 			'progression.articulation': 'Articulation',
 			'progression.articulation.arpeggio': 'Arpeggio',
-			'progression.articulation.legato': 'Legato',
 			'progression.articulation.staccato': 'Staccato',
 			'progression.articulation.sustain': 'Sustain',
 			'progression.bars': 'Bars',
@@ -2121,7 +2121,7 @@
 			language: allowList(['es', 'en']),
 			midiInstrument: allowList(['acoustic_grand_piano', 'acoustic_guitar_nylon', 'drawbar_organ', 'string_ensemble_1']),
 			notation: allowList(['anglosaxon', 'latin']),
-			progressionArticulation: allowList(['sustain', 'legato', 'staccato', 'arpeggio']),
+			progressionArticulation: allowList(['sustain', 'staccato', 'arpeggio']),
 			progressionBars: allowList(['2', '4', '6', '8', '12', '16', '32']),
 			progressionBpm: integerRange(20, 200),
 			progressionChromaticism: integerRange(0, 100),
@@ -5575,7 +5575,7 @@
 			result += 0.02;
 		}
 
-		if (progressionState.articulation === 'sustain' || progressionState.articulation === 'legato') {
+		if (progressionState.articulation === 'sustain') {
 			result += 0.02;
 		} else if (progressionState.articulation === 'staccato') {
 			result -= 0.035;
@@ -6805,12 +6805,8 @@
 		weight += commonToneDegreeScore(pattern.degrees, progressionState);
 		weight *= sensitiveDegreeFactor(pattern.degrees, mode, progressionState);
 
-		if (progressionState.articulation === 'arpeggio' && pattern.form === 'circle-of-fifths') {
+		if (isArpeggioArticulation(progressionState.articulation) && pattern.form === 'circle-of-fifths') {
 			weight += 8;
-		}
-
-		if (progressionState.articulation === 'legato' && pattern.cadence === 'authentic') {
-			weight += 5;
 		}
 
 		if (progressionState.articulation === 'staccato' && pattern.cadence === 'half') {
@@ -6871,6 +6867,10 @@
 		var number = Number(value);
 
 		return isFinite(number) ? number : fallback;
+	}
+
+	function isArpeggioArticulation(articulation) {
+		return String(articulation || '').indexOf('arpeggio') === 0;
 	}
 
 	global.CodaProgressionPatternWeight = {
@@ -8687,7 +8687,7 @@
 		var notes = measure.midiNotes && measure.midiNotes.length ? measure.midiNotes.slice() : chordNotesToMidi(measure.notes || [], options.initialMidiNote);
 		var startTick = Math.max(0, Math.round(measure.startBeat * options.ticksPerBeat) + expressiveDelayTicks(measure, options));
 		var durationTicks = Math.max(1, Math.round(measure.durationBeats * options.ticksPerBeat * articulationFactor(measure.articulation)));
-		var arpeggioStep = measure.articulation === 'arpeggio' ? Math.max(1, Math.round(options.ticksPerBeat / 4)) : 0;
+		var arpeggioStep = isArpeggioArticulation(measure.articulation) ? Math.max(1, Math.round(options.ticksPerBeat / 4)) : 0;
 		var velocity = expressiveVelocity(measure, options.velocity);
 
 		for (var i = 0; i < notes.length; i++) {
@@ -8934,7 +8934,7 @@
 			return 0.45;
 		}
 
-		if (articulation === 'arpeggio') {
+		if (isArpeggioArticulation(articulation)) {
 			return 0.9;
 		}
 
@@ -9067,6 +9067,10 @@
 		return isFinite(number) ? number : fallback;
 	}
 
+	function isArpeggioArticulation(articulation) {
+		return String(articulation || '').indexOf('arpeggio') === 0;
+	}
+
 	global.CodaMidiExport = {
 		articulationFactor: articulationFactor,
 		bpmToMicrosecondsPerBeat: bpmToMicrosecondsPerBeat,
@@ -9076,6 +9080,7 @@
 		encodeMidiFile: encodeMidiFile,
 		expressiveDelayTicks: expressiveDelayTicks,
 		expressiveVelocity: expressiveVelocity,
+		isArpeggioArticulation: isArpeggioArticulation,
 		mimeType: midiMimeType,
 		noteIndex: noteIndex,
 		secondsPerBeatForMeasure: secondsPerBeatForMeasure,
@@ -9383,12 +9388,8 @@
 			return 0.45;
 		}
 
-		if (articulation === 'arpeggio') {
+		if (isArpeggioArticulation(articulation)) {
 			return 0.9;
-		}
-
-		if (articulation === 'legato') {
-			return 1;
 		}
 
 		return 0.95;
@@ -9398,6 +9399,10 @@
 		var duration = Number(measure && measure.durationSeconds) || 0;
 
 		return Math.max(0.05, Math.min(0.18, duration / 8));
+	}
+
+	function isArpeggioArticulation(articulation) {
+		return String(articulation || '').indexOf('arpeggio') === 0;
 	}
 
 	function playbackTotalSeconds(progression, scheduledMeasures) {
@@ -9415,6 +9420,7 @@
 	global.CodaProgressionPlaybackTiming = {
 		arpeggioStepSeconds: arpeggioStepSeconds,
 		articulationDurationFactor: articulationDurationFactor,
+		isArpeggioArticulation: isArpeggioArticulation,
 		normalizeStartIndex: normalizeStartIndex,
 		notesForVoices: notesForVoices,
 		playbackDuration: playbackDuration,
@@ -9448,7 +9454,7 @@
 		var notes = timingService.notesForVoices(measure.notes, measure.voices);
 		var midiNotes = timingService.notesForVoices(measure.midiNotes, measure.voices);
 		var midiNoteEvents = noteEventService.build(measure, duration, options);
-		var mode = measure.articulation === 'arpeggio' ? 'arpeggio' : 'chord';
+		var mode = timingService.isArpeggioArticulation(measure.articulation) ? 'arpeggio' : 'chord';
 		var delay = Math.max(0, (measure.startSeconds || 0) - (startOffset || 0));
 		var event = {
 			arpeggioStep: timingService.arpeggioStepSeconds(measure),
@@ -14147,11 +14153,13 @@
 		html += '<legend><span data-i18n="progression.writing"></span></legend>';
 		html += renderControl('progression.voices', '<input id="progressionVoices" type="number" value="4" min="1" max="6" step="1" />', '#progressionVoices', null, 'progression.help.voices');
 		html += renderControl('progression.voicing', '<select id="progressionVoicing"><option value="closed" selected="selected" data-i18n="progression.voicing.closed"></option><option value="open" data-i18n="progression.voicing.open"></option></select>', '#progressionVoicing', null, 'progression.help.voicing');
-		html += renderControl('progression.articulation', '<select id="progressionArticulation"><option value="sustain" data-i18n="progression.articulation.sustain"></option><option value="legato" data-i18n="progression.articulation.legato"></option><option value="staccato" data-i18n="progression.articulation.staccato"></option><option value="arpeggio" data-i18n="progression.articulation.arpeggio"></option></select>', '#progressionArticulation', null, 'progression.help.articulation');
 		html += renderControl('progression.style', '<select id="progressionStyle"><option value="modern" selected="selected" data-i18n="progression.style.modern"></option><option value="classic" data-i18n="progression.style.classic"></option></select>', '#progressionStyle', null, 'progression.help.style');
-		html += renderControl('progression.intensity', '<input id="progressionIntensity" type="range" value="80" min="1" max="127" step="1" />', '#progressionIntensity', null, 'progression.help.intensity');
-		html += renderControl('progression.humanization', '<input id="progressionHumanization" type="range" value="0" min="0" max="100" step="1" />', '#progressionHumanization', null, 'progression.help.humanization');
-		html += renderControl('progression.swing', '<input id="progressionSwing" type="range" value="0" min="0" max="75" step="1" />', '#progressionSwing', null, 'progression.help.swing');
+		html += renderControl('progression.articulation', '<select id="progressionArticulation"><option value="sustain" data-i18n="progression.articulation.sustain"></option><option value="staccato" data-i18n="progression.articulation.staccato"></option><option value="arpeggio" data-i18n="progression.articulation.arpeggio"></option></select>', '#progressionArticulation', null, 'progression.help.articulation');
+		html += '<div class="progressionExpressiveControls" data-articulation-detail hidden>';
+		html += renderKnobControl('progression.intensity', '<input id="progressionIntensity" class="knobControl__input" type="range" value="80" min="1" max="127" step="1" />', '#progressionIntensity', 'progression.help.intensity', '');
+		html += renderKnobControl('progression.humanization', '<input id="progressionHumanization" class="knobControl__input" type="range" value="0" min="0" max="100" step="1" />', '#progressionHumanization', 'progression.help.humanization', '%');
+		html += renderKnobControl('progression.swing', '<input id="progressionSwing" class="knobControl__input" type="range" value="0" min="0" max="75" step="1" />', '#progressionSwing', 'progression.help.swing', '%');
+		html += '</div>';
 		html += '</fieldset>';
 
 		return html;
@@ -14177,6 +14185,17 @@
 		return '<label' + helpAttribute + '>' + labelHtml + controlHtml + renderRandomButton(targetSelector) + '</label>';
 	}
 
+	function renderKnobControl(labelKey, controlHtml, targetSelector, helpKey, unit) {
+		return '<label class="workbenchControl workbenchControl--knob" data-help-i18n="' + helpKey + '" title="">' +
+			'<span class="workbenchControlHeader"><span data-i18n="' + labelKey + '"></span>' + renderRandomButton(targetSelector) + '</span>' +
+			'<span class="knobControl" data-knob-unit="' + unit + '">' +
+			controlHtml +
+			'<span class="knobControl__dial" aria-hidden="true"><span class="knobControl__indicator"></span></span>' +
+			'<output class="knobControl__value"></output>' +
+			'</span>' +
+			'</label>';
+	}
+
 	function renderRandomButton(targetSelector) {
 		return '<button class="randomSelectButton randomControlButton" type="button" data-random-control-target="' + targetSelector + '" data-random-group="global" data-random-i18n-key="randomSelect.label"><span class="material-icons" aria-hidden="true">casino</span></button>';
 	}
@@ -14185,6 +14204,7 @@
 	global.CodaRenderers.progressionControls = {
 		renderColorPanel: renderColorPanel,
 		renderControl: renderControl,
+		renderKnobControl: renderKnobControl,
 		renderPanels: renderPanels,
 		renderTimePanel: renderTimePanel,
 		renderWritingPanel: renderWritingPanel
@@ -15128,7 +15148,7 @@
 (function (global) {
 	'use strict';
 
-	var allowedArticulations = ['sustain', 'legato', 'staccato', 'arpeggio'];
+	var allowedArticulations = ['sustain', 'staccato', 'arpeggio'];
 	var allowedBars = [2, 4, 6, 8, 12, 16, 32];
 	var allowedMeters = ['4/4', '3/4', '6/8'];
 	var allowedStyles = ['modern', 'classic'];
@@ -15450,7 +15470,6 @@
 		setText(i18n, 'span[data-i18n="progression.counterpoint"]', 'progression.counterpoint');
 		applyProgressionHelpTooltips(i18n);
 		setText(i18n, 'option[data-i18n="progression.articulation.sustain"]', 'progression.articulation.sustain');
-		setText(i18n, 'option[data-i18n="progression.articulation.legato"]', 'progression.articulation.legato');
 		setText(i18n, 'option[data-i18n="progression.articulation.staccato"]', 'progression.articulation.staccato');
 		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio"]', 'progression.articulation.arpeggio');
 		setText(i18n, 'option[data-i18n="progression.voicing.closed"]', 'progression.voicing.closed');
@@ -15539,6 +15558,7 @@
 		setAttribute(i18n, '#enlaceNovedades', 'title', 'footer.newsTitle');
 		setText(i18n, 'footer a[href="https://github.com/Maple1981/Coda"]', 'footer.github');
 		setAttribute(i18n, 'footer a[href="https://creativecommons.org/licenses/by-sa/4.0/"]', 'title', 'footer.licenseTitle');
+		setText(i18n, '#creditoAutor', 'footer.author');
 		setTrustedHtml(i18n, '#creditosSoundfonts', 'footer.soundfonts');
 		setTrustedHtml(i18n, '#estadoBeta', 'footer.beta');
 		setTrustedHtml(i18n, '#contactoAutor', 'footer.contact');
@@ -16073,6 +16093,216 @@
 		randomizeInput: randomizeInput,
 		randomizeSelect: randomizeSelect,
 		updateLabels: updateLabels
+	};
+})(window);
+
+;
+
+/* Source: js/ui/knob-control-controller.js */
+// Control visual reutilizable para inputs range representados como knobs.
+(function (global) {
+	'use strict';
+
+	function initialize(options) {
+		var root = options && options.root ? options.root : global.document;
+
+		if (!root || root.getAttribute && root.getAttribute('data-coda-knob-control') === 'true') {
+			refreshAll(root);
+			return;
+		}
+
+		if (root.setAttribute) {
+			root.setAttribute('data-coda-knob-control', 'true');
+		}
+
+		root.addEventListener('input', function (event) {
+			if (isKnobInput(event.target)) {
+				refresh(event.target);
+			}
+		});
+
+		root.addEventListener('change', function (event) {
+			if (isKnobInput(event.target)) {
+				refresh(event.target);
+			}
+		});
+
+		root.addEventListener('pointerdown', function (event) {
+			var knob = closest(event.target, '.knobControl');
+
+			if (!knob || event.target && event.target.closest && event.target.closest('button')) {
+				return;
+			}
+
+			if (event.ctrlKey) {
+				resetToZero(knob, event);
+				return;
+			}
+
+			startDrag(knob, event);
+		});
+
+		refreshAll(root);
+	}
+
+	function startDrag(knob, event) {
+		var input = knob ? knob.querySelector('.knobControl__input') : null;
+		var startY;
+		var startValue;
+		var min;
+		var max;
+		var step;
+		var range;
+
+		if (!input || event.button && event.button !== 0) {
+			return;
+		}
+
+		event.preventDefault();
+		input.focus();
+
+		startY = event.clientY;
+		startValue = numberOr(input.value, 0);
+		min = numberOr(input.min, 0);
+		max = numberOr(input.max, min);
+		step = Math.max(numberOr(input.step, 1), 1);
+		range = Math.max(max - min, step);
+
+		function move(moveEvent) {
+			var delta = startY - moveEvent.clientY;
+			var sensitivity = moveEvent.shiftKey ? 640 : 160;
+			var value = startValue + (delta * range / sensitivity);
+
+			setInputValue(input, quantize(value, min, max, step));
+			dispatch(input, 'input');
+		}
+
+		function end() {
+			global.removeEventListener('pointermove', move);
+			global.removeEventListener('pointerup', end);
+			dispatch(input, 'change');
+		}
+
+		global.addEventListener('pointermove', move);
+		global.addEventListener('pointerup', end);
+	}
+
+	function resetToZero(knob, event) {
+		var input = knob ? knob.querySelector('.knobControl__input') : null;
+		var min;
+
+		if (!input || event.button && event.button !== 0) {
+			return;
+		}
+
+		event.preventDefault();
+		input.focus();
+
+		min = numberOr(input.min, 0);
+		setInputValue(input, min <= 0 ? 0 : min);
+		dispatch(input, 'input');
+		dispatch(input, 'change');
+	}
+
+	function refreshAll(root) {
+		root = root || global.document;
+
+		if (!root || typeof root.querySelectorAll !== 'function') {
+			return;
+		}
+
+		forEach(root.querySelectorAll('.knobControl__input'), refresh);
+	}
+
+	function refresh(input) {
+		var knob = input ? closest(input, '.knobControl') : null;
+		var output = knob ? knob.querySelector('.knobControl__value') : null;
+		var value;
+		var min;
+		var max;
+		var ratio;
+		var angle;
+		var unit;
+
+		if (!knob || !input) {
+			return;
+		}
+
+		value = numberOr(input.value, 0);
+		min = numberOr(input.min, 0);
+		max = numberOr(input.max, min);
+		ratio = max === min ? 0 : (value - min) / (max - min);
+		angle = -135 + (Math.max(0, Math.min(1, ratio)) * 270);
+		unit = knob.getAttribute('data-knob-unit') || '';
+
+		knob.style.setProperty('--knob-angle', angle + 'deg');
+
+		if (output) {
+			output.textContent = formatValue(value, input.step) + unit;
+		}
+	}
+
+	function setInputValue(input, value) {
+		input.value = formatValue(value, input.step);
+		refresh(input);
+	}
+
+	function quantize(value, min, max, step) {
+		var steps = Math.round((value - min) / step);
+
+		return Math.max(min, Math.min(max, min + (steps * step)));
+	}
+
+	function dispatch(element, eventName) {
+		var event;
+
+		if (!element) {
+			return;
+		}
+
+		event = new Event(eventName, {
+			bubbles: true
+		});
+		element.dispatchEvent(event);
+	}
+
+	function formatValue(value, step) {
+		var decimals = decimalsFor(step);
+
+		return Number(value).toFixed(decimals);
+	}
+
+	function decimalsFor(step) {
+		var text = String(step || '1');
+		var index = text.indexOf('.');
+
+		return index === -1 ? 0 : text.length - index - 1;
+	}
+
+	function numberOr(value, fallback) {
+		var parsed = Number(value);
+
+		return Number.isFinite(parsed) ? parsed : fallback;
+	}
+
+	function isKnobInput(element) {
+		return element && element.classList && element.classList.contains('knobControl__input');
+	}
+
+	function closest(element, selector) {
+		return element && element.closest ? element.closest(selector) : null;
+	}
+
+	function forEach(list, callback) {
+		for (var i = 0; i < list.length; i++) {
+			callback(list[i]);
+		}
+	}
+
+	global.CodaKnobControl = {
+		initialize: initialize,
+		refresh: refresh,
+		refreshAll: refreshAll
 	};
 })(window);
 
@@ -17245,6 +17475,7 @@
 		};
 		var progressionStateInputTimer = null;
 		var progressionStateInputDelay = 160;
+		var expressiveControlsVisible = null;
 		var initialProgressionWorkspace = options.initialProgressionWorkspace || null;
 		var initialProgressionWorkspaceRestored = false;
 		uiState.setNotationStyle(notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon');
@@ -17289,6 +17520,11 @@
 				i18n: i18n
 			});
 		}
+		if (global.CodaKnobControl) {
+			global.CodaKnobControl.initialize({
+				root: global.document
+			});
+		}
 		if (options.dashboardResizer) {
 			options.dashboardResizer.initialize({
 				preferences: preferences,
@@ -17296,6 +17532,7 @@
 			});
 		}
 		restoreProgressionControls(normalizeInitialProgressionControls(options.initialProgressionState, progressionState, progressionPreferences));
+		updateProgressionExpressiveControls();
 		syncProgressionState();
 		bindProgressionState();
 		bindProgressionTransport();
@@ -17535,10 +17772,12 @@
 
 			controls.setAttribute('data-coda-progression-state', 'true');
 			controls.addEventListener('input', function () {
+				updateProgressionExpressiveControls();
 				scheduleProgressionStateUpdate();
 			});
 			controls.addEventListener('change', function () {
 				cancelProgressionStateUpdate();
+				updateProgressionExpressiveControls();
 				updateProgressionStateFromControls();
 				recordHistorySnapshot();
 			});
@@ -18096,6 +18335,7 @@
 		function restoreProgressionControls(controls) {
 			if (progressionPreferences && typeof progressionPreferences.writeControls === 'function') {
 				progressionPreferences.writeControls(global.document, controls);
+				updateProgressionExpressiveControls();
 				return;
 			}
 
@@ -18112,6 +18352,32 @@
 			setValue(query('#progressionTensions'), controls.tensions);
 			setValue(query('#progressionVoicing'), controls.voicing);
 			setValue(query('#progressionVoices'), controls.voices);
+			updateProgressionExpressiveControls();
+		}
+
+		function updateProgressionExpressiveControls() {
+			var details = query('.progressionExpressiveControls');
+			var articulation = valueOf(query('#progressionArticulation'));
+			var visible = articulation === 'staccato' || isArpeggioArticulation(articulation);
+
+			if (details) {
+				details.hidden = !visible;
+				details.setAttribute('aria-hidden', visible ? 'false' : 'true');
+			}
+
+			if (global.CodaKnobControl && typeof global.CodaKnobControl.refreshAll === 'function') {
+				global.CodaKnobControl.refreshAll(global.document);
+			}
+
+			if (visible !== expressiveControlsVisible && options.ui && typeof options.ui.scheduleDashboardWorkspaceHeight === 'function') {
+				options.ui.scheduleDashboardWorkspaceHeight();
+			}
+
+			expressiveControlsVisible = visible;
+		}
+
+		function isArpeggioArticulation(articulation) {
+			return String(articulation || '').indexOf('arpeggio') === 0;
 		}
 
 		function updateHistoryButtons() {

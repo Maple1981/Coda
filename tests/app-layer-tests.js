@@ -85,7 +85,7 @@ assert.deepEqual(cMajorProgression.map(function (step) { return step.chord.nombr
 const cMajorProgressionPlan = app.buildProgressionFromState({
 	domain: domain,
 	progressionState: {
-		articulation: 'legato',
+		articulation: 'sustain',
 		bars: 4,
 		beatUnit: 4,
 		beatsPerBar: 3,
@@ -113,7 +113,7 @@ const contrastingSectionProgression = app.generateContrastingProgressionSection(
 	domain: domain,
 	progression: cMajorProgressionPlan,
 	progressionState: {
-		articulation: 'legato',
+		articulation: 'sustain',
 		bars: 4,
 		beatUnit: 4,
 		beatsPerBar: 3,
@@ -146,7 +146,7 @@ const aprimeProgression = app.generateProgressionSection({
 	domain: domain,
 	progression: contrastingSectionProgression,
 	progressionState: {
-		articulation: 'legato',
+		articulation: 'sustain',
 		bars: 4,
 		beatUnit: 4,
 		beatsPerBar: 3,
@@ -173,7 +173,7 @@ const sectionCProgression = app.generateProgressionSection({
 	domain: domain,
 	progression: aprimeProgression,
 	progressionState: {
-		articulation: 'legato',
+		articulation: 'sustain',
 		bars: 4,
 		beatUnit: 4,
 		beatsPerBar: 3,
@@ -203,7 +203,7 @@ assert.equal(sectionCProgression.measures[12].sectionId, 'C');
 		domain: domain,
 		progression: cMajorProgressionPlan,
 		progressionState: {
-			articulation: 'legato',
+			articulation: 'sustain',
 			bars: 4,
 			beatUnit: 4,
 			beatsPerBar: 3,
@@ -226,7 +226,7 @@ assert.equal(sectionCProgression.measures[12].sectionId, 'C');
 	assert.equal(contrasted.measures[4].sectionId, 'B');
 });
 assert.deepEqual(cMajorProgressionPlan.measures[1], {
-	articulation: 'legato',
+	articulation: 'sustain',
 	bar: 2,
 	beatUnit: 4,
 	beatsPerBar: 3,
@@ -311,7 +311,7 @@ assert.ok(upperVoiceSpan(cMajorOpenVoicingPlan.measures[0].midiNotes) > upperVoi
 const splitProgression = app.addProgressionMeasureChord(cMajorProgressionPlan, 0, {
 	data: data,
 	progressionState: {
-		articulation: 'legato',
+		articulation: 'sustain',
 		bars: 4,
 		beatUnit: 4,
 		beatsPerBar: 3,
@@ -347,7 +347,7 @@ suspendedMeasureProgression.measures[0].voiceNotes = [
 const resolvedSuspensionProgression = app.addProgressionMeasureChord(suspendedMeasureProgression, 0, {
 	data: data,
 	progressionState: {
-		articulation: 'legato',
+		articulation: 'sustain',
 		bars: 4,
 		beatUnit: 4,
 		beatsPerBar: 3,
@@ -371,7 +371,7 @@ const threeChordMeasureProgression = app.addProgressionMeasureChord(splitProgres
 	chordIndex: 1,
 	data: data,
 	progressionState: {
-		articulation: 'legato',
+		articulation: 'sustain',
 		bars: 4,
 		beatUnit: 4,
 		beatsPerBar: 3,
@@ -389,7 +389,7 @@ const fourChordMeasureProgression = app.addProgressionMeasureChord(threeChordMea
 	chordIndex: 2,
 	data: data,
 	progressionState: {
-		articulation: 'legato',
+		articulation: 'sustain',
 		bars: 4,
 		beatUnit: 4,
 		beatsPerBar: 3,
@@ -761,7 +761,7 @@ assert.ok(suspensionWithDefaultRandom.measures.some(function (measure) {
 const generatedEightBarProgression = app.generateProgressionFromState({
 	data: data,
 	progressionState: {
-		articulation: 'legato',
+		articulation: 'sustain',
 		bars: 8,
 		beatUnit: 4,
 		beatsPerBar: 4,

@@ -28,11 +28,13 @@
 		html += '<legend><span data-i18n="progression.writing"></span></legend>';
 		html += renderControl('progression.voices', '<input id="progressionVoices" type="number" value="4" min="1" max="6" step="1" />', '#progressionVoices', null, 'progression.help.voices');
 		html += renderControl('progression.voicing', '<select id="progressionVoicing"><option value="closed" selected="selected" data-i18n="progression.voicing.closed"></option><option value="open" data-i18n="progression.voicing.open"></option></select>', '#progressionVoicing', null, 'progression.help.voicing');
-		html += renderControl('progression.articulation', '<select id="progressionArticulation"><option value="sustain" data-i18n="progression.articulation.sustain"></option><option value="legato" data-i18n="progression.articulation.legato"></option><option value="staccato" data-i18n="progression.articulation.staccato"></option><option value="arpeggio" data-i18n="progression.articulation.arpeggio"></option></select>', '#progressionArticulation', null, 'progression.help.articulation');
 		html += renderControl('progression.style', '<select id="progressionStyle"><option value="modern" selected="selected" data-i18n="progression.style.modern"></option><option value="classic" data-i18n="progression.style.classic"></option></select>', '#progressionStyle', null, 'progression.help.style');
-		html += renderControl('progression.intensity', '<input id="progressionIntensity" type="range" value="80" min="1" max="127" step="1" />', '#progressionIntensity', null, 'progression.help.intensity');
-		html += renderControl('progression.humanization', '<input id="progressionHumanization" type="range" value="0" min="0" max="100" step="1" />', '#progressionHumanization', null, 'progression.help.humanization');
-		html += renderControl('progression.swing', '<input id="progressionSwing" type="range" value="0" min="0" max="75" step="1" />', '#progressionSwing', null, 'progression.help.swing');
+		html += renderControl('progression.articulation', '<select id="progressionArticulation"><option value="sustain" data-i18n="progression.articulation.sustain"></option><option value="staccato" data-i18n="progression.articulation.staccato"></option><option value="arpeggio" data-i18n="progression.articulation.arpeggio"></option></select>', '#progressionArticulation', null, 'progression.help.articulation');
+		html += '<div class="progressionExpressiveControls" data-articulation-detail hidden>';
+		html += renderKnobControl('progression.intensity', '<input id="progressionIntensity" class="knobControl__input" type="range" value="80" min="1" max="127" step="1" />', '#progressionIntensity', 'progression.help.intensity', '');
+		html += renderKnobControl('progression.humanization', '<input id="progressionHumanization" class="knobControl__input" type="range" value="0" min="0" max="100" step="1" />', '#progressionHumanization', 'progression.help.humanization', '%');
+		html += renderKnobControl('progression.swing', '<input id="progressionSwing" class="knobControl__input" type="range" value="0" min="0" max="75" step="1" />', '#progressionSwing', 'progression.help.swing', '%');
+		html += '</div>';
 		html += '</fieldset>';
 
 		return html;
@@ -58,6 +60,17 @@
 		return '<label' + helpAttribute + '>' + labelHtml + controlHtml + renderRandomButton(targetSelector) + '</label>';
 	}
 
+	function renderKnobControl(labelKey, controlHtml, targetSelector, helpKey, unit) {
+		return '<label class="workbenchControl workbenchControl--knob" data-help-i18n="' + helpKey + '" title="">' +
+			'<span class="workbenchControlHeader"><span data-i18n="' + labelKey + '"></span>' + renderRandomButton(targetSelector) + '</span>' +
+			'<span class="knobControl" data-knob-unit="' + unit + '">' +
+			controlHtml +
+			'<span class="knobControl__dial" aria-hidden="true"><span class="knobControl__indicator"></span></span>' +
+			'<output class="knobControl__value"></output>' +
+			'</span>' +
+			'</label>';
+	}
+
 	function renderRandomButton(targetSelector) {
 		return '<button class="randomSelectButton randomControlButton" type="button" data-random-control-target="' + targetSelector + '" data-random-group="global" data-random-i18n-key="randomSelect.label"><span class="material-icons" aria-hidden="true">casino</span></button>';
 	}
@@ -66,6 +79,7 @@
 	global.CodaRenderers.progressionControls = {
 		renderColorPanel: renderColorPanel,
 		renderControl: renderControl,
+		renderKnobControl: renderKnobControl,
 		renderPanels: renderPanels,
 		renderTimePanel: renderTimePanel,
 		renderWritingPanel: renderWritingPanel

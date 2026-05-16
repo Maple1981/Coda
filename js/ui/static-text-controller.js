@@ -136,7 +136,6 @@
 		setText(i18n, 'span[data-i18n="progression.counterpoint"]', 'progression.counterpoint');
 		applyProgressionHelpTooltips(i18n);
 		setText(i18n, 'option[data-i18n="progression.articulation.sustain"]', 'progression.articulation.sustain');
-		setText(i18n, 'option[data-i18n="progression.articulation.legato"]', 'progression.articulation.legato');
 		setText(i18n, 'option[data-i18n="progression.articulation.staccato"]', 'progression.articulation.staccato');
 		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio"]', 'progression.articulation.arpeggio');
 		setText(i18n, 'option[data-i18n="progression.voicing.closed"]', 'progression.voicing.closed');
@@ -225,6 +224,7 @@
 		setAttribute(i18n, '#enlaceNovedades', 'title', 'footer.newsTitle');
 		setText(i18n, 'footer a[href="https://github.com/Maple1981/Coda"]', 'footer.github');
 		setAttribute(i18n, 'footer a[href="https://creativecommons.org/licenses/by-sa/4.0/"]', 'title', 'footer.licenseTitle');
+		setText(i18n, '#creditoAutor', 'footer.author');
 		setTrustedHtml(i18n, '#creditosSoundfonts', 'footer.soundfonts');
 		setTrustedHtml(i18n, '#estadoBeta', 'footer.beta');
 		setTrustedHtml(i18n, '#contactoAutor', 'footer.contact');

@@ -22,12 +22,8 @@
 		weight += commonToneDegreeScore(pattern.degrees, progressionState);
 		weight *= sensitiveDegreeFactor(pattern.degrees, mode, progressionState);
 
-		if (progressionState.articulation === 'arpeggio' && pattern.form === 'circle-of-fifths') {
+		if (isArpeggioArticulation(progressionState.articulation) && pattern.form === 'circle-of-fifths') {
 			weight += 8;
-		}
-
-		if (progressionState.articulation === 'legato' && pattern.cadence === 'authentic') {
-			weight += 5;
 		}
 
 		if (progressionState.articulation === 'staccato' && pattern.cadence === 'half') {
@@ -88,6 +84,10 @@
 		var number = Number(value);
 
 		return isFinite(number) ? number : fallback;
+	}
+
+	function isArpeggioArticulation(articulation) {
+		return String(articulation || '').indexOf('arpeggio') === 0;
 	}
 
 	global.CodaProgressionPatternWeight = {

@@ -2,7 +2,7 @@
 (function (global) {
 	'use strict';
 
-	var allowedArticulations = ['sustain', 'legato', 'staccato', 'arpeggio'];
+	var allowedArticulations = ['sustain', 'staccato', 'arpeggio'];
 	var allowedBars = [2, 4, 6, 8, 12, 16, 32];
 	var allowedMeters = ['4/4', '3/4', '6/8'];
 	var allowedStyles = ['modern', 'classic'];

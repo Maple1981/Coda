@@ -31,12 +31,8 @@
 			return 0.45;
 		}
 
-		if (articulation === 'arpeggio') {
+		if (isArpeggioArticulation(articulation)) {
 			return 0.9;
-		}
-
-		if (articulation === 'legato') {
-			return 1;
 		}
 
 		return 0.95;
@@ -46,6 +42,10 @@
 		var duration = Number(measure && measure.durationSeconds) || 0;
 
 		return Math.max(0.05, Math.min(0.18, duration / 8));
+	}
+
+	function isArpeggioArticulation(articulation) {
+		return String(articulation || '').indexOf('arpeggio') === 0;
 	}
 
 	function playbackTotalSeconds(progression, scheduledMeasures) {
@@ -63,6 +63,7 @@
 	global.CodaProgressionPlaybackTiming = {
 		arpeggioStepSeconds: arpeggioStepSeconds,
 		articulationDurationFactor: articulationDurationFactor,
+		isArpeggioArticulation: isArpeggioArticulation,
 		normalizeStartIndex: normalizeStartIndex,
 		notesForVoices: notesForVoices,
 		playbackDuration: playbackDuration,

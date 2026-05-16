@@ -91,7 +91,7 @@
 		var notes = measure.midiNotes && measure.midiNotes.length ? measure.midiNotes.slice() : chordNotesToMidi(measure.notes || [], options.initialMidiNote);
 		var startTick = Math.max(0, Math.round(measure.startBeat * options.ticksPerBeat) + expressiveDelayTicks(measure, options));
 		var durationTicks = Math.max(1, Math.round(measure.durationBeats * options.ticksPerBeat * articulationFactor(measure.articulation)));
-		var arpeggioStep = measure.articulation === 'arpeggio' ? Math.max(1, Math.round(options.ticksPerBeat / 4)) : 0;
+		var arpeggioStep = isArpeggioArticulation(measure.articulation) ? Math.max(1, Math.round(options.ticksPerBeat / 4)) : 0;
 		var velocity = expressiveVelocity(measure, options.velocity);
 
 		for (var i = 0; i < notes.length; i++) {
@@ -338,7 +338,7 @@
 			return 0.45;
 		}
 
-		if (articulation === 'arpeggio') {
+		if (isArpeggioArticulation(articulation)) {
 			return 0.9;
 		}
 
@@ -471,6 +471,10 @@
 		return isFinite(number) ? number : fallback;
 	}
 
+	function isArpeggioArticulation(articulation) {
+		return String(articulation || '').indexOf('arpeggio') === 0;
+	}
+
 	global.CodaMidiExport = {
 		articulationFactor: articulationFactor,
 		bpmToMicrosecondsPerBeat: bpmToMicrosecondsPerBeat,
@@ -480,6 +484,7 @@
 		encodeMidiFile: encodeMidiFile,
 		expressiveDelayTicks: expressiveDelayTicks,
 		expressiveVelocity: expressiveVelocity,
+		isArpeggioArticulation: isArpeggioArticulation,
 		mimeType: midiMimeType,
 		noteIndex: noteIndex,
 		secondsPerBeatForMeasure: secondsPerBeatForMeasure,

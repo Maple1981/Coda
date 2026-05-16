@@ -142,6 +142,7 @@
 			'js/ui/volume-controller.js',
 			'js/ui/theme-controller.js',
 			'js/ui/random-select-controller.js',
+			'js/ui/knob-control-controller.js',
 			'js/ui/key-navigation-controller.js',
 			'js/ui/changelog-dialog-controller.js',
 			'js/ui/dashboard-resizer-controller.js',

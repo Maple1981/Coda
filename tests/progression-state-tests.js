@@ -136,12 +136,12 @@ assert.deepEqual(state.get(), {
 });
 
 state.set({
-	articulation: 'legato',
+	articulation: 'missing',
 	bpm: 112,
 	tensions: 52
 });
 
-assert.equal(state.get().articulation, 'legato');
+assert.equal(state.get().articulation, 'sustain');
 assert.equal(state.get().bars, 4);
 assert.equal(state.get().bpm, 112);
 assert.equal(state.get().tensions, 52);
