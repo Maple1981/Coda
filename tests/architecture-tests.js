@@ -918,6 +918,30 @@ const variedSubdominantBlock = global.CodaProgressionPlanner.varyBlockOpening([
 	{ index: 4, source: 'diatonic' }
 ], 2, 'minor', sequenceRng([0.95, 0]));
 assert.equal(variedSubdominantBlock[0].index, 3);
+assert.equal(global.CodaProgressionPlanner.repetitionChance({ bars: 2 }), 0);
+assert.equal(global.CodaProgressionPlanner.repetitionChance({ bars: 4 }), 0.02);
+assert.equal(global.CodaProgressionPlanner.repetitionChance({ bars: 8 }), 0.08);
+assert.equal(global.CodaProgressionPlanner.repetitionChance({ bars: 16 }), 0.16);
+assert.equal(global.CodaProgressionPlanner.repetitionChance({ bars: 32 }), 0.24);
+const noRepeatTwoBars = global.CodaProgressionPlanner.applySparseChordRepetition([
+	{ index: 0, source: 'diatonic' },
+	{ index: 4, source: 'diatonic' }
+], { bars: 2 }, sequenceRng([0]));
+assert.deepEqual(noRepeatTwoBars.map(function (degree) { return degree.index; }), [0, 4]);
+const sparseRepeatedDegrees = global.CodaProgressionPlanner.applySparseChordRepetition([
+	{ index: 0, source: 'diatonic' },
+	{ index: 3, source: 'diatonic' },
+	{ index: 1, source: 'diatonic' },
+	{ index: 4, source: 'diatonic' },
+	{ index: 0, source: 'diatonic' },
+	{ index: 2, source: 'diatonic' },
+	{ index: 4, source: 'diatonic' },
+	{ index: 0, source: 'diatonic' }
+], { bars: 8 }, sequenceRng([0.01, 0.4]));
+assert.deepEqual(sparseRepeatedDegrees.map(function (degree) { return degree.index; }), [0, 3, 1, 1, 0, 2, 4, 0]);
+assert.equal(sparseRepeatedDegrees[3].repetitionRole, 'direct-repeat');
+assert.equal(sparseRepeatedDegrees[6].index, 4);
+assert.equal(sparseRepeatedDegrees[7].index, 0);
 const chordMenuServiceGroups = global.CodaProgressionChordMenu.build({
 	currentSegment: {
 		notes: ['C', 'E', 'G'],

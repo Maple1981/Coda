@@ -722,7 +722,7 @@ const suspensionWeightedProgression = app.generateProgressionFromState({
 		voices: 4
 	},
 	report: cMajorReport,
-	rng: sequenceRng([0, 0.99, 0.18, 0.99, 0.99, 0.99]),
+	rng: sequenceRng([0, 0.99, 0.99, 0.18, 0.99, 0.99, 0.99]),
 	rules: forcedSuspensionRules
 });
 assert.ok(suspensionWeightedProgression.measures.some(function (measure) {
@@ -730,7 +730,7 @@ assert.ok(suspensionWeightedProgression.measures.some(function (measure) {
 }));
 
 const originalMathRandom = vm.runInContext('Math.random', context);
-context.__codaTestRandom = sequenceRng([0, 0.99, 0.18, 0.99, 0.99, 0.99]);
+context.__codaTestRandom = sequenceRng([0, 0.99, 0.99, 0.18, 0.99, 0.99, 0.99]);
 context.__codaOriginalRandom = originalMathRandom;
 vm.runInContext('Math.random = function () { return __codaTestRandom(); };', context);
 const suspensionWithDefaultRandom = app.generateProgressionFromState({
@@ -834,7 +834,7 @@ const classicCadenceProgression = app.generateProgressionFromState({
 	rules: forcedCadenceRules
 });
 assert.equal(modernCadenceProgression.generation.cadence, 'half');
-assert.deepEqual(modernCadenceProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['ii7 sus2', 'V7 4/3 sus4']);
+assert.deepEqual(modernCadenceProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['ii7 4/2 sus2', 'V7 6/5 sus4']);
 assert.equal(classicCadenceProgression.generation.cadence, 'authentic');
 assert.deepEqual(classicCadenceProgression.measures.slice(-2).map(function (measure) { return measure.degree; }), ['V 6', 'I']);
 const forcedMinorCadenceRules = {

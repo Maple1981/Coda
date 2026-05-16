@@ -39,6 +39,12 @@ Esta distinción afecta a la selección de patrones completos y a los bloques de
 
 En tonalidades menores, el estilo **Clásico** trata el quinto grado como dominante tonal. Por tanto, cuando la escala principal es menor natural o menor melódica descendente, el `V` o `V7` se toma de una fuente con sensible, preferentemente la menor armónica sobre la misma tónica. Esto evita cierres modales `v-i` en contextos que deben sonar funcionales y permite que aparezcan dominantes mayores o dominantes séptima como `G`/`G7` en `C` menor.
 
+## Repetición directa de acordes
+
+El planificador puede repetir de forma esporádica el mismo acorde en dos compases consecutivos para producir insistencia, reposo o respiración armónica. No se aplica en progresiones de dos compases. En secciones de cuatro compases la probabilidad es mínima; aumenta moderadamente en ocho, dieciséis y treinta y dos compases, pero sigue limitada a una repetición directa por plan para que no se convierta en un rasgo dominante.
+
+La repetición se aplica después de resolver dominantes menores, intercambio modal y función de apertura, de modo que se copia el acorde real previsto para el compás anterior. El planificador evita alterar los dos últimos compases para preservar la cadencia final y también evita duplicar grados marcados como cadenciales o cromáticos obligatorios.
+
 ## Cadencias finales
 
 El catálogo técnico de progresiones incluye una pequeña biblioteca de cadencias finales en `js/data/progression-rules-data.js`. El planificador las usa como cierres ponderados y, cuando procede, añade metadatos por grado para forzar inversiones, evitar suspensiones aleatorias o fijar la función tonal mostrada.

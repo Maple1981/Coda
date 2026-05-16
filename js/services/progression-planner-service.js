@@ -22,6 +22,8 @@
 				rules: options.rules
 			});
 
+			modalPlan.degrees = applySparseChordRepetition(modalPlan.degrees, progressionState, rng);
+
 			return modalPlan;
 		}
 
@@ -54,6 +56,7 @@
 		degrees = applyClassicMinorDominants(degrees, options.report, progressionState, mode);
 		degrees = applyModalInterchangeSources(degrees, options.report, progressionState, rng);
 		degrees = applyOpeningFunction(degrees, options.report, options.openingFunction, rng);
+		degrees = applySparseChordRepetition(degrees, progressionState, rng);
 
 		return {
 			degrees: degrees,
@@ -93,6 +96,86 @@
 		});
 
 		return degrees;
+	}
+
+	function applySparseChordRepetition(degrees, progressionState, rng) {
+		var chance = repetitionChance(progressionState);
+		var candidates;
+		var targetIndex;
+
+		rng = typeof rng === 'function' ? rng : Math.random;
+
+		if (!degrees || degrees.length < 3 || !chance || rng() >= chance) {
+			return degrees;
+		}
+
+		candidates = repeatableDegreeIndexes(degrees);
+		if (!candidates.length) {
+			return degrees;
+		}
+
+		targetIndex = candidates[Math.floor(rng() * candidates.length) % candidates.length];
+		degrees[targetIndex] = repeatDegree(degrees[targetIndex - 1]);
+
+		return degrees;
+	}
+
+	function repetitionChance(progressionState) {
+		var bars = numberOrDefault(progressionState && progressionState.bars, 0);
+
+		if (bars <= 2) {
+			return 0;
+		}
+
+		if (bars <= 4) {
+			return 0.02;
+		}
+
+		if (bars <= 8) {
+			return 0.08;
+		}
+
+		if (bars <= 16) {
+			return 0.16;
+		}
+
+		return 0.24;
+	}
+
+	function repeatableDegreeIndexes(degrees) {
+		var indexes = [];
+		var protectedCadenceStart = Math.max(1, degrees.length - 2);
+
+		for (var i = 1; i < protectedCadenceStart; i++) {
+			if (canRepeatDegree(degrees[i - 1]) && canReplaceWithRepeat(degrees[i])) {
+				indexes.push(i);
+			}
+		}
+
+		return indexes;
+	}
+
+	function canRepeatDegree(degree) {
+		return degree &&
+			degree.index !== undefined &&
+			!degree.cadentialRole &&
+			!degree.chromaticRole;
+	}
+
+	function canReplaceWithRepeat(degree) {
+		return degree &&
+			!degree.cadentialRole &&
+			!degree.chromaticRole &&
+			degree.forceInversionIndex === undefined &&
+			!degree.forceKind;
+	}
+
+	function repeatDegree(degree) {
+		var repeated = extendObject(degree, {});
+
+		repeated.repetitionRole = 'direct-repeat';
+
+		return repeated;
 	}
 
 	function degreeIndexesForFunction(report, functionName) {
@@ -337,12 +420,14 @@
 		applyClassicMinorDominants: applyClassicMinorDominants,
 		applyModalInterchangeSources: applyModalInterchangeSources,
 		applyOpeningFunction: applyOpeningFunction,
+		applySparseChordRepetition: applySparseChordRepetition,
 		chooseInterchangeSource: chooseInterchangeSource,
 		createPlan: createPlan,
 		degreeIndexesForFunction: degreeIndexesForFunction,
 		effectiveEndingCadence: effectiveEndingCadence,
 		fitDegreesToBars: fitDegreesToBars,
 		harmonicMinorDominantSource: harmonicMinorDominantSource,
+		repetitionChance: repetitionChance,
 		shouldUseClassicMinorDominant: shouldUseClassicMinorDominant,
 		varyBlockOpening: varyBlockOpening,
 		voiceLeadingProfile: voiceLeadingProfile
