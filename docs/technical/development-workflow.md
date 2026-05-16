@@ -115,6 +115,53 @@ De forma opcional, puede instalarse un hook local de Git para ejecutar las misma
 
 El hook se instala en `.git/hooks/pre-push`, que es una zona local del repositorio y no se versiona. El script versionado que ejecuta el hook vive en `tools/git-hooks/pre-push.ps1`.
 
+## Limitación conocida de Codex Desktop
+
+En Windows, algunas versiones de Codex Desktop pueden fallar al abrir chats antiguos si el historial local contiene directivas internas de Git con rutas Windows escapadas. El síntoma visible es que el chat se abre con un error de renderizado; en el log aparece una traza similar a:
+
+```text
+invalid syntax at line 1 col 5:
+
+1  cwd="C:\Users\Usuario\Documents\GitHub\Coda"
+       ^
+```
+
+En Windows, los logs de Codex Desktop no están en `.codex\log`. La ruta habitual está bajo el paquete de la aplicación:
+
+```text
+%LOCALAPPDATA%\Packages\OpenAI.Codex_...\LocalCache\Local\Codex\Logs\...
+```
+
+La causa conocida en este proyecto es una respuesta final de Codex con directivas como:
+
+```text
+::git-stage{cwd="C:\Users\Usuario\Documents\GitHub\Coda"}
+::git-commit{cwd="C:\Users\Usuario\Documents\GitHub\Coda"}
+::git-push{cwd="C:\Users\Usuario\Documents\GitHub\Coda" branch="master"}
+```
+
+El formato seguro usa barras `/` incluso en Windows:
+
+```text
+::git-stage{cwd="C:/Users/Usuario/Documents/GitHub/Coda"}
+::git-commit{cwd="C:/Users/Usuario/Documents/GitHub/Coda"}
+::git-push{cwd="C:/Users/Usuario/Documents/GitHub/Coda" branch="master"}
+```
+
+Si el usuario avisa con una frase como "los chats vuelven a dar error", comprobar primero este fallo antes de investigar la aplicación Coda. El diagnóstico local es:
+
+```powershell
+.\tools\repair-codex-chat-history.ps1
+```
+
+Si el script informa de historiales afectados, aplicar la reparación con:
+
+```powershell
+.\tools\repair-codex-chat-history.ps1 -Fix
+```
+
+El script revisa `C:\Users\Usuario\.codex\sessions`, crea una copia `.bak-codex-render-fix` antes de modificar cada JSONL y reemplaza solamente el literal serializado `C:\\Users\\Usuario\\Documents\\GitHub\\Coda` por `C:/Users/Usuario/Documents/GitHub/Coda`. La corrección conserva el historial en UTF-8 sin BOM.
+
 ## Smoke tests
 
 Para pruebas de navegador, usar Live Server:

@@ -62,6 +62,8 @@ La documentación técnica vive en `docs/technical/` para no mezclarla con la ba
 
 Las herramientas locales de apoyo viven en `tools/`. El flujo recomendado para publicar cambios es `tools/publish.ps1`, que ejecuta pruebas, prepara cambios, crea el commit y hace push de forma controlada. Si se quiere reforzar la comprobación antes de publicar, `tools/install-pre-push-hook.ps1` instala un hook local que ejecuta las pruebas antes de cada `git push`.
 
+Si el usuario avisa con una frase como "los chats vuelven a dar error", comprobar antes de nada la limitación conocida de Codex Desktop documentada en `docs/technical/development-workflow.md`: algunas respuestas finales antiguas pueden haber guardado directivas `::git-*` con rutas Windows escapadas (`C:\\Users\\Usuario\\Documents\\GitHub\\Coda`), lo que rompe el renderizado del chat. Ejecutar `tools/repair-codex-chat-history.ps1` para diagnosticar y `tools/repair-codex-chat-history.ps1 -Fix` para corregir los historiales locales afectados con copia de seguridad.
+
 El bundle de JavaScript publicado en `dist/js/coda.bundle.js` se genera con `tools/build-js-bundle.ps1` a partir de `js/bootstrap/script-manifest.js`. Cuando se añadan, retiren o reordenen scripts de aplicación, actualizar el manifest y regenerar el bundle antes de publicar.
 
 Cuando el usuario pida publicar los cambios sin indicar mensaje, revisar el diff y escoger un mensaje de commit en inglés con esta convención: prefijo `Add`, `Upd`, `Del` o `Fix`, seguido de dos a cinco palabras descriptivas. Usar `Add` para funcionalidad nueva, `Upd` para mejoras o cambios evolutivos, `Del` para retiradas de código/contenido y `Fix` para correcciones de errores.
