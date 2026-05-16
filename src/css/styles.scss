@@ -626,10 +626,26 @@ section#notacion{
 		text-align:center;
 	}
 
+	ul.notasEscala{
+		display:flex;
+		align-items:center;
+		justify-content:center;
+		flex-wrap:wrap;
+		gap:.18em .3em;
+		line-height:1.35;
+	}
+
 	ul li{
 		list-style-type:none; 
 		display:inline;
 		margin-right:.3em;
+	}
+
+	ul.notasEscala li{
+		display:inline-flex;
+		align-items:center;
+		margin-right:0;
+		line-height:1;
 	}
 
 	ul li sup{
@@ -669,7 +685,7 @@ section#notacion{
 
 	.scaleDegreeNoteButton{
 		display:inline-flex;
-		align-items:flex-start;
+		align-items:center;
 		gap:.05em;
 		border:0;
 		background:transparent;
@@ -1453,7 +1469,7 @@ section#bienvenida .columnata article{
 }
 
 .measureChord.isSelected{
-	outline:2px solid $corporative_complementarybright_color;
+	outline:1px solid rgba($corporative_complementarybright_color, .56);
 	outline-offset:2px;
 }
 
@@ -2336,7 +2352,7 @@ body[data-theme="day"] .measure--split .measureChord.isChordDropTarget{
 }
 
 body[data-theme="day"] .measureChord.isSelected{
-	outline-color:#7d2785;
+	outline-color:rgba(125, 39, 133, .52);
 }
 
 body[data-theme="day"] .measureChordQuickToggle{
