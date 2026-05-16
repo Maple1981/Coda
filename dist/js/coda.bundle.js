@@ -1478,6 +1478,14 @@
 			'progression.aria': 'Visualizador de progresión',
 			'progression.articulation': 'Articulación',
 			'progression.articulation.arpeggio': 'Arpegio',
+			'progression.articulation.arpeggio.alternate': 'Arpegio - Alterno',
+			'progression.articulation.arpeggio.down': 'Arpegio - Descendente',
+			'progression.articulation.arpeggio.downUp': 'Arpegio - Descendente-ascendente',
+			'progression.articulation.arpeggio.outsideIn': 'Arpegio - Extremos-centro',
+			'progression.articulation.arpeggio.random': 'Arpegio - Aleatorio',
+			'progression.articulation.arpeggio.up': 'Arpegio - Ascendente',
+			'progression.articulation.arpeggio.upDown': 'Arpegio - Ascendente-descendente',
+			'progression.articulation.arpeggioGroup': 'Arpegio',
 			'progression.articulation.staccato': 'Staccato',
 			'progression.articulation.sustain': 'Sostenido',
 			'progression.bars': 'Compases',
@@ -1707,6 +1715,14 @@
 			'progression.aria': 'Progression viewer',
 			'progression.articulation': 'Articulation',
 			'progression.articulation.arpeggio': 'Arpeggio',
+			'progression.articulation.arpeggio.alternate': 'Arpeggio - Alternating',
+			'progression.articulation.arpeggio.down': 'Arpeggio - Down',
+			'progression.articulation.arpeggio.downUp': 'Arpeggio - Down-up',
+			'progression.articulation.arpeggio.outsideIn': 'Arpeggio - Outside-in',
+			'progression.articulation.arpeggio.random': 'Arpeggio - Random',
+			'progression.articulation.arpeggio.up': 'Arpeggio - Up',
+			'progression.articulation.arpeggio.upDown': 'Arpeggio - Up-down',
+			'progression.articulation.arpeggioGroup': 'Arpeggio',
 			'progression.articulation.staccato': 'Staccato',
 			'progression.articulation.sustain': 'Sustain',
 			'progression.bars': 'Bars',
@@ -2121,7 +2137,18 @@
 			language: allowList(['es', 'en']),
 			midiInstrument: allowList(['acoustic_grand_piano', 'acoustic_guitar_nylon', 'drawbar_organ', 'string_ensemble_1']),
 			notation: allowList(['anglosaxon', 'latin']),
-			progressionArticulation: allowList(['sustain', 'staccato', 'arpeggio']),
+			progressionArticulation: allowList([
+				'sustain',
+				'staccato',
+				'arpeggio',
+				'arpeggio_up',
+				'arpeggio_down',
+				'arpeggio_up_down',
+				'arpeggio_down_up',
+				'arpeggio_alternate',
+				'arpeggio_outside_in',
+				'arpeggio_random'
+			]),
 			progressionBars: allowList(['2', '4', '6', '8', '12', '16', '32']),
 			progressionBpm: integerRange(20, 200),
 			progressionChromaticism: integerRange(0, 100),
@@ -8593,11 +8620,155 @@
 
 ;
 
+/* Source: js/services/progression-arpeggio-pattern-service.js */
+// Shared arpeggio pattern ordering for playback and MIDI export.
+(function (global) {
+	'use strict';
+
+	function pattern(articulation) {
+		switch (String(articulation || '')) {
+		case 'down':
+		case 'arpeggio_down':
+			return 'down';
+		case 'upDown':
+		case 'arpeggio_up_down':
+			return 'upDown';
+		case 'downUp':
+		case 'arpeggio_down_up':
+			return 'downUp';
+		case 'alternate':
+		case 'arpeggio_alternate':
+			return 'alternate';
+		case 'outsideIn':
+		case 'arpeggio_outside_in':
+			return 'outsideIn';
+		case 'random':
+		case 'arpeggio_random':
+			return 'random';
+		case 'up':
+		case 'arpeggio':
+		case 'arpeggio_up':
+		default:
+			return 'up';
+		}
+	}
+
+	function orderIndexes(noteCount, articulation, seed) {
+		var count = Math.max(0, parseInt(noteCount, 10) || 0);
+		var selectedPattern = pattern(articulation);
+		var indexes = ascendingIndexes(count);
+
+		if (count < 2) {
+			return indexes;
+		}
+
+		if (selectedPattern === 'down') {
+			return indexes.reverse();
+		}
+
+		if (selectedPattern === 'upDown') {
+			return indexes.concat(ascendingIndexes(count).reverse().slice(1, -1));
+		}
+
+		if (selectedPattern === 'downUp') {
+			return indexes.reverse().concat(ascendingIndexes(count).slice(1, -1));
+		}
+
+		if (selectedPattern === 'alternate') {
+			return alternatingIndexes(count);
+		}
+
+		if (selectedPattern === 'outsideIn') {
+			return outsideInIndexes(count);
+		}
+
+		if (selectedPattern === 'random') {
+			return deterministicShuffle(indexes, seed || count);
+		}
+
+		return indexes;
+	}
+
+	function ascendingIndexes(count) {
+		var indexes = [];
+
+		for (var i = 0; i < count; i++) {
+			indexes.push(i);
+		}
+
+		return indexes;
+	}
+
+	function alternatingIndexes(count) {
+		var indexes = [];
+		var i;
+
+		for (i = 0; i < count; i += 2) {
+			indexes.push(i);
+		}
+
+		for (i = 1; i < count; i += 2) {
+			indexes.push(i);
+		}
+
+		return indexes;
+	}
+
+	function outsideInIndexes(count) {
+		var indexes = [];
+		var left = 0;
+		var right = count - 1;
+
+		while (left <= right) {
+			indexes.push(left);
+
+			if (right !== left) {
+				indexes.push(right);
+			}
+
+			left += 1;
+			right -= 1;
+		}
+
+		return indexes;
+	}
+
+	function deterministicShuffle(indexes, seed) {
+		var shuffled = indexes.slice();
+
+		for (var i = shuffled.length - 1; i > 0; i--) {
+			var randomValue = deterministicValue((Number(seed) || 0) + (i * 37));
+			var swapIndex = Math.floor(randomValue * (i + 1));
+			var current = shuffled[i];
+
+			shuffled[i] = shuffled[swapIndex];
+			shuffled[swapIndex] = current;
+		}
+
+		return shuffled;
+	}
+
+	function deterministicValue(seed) {
+		var value = Math.sin(seed) * 10000;
+
+		return value - Math.floor(value);
+	}
+
+	global.CodaProgressionArpeggioPatterns = {
+		ascendingIndexes: ascendingIndexes,
+		orderIndexes: orderIndexes,
+		pattern: pattern
+	};
+})(window);
+
+;
+
 /* Source: js/services/midi-export-service.js */
 // Servicio puro de exportación MIDI. Convierte progresiones en eventos MIDI y bytes SMF.
 (function (global) {
 	'use strict';
 
+	var arpeggioPatterns = global.CodaProgressionArpeggioPatterns;
 	var defaultTicksPerBeat = 480;
 	var midiMimeType = 'audio/midi';
 	var noteIndexes = {
@@ -8688,21 +8859,25 @@
 		var startTick = Math.max(0, Math.round(measure.startBeat * options.ticksPerBeat) + expressiveDelayTicks(measure, options));
 		var durationTicks = Math.max(1, Math.round(measure.durationBeats * options.ticksPerBeat * articulationFactor(measure.articulation)));
 		var arpeggioStep = isArpeggioArticulation(measure.articulation) ? Math.max(1, Math.round(options.ticksPerBeat / 4)) : 0;
+		var order = isArpeggioArticulation(measure.articulation) ? arpeggioOrderIndexes(notes.length, measure.articulation, measure.bar) : arpeggioPatterns.ascendingIndexes(notes.length);
 		var velocity = expressiveVelocity(measure, options.velocity);
 
-		for (var i = 0; i < notes.length; i++) {
-			if (supportsPedalHold(options.instrument) && isPedalIn(notes[i], measure)) {
+		for (var i = 0; i < order.length; i++) {
+			var noteIndex = Math.max(0, Math.min(notes.length - 1, order[i]));
+			var note = notes[noteIndex];
+
+			if (supportsPedalHold(options.instrument) && isPedalIn(note, measure)) {
 				continue;
 			}
 
 			var noteStart = startTick + (arpeggioStep * i);
-			var noteEnd = Math.max(noteStart + 1, startTick + durationTicks + (supportsPedalHold(options.instrument) ? pedalOutTicks(notes[i], measure, options) : 0));
+			var noteEnd = Math.max(noteStart + 1, startTick + durationTicks + (supportsPedalHold(options.instrument) ? pedalOutTicks(note, measure, options) : 0));
 
 			events.push({
 				bar: measure.bar,
 				channel: options.channel,
 				degree: measure.degree,
-				note: notes[i],
+				note: note,
 				tick: noteStart,
 				type: 'noteOn',
 				velocity: velocity
@@ -8711,7 +8886,7 @@
 				bar: measure.bar,
 				channel: options.channel,
 				degree: measure.degree,
-				note: notes[i],
+				note: note,
 				tick: noteEnd,
 				type: 'noteOff',
 				velocity: 0
@@ -9071,7 +9246,17 @@
 		return String(articulation || '').indexOf('arpeggio') === 0;
 	}
 
+	function arpeggioPattern(articulation) {
+		return arpeggioPatterns.pattern(articulation);
+	}
+
+	function arpeggioOrderIndexes(noteCount, articulation, seed) {
+		return arpeggioPatterns.orderIndexes(noteCount, articulation, seed);
+	}
+
 	global.CodaMidiExport = {
+		arpeggioOrderIndexes: arpeggioOrderIndexes,
+		arpeggioPattern: arpeggioPattern,
 		articulationFactor: articulationFactor,
 		bpmToMicrosecondsPerBeat: bpmToMicrosecondsPerBeat,
 		chordNotesToMidi: chordNotesToMidi,
@@ -9359,6 +9544,8 @@
 (function (global) {
 	'use strict';
 
+	var arpeggioPatterns = global.CodaProgressionArpeggioPatterns;
+
 	function normalizeStartIndex(startIndex, progression) {
 		var measures = progression && progression.measures ? progression.measures : [];
 		var numericIndex = parseInt(startIndex, 10);
@@ -9401,6 +9588,14 @@
 		return Math.max(0.05, Math.min(0.18, duration / 8));
 	}
 
+	function arpeggioPattern(articulation) {
+		return arpeggioPatterns.pattern(articulation);
+	}
+
+	function arpeggioOrderIndexes(noteCount, articulation, seed) {
+		return arpeggioPatterns.orderIndexes(noteCount, articulation, seed);
+	}
+
 	function isArpeggioArticulation(articulation) {
 		return String(articulation || '').indexOf('arpeggio') === 0;
 	}
@@ -9418,6 +9613,8 @@
 	}
 
 	global.CodaProgressionPlaybackTiming = {
+		arpeggioOrderIndexes: arpeggioOrderIndexes,
+		arpeggioPattern: arpeggioPattern,
 		arpeggioStepSeconds: arpeggioStepSeconds,
 		articulationDurationFactor: articulationDurationFactor,
 		isArpeggioArticulation: isArpeggioArticulation,
@@ -9470,6 +9667,11 @@
 
 		if (chordIndex) {
 			event.chordIndex = chordIndex;
+		}
+
+		if (mode === 'arpeggio') {
+			event.arpeggioPattern = timingService.arpeggioPattern(measure.articulation);
+			event.arpeggioOrder = timingService.arpeggioOrderIndexes(midiNotes.length || notes.length, measure.articulation, measure.bar);
 		}
 
 		if (midiNotes.length) {
@@ -9627,6 +9829,14 @@
 			immediateEvent.midiNotes = event.midiNotes;
 		}
 
+		if (event.arpeggioPattern) {
+			immediateEvent.arpeggioPattern = event.arpeggioPattern;
+		}
+
+		if (event.arpeggioOrder && event.arpeggioOrder.length) {
+			immediateEvent.arpeggioOrder = event.arpeggioOrder.slice();
+		}
+
 		if (event.midiNoteEvents && event.midiNoteEvents.length) {
 			immediateEvent.midiNoteEvents = event.midiNoteEvents;
 		}
@@ -9645,6 +9855,8 @@
 // MIDI playback strategies for progression chord and arpeggio events.
 (function (global) {
 	'use strict';
+
+	var arpeggioPatterns = global.CodaProgressionArpeggioPatterns;
 
 	function playMidiChord(playbackService, event) {
 		var options;
@@ -9700,8 +9912,12 @@
 			return playChordFallback(playbackService, event);
 		}
 
-		for (var i = 0; i < midiNotes.length; i++) {
-			playbackService.playMidiNote(midiNotes[i], withVelocity({
+		var order = event.arpeggioOrder && event.arpeggioOrder.length ? event.arpeggioOrder : arpeggioPatterns.orderIndexes(midiNotes.length, event.arpeggioPattern || event.articulation, event.bar);
+
+		for (var i = 0; i < order.length; i++) {
+			var noteIndex = Math.max(0, Math.min(midiNotes.length - 1, order[i]));
+
+			playbackService.playMidiNote(midiNotes[noteIndex], withVelocity({
 				delay: event.delay + (event.arpeggioStep * i),
 				duration: Math.max(0.1, event.duration - (event.arpeggioStep * i))
 			}, event.velocity));
@@ -14154,7 +14370,7 @@
 		html += renderControl('progression.voices', '<input id="progressionVoices" type="number" value="4" min="1" max="6" step="1" />', '#progressionVoices', null, 'progression.help.voices');
 		html += renderControl('progression.voicing', '<select id="progressionVoicing"><option value="closed" selected="selected" data-i18n="progression.voicing.closed"></option><option value="open" data-i18n="progression.voicing.open"></option></select>', '#progressionVoicing', null, 'progression.help.voicing');
 		html += renderControl('progression.style', '<select id="progressionStyle"><option value="modern" selected="selected" data-i18n="progression.style.modern"></option><option value="classic" data-i18n="progression.style.classic"></option></select>', '#progressionStyle', null, 'progression.help.style');
-		html += renderControl('progression.articulation', '<select id="progressionArticulation"><option value="sustain" data-i18n="progression.articulation.sustain"></option><option value="staccato" data-i18n="progression.articulation.staccato"></option><option value="arpeggio" data-i18n="progression.articulation.arpeggio"></option></select>', '#progressionArticulation', null, 'progression.help.articulation');
+		html += renderControl('progression.articulation', renderArticulationSelect(), '#progressionArticulation', null, 'progression.help.articulation');
 		html += '<div class="progressionExpressiveControls" data-articulation-detail hidden>';
 		html += renderKnobControl('progression.intensity', '<input id="progressionIntensity" class="knobControl__input" type="range" value="80" min="1" max="127" step="1" />', '#progressionIntensity', 'progression.help.intensity', '');
 		html += renderKnobControl('progression.humanization', '<input id="progressionHumanization" class="knobControl__input" type="range" value="0" min="0" max="100" step="1" />', '#progressionHumanization', 'progression.help.humanization', '%');
@@ -14176,6 +14392,22 @@
 		html += '</fieldset>';
 
 		return html;
+	}
+
+	function renderArticulationSelect() {
+		return '<select id="progressionArticulation">' +
+			'<option value="sustain" data-i18n="progression.articulation.sustain"></option>' +
+			'<option value="staccato" data-i18n="progression.articulation.staccato"></option>' +
+			'<optgroup data-i18n-label="progression.articulation.arpeggioGroup">' +
+			'<option value="arpeggio_up" data-i18n="progression.articulation.arpeggio.up"></option>' +
+			'<option value="arpeggio_down" data-i18n="progression.articulation.arpeggio.down"></option>' +
+			'<option value="arpeggio_up_down" data-i18n="progression.articulation.arpeggio.upDown"></option>' +
+			'<option value="arpeggio_down_up" data-i18n="progression.articulation.arpeggio.downUp"></option>' +
+			'<option value="arpeggio_alternate" data-i18n="progression.articulation.arpeggio.alternate"></option>' +
+			'<option value="arpeggio_outside_in" data-i18n="progression.articulation.arpeggio.outsideIn"></option>' +
+			'<option value="arpeggio_random" data-i18n="progression.articulation.arpeggio.random"></option>' +
+			'</optgroup>' +
+			'</select>';
 	}
 
 	function renderControl(labelKey, controlHtml, targetSelector, fallbackLabel, helpKey) {
@@ -14206,6 +14438,7 @@
 		renderControl: renderControl,
 		renderKnobControl: renderKnobControl,
 		renderPanels: renderPanels,
+		renderArticulationSelect: renderArticulationSelect,
 		renderTimePanel: renderTimePanel,
 		renderWritingPanel: renderWritingPanel
 	};
@@ -15148,7 +15381,18 @@
 (function (global) {
 	'use strict';
 
-	var allowedArticulations = ['sustain', 'staccato', 'arpeggio'];
+	var allowedArticulations = [
+		'sustain',
+		'staccato',
+		'arpeggio',
+		'arpeggio_up',
+		'arpeggio_down',
+		'arpeggio_up_down',
+		'arpeggio_down_up',
+		'arpeggio_alternate',
+		'arpeggio_outside_in',
+		'arpeggio_random'
+	];
 	var allowedBars = [2, 4, 6, 8, 12, 16, 32];
 	var allowedMeters = ['4/4', '3/4', '6/8'];
 	var allowedStyles = ['modern', 'classic'];
@@ -15472,6 +15716,14 @@
 		setText(i18n, 'option[data-i18n="progression.articulation.sustain"]', 'progression.articulation.sustain');
 		setText(i18n, 'option[data-i18n="progression.articulation.staccato"]', 'progression.articulation.staccato');
 		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio"]', 'progression.articulation.arpeggio');
+		setAttribute(i18n, 'optgroup[data-i18n-label="progression.articulation.arpeggioGroup"]', 'label', 'progression.articulation.arpeggioGroup');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.up"]', 'progression.articulation.arpeggio.up');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.down"]', 'progression.articulation.arpeggio.down');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.upDown"]', 'progression.articulation.arpeggio.upDown');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.downUp"]', 'progression.articulation.arpeggio.downUp');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.alternate"]', 'progression.articulation.arpeggio.alternate');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.outsideIn"]', 'progression.articulation.arpeggio.outsideIn');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.random"]', 'progression.articulation.arpeggio.random');
 		setText(i18n, 'option[data-i18n="progression.voicing.closed"]', 'progression.voicing.closed');
 		setText(i18n, 'option[data-i18n="progression.voicing.open"]', 'progression.voicing.open');
 		setText(i18n, 'option[data-i18n="progression.style.modern"]', 'progression.style.modern');
@@ -18506,11 +18758,11 @@
 				uiState.getReport() &&
 				uiState.getProgressionState()
 			) {
-				setProgression(options.application.generateProgressionFromState({
+				setProgression(markProgressionAsUserEdited(options.application.generateProgressionFromState({
 					data: options.data,
 					progressionState: uiState.getProgressionState(),
 					report: uiState.getReport()
-				}));
+				})));
 			}
 		}
 

@@ -255,6 +255,31 @@ const firstStaccatoOff = staccatoEvents.filter(function (event) {
 })[0];
 assert.equal(firstStaccatoOff.tick, 864);
 
+const arpeggioEvents = midiExport.createProgressionMidiEvents({
+	initialMidiNote: 60,
+	progression: {
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		measures: [
+			{
+				articulation: 'arpeggio_up_down',
+				bar: 1,
+				degree: 'I',
+				durationBeats: 4,
+				midiNotes: [60, 64, 67, 72],
+				startBeat: 0
+			}
+		]
+	}
+});
+const arpeggioNoteOns = arpeggioEvents.filter(function (event) {
+	return event.type === 'noteOn';
+});
+assert.deepEqual(arpeggioNoteOns.map(function (event) { return event.note; }), [60, 64, 67, 72, 67, 64]);
+assert.deepEqual(arpeggioNoteOns.map(function (event) { return event.tick; }), [0, 120, 240, 360, 480, 600]);
+assert.deepEqual(midiExport.arpeggioOrderIndexes(4, 'arpeggio_down_up'), [3, 2, 1, 0, 1, 2]);
+
 const expressiveEvents = midiExport.createProgressionMidiEvents({
 	initialMidiNote: 60,
 	progression: {

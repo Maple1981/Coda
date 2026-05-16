@@ -270,6 +270,7 @@ assert.ok(manifestScripts.indexOf('js/services/progression-section-contrast-serv
 assert.ok(manifestScripts.indexOf('js/services/progression-edit-command-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-chord-menu-option-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-chord-menu-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-arpeggio-pattern-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/midi-export-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-midi-file-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-midi-download-service.js') > -1);
@@ -382,7 +383,7 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	language: 'en',
 	midiInstrument: 'drawbar_organ',
 	notation: 'latin',
-	progressionArticulation: 'arpeggio',
+	progressionArticulation: 'arpeggio_outside_in',
 	progressionBars: '16',
 	progressionBpm: '132',
 	progressionChromaticism: '55',
@@ -407,7 +408,7 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	language: 'en',
 	midiInstrument: 'drawbar_organ',
 	notation: 'latin',
-	progressionArticulation: 'arpeggio',
+	progressionArticulation: 'arpeggio_outside_in',
 	progressionBars: '16',
 	progressionBpm: 132,
 	progressionChromaticism: 55,
@@ -451,7 +452,7 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	volume: 101
 }), {});
 assert.deepEqual(global.CodaProgressionPreferences.fromPreferences({
-	progressionArticulation: 'arpeggio',
+	progressionArticulation: 'arpeggio_alternate',
 	progressionBars: '16',
 	progressionBpm: 132,
 	progressionChromaticism: 55,
@@ -463,7 +464,7 @@ assert.deepEqual(global.CodaProgressionPreferences.fromPreferences({
 	progressionVoicing: 'open',
 	progressionVoices: 5
 }), {
-	articulation: 'arpeggio',
+	articulation: 'arpeggio_alternate',
 	bars: '16',
 	bpm: 132,
 	chromaticism: 55,

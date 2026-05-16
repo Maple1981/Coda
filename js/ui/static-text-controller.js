@@ -138,6 +138,14 @@
 		setText(i18n, 'option[data-i18n="progression.articulation.sustain"]', 'progression.articulation.sustain');
 		setText(i18n, 'option[data-i18n="progression.articulation.staccato"]', 'progression.articulation.staccato');
 		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio"]', 'progression.articulation.arpeggio');
+		setAttribute(i18n, 'optgroup[data-i18n-label="progression.articulation.arpeggioGroup"]', 'label', 'progression.articulation.arpeggioGroup');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.up"]', 'progression.articulation.arpeggio.up');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.down"]', 'progression.articulation.arpeggio.down');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.upDown"]', 'progression.articulation.arpeggio.upDown');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.downUp"]', 'progression.articulation.arpeggio.downUp');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.alternate"]', 'progression.articulation.arpeggio.alternate');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.outsideIn"]', 'progression.articulation.arpeggio.outsideIn');
+		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.random"]', 'progression.articulation.arpeggio.random');
 		setText(i18n, 'option[data-i18n="progression.voicing.closed"]', 'progression.voicing.closed');
 		setText(i18n, 'option[data-i18n="progression.voicing.open"]', 'progression.voicing.open');
 		setText(i18n, 'option[data-i18n="progression.style.modern"]', 'progression.style.modern');

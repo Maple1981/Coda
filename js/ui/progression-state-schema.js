@@ -2,7 +2,18 @@
 (function (global) {
 	'use strict';
 
-	var allowedArticulations = ['sustain', 'staccato', 'arpeggio'];
+	var allowedArticulations = [
+		'sustain',
+		'staccato',
+		'arpeggio',
+		'arpeggio_up',
+		'arpeggio_down',
+		'arpeggio_up_down',
+		'arpeggio_down_up',
+		'arpeggio_alternate',
+		'arpeggio_outside_in',
+		'arpeggio_random'
+	];
 	var allowedBars = [2, 4, 6, 8, 12, 16, 32];
 	var allowedMeters = ['4/4', '3/4', '6/8'];
 	var allowedStyles = ['modern', 'classic'];

@@ -2,6 +2,8 @@
 (function (global) {
 	'use strict';
 
+	var arpeggioPatterns = global.CodaProgressionArpeggioPatterns;
+
 	function playMidiChord(playbackService, event) {
 		var options;
 
@@ -56,8 +58,12 @@
 			return playChordFallback(playbackService, event);
 		}
 
-		for (var i = 0; i < midiNotes.length; i++) {
-			playbackService.playMidiNote(midiNotes[i], withVelocity({
+		var order = event.arpeggioOrder && event.arpeggioOrder.length ? event.arpeggioOrder : arpeggioPatterns.orderIndexes(midiNotes.length, event.arpeggioPattern || event.articulation, event.bar);
+
+		for (var i = 0; i < order.length; i++) {
+			var noteIndex = Math.max(0, Math.min(midiNotes.length - 1, order[i]));
+
+			playbackService.playMidiNote(midiNotes[noteIndex], withVelocity({
 				delay: event.delay + (event.arpeggioStep * i),
 				duration: Math.max(0.1, event.duration - (event.arpeggioStep * i))
 			}, event.velocity));

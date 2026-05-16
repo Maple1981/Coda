@@ -1010,11 +1010,11 @@
 				uiState.getReport() &&
 				uiState.getProgressionState()
 			) {
-				setProgression(options.application.generateProgressionFromState({
+				setProgression(markProgressionAsUserEdited(options.application.generateProgressionFromState({
 					data: options.data,
 					progressionState: uiState.getProgressionState(),
 					report: uiState.getReport()
-				}));
+				})));
 			}
 		}
 

@@ -2,6 +2,8 @@
 (function (global) {
 	'use strict';
 
+	var arpeggioPatterns = global.CodaProgressionArpeggioPatterns;
+
 	function normalizeStartIndex(startIndex, progression) {
 		var measures = progression && progression.measures ? progression.measures : [];
 		var numericIndex = parseInt(startIndex, 10);
@@ -44,6 +46,14 @@
 		return Math.max(0.05, Math.min(0.18, duration / 8));
 	}
 
+	function arpeggioPattern(articulation) {
+		return arpeggioPatterns.pattern(articulation);
+	}
+
+	function arpeggioOrderIndexes(noteCount, articulation, seed) {
+		return arpeggioPatterns.orderIndexes(noteCount, articulation, seed);
+	}
+
 	function isArpeggioArticulation(articulation) {
 		return String(articulation || '').indexOf('arpeggio') === 0;
 	}
@@ -61,6 +71,8 @@
 	}
 
 	global.CodaProgressionPlaybackTiming = {
+		arpeggioOrderIndexes: arpeggioOrderIndexes,
+		arpeggioPattern: arpeggioPattern,
 		arpeggioStepSeconds: arpeggioStepSeconds,
 		articulationDurationFactor: articulationDurationFactor,
 		isArpeggioArticulation: isArpeggioArticulation,

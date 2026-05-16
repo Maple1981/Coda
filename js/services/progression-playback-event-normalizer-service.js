@@ -17,6 +17,14 @@
 			immediateEvent.midiNotes = event.midiNotes;
 		}
 
+		if (event.arpeggioPattern) {
+			immediateEvent.arpeggioPattern = event.arpeggioPattern;
+		}
+
+		if (event.arpeggioOrder && event.arpeggioOrder.length) {
+			immediateEvent.arpeggioOrder = event.arpeggioOrder.slice();
+		}
+
 		if (event.midiNoteEvents && event.midiNoteEvents.length) {
 			immediateEvent.midiNoteEvents = event.midiNoteEvents;
 		}

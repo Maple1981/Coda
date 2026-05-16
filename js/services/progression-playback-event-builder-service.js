@@ -39,6 +39,11 @@
 			event.chordIndex = chordIndex;
 		}
 
+		if (mode === 'arpeggio') {
+			event.arpeggioPattern = timingService.arpeggioPattern(measure.articulation);
+			event.arpeggioOrder = timingService.arpeggioOrderIndexes(midiNotes.length || notes.length, measure.articulation, measure.bar);
+		}
+
 		if (midiNotes.length) {
 			event.midiNotes = midiNotes;
 		}

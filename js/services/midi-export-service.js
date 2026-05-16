@@ -2,6 +2,7 @@
 (function (global) {
 	'use strict';
 
+	var arpeggioPatterns = global.CodaProgressionArpeggioPatterns;
 	var defaultTicksPerBeat = 480;
 	var midiMimeType = 'audio/midi';
 	var noteIndexes = {
@@ -92,21 +93,25 @@
 		var startTick = Math.max(0, Math.round(measure.startBeat * options.ticksPerBeat) + expressiveDelayTicks(measure, options));
 		var durationTicks = Math.max(1, Math.round(measure.durationBeats * options.ticksPerBeat * articulationFactor(measure.articulation)));
 		var arpeggioStep = isArpeggioArticulation(measure.articulation) ? Math.max(1, Math.round(options.ticksPerBeat / 4)) : 0;
+		var order = isArpeggioArticulation(measure.articulation) ? arpeggioOrderIndexes(notes.length, measure.articulation, measure.bar) : arpeggioPatterns.ascendingIndexes(notes.length);
 		var velocity = expressiveVelocity(measure, options.velocity);
 
-		for (var i = 0; i < notes.length; i++) {
-			if (supportsPedalHold(options.instrument) && isPedalIn(notes[i], measure)) {
+		for (var i = 0; i < order.length; i++) {
+			var noteIndex = Math.max(0, Math.min(notes.length - 1, order[i]));
+			var note = notes[noteIndex];
+
+			if (supportsPedalHold(options.instrument) && isPedalIn(note, measure)) {
 				continue;
 			}
 
 			var noteStart = startTick + (arpeggioStep * i);
-			var noteEnd = Math.max(noteStart + 1, startTick + durationTicks + (supportsPedalHold(options.instrument) ? pedalOutTicks(notes[i], measure, options) : 0));
+			var noteEnd = Math.max(noteStart + 1, startTick + durationTicks + (supportsPedalHold(options.instrument) ? pedalOutTicks(note, measure, options) : 0));
 
 			events.push({
 				bar: measure.bar,
 				channel: options.channel,
 				degree: measure.degree,
-				note: notes[i],
+				note: note,
 				tick: noteStart,
 				type: 'noteOn',
 				velocity: velocity
@@ -115,7 +120,7 @@
 				bar: measure.bar,
 				channel: options.channel,
 				degree: measure.degree,
-				note: notes[i],
+				note: note,
 				tick: noteEnd,
 				type: 'noteOff',
 				velocity: 0
@@ -475,7 +480,17 @@
 		return String(articulation || '').indexOf('arpeggio') === 0;
 	}
 
+	function arpeggioPattern(articulation) {
+		return arpeggioPatterns.pattern(articulation);
+	}
+
+	function arpeggioOrderIndexes(noteCount, articulation, seed) {
+		return arpeggioPatterns.orderIndexes(noteCount, articulation, seed);
+	}
+
 	global.CodaMidiExport = {
+		arpeggioOrderIndexes: arpeggioOrderIndexes,
+		arpeggioPattern: arpeggioPattern,
 		articulationFactor: articulationFactor,
 		bpmToMicrosecondsPerBeat: bpmToMicrosecondsPerBeat,
 		chordNotesToMidi: chordNotesToMidi,

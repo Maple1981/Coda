@@ -416,6 +416,26 @@ assert.ok(initialized.uiState.getProgression().sections.some(function (section) 
 }));
 assert.equal(savedWorkspaces[savedWorkspaces.length - 1].progression.measures.length, sectionProgressionLength);
 
+document.getElementById('generateProgression').dispatchEvent({
+	target: document.getElementById('generateProgression'),
+	type: 'click'
+});
+const randomGeneratedProgression = initialized.uiState.getProgression();
+const randomGeneratedDegrees = randomGeneratedProgression.measures.map(function (measure) {
+	return measure.degree;
+});
+assert.equal(randomGeneratedProgression.userEdited, true);
+document.getElementById('progressionIntensity').value = '102';
+document.querySelector('.progressionControls').dispatchEvent({
+	target: document.getElementById('progressionIntensity'),
+	type: 'change'
+});
+assert.equal(initialized.uiState.getProgressionState().intensity, 102);
+assert.equal(initialized.uiState.getProgression().userEdited, true);
+assert.deepEqual(initialized.uiState.getProgression().measures.map(function (measure) {
+	return measure.degree;
+}), randomGeneratedDegrees);
+
 const knobInput = createFakeElement('testKnobInput', '50');
 const knob = createFakeElement('testKnob');
 knobInput.min = '0';
@@ -603,6 +623,7 @@ function createFakeDocument() {
 	addElement('interface');
 	addElement('herramientasTeoricas');
 	addElement('constructorProgresiones');
+	addElement('generateProgression');
 	addElement('generateProgressionSectionB');
 	addElement('progressionControls');
 	addElement('workbenchContext');

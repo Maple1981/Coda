@@ -18,6 +18,7 @@ function runScript(relativePath) {
 
 runScript('js/services/progression-metronome-schedule-service.js');
 runScript('js/services/progression-playback-note-event-service.js');
+runScript('js/services/progression-arpeggio-pattern-service.js');
 runScript('js/services/progression-playback-timing-service.js');
 runScript('js/services/progression-playback-event-builder-service.js');
 runScript('js/services/progression-playback-schedule-service.js');
@@ -51,7 +52,7 @@ const progression = {
 			voices: 3
 		},
 		{
-			articulation: 'arpeggio',
+			articulation: 'arpeggio_down',
 			bar: 3,
 			degree: 'VJ',
 			durationSeconds: 2,
@@ -90,6 +91,11 @@ assert.deepEqual(schedule[1], {
 assert.equal(schedule[2].mode, 'arpeggio');
 assert.equal(schedule[2].duration, 1.8);
 assert.deepEqual(schedule[2].notes, ['G', 'B', 'D', 'F']);
+assert.equal(schedule[2].arpeggioPattern, 'down');
+assert.deepEqual(schedule[2].arpeggioOrder, [3, 2, 1, 0]);
+assert.deepEqual(context.window.CodaProgressionPlaybackTiming.arpeggioOrderIndexes(4, 'arpeggio_up_down'), [0, 1, 2, 3, 2, 1]);
+assert.deepEqual(context.window.CodaProgressionPlaybackTiming.arpeggioOrderIndexes(4, 'arpeggio_alternate'), [0, 2, 1, 3]);
+assert.deepEqual(context.window.CodaProgressionPlaybackTiming.arpeggioOrderIndexes(4, 'arpeggio_outside_in'), [0, 3, 1, 2]);
 
 const splitSchedule = app.buildProgressionPlaybackSchedule({
 	measures: [
@@ -286,6 +292,7 @@ assert.deepEqual(app.notesForVoices(['C', 'E', 'G', 'B'], 6), ['C', 'E', 'G', 'B
 assert.deepEqual(app.notesForVoices(['C', 'E', 'G', 'B', 'D', 'A'], 6), ['C', 'E', 'G', 'B', 'D', 'A']);
 assert.equal(app.articulationDurationFactor('unknown'), 0.95);
 assert.equal(app.articulationDurationFactor('staccato'), 0.45);
+assert.equal(app.articulationDurationFactor('arpeggio_random'), 0.9);
 
 const chordCalls = [];
 const noteCalls = [];
@@ -377,7 +384,7 @@ assert.deepEqual(chordCalls.map(function (call) { return call.options.duration; 
 
 runTimersAt(4000);
 assert.deepEqual(activeBars, [1, 2, 3]);
-assert.deepEqual(noteCalls.map(function (call) { return call.note; }), [60, 61, 62, 63]);
+assert.deepEqual(noteCalls.map(function (call) { return call.note; }), [63, 62, 61, 60]);
 assert.deepEqual(noteCalls.map(function (call) { return call.options.delay; }), [0, 0.18, 0.36, 0.54]);
 
 assert.equal(completed, false);

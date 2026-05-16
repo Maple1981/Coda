@@ -43,7 +43,7 @@ assert.deepEqual(progressionState.defaults, {
 });
 
 assert.deepEqual(progressionState.normalize({
-	articulation: 'arpeggio',
+	articulation: 'arpeggio_down_up',
 	bars: '16',
 	bpm: '128',
 	chromaticism: '80',
@@ -58,7 +58,7 @@ assert.deepEqual(progressionState.normalize({
 	voicing: 'open',
 	voices: '6'
 }), {
-	articulation: 'arpeggio',
+	articulation: 'arpeggio_down_up',
 	bars: 16,
 	beatsPerBar: 6,
 	beatUnit: 8,

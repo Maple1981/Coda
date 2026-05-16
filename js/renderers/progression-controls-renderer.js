@@ -29,7 +29,7 @@
 		html += renderControl('progression.voices', '<input id="progressionVoices" type="number" value="4" min="1" max="6" step="1" />', '#progressionVoices', null, 'progression.help.voices');
 		html += renderControl('progression.voicing', '<select id="progressionVoicing"><option value="closed" selected="selected" data-i18n="progression.voicing.closed"></option><option value="open" data-i18n="progression.voicing.open"></option></select>', '#progressionVoicing', null, 'progression.help.voicing');
 		html += renderControl('progression.style', '<select id="progressionStyle"><option value="modern" selected="selected" data-i18n="progression.style.modern"></option><option value="classic" data-i18n="progression.style.classic"></option></select>', '#progressionStyle', null, 'progression.help.style');
-		html += renderControl('progression.articulation', '<select id="progressionArticulation"><option value="sustain" data-i18n="progression.articulation.sustain"></option><option value="staccato" data-i18n="progression.articulation.staccato"></option><option value="arpeggio" data-i18n="progression.articulation.arpeggio"></option></select>', '#progressionArticulation', null, 'progression.help.articulation');
+		html += renderControl('progression.articulation', renderArticulationSelect(), '#progressionArticulation', null, 'progression.help.articulation');
 		html += '<div class="progressionExpressiveControls" data-articulation-detail hidden>';
 		html += renderKnobControl('progression.intensity', '<input id="progressionIntensity" class="knobControl__input" type="range" value="80" min="1" max="127" step="1" />', '#progressionIntensity', 'progression.help.intensity', '');
 		html += renderKnobControl('progression.humanization', '<input id="progressionHumanization" class="knobControl__input" type="range" value="0" min="0" max="100" step="1" />', '#progressionHumanization', 'progression.help.humanization', '%');
@@ -51,6 +51,22 @@
 		html += '</fieldset>';
 
 		return html;
+	}
+
+	function renderArticulationSelect() {
+		return '<select id="progressionArticulation">' +
+			'<option value="sustain" data-i18n="progression.articulation.sustain"></option>' +
+			'<option value="staccato" data-i18n="progression.articulation.staccato"></option>' +
+			'<optgroup data-i18n-label="progression.articulation.arpeggioGroup">' +
+			'<option value="arpeggio_up" data-i18n="progression.articulation.arpeggio.up"></option>' +
+			'<option value="arpeggio_down" data-i18n="progression.articulation.arpeggio.down"></option>' +
+			'<option value="arpeggio_up_down" data-i18n="progression.articulation.arpeggio.upDown"></option>' +
+			'<option value="arpeggio_down_up" data-i18n="progression.articulation.arpeggio.downUp"></option>' +
+			'<option value="arpeggio_alternate" data-i18n="progression.articulation.arpeggio.alternate"></option>' +
+			'<option value="arpeggio_outside_in" data-i18n="progression.articulation.arpeggio.outsideIn"></option>' +
+			'<option value="arpeggio_random" data-i18n="progression.articulation.arpeggio.random"></option>' +
+			'</optgroup>' +
+			'</select>';
 	}
 
 	function renderControl(labelKey, controlHtml, targetSelector, fallbackLabel, helpKey) {
@@ -81,6 +97,7 @@
 		renderControl: renderControl,
 		renderKnobControl: renderKnobControl,
 		renderPanels: renderPanels,
+		renderArticulationSelect: renderArticulationSelect,
 		renderTimePanel: renderTimePanel,
 		renderWritingPanel: renderWritingPanel
 	};
