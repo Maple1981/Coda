@@ -32,6 +32,7 @@
 				var rebuiltSegment = revoiceSegment(segment, {
 					data: options.data,
 					index: i,
+					preserveInversions: !(options && options.preserveInversions === false),
 					previousPlan: previousPlan,
 					progressionState: progressionState,
 					report: report,
@@ -62,7 +63,7 @@
 		chordPlan = chordPlanService.build({
 			index: context.index,
 			options: {
-				forceInversionIndex: numberOrDefault(segment.inversionIndex, 0),
+				forceInversionIndex: shouldPreserveSegmentInversion(segment, context) ? numberOrDefault(segment.inversionIndex, 0) : null,
 				forceKind: segment.chordKind === 'seventh' ? 'seventh' : 'triad',
 				includeTensions: true,
 				initialMidiNote: context.data && context.data.midi ? context.data.midi.initialMidiNote : 60,
@@ -90,10 +91,22 @@
 		});
 	}
 
+	function shouldPreserveSegmentInversion(segment, context) {
+		return context.preserveInversions ||
+			!!(segment && (segment.cadentialRole || segment.chromaticRole || segment.restorableInversionIndex != null));
+	}
+
 	function resolvedDegreeFromSegment(segment, report) {
 		var resolvedDegree = measureContext.resolvedDegreeFromMeasure(segment, report);
 
 		if (resolvedDegree) {
+			resolvedDegree.cadentialRole = segment.cadentialRole;
+			resolvedDegree.chromaticRole = segment.chromaticRole;
+			resolvedDegree.modalRole = segment.modalRole;
+			resolvedDegree.sourceLabelKey = segment.sourceLabelKey;
+			resolvedDegree.sourceScaleIndex = segment.sourceScaleIndex;
+			resolvedDegree.sourceTonicName = segment.sourceTonicName;
+			resolvedDegree.tonalFunctionOverride = segment.tonalFunction;
 			return resolvedDegree;
 		}
 
@@ -103,6 +116,7 @@
 
 		return {
 			chord: segment.chord,
+			cadentialRole: segment.cadentialRole,
 			chromaticRole: segment.chromaticRole,
 			degree: segment.degree || '',
 			degreeDisplayName: baseDegreeDisplayName(segment),
@@ -153,6 +167,9 @@
 
 	function segmentPlan(segment) {
 		return {
+			inversionIndex: segment.inversionIndex,
+			inversionRunKey: segment.inversionRunKey,
+			inversionRunLength: segment.inversionRunLength,
 			midiNotes: segment.midiNotes || [],
 			notes: segment.notes || [],
 			voiceNotes: segment.voiceNotes || []
@@ -162,15 +179,21 @@
 	function updateMeasureState(measure, state) {
 		var next = measureTimelineService.cloneMeasure(measure);
 
-		next.articulation = state.articulation;
-		next.beatUnit = state.beatUnit;
-		next.beatsPerBar = state.beatsPerBar;
-		next.humanization = state.humanization;
-		next.intensity = state.intensity;
-		next.swing = state.swing;
-		next.voices = state.voices;
+		next.articulation = valueOrExisting(state.articulation, next.articulation);
+		next.beatUnit = valueOrExisting(state.beatUnit, next.beatUnit);
+		next.beatsPerBar = valueOrExisting(state.beatsPerBar, next.beatsPerBar);
+		next.humanization = valueOrExisting(state.humanization, next.humanization);
+		next.intensity = valueOrExisting(state.intensity, next.intensity);
+		next.swing = valueOrExisting(state.swing, next.swing);
+		next.voices = valueOrExisting(state.voices, next.voices);
+		next.pedalsIn = [];
+		next.pedalsOut = [];
 
 		return next;
+	}
+
+	function valueOrExisting(value, existing) {
+		return value == null ? existing : value;
 	}
 
 	function extendObject(target, values) {

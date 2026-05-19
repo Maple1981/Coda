@@ -105,6 +105,7 @@
 
 		if (shouldUseSharedNoteEvents(measure, options.instrument)) {
 			sharedNoteEvents = noteEventService.build(measureWithMidiNotes(measure, notes, options), ticksToSeconds(durationTicks, measure, options), {
+				arpeggioStepSeconds: secondsPerBeatForMeasure(measure) / 4,
 				instrument: options.instrument
 			});
 			appendSharedNoteEvents(events, sharedNoteEvents, measure, options, startTick, velocity);
@@ -147,6 +148,7 @@
 
 	function shouldUseSharedNoteEvents(measure, instrument) {
 		return measure.articulation === 'staccato' ||
+			isArpeggioArticulation(measure.articulation) ||
 			(hasPedals(measure) && supportsPedalHold(instrument)) ||
 			(!isArpeggioArticulation(measure.articulation) && measure.passingNotes && measure.passingNotes.length);
 	}

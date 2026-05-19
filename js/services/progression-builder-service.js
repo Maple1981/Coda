@@ -6,6 +6,7 @@
 	var harmonicDensityService = global.CodaProgressionHarmonicDensity;
 	var measureBuilderService = global.CodaProgressionMeasureBuilder;
 	var plannerService = global.CodaProgressionPlanner;
+	var revoiceService = global.CodaProgressionRevoice;
 	var resultService = global.CodaProgressionResult;
 	var stateNormalizer = global.CodaProgressionStateNormalizer;
 
@@ -34,11 +35,11 @@
 			scaleNotes: options.report.scaleNotes
 		});
 
-		return resultService.build({
+		return finalizeProgression(resultService.build({
 			measures: applyHarmonicDensity(measures, progressionState, secondsPerBeat, options, rng),
 			progressionState: progressionState,
 			secondsPerBeat: secondsPerBeat
-		});
+		}), progressionState, options);
 	}
 
 	function generate(options) {
@@ -66,12 +67,12 @@
 			scaleNotes: options.report.scaleNotes
 		});
 
-		return resultService.build({
+		return finalizeProgression(resultService.build({
 			generationPlan: generationPlan,
 			measures: applyHarmonicDensity(measures, progressionState, secondsPerBeat, options, rng),
 			progressionState: progressionState,
 			secondsPerBeat: secondsPerBeat
-		});
+		}), progressionState, options);
 	}
 
 	function applyHarmonicDensity(measures, progressionState, secondsPerBeat, options, rng) {
@@ -84,8 +85,32 @@
 		});
 	}
 
+	function finalizeProgression(progression, progressionState, options) {
+		if (hasSplitMeasures(progression.measures) && revoiceService && typeof revoiceService.apply === 'function') {
+			progression.measures = revoiceService.apply(progression, {
+				data: options.data,
+				preserveInversions: false,
+				progressionState: progressionState,
+				report: options.report
+			});
+		}
+
+		return progression;
+	}
+
+	function hasSplitMeasures(measures) {
+		for (var i = 0; i < (measures || []).length; i++) {
+			if (measures[i].chords && measures[i].chords.length) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	global.CodaProgressionBuilder = {
 		applyHarmonicDensity: applyHarmonicDensity,
+		finalizeProgression: finalizeProgression,
 		fromDegrees: fromDegrees,
 		fromState: fromState,
 		generate: generate

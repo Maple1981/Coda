@@ -14,6 +14,7 @@
 			articulation: measure.articulation,
 			bar: measure.bar,
 			beatUnit: measure.beatUnit,
+			beatsPerBar: measure.beatsPerBar,
 			chord: resolvedDegree.chord,
 			chordIndex: timing.chordIndex,
 			chordKind: chordPlan.kind,
@@ -27,16 +28,26 @@
 			endSeconds: timing.startSeconds + timing.durationSeconds,
 			inversion: chordPlan.inversionLabel,
 			inversionIndex: chordPlan.inversionIndex,
+			humanization: measure.humanization,
+			intensity: measure.intensity,
 			midiNotes: chordPlan.midiNotes,
 			notes: chordPlan.notes,
 			source: resolvedDegree.source || 'diatonic',
 			startBeat: timing.startBeat,
 			startSeconds: timing.startSeconds,
+			swing: measure.swing,
 			suspension: chordPlan.suspension,
-			tonalFunction: tonalFunctionForDegree(chordSelection.reportScaleDefinition, resolvedDegree.degreeIndex),
+			tonalFunction: resolvedDegree.tonalFunctionOverride || tonalFunctionForDegree(chordSelection.reportScaleDefinition, resolvedDegree.degreeIndex),
 			voiceNotes: chordPlan.voiceNotes,
 			voices: measure.voices
 		};
+
+		setInternalValue(segment, 'inversionRunKey', chordPlan.inversionRunKey);
+		setInternalValue(segment, 'inversionRunLength', chordPlan.inversionRunLength);
+
+		if (resolvedDegree.cadentialRole) {
+			segment.cadentialRole = resolvedDegree.cadentialRole;
+		}
 
 		if (resolvedDegree.chromaticRole) {
 			segment.chromaticRole = resolvedDegree.chromaticRole;
@@ -113,6 +124,24 @@
 
 	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
 		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
+	}
+
+	function setInternalValue(target, key, value) {
+		if (!target || value == null) {
+			return;
+		}
+
+		if (typeof Object.defineProperty === 'function') {
+			Object.defineProperty(target, key, {
+				configurable: true,
+				enumerable: false,
+				value: value,
+				writable: true
+			});
+			return;
+		}
+
+		target[key] = value;
 	}
 
 	global.CodaProgressionSegmentBuilder = {

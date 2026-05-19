@@ -7,6 +7,10 @@
 		var events = [];
 		var melodicEvents = passingNoteEvents(measure);
 
+		if (isArpeggioArticulation(measure && measure.articulation)) {
+			return arpeggioNoteEvents(midiNotes, measure, duration, options).concat(melodicEvents);
+		}
+
 		if (measure && measure.articulation === 'staccato') {
 			return staccatoNoteEvents(midiNotes, measure).concat(melodicEvents);
 		}
@@ -44,6 +48,26 @@
 					midiNote: midiNotes[noteIndex]
 				});
 			}
+		}
+
+		return events;
+	}
+
+	function arpeggioNoteEvents(midiNotes, measure, duration, options) {
+		var step = arpeggioStepSeconds(measure, duration, options);
+		var order = arpeggioPatternService().orderIndexes(midiNotes.length, measure.articulation, measure.bar);
+		var events = [];
+
+		for (var i = 0; i < order.length; i++) {
+			var noteIndex = Math.max(0, Math.min(midiNotes.length - 1, order[i]));
+			var delay = step * i;
+
+			events.push({
+				delay: delay,
+				duration: Math.max(0.1, duration - delay),
+				kind: 'arpeggio',
+				midiNote: midiNotes[noteIndex]
+			});
 		}
 
 		return events;
@@ -100,6 +124,36 @@
 		return instrument && (instrument.supportsPedalHold === true || instrument.sustained === true || instrument.pedalBehavior === 'sustain');
 	}
 
+	function arpeggioStepSeconds(measure, duration, options) {
+		var configuredStep = Number(options && options.arpeggioStepSeconds);
+
+		if (isFinite(configuredStep) && configuredStep > 0) {
+			return configuredStep;
+		}
+
+		return Math.max(0.05, Math.min(0.18, (Number(measure && measure.durationSeconds) || duration || 0) / 8));
+	}
+
+	function isArpeggioArticulation(articulation) {
+		return String(articulation || '').indexOf('arpeggio') === 0;
+	}
+
+	function arpeggioPatternService() {
+		return global.CodaProgressionArpeggioPatterns || {
+			orderIndexes: ascendingIndexes
+		};
+	}
+
+	function ascendingIndexes(count) {
+		var indexes = [];
+
+		for (var i = 0; i < count; i++) {
+			indexes.push(i);
+		}
+
+		return indexes;
+	}
+
 	function isPedalIn(midiNote, measure) {
 		var pedals = measure.pedalsIn || [];
 
@@ -132,8 +186,11 @@
 	}
 
 	global.CodaProgressionPlaybackNoteEvents = {
+		arpeggioNoteEvents: arpeggioNoteEvents,
+		arpeggioStepSeconds: arpeggioStepSeconds,
 		build: build,
 		chordNoteEvents: chordNoteEvents,
+		isArpeggioArticulation: isArpeggioArticulation,
 		passingNoteEvents: passingNoteEvents,
 		pulseCountForMeasure: pulseCountForMeasure,
 		supportsPedalHold: supportsPedalHold

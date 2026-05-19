@@ -142,6 +142,8 @@ La exportación MIDI debe reflejar el estado editado, no solo el plan original: 
 
 Las articulaciones y eventos breves compartidos por preescucha y MIDI, como `staccato`, notas de paso y pedales, se construyen desde el mismo servicio de eventos de nota. Así se evita que una articulación suene de una forma en el navegador y se exporte con otra duración o distribución rítmica en el archivo MIDI.
 
+Los arpegios también se construyen como eventos de nota compartidos. La preescucha y la exportación MIDI usan el mismo orden de patrón; la exportación conserva un paso rítmico fijo en ticks para mantener compatibilidad con DAWs, mientras que la preescucha convierte ese patrón a segundos según la duración real del compás o segmento.
+
 ## Pedales, suspensiones y paralelas
 
 El algoritmo valora positivamente las progresiones que enlazan acordes con notas comunes. Cuando dos acordes consecutivos comparten una o dos notas y el nivel de contrapunto lo favorece, esas notas pueden marcarse como pedales.

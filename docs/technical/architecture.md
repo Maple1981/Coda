@@ -46,6 +46,10 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/services/progression-workspace-service.js`: contrato versionado del workspace persistido de progresiones. Construye, valida y firma el estado que puede guardarse localmente.
 - `js/services/progression-workspace-storage-service.js`: persistencia local del trabajo actual del constructor de progresiones mediante `localStorage`, incluyendo secciones, acordes añadidos, reordenaciones y controles asociados.
 - `js/services/progression-edit-command-service.js`: despachador común de comandos de edición de progresiones: añadir, quitar, reordenar, reemplazar acordes y generar sección B.
+- `js/services/progression-section-document-service.js`: operaciones estructurales de secciones, como localizar, clonar, anexar y anotar medidas por sección.
+- `js/services/progression-section-variation-service.js`: creación de secciones derivadas con pequeñas variaciones garantizando al menos un cambio cuando procede.
+- `js/services/progression-section-candidate-service.js`: elección de contextos tonales contrastantes para nuevas secciones.
+- `js/services/progression-section-contrast-service.js`: orquestador de alto nivel para secciones clonadas, variantes y contrastantes.
 - `js/services/midi-export-service.js`: conversión de progresiones a eventos MIDI y bytes de archivo Standard MIDI File sin depender del DOM.
 - `js/services/progression-playback-note-event-service.js`: eventos de nota compartidos por playback y exportación MIDI para staccato, notas de paso y pedales, evitando divergencias entre preescucha y archivo exportado.
 - `js/application/scale-report-application.js`: construye informes de escala e instrumentos.
@@ -95,6 +99,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - El estado de progresiones debe leerse desde `CodaProgressionState` y guardarse en `CodaUiState`; los casos de uso posteriores deben recibir ese objeto normalizado, no leer directamente controles de formulario.
 - La progresión editable debe tratarse como un documento versionado mediante `CodaProgressionDocument`. Las operaciones de edición deben devolver documentos marcados como trabajo de usuario para que undo/redo, persistencia y renderizado tengan un contrato estable.
 - Las ediciones de progresión deben pasar por `CodaProgressionEditCommands` o por casos de uso de aplicación que lo utilicen. Evitar que la UI marque o reconstruya manualmente operaciones como añadir, quitar, reordenar o reemplazar acordes.
+- La lógica de secciones debe mantenerse separada por responsabilidad: documento de secciones, variaciones, candidatos tonales y orquestación. Evitar que `progression-section-contrast-service.js` vuelva a acumular clonación, reindexado, variación y búsqueda tonal en un único archivo.
 - Las reglas de validación y valores permitidos del estado de progresiones deben vivir en `CodaProgressionStateSchema`; si se añade un control nuevo al constructor, debe actualizarse ese esquema, la cookie funcional y las traducciones de interfaz.
 - El transporte de progresiones debe componerse mediante servicios pequeños: botones, clicks de compases, eventos de documento, drag and drop, acciones, playback y menú contextual. `js/ui/progression-transport-controller.js` debe limitarse a inicializar y cablear esas piezas.
 - La reproducción de progresiones debe mantener separadas la agenda musical, la normalización de eventos, las estrategias MIDI/arpegio y el runner de una ejecución. El caso de uso `createProgressionPlayback` no debe acumular nuevas reglas de secuenciación internas.
@@ -123,4 +128,5 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - Las reglas de eventos de nota que afecten tanto a preescucha como a exportación MIDI deben vivir en un servicio compartido. Evitar duplicar staccato, notas de paso, pedales o articulaciones especiales en `midi-export-service.js` y en los servicios de playback por separado.
 - El orden de carga de módulos debe mantenerse en `js/bootstrap/script-manifest.js` y verificarse con `tests/architecture-tests.js`.
 - Las pruebas que cargan pilas largas de scripts deben usar `tests/helpers/script-loader.js` para leer rangos desde el manifest, evitando listas manuales que se desincronicen al añadir módulos.
+- Las invariantes musicales recurrentes deben tener cobertura multi-semilla en la capa de aplicación: límite de rachas de inversión, ausencia de sufijos duplicados, duración completa del acorde final, reparto por pulsos en compases divididos y centrado registral aproximado.
 - Si una mejora requiere servidor, cuentas de usuario, sincronización externa o almacenamiento persistente, debe tratarse como cambio de alcance.

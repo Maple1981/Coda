@@ -5396,6 +5396,7 @@
 			articulation: measure.articulation,
 			bar: measure.bar,
 			beatUnit: measure.beatUnit,
+			beatsPerBar: measure.beatsPerBar,
 			chord: resolvedDegree.chord,
 			chordIndex: timing.chordIndex,
 			chordKind: chordPlan.kind,
@@ -5409,16 +5410,26 @@
 			endSeconds: timing.startSeconds + timing.durationSeconds,
 			inversion: chordPlan.inversionLabel,
 			inversionIndex: chordPlan.inversionIndex,
+			humanization: measure.humanization,
+			intensity: measure.intensity,
 			midiNotes: chordPlan.midiNotes,
 			notes: chordPlan.notes,
 			source: resolvedDegree.source || 'diatonic',
 			startBeat: timing.startBeat,
 			startSeconds: timing.startSeconds,
+			swing: measure.swing,
 			suspension: chordPlan.suspension,
-			tonalFunction: tonalFunctionForDegree(chordSelection.reportScaleDefinition, resolvedDegree.degreeIndex),
+			tonalFunction: resolvedDegree.tonalFunctionOverride || tonalFunctionForDegree(chordSelection.reportScaleDefinition, resolvedDegree.degreeIndex),
 			voiceNotes: chordPlan.voiceNotes,
 			voices: measure.voices
 		};
+
+		setInternalValue(segment, 'inversionRunKey', chordPlan.inversionRunKey);
+		setInternalValue(segment, 'inversionRunLength', chordPlan.inversionRunLength);
+
+		if (resolvedDegree.cadentialRole) {
+			segment.cadentialRole = resolvedDegree.cadentialRole;
+		}
 
 		if (resolvedDegree.chromaticRole) {
 			segment.chromaticRole = resolvedDegree.chromaticRole;
@@ -5495,6 +5506,24 @@
 
 	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
 		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
+	}
+
+	function setInternalValue(target, key, value) {
+		if (!target || value == null) {
+			return;
+		}
+
+		if (typeof Object.defineProperty === 'function') {
+			Object.defineProperty(target, key, {
+				configurable: true,
+				enumerable: false,
+				value: value,
+				writable: true
+			});
+			return;
+		}
+
+		target[key] = value;
 	}
 
 	global.CodaProgressionSegmentBuilder = {
@@ -6620,6 +6649,7 @@
 				var rebuiltSegment = revoiceSegment(segment, {
 					data: options.data,
 					index: i,
+					preserveInversions: !(options && options.preserveInversions === false),
 					previousPlan: previousPlan,
 					progressionState: progressionState,
 					report: report,
@@ -6650,7 +6680,7 @@
 		chordPlan = chordPlanService.build({
 			index: context.index,
 			options: {
-				forceInversionIndex: numberOrDefault(segment.inversionIndex, 0),
+				forceInversionIndex: shouldPreserveSegmentInversion(segment, context) ? numberOrDefault(segment.inversionIndex, 0) : null,
 				forceKind: segment.chordKind === 'seventh' ? 'seventh' : 'triad',
 				includeTensions: true,
 				initialMidiNote: context.data && context.data.midi ? context.data.midi.initialMidiNote : 60,
@@ -6678,10 +6708,22 @@
 		});
 	}
 
+	function shouldPreserveSegmentInversion(segment, context) {
+		return context.preserveInversions ||
+			!!(segment && (segment.cadentialRole || segment.chromaticRole || segment.restorableInversionIndex != null));
+	}
+
 	function resolvedDegreeFromSegment(segment, report) {
 		var resolvedDegree = measureContext.resolvedDegreeFromMeasure(segment, report);
 
 		if (resolvedDegree) {
+			resolvedDegree.cadentialRole = segment.cadentialRole;
+			resolvedDegree.chromaticRole = segment.chromaticRole;
+			resolvedDegree.modalRole = segment.modalRole;
+			resolvedDegree.sourceLabelKey = segment.sourceLabelKey;
+			resolvedDegree.sourceScaleIndex = segment.sourceScaleIndex;
+			resolvedDegree.sourceTonicName = segment.sourceTonicName;
+			resolvedDegree.tonalFunctionOverride = segment.tonalFunction;
 			return resolvedDegree;
 		}
 
@@ -6691,6 +6733,7 @@
 
 		return {
 			chord: segment.chord,
+			cadentialRole: segment.cadentialRole,
 			chromaticRole: segment.chromaticRole,
 			degree: segment.degree || '',
 			degreeDisplayName: baseDegreeDisplayName(segment),
@@ -6741,6 +6784,9 @@
 
 	function segmentPlan(segment) {
 		return {
+			inversionIndex: segment.inversionIndex,
+			inversionRunKey: segment.inversionRunKey,
+			inversionRunLength: segment.inversionRunLength,
 			midiNotes: segment.midiNotes || [],
 			notes: segment.notes || [],
 			voiceNotes: segment.voiceNotes || []
@@ -6750,15 +6796,21 @@
 	function updateMeasureState(measure, state) {
 		var next = measureTimelineService.cloneMeasure(measure);
 
-		next.articulation = state.articulation;
-		next.beatUnit = state.beatUnit;
-		next.beatsPerBar = state.beatsPerBar;
-		next.humanization = state.humanization;
-		next.intensity = state.intensity;
-		next.swing = state.swing;
-		next.voices = state.voices;
+		next.articulation = valueOrExisting(state.articulation, next.articulation);
+		next.beatUnit = valueOrExisting(state.beatUnit, next.beatUnit);
+		next.beatsPerBar = valueOrExisting(state.beatsPerBar, next.beatsPerBar);
+		next.humanization = valueOrExisting(state.humanization, next.humanization);
+		next.intensity = valueOrExisting(state.intensity, next.intensity);
+		next.swing = valueOrExisting(state.swing, next.swing);
+		next.voices = valueOrExisting(state.voices, next.voices);
+		next.pedalsIn = [];
+		next.pedalsOut = [];
 
 		return next;
+	}
+
+	function valueOrExisting(value, existing) {
+		return value == null ? existing : value;
 	}
 
 	function extendObject(target, values) {
@@ -8895,6 +8947,7 @@
 	var harmonicDensityService = global.CodaProgressionHarmonicDensity;
 	var measureBuilderService = global.CodaProgressionMeasureBuilder;
 	var plannerService = global.CodaProgressionPlanner;
+	var revoiceService = global.CodaProgressionRevoice;
 	var resultService = global.CodaProgressionResult;
 	var stateNormalizer = global.CodaProgressionStateNormalizer;
 
@@ -8923,11 +8976,11 @@
 			scaleNotes: options.report.scaleNotes
 		});
 
-		return resultService.build({
+		return finalizeProgression(resultService.build({
 			measures: applyHarmonicDensity(measures, progressionState, secondsPerBeat, options, rng),
 			progressionState: progressionState,
 			secondsPerBeat: secondsPerBeat
-		});
+		}), progressionState, options);
 	}
 
 	function generate(options) {
@@ -8955,12 +9008,12 @@
 			scaleNotes: options.report.scaleNotes
 		});
 
-		return resultService.build({
+		return finalizeProgression(resultService.build({
 			generationPlan: generationPlan,
 			measures: applyHarmonicDensity(measures, progressionState, secondsPerBeat, options, rng),
 			progressionState: progressionState,
 			secondsPerBeat: secondsPerBeat
-		});
+		}), progressionState, options);
 	}
 
 	function applyHarmonicDensity(measures, progressionState, secondsPerBeat, options, rng) {
@@ -8973,8 +9026,32 @@
 		});
 	}
 
+	function finalizeProgression(progression, progressionState, options) {
+		if (hasSplitMeasures(progression.measures) && revoiceService && typeof revoiceService.apply === 'function') {
+			progression.measures = revoiceService.apply(progression, {
+				data: options.data,
+				preserveInversions: false,
+				progressionState: progressionState,
+				report: options.report
+			});
+		}
+
+		return progression;
+	}
+
+	function hasSplitMeasures(measures) {
+		for (var i = 0; i < (measures || []).length; i++) {
+			if (measures[i].chords && measures[i].chords.length) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	global.CodaProgressionBuilder = {
 		applyHarmonicDensity: applyHarmonicDensity,
+		finalizeProgression: finalizeProgression,
 		fromDegrees: fromDegrees,
 		fromState: fromState,
 		generate: generate
@@ -8987,201 +9064,12 @@
 
 ;
 
-/* Source: js/services/progression-section-contrast-service.js */
-// Builds a contrasting B section while preserving the A section timeline.
+/* Source: js/services/progression-section-document-service.js */
+// Shared helpers for section metadata and measure slicing.
 (function (global) {
 	'use strict';
 
 	var cloneService = global.CodaProgressionMeasureClone;
-
-	function generate(options, dependencies) {
-		var progression = options.progression || {};
-		var progressionState = cloneObject(options.progressionState || {});
-		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
-		var sectionAMeasures = measuresForSectionA(progression, progressionState);
-		options.buildScaleReport = dependencies.buildScaleReport;
-		var candidate = chooseContrastCandidate(options, rng);
-		var targetReport = candidate.report || options.report;
-		var sectionState = cloneObject(progressionState);
-		var sectionB;
-		var combined;
-		var rebuilt;
-
-		sectionState.bars = sectionAMeasures.length || progressionState.bars || 8;
-		sectionB = dependencies.generateProgressionFromState({
-			data: options.data,
-			domain: options.domain,
-			openingFunction: candidate.openingFunction,
-			progressionState: sectionState,
-			report: targetReport,
-			rng: rng
-		});
-
-		combined = cloneMeasures(sectionAMeasures).concat(cloneMeasures(sectionB.measures || []));
-		rebuilt = dependencies.rebuildProgressionTimeline(progression, combined);
-		rebuilt.sections = [
-			{
-				id: 'A',
-				labelKey: 'progression.sectionA',
-				length: sectionAMeasures.length,
-				startIndex: 0
-			},
-			{
-				circleOfFifths: targetReport.circleOfFifths || null,
-				contrast: candidate.id,
-				contextLabel: candidate.label,
-				contextScaleIndex: targetReport.scaleIndex,
-				contextScaleName: targetReport.scaleName,
-				contextTonicName: targetReport.tonicName,
-				id: 'B',
-				labelKey: 'progression.sectionB',
-				length: sectionB.measures ? sectionB.measures.length : 0,
-				state: cloneObject(sectionState),
-				startIndex: sectionAMeasures.length
-			}
-		];
-		annotateSectionMeasures(rebuilt.measures, rebuilt.sections);
-		rebuilt.sectionContrast = candidate.id;
-
-		return rebuilt;
-	}
-
-	function generateSection(options, dependencies) {
-		var sectionType;
-
-		options = options || {};
-		sectionType = normalizedSectionType(options.sectionType);
-		options.buildScaleReport = dependencies.buildScaleReport;
-
-		if (sectionType === 'aprimeClone') {
-			return generateDerivativeSection(options, dependencies, 'A', 'A\'', false);
-		}
-
-		if (sectionType === 'aprimeVariation') {
-			return generateDerivativeSection(options, dependencies, 'A', 'A\'', true);
-		}
-
-		if (sectionType === 'bprimeClone') {
-			return generateDerivativeSection(options, dependencies, 'B', 'B\'', false);
-		}
-
-		if (sectionType === 'bprimeVariation') {
-			return generateDerivativeSection(options, dependencies, 'B', 'B\'', true);
-		}
-
-		if (sectionType === 'contrast') {
-			return generateContrastSection(options, dependencies, findSection(options.progression, 'B') ? 'C' : 'B');
-		}
-
-		return generateContrastSection(options, dependencies, 'B');
-	}
-
-	function generateAprimeSection(options, dependencies) {
-		return generateDerivativeSection(options, dependencies, 'A', 'A\'', true);
-	}
-
-	function generateCSection(options, dependencies) {
-		return generateContrastSection(options, dependencies, 'C');
-	}
-
-	function generateContrastSection(options, dependencies, targetId) {
-		var progression = options.progression || {};
-		var progressionState = cloneObject(options.progressionState || {});
-		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
-		var referenceMeasures = targetId === 'B' ? measuresForSection(progression, 'A', progressionState) : measuresForLastSection(progression, progressionState);
-		var sectionState = cloneObject(progressionState);
-		var candidate;
-		var targetReport;
-		var sectionProgression;
-
-		if (findSection(progression, targetId)) {
-			return progression;
-		}
-
-		options.buildScaleReport = dependencies.buildScaleReport;
-		sectionState.bars = referenceMeasures.length || progressionState.bars || 8;
-		candidate = chooseContrastCandidateExcluding(options, rng, existingSectionContexts(progression, options.report));
-		targetReport = candidate.report || options.report;
-		sectionProgression = dependencies.generateProgressionFromState({
-			data: options.data,
-			domain: options.domain,
-			openingFunction: candidate.openingFunction,
-			progressionState: sectionState,
-			report: targetReport,
-			rng: rng
-		});
-
-		return appendSection(progression, sectionProgression.measures || [], {
-			circleOfFifths: targetReport.circleOfFifths || null,
-			contrast: candidate.id,
-			contextLabel: candidate.label,
-			contextScaleIndex: targetReport.scaleIndex,
-			contextScaleName: targetReport.scaleName,
-			contextTonicName: targetReport.tonicName,
-			id: targetId,
-			labelKey: sectionLabelKey(targetId),
-			state: cloneObject(sectionState)
-		}, dependencies);
-	}
-
-	function generateDerivativeSection(options, dependencies, sourceId, targetId, shouldVary) {
-		var progression = options.progression || {};
-		var progressionState = cloneObject(options.progressionState || {});
-		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
-		var sourceSection = findSection(progression, sourceId);
-		var sourceMeasures = measuresForSection(progression, sourceId, progressionState);
-		var sourceReport = reportForSection(sourceSection, options) || options.report;
-		var sectionState = sectionStateForSource(sourceSection, progressionState, sourceMeasures);
-		var sectionMeasures = cloneMeasures(sourceMeasures);
-		var generated;
-
-		if (findSection(progression, targetId) || !sourceMeasures.length) {
-			return progression;
-		}
-
-		if (shouldVary) {
-			generated = dependencies.generateProgressionFromState({
-				data: options.data,
-				domain: options.domain,
-				progressionState: sectionState,
-				report: sourceReport,
-				rng: rng
-			});
-			sectionMeasures = createVariationMeasures(sourceMeasures, generated.measures || [], rng);
-		}
-
-		return appendSection(progression, sectionMeasures, extendObject(sectionMetadataFromReport(sourceReport), {
-			id: targetId,
-			labelKey: sectionLabelKey(targetId),
-			state: cloneObject(sectionState),
-			variationKind: shouldVary ? 'small' : 'clone',
-			variationOf: sourceId
-		}), dependencies);
-	}
-
-	function normalizedSectionType(value) {
-		if (value === 'ap' || value === 'A\'' || value === 'aprimeVariation') {
-			return 'aprimeVariation';
-		}
-
-		if (value === 'aprimeClone') {
-			return 'aprimeClone';
-		}
-
-		if (value === 'bprimeClone') {
-			return 'bprimeClone';
-		}
-
-		if (value === 'bprimeVariation') {
-			return 'bprimeVariation';
-		}
-
-		if (value === 'C' || value === 'c' || value === 'contrast') {
-			return 'contrast';
-		}
-
-		return 'contrast';
-	}
 
 	function measuresForSectionA(progression, progressionState) {
 		return measuresForSection(progression, 'A', progressionState);
@@ -9190,7 +9078,7 @@
 	function measuresForSection(progression, id, progressionState) {
 		var measures = progression && progression.measures ? progression.measures : [];
 		var section = findSection(progression, id);
-		var length = section ? section.length : Number(progressionState.bars) || measures.length;
+		var length = section ? section.length : Number(progressionState && progressionState.bars) || measures.length;
 		var startIndex = section ? section.startIndex : 0;
 
 		return measures.slice(startIndex, startIndex + Math.min(length, measures.length));
@@ -9205,6 +9093,286 @@
 
 		return measuresForSectionA(progression, progressionState);
 	}
+
+	function appendSection(progression, sectionMeasures, sectionMetadata, dependencies) {
+		var previousSections = normalizedSections(progression);
+		var combined = cloneMeasures(progression && progression.measures ? progression.measures : []).concat(cloneMeasures(sectionMeasures || []));
+		var rebuilt = dependencies.rebuildProgressionTimeline(progression, combined);
+		var startIndex = combined.length - (sectionMeasures ? sectionMeasures.length : 0);
+
+		rebuilt.sections = previousSections.concat([extendObject(sectionMetadata, {
+			length: sectionMeasures ? sectionMeasures.length : 0,
+			startIndex: startIndex
+		})]);
+		annotateSectionMeasures(rebuilt.measures, rebuilt.sections);
+
+		return rebuilt;
+	}
+
+	function normalizedSections(progression) {
+		var sections = progression && progression.sections ? progression.sections : [];
+		var result = [];
+
+		if (!sections.length && progression && progression.measures && progression.measures.length) {
+			return [{
+				id: 'A',
+				labelKey: 'progression.sectionA',
+				length: progression.measures.length,
+				startIndex: 0
+			}];
+		}
+
+		for (var i = 0; i < sections.length; i++) {
+			result.push(cloneSection(sections[i]));
+		}
+
+		return result;
+	}
+
+	function annotateSectionMeasures(measures, sections) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			var section = sections[i];
+
+			for (var j = section.startIndex; j < section.startIndex + section.length && j < measures.length; j++) {
+				measures[j].sectionId = section.id;
+				measures[j].sectionLabelKey = section.labelKey;
+			}
+		}
+	}
+
+	function findSection(progression, id) {
+		var sections = progression && progression.sections ? progression.sections : [];
+
+		for (var i = 0; i < sections.length; i++) {
+			if (sections[i].id === id) {
+				return sections[i];
+			}
+		}
+
+		return null;
+	}
+
+	function sectionLabelKey(sectionId) {
+		if (sectionId === 'A\'') {
+			return 'progression.sectionAprime';
+		}
+
+		if (sectionId === 'B') {
+			return 'progression.sectionB';
+		}
+
+		if (sectionId === 'B\'') {
+			return 'progression.sectionBprime';
+		}
+
+		if (sectionId === 'C') {
+			return 'progression.sectionC';
+		}
+
+		return 'progression.sectionA';
+	}
+
+	function sectionStateForSource(section, progressionState, sourceMeasures) {
+		var state = cloneObject(section && section.state ? section.state : progressionState);
+
+		state.bars = sourceMeasures.length || state.bars || (progressionState && progressionState.bars) || 8;
+
+		return state;
+	}
+
+	function sectionMetadataFromReport(report) {
+		return {
+			circleOfFifths: report && report.circleOfFifths ? report.circleOfFifths : null,
+			contextLabel: contextLabelFromReport(report),
+			contextScaleIndex: report ? report.scaleIndex : null,
+			contextScaleName: report ? report.scaleName : '',
+			contextTonicName: report ? report.tonicName : ''
+		};
+	}
+
+	function contextLabelFromReport(report) {
+		return report && report.tonicName && report.scaleName ? report.tonicName + ' ' + report.scaleName : '';
+	}
+
+	function cloneMeasures(measures) {
+		var result = [];
+
+		for (var i = 0; i < (measures || []).length; i++) {
+			result.push(cloneService.cloneMeasure(measures[i]));
+		}
+
+		return result;
+	}
+
+	function cloneSection(section) {
+		var result = {};
+
+		for (var key in section || {}) {
+			if (Object.prototype.hasOwnProperty.call(section, key)) {
+				result[key] = key === 'state' ? cloneObject(section[key]) : section[key];
+			}
+		}
+
+		return result;
+	}
+
+	function cloneObject(value) {
+		var result = {};
+
+		for (var key in value || {}) {
+			if (Object.prototype.hasOwnProperty.call(value, key)) {
+				result[key] = value[key];
+			}
+		}
+
+		return result;
+	}
+
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target || {}) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values || {}) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
+	global.CodaProgressionSectionDocument = {
+		annotateSectionMeasures: annotateSectionMeasures,
+		appendSection: appendSection,
+		cloneMeasures: cloneMeasures,
+		contextLabelFromReport: contextLabelFromReport,
+		findSection: findSection,
+		measuresForLastSection: measuresForLastSection,
+		measuresForSection: measuresForSection,
+		measuresForSectionA: measuresForSectionA,
+		normalizedSections: normalizedSections,
+		sectionLabelKey: sectionLabelKey,
+		sectionMetadataFromReport: sectionMetadataFromReport,
+		sectionStateForSource: sectionStateForSource
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-section-variation-service.js */
+// Creates small derivative variations for cloned progression sections.
+(function (global) {
+	'use strict';
+
+	var sectionDocument = global.CodaProgressionSectionDocument;
+
+	function createVariationMeasures(sourceMeasures, generatedMeasures, rng) {
+		var variation = sectionDocument.cloneMeasures(sourceMeasures);
+		var count = variationChangeCount(variation.length, rng);
+		var used = {};
+		var index;
+		var replacement;
+
+		for (var i = 0; i < count && variation.length; i++) {
+			index = variationIndex(variation.length, rng, used);
+			used[index] = true;
+			replacement = variationReplacementMeasure(index, sourceMeasures, generatedMeasures);
+			if (replacement) {
+				variation[index] = sectionDocument.cloneMeasures([replacement])[0];
+			}
+		}
+
+		return variation;
+	}
+
+	function variationReplacementMeasure(index, sourceMeasures, generatedMeasures) {
+		var sourceSignature = measureVisibleChordSignature(sourceMeasures[index]);
+		var fallback;
+
+		if (generatedMeasures[index] && measureVisibleChordSignature(generatedMeasures[index]) !== sourceSignature) {
+			return generatedMeasures[index];
+		}
+
+		fallback = firstDifferentMeasure(sourceSignature, generatedMeasures);
+		if (fallback) {
+			return fallback;
+		}
+
+		return firstDifferentMeasure(sourceSignature, sourceMeasures, index);
+	}
+
+	function firstDifferentMeasure(sourceSignature, measures, excludedIndex) {
+		for (var i = 0; i < (measures || []).length; i++) {
+			if (i !== excludedIndex && measureVisibleChordSignature(measures[i]) !== sourceSignature) {
+				return measures[i];
+			}
+		}
+
+		return null;
+	}
+
+	function measureVisibleChordSignature(measure) {
+		if (!measure) {
+			return '';
+		}
+
+		if (measure.chords && measure.chords.length) {
+			return measure.chords.map(measureVisibleChordSignature).join('|');
+		}
+
+		return [
+			measure.displayName,
+			measure.chordName,
+			measure.label
+		].join('::');
+	}
+
+	function variationChangeCount(length, rng) {
+		var max = length >= 12 ? 3 : (length >= 6 ? 2 : 1);
+
+		return 1 + Math.floor(rng() * max);
+	}
+
+	function variationIndex(length, rng, used) {
+		var min = length > 3 ? 1 : 0;
+		var max = length > 3 ? length - 2 : length - 1;
+		var index = min + Math.floor(rng() * Math.max(1, max - min + 1));
+		var guard = 0;
+
+		while (used[index] && guard < length) {
+			index += 1;
+			if (index > max) {
+				index = min;
+			}
+			guard += 1;
+		}
+
+		return index;
+	}
+
+	global.CodaProgressionSectionVariation = {
+		createVariationMeasures: createVariationMeasures,
+		measureVisibleChordSignature: measureVisibleChordSignature,
+		variationChangeCount: variationChangeCount,
+		variationIndex: variationIndex,
+		variationReplacementMeasure: variationReplacementMeasure
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-section-candidate-service.js */
+// Chooses tonal contexts for contrasting progression sections.
+(function (global) {
+	'use strict';
+
+	var sectionDocument = global.CodaProgressionSectionDocument;
 
 	function chooseContrastCandidate(options, rng) {
 		var roll = rng();
@@ -9231,7 +9399,7 @@
 	function sameKeySubdominant(options) {
 		return {
 			id: 'same-sd',
-			label: contextLabelFromReport(options.report),
+			label: sectionDocument.contextLabelFromReport(options.report),
 			openingFunction: 'SD',
 			report: options.report
 		};
@@ -9342,7 +9510,7 @@
 	function existingSectionContexts(progression, report) {
 		var sections = progression && progression.sections ? progression.sections : [];
 		var contexts = [];
-		var primaryContext = contextLabelFromReport(report);
+		var primaryContext = sectionDocument.contextLabelFromReport(report);
 
 		if (primaryContext) {
 			contexts.push(primaryContext);
@@ -9355,44 +9523,6 @@
 		}
 
 		return contexts;
-	}
-
-	function sectionLabelKey(sectionId) {
-		if (sectionId === 'A\'') {
-			return 'progression.sectionAprime';
-		}
-
-		if (sectionId === 'B') {
-			return 'progression.sectionB';
-		}
-
-		if (sectionId === 'B\'') {
-			return 'progression.sectionBprime';
-		}
-
-		if (sectionId === 'C') {
-			return 'progression.sectionC';
-		}
-
-		return 'progression.sectionA';
-	}
-
-	function sectionStateForSource(section, progressionState, sourceMeasures) {
-		var state = cloneObject(section && section.state ? section.state : progressionState);
-
-		state.bars = sourceMeasures.length || state.bars || progressionState.bars || 8;
-
-		return state;
-	}
-
-	function sectionMetadataFromReport(report) {
-		return {
-			circleOfFifths: report && report.circleOfFifths ? report.circleOfFifths : null,
-			contextLabel: contextLabelFromReport(report),
-			contextScaleIndex: report ? report.scaleIndex : null,
-			contextScaleName: report ? report.scaleName : '',
-			contextTonicName: report ? report.tonicName : ''
-		};
 	}
 
 	function reportForSection(section, options) {
@@ -9419,16 +9549,6 @@
 			tonicIndex: tonicIndex,
 			tonicName: section.contextTonicName
 		});
-	}
-
-	function noteIndexForName(notes, name) {
-		for (var i = 0; i < notes.length; i++) {
-			if (notes[i].nombre === name || notes[i].enarmonica === name) {
-				return i;
-			}
-		}
-
-		return null;
 	}
 
 	function buildCandidate(id, tonicIndex, scaleIndex, options) {
@@ -9465,8 +9585,14 @@
 		};
 	}
 
-	function contextLabelFromReport(report) {
-		return report && report.tonicName && report.scaleName ? report.tonicName + ' ' + report.scaleName : '';
+	function noteIndexForName(notes, name) {
+		for (var i = 0; i < notes.length; i++) {
+			if (notes[i].nombre === name || notes[i].enarmonica === name) {
+				return i;
+			}
+		}
+
+		return null;
 	}
 
 	function preferFlatsForCandidate(options, tonicIndex, scaleIndex, scaleDefinition) {
@@ -9488,6 +9614,26 @@
 		return preferFlats == null ? !!(options.selection && options.selection.preferFlats) : preferFlats;
 	}
 
+	function isMajorReport(report) {
+		return report && report.mode === 'M';
+	}
+
+	function noteNameForIndex(notes, index, preferFlats) {
+		var note = notes[normalizeIndex(index)];
+
+		return preferFlats && note.enarmonica ? note.enarmonica : note.nombre;
+	}
+
+	function normalizeIndex(index) {
+		var normalized = Number(index) % 12;
+
+		return normalized < 0 ? normalized + 12 : normalized;
+	}
+
+	function transposeIndex(index, semitones) {
+		return normalizeIndex(Number(index) + semitones);
+	}
+
 	function isConventionalFlatKey(tonicName, scaleIndex) {
 		var keyName = String(scaleIndex) === '0' ? tonicName : tonicName + 'm';
 		var flatKeys = String(scaleIndex) === '0' ?
@@ -9506,168 +9652,214 @@
 		return sharpKeys.indexOf(keyName) > -1;
 	}
 
-	function annotateSectionMeasures(measures, sections) {
-		for (var i = 0; i < sections.length; i++) {
-			var section = sections[i];
+	global.CodaProgressionSectionCandidates = {
+		circleNeighborCandidates: circleNeighborCandidates,
+		chooseContrastCandidate: chooseContrastCandidate,
+		chooseContrastCandidateExcluding: chooseContrastCandidateExcluding,
+		contrastCandidates: contrastCandidates,
+		existingSectionContexts: existingSectionContexts,
+		parallelKey: parallelKey,
+		relativeKey: relativeKey,
+		reportForSection: reportForSection,
+		sameKeySubdominant: sameKeySubdominant,
+		transposeIndex: transposeIndex
+	};
+})(window);
 
-			for (var j = section.startIndex; j < section.startIndex + section.length && j < measures.length; j++) {
-				measures[j].sectionId = section.id;
-				measures[j].sectionLabelKey = section.labelKey;
-			}
-		}
-	}
+;
 
-	function findSection(progression, id) {
-		var sections = progression && progression.sections ? progression.sections : [];
+/* Source: js/services/progression-section-contrast-service.js */
+// Orchestrates derivative and contrasting progression sections.
+(function (global) {
+	'use strict';
 
-		for (var i = 0; i < sections.length; i++) {
-			if (sections[i].id === id) {
-				return sections[i];
-			}
-		}
+	var sectionCandidates = global.CodaProgressionSectionCandidates;
+	var sectionDocument = global.CodaProgressionSectionDocument;
+	var sectionVariation = global.CodaProgressionSectionVariation;
 
-		return null;
-	}
+	function generate(options, dependencies) {
+		var progression = options.progression || {};
+		var progressionState = cloneObject(options.progressionState || {});
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var sectionAMeasures = sectionDocument.measuresForSectionA(progression, progressionState);
+		options.buildScaleReport = dependencies.buildScaleReport;
+		var candidate = sectionCandidates.chooseContrastCandidate(options, rng);
+		var targetReport = candidate.report || options.report;
+		var sectionState = cloneObject(progressionState);
+		var sectionB;
+		var combined;
+		var rebuilt;
 
-	function cloneMeasures(measures) {
-		var result = [];
+		sectionState.bars = sectionAMeasures.length || progressionState.bars || 8;
+		sectionB = dependencies.generateProgressionFromState({
+			data: options.data,
+			domain: options.domain,
+			openingFunction: candidate.openingFunction,
+			progressionState: sectionState,
+			report: targetReport,
+			rng: rng
+		});
 
-		for (var i = 0; i < (measures || []).length; i++) {
-			result.push(cloneService.cloneMeasure(measures[i]));
-		}
-
-		return result;
-	}
-
-	function createVariationMeasures(sourceMeasures, generatedMeasures, rng) {
-		var variation = cloneMeasures(sourceMeasures);
-		var count = variationChangeCount(variation.length, rng);
-		var used = {};
-		var index;
-		var replacement;
-
-		for (var i = 0; i < count && variation.length; i++) {
-			index = variationIndex(variation.length, rng, used);
-			used[index] = true;
-			replacement = variationReplacementMeasure(index, sourceMeasures, generatedMeasures);
-			if (replacement) {
-				variation[index] = cloneService.cloneMeasure(replacement);
-			}
-		}
-
-		return variation;
-	}
-
-	function variationReplacementMeasure(index, sourceMeasures, generatedMeasures) {
-		var sourceSignature = measureVisibleChordSignature(sourceMeasures[index]);
-		var fallback;
-
-		if (generatedMeasures[index] && measureVisibleChordSignature(generatedMeasures[index]) !== sourceSignature) {
-			return generatedMeasures[index];
-		}
-
-		fallback = firstDifferentMeasure(sourceSignature, generatedMeasures);
-		if (fallback) {
-			return fallback;
-		}
-
-		return firstDifferentMeasure(sourceSignature, sourceMeasures, index);
-	}
-
-	function firstDifferentMeasure(sourceSignature, measures, excludedIndex) {
-		for (var i = 0; i < (measures || []).length; i++) {
-			if (i !== excludedIndex && measureVisibleChordSignature(measures[i]) !== sourceSignature) {
-				return measures[i];
-			}
-		}
-
-		return null;
-	}
-
-	function measureVisibleChordSignature(measure) {
-		if (!measure) {
-			return '';
-		}
-
-		if (measure.chords && measure.chords.length) {
-			return measure.chords.map(measureVisibleChordSignature).join('|');
-		}
-
-		return [
-			measure.displayName,
-			measure.chordName,
-			measure.label
-		].join('::');
-	}
-
-	function variationChangeCount(length, rng) {
-		var max = length >= 12 ? 3 : (length >= 6 ? 2 : 1);
-
-		return 1 + Math.floor(rng() * max);
-	}
-
-	function variationIndex(length, rng, used) {
-		var min = length > 3 ? 1 : 0;
-		var max = length > 3 ? length - 2 : length - 1;
-		var index = min + Math.floor(rng() * Math.max(1, max - min + 1));
-		var guard = 0;
-
-		while (used[index] && guard < length) {
-			index += 1;
-			if (index > max) {
-				index = min;
-			}
-			guard += 1;
-		}
-
-		return index;
-	}
-
-	function appendSection(progression, sectionMeasures, sectionMetadata, dependencies) {
-		var previousSections = normalizedSections(progression);
-		var combined = cloneMeasures(progression.measures || []).concat(cloneMeasures(sectionMeasures || []));
-		var rebuilt = dependencies.rebuildProgressionTimeline(progression, combined);
-		var startIndex = combined.length - (sectionMeasures ? sectionMeasures.length : 0);
-
-		rebuilt.sections = previousSections.concat([extendObject(sectionMetadata, {
-			length: sectionMeasures ? sectionMeasures.length : 0,
-			startIndex: startIndex
-		})]);
-		annotateSectionMeasures(rebuilt.measures, rebuilt.sections);
+		combined = sectionDocument.cloneMeasures(sectionAMeasures).concat(sectionDocument.cloneMeasures(sectionB.measures || []));
+		rebuilt = dependencies.rebuildProgressionTimeline(progression, combined);
+		rebuilt.sections = [
+			{
+				id: 'A',
+				labelKey: 'progression.sectionA',
+				length: sectionAMeasures.length,
+				startIndex: 0
+			},
+			sectionMetadata(candidate, targetReport, 'B', sectionAMeasures.length, sectionB.measures ? sectionB.measures.length : 0, sectionState)
+		];
+		sectionDocument.annotateSectionMeasures(rebuilt.measures, rebuilt.sections);
+		rebuilt.sectionContrast = candidate.id;
 
 		return rebuilt;
 	}
 
-	function normalizedSections(progression) {
-		var sections = progression && progression.sections ? progression.sections : [];
-		var result = [];
+	function generateSection(options, dependencies) {
+		var sectionType;
 
-		if (!sections.length && progression && progression.measures && progression.measures.length) {
-			return [{
-				id: 'A',
-				labelKey: 'progression.sectionA',
-				length: progression.measures.length,
-				startIndex: 0
-			}];
+		options = options || {};
+		sectionType = normalizedSectionType(options.sectionType);
+		options.buildScaleReport = dependencies.buildScaleReport;
+
+		if (sectionType === 'aprimeClone') {
+			return generateDerivativeSection(options, dependencies, 'A', 'A\'', false);
 		}
 
-		for (var i = 0; i < sections.length; i++) {
-			result.push(cloneSection(sections[i]));
+		if (sectionType === 'aprimeVariation') {
+			return generateDerivativeSection(options, dependencies, 'A', 'A\'', true);
 		}
 
-		return result;
+		if (sectionType === 'bprimeClone') {
+			return generateDerivativeSection(options, dependencies, 'B', 'B\'', false);
+		}
+
+		if (sectionType === 'bprimeVariation') {
+			return generateDerivativeSection(options, dependencies, 'B', 'B\'', true);
+		}
+
+		if (sectionType === 'contrast') {
+			return generateContrastSection(options, dependencies, sectionDocument.findSection(options.progression, 'B') ? 'C' : 'B');
+		}
+
+		return generateContrastSection(options, dependencies, 'B');
 	}
 
-	function cloneSection(section) {
-		var result = {};
+	function generateAprimeSection(options, dependencies) {
+		return generateDerivativeSection(options, dependencies, 'A', 'A\'', true);
+	}
 
-		for (var key in section || {}) {
-			if (Object.prototype.hasOwnProperty.call(section, key)) {
-				result[key] = key === 'state' ? cloneObject(section[key]) : section[key];
-			}
+	function generateCSection(options, dependencies) {
+		return generateContrastSection(options, dependencies, 'C');
+	}
+
+	function generateContrastSection(options, dependencies, targetId) {
+		var progression = options.progression || {};
+		var progressionState = cloneObject(options.progressionState || {});
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var referenceMeasures = targetId === 'B' ?
+			sectionDocument.measuresForSection(progression, 'A', progressionState) :
+			sectionDocument.measuresForLastSection(progression, progressionState);
+		var sectionState = cloneObject(progressionState);
+		var candidate;
+		var targetReport;
+		var sectionProgression;
+
+		if (sectionDocument.findSection(progression, targetId)) {
+			return progression;
 		}
 
-		return result;
+		options.buildScaleReport = dependencies.buildScaleReport;
+		sectionState.bars = referenceMeasures.length || progressionState.bars || 8;
+		candidate = sectionCandidates.chooseContrastCandidateExcluding(options, rng, sectionCandidates.existingSectionContexts(progression, options.report));
+		targetReport = candidate.report || options.report;
+		sectionProgression = dependencies.generateProgressionFromState({
+			data: options.data,
+			domain: options.domain,
+			openingFunction: candidate.openingFunction,
+			progressionState: sectionState,
+			report: targetReport,
+			rng: rng
+		});
+
+		return sectionDocument.appendSection(progression, sectionProgression.measures || [], sectionMetadata(candidate, targetReport, targetId, 0, 0, sectionState), dependencies);
+	}
+
+	function generateDerivativeSection(options, dependencies, sourceId, targetId, shouldVary) {
+		var progression = options.progression || {};
+		var progressionState = cloneObject(options.progressionState || {});
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var sourceSection = sectionDocument.findSection(progression, sourceId);
+		var sourceMeasures = sectionDocument.measuresForSection(progression, sourceId, progressionState);
+		var sourceReport = sectionCandidates.reportForSection(sourceSection, options) || options.report;
+		var sectionState = sectionDocument.sectionStateForSource(sourceSection, progressionState, sourceMeasures);
+		var sectionMeasures = sectionDocument.cloneMeasures(sourceMeasures);
+		var generated;
+
+		if (sectionDocument.findSection(progression, targetId) || !sourceMeasures.length) {
+			return progression;
+		}
+
+		if (shouldVary) {
+			generated = dependencies.generateProgressionFromState({
+				data: options.data,
+				domain: options.domain,
+				progressionState: sectionState,
+				report: sourceReport,
+				rng: rng
+			});
+			sectionMeasures = sectionVariation.createVariationMeasures(sourceMeasures, generated.measures || [], rng);
+		}
+
+		return sectionDocument.appendSection(progression, sectionMeasures, extendObject(sectionDocument.sectionMetadataFromReport(sourceReport), {
+			id: targetId,
+			labelKey: sectionDocument.sectionLabelKey(targetId),
+			state: cloneObject(sectionState),
+			variationKind: shouldVary ? 'small' : 'clone',
+			variationOf: sourceId
+		}), dependencies);
+	}
+
+	function sectionMetadata(candidate, report, id, startIndex, length, state) {
+		return {
+			circleOfFifths: report.circleOfFifths || null,
+			contrast: candidate.id,
+			contextLabel: candidate.label,
+			contextScaleIndex: report.scaleIndex,
+			contextScaleName: report.scaleName,
+			contextTonicName: report.tonicName,
+			id: id,
+			labelKey: sectionDocument.sectionLabelKey(id),
+			length: length,
+			startIndex: startIndex,
+			state: cloneObject(state)
+		};
+	}
+
+	function normalizedSectionType(value) {
+		if (value === 'ap' || value === 'A\'' || value === 'aprimeVariation') {
+			return 'aprimeVariation';
+		}
+
+		if (value === 'aprimeClone') {
+			return 'aprimeClone';
+		}
+
+		if (value === 'bprimeClone') {
+			return 'bprimeClone';
+		}
+
+		if (value === 'bprimeVariation') {
+			return 'bprimeVariation';
+		}
+
+		if (value === 'C' || value === 'c' || value === 'contrast') {
+			return 'contrast';
+		}
+
+		return 'contrast';
 	}
 
 	function cloneObject(value) {
@@ -9701,41 +9893,23 @@
 		return result;
 	}
 
-	function isMajorReport(report) {
-		return report && report.mode === 'M';
-	}
-
-	function noteNameForIndex(notes, index, preferFlats) {
-		var note = notes[normalizeIndex(index)];
-
-		return preferFlats && note.enarmonica ? note.enarmonica : note.nombre;
-	}
-
-	function normalizeIndex(index) {
-		var normalized = Number(index) % 12;
-
-		return normalized < 0 ? normalized + 12 : normalized;
-	}
-
-	function transposeIndex(index, semitones) {
-		return normalizeIndex(Number(index) + semitones);
-	}
-
 	global.CodaProgressionSectionContrast = {
-		annotateSectionMeasures: annotateSectionMeasures,
-		circleNeighborCandidates: circleNeighborCandidates,
-		chooseContrastCandidate: chooseContrastCandidate,
-		chooseContrastCandidateExcluding: chooseContrastCandidateExcluding,
-		contrastCandidates: contrastCandidates,
-		contextLabelFromReport: contextLabelFromReport,
+		annotateSectionMeasures: sectionDocument.annotateSectionMeasures,
+		circleNeighborCandidates: sectionCandidates.circleNeighborCandidates,
+		chooseContrastCandidate: sectionCandidates.chooseContrastCandidate,
+		chooseContrastCandidateExcluding: sectionCandidates.chooseContrastCandidateExcluding,
+		contrastCandidates: sectionCandidates.contrastCandidates,
+		contextLabelFromReport: sectionDocument.contextLabelFromReport,
 		generate: generate,
+		generateAprimeSection: generateAprimeSection,
+		generateCSection: generateCSection,
 		generateSection: generateSection,
-		measuresForSectionA: measuresForSectionA,
-		measuresForSection: measuresForSection,
-		parallelKey: parallelKey,
-		relativeKey: relativeKey,
-		sameKeySubdominant: sameKeySubdominant,
-		transposeIndex: transposeIndex
+		measuresForSection: sectionDocument.measuresForSection,
+		measuresForSectionA: sectionDocument.measuresForSectionA,
+		parallelKey: sectionCandidates.parallelKey,
+		relativeKey: sectionCandidates.relativeKey,
+		sameKeySubdominant: sectionCandidates.sameKeySubdominant,
+		transposeIndex: sectionCandidates.transposeIndex
 	};
 })(window);
 
@@ -10243,6 +10417,10 @@
 		var events = [];
 		var melodicEvents = passingNoteEvents(measure);
 
+		if (isArpeggioArticulation(measure && measure.articulation)) {
+			return arpeggioNoteEvents(midiNotes, measure, duration, options).concat(melodicEvents);
+		}
+
 		if (measure && measure.articulation === 'staccato') {
 			return staccatoNoteEvents(midiNotes, measure).concat(melodicEvents);
 		}
@@ -10280,6 +10458,26 @@
 					midiNote: midiNotes[noteIndex]
 				});
 			}
+		}
+
+		return events;
+	}
+
+	function arpeggioNoteEvents(midiNotes, measure, duration, options) {
+		var step = arpeggioStepSeconds(measure, duration, options);
+		var order = arpeggioPatternService().orderIndexes(midiNotes.length, measure.articulation, measure.bar);
+		var events = [];
+
+		for (var i = 0; i < order.length; i++) {
+			var noteIndex = Math.max(0, Math.min(midiNotes.length - 1, order[i]));
+			var delay = step * i;
+
+			events.push({
+				delay: delay,
+				duration: Math.max(0.1, duration - delay),
+				kind: 'arpeggio',
+				midiNote: midiNotes[noteIndex]
+			});
 		}
 
 		return events;
@@ -10336,6 +10534,36 @@
 		return instrument && (instrument.supportsPedalHold === true || instrument.sustained === true || instrument.pedalBehavior === 'sustain');
 	}
 
+	function arpeggioStepSeconds(measure, duration, options) {
+		var configuredStep = Number(options && options.arpeggioStepSeconds);
+
+		if (isFinite(configuredStep) && configuredStep > 0) {
+			return configuredStep;
+		}
+
+		return Math.max(0.05, Math.min(0.18, (Number(measure && measure.durationSeconds) || duration || 0) / 8));
+	}
+
+	function isArpeggioArticulation(articulation) {
+		return String(articulation || '').indexOf('arpeggio') === 0;
+	}
+
+	function arpeggioPatternService() {
+		return global.CodaProgressionArpeggioPatterns || {
+			orderIndexes: ascendingIndexes
+		};
+	}
+
+	function ascendingIndexes(count) {
+		var indexes = [];
+
+		for (var i = 0; i < count; i++) {
+			indexes.push(i);
+		}
+
+		return indexes;
+	}
+
 	function isPedalIn(midiNote, measure) {
 		var pedals = measure.pedalsIn || [];
 
@@ -10368,8 +10596,11 @@
 	}
 
 	global.CodaProgressionPlaybackNoteEvents = {
+		arpeggioNoteEvents: arpeggioNoteEvents,
+		arpeggioStepSeconds: arpeggioStepSeconds,
 		build: build,
 		chordNoteEvents: chordNoteEvents,
+		isArpeggioArticulation: isArpeggioArticulation,
 		passingNoteEvents: passingNoteEvents,
 		pulseCountForMeasure: pulseCountForMeasure,
 		supportsPedalHold: supportsPedalHold
@@ -10486,6 +10717,7 @@
 
 		if (shouldUseSharedNoteEvents(measure, options.instrument)) {
 			sharedNoteEvents = noteEventService.build(measureWithMidiNotes(measure, notes, options), ticksToSeconds(durationTicks, measure, options), {
+				arpeggioStepSeconds: secondsPerBeatForMeasure(measure) / 4,
 				instrument: options.instrument
 			});
 			appendSharedNoteEvents(events, sharedNoteEvents, measure, options, startTick, velocity);
@@ -10528,6 +10760,7 @@
 
 	function shouldUseSharedNoteEvents(measure, instrument) {
 		return measure.articulation === 'staccato' ||
+			isArpeggioArticulation(measure.articulation) ||
 			(hasPedals(measure) && supportsPedalHold(instrument)) ||
 			(!isArpeggioArticulation(measure.articulation) && measure.passingNotes && measure.passingNotes.length);
 	}
@@ -11715,12 +11948,12 @@
 			return false;
 		}
 
-		if (event.mode === 'arpeggio') {
-			return midiEventPlayer.playArpeggio(playbackService, event);
-		}
-
 		if (event.midiNoteEvents && event.midiNoteEvents.length) {
 			return midiEventPlayer.playMidiNoteEvents(playbackService, event);
+		}
+
+		if (event.mode === 'arpeggio') {
+			return midiEventPlayer.playArpeggio(playbackService, event);
 		}
 
 		if (event.midiNotes && event.midiNotes.length) {
@@ -20903,28 +21136,15 @@
 				return;
 			}
 
-			if (options.application && typeof options.application.transformProgressionFromState === 'function') {
-				setProgression(options.application.transformProgressionFromState(progression, {
-					data: options.data,
-					progressionState: state,
-					report: uiState.getReport()
-				}));
+			if (!options.application || typeof options.application.transformProgressionFromState !== 'function') {
 				return;
 			}
 
-			refreshed = progressionWithState(progression, state);
-			if (options.application && typeof options.application.rebuildProgressionTimeline === 'function') {
-				refreshed = options.application.rebuildProgressionTimeline(refreshed, normalizeMeasureDurations(adjustedMeasuresForState(progression, state), state));
-			}
-			if (options.application && typeof options.application.revoiceProgression === 'function') {
-				refreshed = progressionWithState(refreshed, state);
-				refreshed.measures = options.application.revoiceProgression(refreshed, {
-					data: options.data,
-					progressionState: state,
-					report: uiState.getReport()
-				});
-			}
-			refreshed.userEdited = true;
+			refreshed = options.application.transformProgressionFromState(progression, {
+				data: options.data,
+				progressionState: state,
+				report: uiState.getReport()
+			});
 			setProgression(refreshed);
 		}
 
@@ -20989,93 +21209,6 @@
 			return options.progressionPlayback &&
 				typeof options.progressionPlayback.isPlaying === 'function' &&
 				options.progressionPlayback.isPlaying();
-		}
-
-		function adjustedMeasuresForState(progression, state) {
-			var measures = cloneJson(progression.measures || []);
-			var sections = progression && progression.sections ? progression.sections : [];
-			var firstSection = sections.length ? sections[0] : null;
-			var targetBars = Math.max(1, Number(state.bars) || measures.length);
-			var generated;
-
-			if (sections.length > 1 && firstSection && Number(firstSection.length) === targetBars) {
-				return measures;
-			}
-
-			if (measures.length > targetBars) {
-				return measures.slice(0, targetBars);
-			}
-
-			if (
-				measures.length < targetBars &&
-				options.application &&
-				typeof options.application.generateProgressionFromState === 'function' &&
-				uiState.getReport()
-			) {
-				generated = options.application.generateProgressionFromState({
-					data: options.data,
-					progressionState: state,
-					report: uiState.getReport()
-				});
-				measures = measures.concat((generated.measures || []).slice(measures.length, targetBars));
-			}
-
-			return measures;
-		}
-
-		function progressionWithState(progression, state) {
-			var next = cloneJson(progression) || {};
-			var secondsPerBeat = 60 / (Number(state.bpm) || 120);
-
-			next.articulation = state.articulation;
-			next.beatUnit = state.beatUnit;
-			next.beatsPerBar = state.beatsPerBar;
-			next.bpm = state.bpm;
-			next.harmonicColor = {
-				chromaticism: state.chromaticism,
-				counterpoint: state.counterpoint,
-				modalInterchange: state.modalInterchange,
-				tensions: state.tensions
-			};
-			next.harmonicDensity = state.harmonicDensity;
-			next.humanization = state.humanization;
-			next.intensity = state.intensity;
-			next.meter = state.meter;
-			next.secondsPerBeat = secondsPerBeat;
-			next.style = state.style;
-			next.swing = state.swing;
-			next.totalBeats = (next.measures ? next.measures.length : Number(state.bars) || 0) * state.beatsPerBar;
-			next.totalSeconds = next.totalBeats * secondsPerBeat;
-			next.voicing = state.voicing;
-			next.voices = state.voices;
-
-			return next;
-		}
-
-		function normalizeMeasureDurations(measures, state) {
-			var normalized = cloneJson(measures || []);
-
-			for (var i = 0; i < normalized.length; i++) {
-				normalized[i].articulation = state.articulation;
-				normalized[i].beatUnit = state.beatUnit;
-				normalized[i].beatsPerBar = state.beatsPerBar;
-				normalized[i].durationBeats = state.beatsPerBar;
-				normalized[i].humanization = state.humanization;
-				normalized[i].intensity = state.intensity;
-				normalized[i].swing = state.swing;
-				if (normalized[i].chords && normalized[i].chords.length) {
-					for (var j = 0; j < normalized[i].chords.length; j++) {
-						normalized[i].chords[j].articulation = state.articulation;
-						normalized[i].chords[j].beatUnit = state.beatUnit;
-						normalized[i].chords[j].beatsPerBar = state.beatsPerBar;
-						normalized[i].chords[j].humanization = state.humanization;
-						normalized[i].chords[j].intensity = state.intensity;
-						normalized[i].chords[j].swing = state.swing;
-					}
-				}
-			}
-
-			return normalized;
 		}
 
 		function markProgressionAsUserEdited(progression) {

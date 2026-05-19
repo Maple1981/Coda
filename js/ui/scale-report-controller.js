@@ -1230,28 +1230,15 @@
 				return;
 			}
 
-			if (options.application && typeof options.application.transformProgressionFromState === 'function') {
-				setProgression(options.application.transformProgressionFromState(progression, {
-					data: options.data,
-					progressionState: state,
-					report: uiState.getReport()
-				}));
+			if (!options.application || typeof options.application.transformProgressionFromState !== 'function') {
 				return;
 			}
 
-			refreshed = progressionWithState(progression, state);
-			if (options.application && typeof options.application.rebuildProgressionTimeline === 'function') {
-				refreshed = options.application.rebuildProgressionTimeline(refreshed, normalizeMeasureDurations(adjustedMeasuresForState(progression, state), state));
-			}
-			if (options.application && typeof options.application.revoiceProgression === 'function') {
-				refreshed = progressionWithState(refreshed, state);
-				refreshed.measures = options.application.revoiceProgression(refreshed, {
-					data: options.data,
-					progressionState: state,
-					report: uiState.getReport()
-				});
-			}
-			refreshed.userEdited = true;
+			refreshed = options.application.transformProgressionFromState(progression, {
+				data: options.data,
+				progressionState: state,
+				report: uiState.getReport()
+			});
 			setProgression(refreshed);
 		}
 
@@ -1316,93 +1303,6 @@
 			return options.progressionPlayback &&
 				typeof options.progressionPlayback.isPlaying === 'function' &&
 				options.progressionPlayback.isPlaying();
-		}
-
-		function adjustedMeasuresForState(progression, state) {
-			var measures = cloneJson(progression.measures || []);
-			var sections = progression && progression.sections ? progression.sections : [];
-			var firstSection = sections.length ? sections[0] : null;
-			var targetBars = Math.max(1, Number(state.bars) || measures.length);
-			var generated;
-
-			if (sections.length > 1 && firstSection && Number(firstSection.length) === targetBars) {
-				return measures;
-			}
-
-			if (measures.length > targetBars) {
-				return measures.slice(0, targetBars);
-			}
-
-			if (
-				measures.length < targetBars &&
-				options.application &&
-				typeof options.application.generateProgressionFromState === 'function' &&
-				uiState.getReport()
-			) {
-				generated = options.application.generateProgressionFromState({
-					data: options.data,
-					progressionState: state,
-					report: uiState.getReport()
-				});
-				measures = measures.concat((generated.measures || []).slice(measures.length, targetBars));
-			}
-
-			return measures;
-		}
-
-		function progressionWithState(progression, state) {
-			var next = cloneJson(progression) || {};
-			var secondsPerBeat = 60 / (Number(state.bpm) || 120);
-
-			next.articulation = state.articulation;
-			next.beatUnit = state.beatUnit;
-			next.beatsPerBar = state.beatsPerBar;
-			next.bpm = state.bpm;
-			next.harmonicColor = {
-				chromaticism: state.chromaticism,
-				counterpoint: state.counterpoint,
-				modalInterchange: state.modalInterchange,
-				tensions: state.tensions
-			};
-			next.harmonicDensity = state.harmonicDensity;
-			next.humanization = state.humanization;
-			next.intensity = state.intensity;
-			next.meter = state.meter;
-			next.secondsPerBeat = secondsPerBeat;
-			next.style = state.style;
-			next.swing = state.swing;
-			next.totalBeats = (next.measures ? next.measures.length : Number(state.bars) || 0) * state.beatsPerBar;
-			next.totalSeconds = next.totalBeats * secondsPerBeat;
-			next.voicing = state.voicing;
-			next.voices = state.voices;
-
-			return next;
-		}
-
-		function normalizeMeasureDurations(measures, state) {
-			var normalized = cloneJson(measures || []);
-
-			for (var i = 0; i < normalized.length; i++) {
-				normalized[i].articulation = state.articulation;
-				normalized[i].beatUnit = state.beatUnit;
-				normalized[i].beatsPerBar = state.beatsPerBar;
-				normalized[i].durationBeats = state.beatsPerBar;
-				normalized[i].humanization = state.humanization;
-				normalized[i].intensity = state.intensity;
-				normalized[i].swing = state.swing;
-				if (normalized[i].chords && normalized[i].chords.length) {
-					for (var j = 0; j < normalized[i].chords.length; j++) {
-						normalized[i].chords[j].articulation = state.articulation;
-						normalized[i].chords[j].beatUnit = state.beatUnit;
-						normalized[i].chords[j].beatsPerBar = state.beatsPerBar;
-						normalized[i].chords[j].humanization = state.humanization;
-						normalized[i].chords[j].intensity = state.intensity;
-						normalized[i].chords[j].swing = state.swing;
-					}
-				}
-			}
-
-			return normalized;
 		}
 
 		function markProgressionAsUserEdited(progression) {

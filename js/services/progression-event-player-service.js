@@ -10,12 +10,12 @@
 			return false;
 		}
 
-		if (event.mode === 'arpeggio') {
-			return midiEventPlayer.playArpeggio(playbackService, event);
-		}
-
 		if (event.midiNoteEvents && event.midiNoteEvents.length) {
 			return midiEventPlayer.playMidiNoteEvents(playbackService, event);
+		}
+
+		if (event.mode === 'arpeggio') {
+			return midiEventPlayer.playArpeggio(playbackService, event);
 		}
 
 		if (event.midiNotes && event.midiNotes.length) {
