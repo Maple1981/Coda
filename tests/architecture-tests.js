@@ -43,6 +43,7 @@ assert.ok(global.CodaProgressionDocument.normalize);
 assert.ok(global.CodaProgressionWorkspace.build);
 assert.ok(global.CodaProgressionWorkspaceStorage.read);
 assert.ok(global.CodaProgressionStateNormalizer.normalize);
+assert.ok(global.CodaProgressionDocumentTransform.applyState);
 assert.ok(global.CodaProgressionDegreeResolver.fromGeneratedPlan);
 assert.ok(global.CodaProgressionPitch.normalizePitchName);
 assert.ok(global.CodaProgressionObjects.extendObject);
@@ -144,6 +145,7 @@ assert.ok(global.CodaApplication.buildProgressionFromDegrees);
 assert.ok(global.CodaApplication.buildProgressionFromState);
 assert.ok(global.CodaApplication.generateProgressionFromState);
 assert.ok(global.CodaApplication.revoiceProgression);
+assert.ok(global.CodaApplication.transformProgressionFromState);
 assert.ok(global.CodaApplication.generateContrastingProgressionSection);
 assert.ok(global.CodaApplication.buildProgressionPlaybackSchedule);
 assert.ok(global.CodaApplication.buildScheduledProgressionMeasures);
@@ -263,6 +265,7 @@ assert.ok(manifestScripts.indexOf('js/services/progression-seventh-decision-serv
 assert.ok(manifestScripts.indexOf('js/services/progression-chord-plan-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-harmonic-density-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-revoice-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-document-transform-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-measure-builder-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-result-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-chromatic-cadence-service.js') > -1);
@@ -279,6 +282,7 @@ assert.ok(manifestScripts.indexOf('js/services/progression-edit-command-service.
 assert.ok(manifestScripts.indexOf('js/services/progression-chord-menu-option-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-chord-menu-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-arpeggio-pattern-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-articulation-instrument-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/midi-export-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-midi-file-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-midi-download-service.js') > -1);
@@ -705,6 +709,8 @@ const repeatedInversionBreakVoicing = global.CodaProgressionVoicing.chooseVoicin
 	voices: 3
 });
 assert.notEqual(repeatedInversionBreakVoicing.inversionIndex, 2);
+assert.ok(repeatedInversionBreakVoicing.inversionRunLength >= 1);
+assert.equal(Object.keys(repeatedInversionBreakVoicing).indexOf('inversionRunLength'), -1);
 assert.equal(global.CodaProgressionVoicing.commonPitchNames(['C', 'E'], ['E', 'G']).join(','), 'E');
 assert.equal(global.CodaProgressionRevoice.baseDegreeDisplayName({
 	degree: 'IV7 4/3 sus4',

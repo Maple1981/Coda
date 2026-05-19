@@ -7,6 +7,7 @@
 	var editCommands = global.CodaProgressionEditCommands;
 	var chordPlanService = global.CodaProgressionChordPlan;
 	var chordMenuService = global.CodaProgressionChordMenu;
+	var documentTransform = global.CodaProgressionDocumentTransform;
 	var stateNormalizer = global.CodaProgressionStateNormalizer;
 	var midiFileService = global.CodaProgressionMidiFile;
 	var progressionBuilder = global.CodaProgressionBuilder;
@@ -143,6 +144,12 @@
 		return progressionRevoice.apply(progression, options || {});
 	}
 
+	function transformProgressionFromState(progression, options) {
+		return documentTransform.applyState(progression, extendObject(options || {}, {
+			generateProgressionFromState: generateProgressionFromState
+		}));
+	}
+
 	function buildProgressionChordMenu(options) {
 		return chordMenuService.build(options);
 	}
@@ -163,6 +170,25 @@
 		return stateNormalizer.normalize(progressionState);
 	}
 
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target || {}) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values || {}) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
 	global.CodaApplication = global.CodaApplication || {};
 	global.CodaApplication.addProgressionMeasureChord = addProgressionMeasureChord;
 	global.CodaApplication.buildProgressionChordMenu = buildProgressionChordMenu;
@@ -180,4 +206,5 @@
 	global.CodaApplication.replaceProgressionMeasureChord = replaceProgressionMeasureChord;
 	global.CodaApplication.reorderProgressionMeasureChords = reorderProgressionMeasureChords;
 	global.CodaApplication.reorderProgressionMeasures = reorderProgressionMeasures;
+	global.CodaApplication.transformProgressionFromState = transformProgressionFromState;
 })(window);

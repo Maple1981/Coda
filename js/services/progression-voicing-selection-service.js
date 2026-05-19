@@ -18,7 +18,7 @@
 		if (forcedInversionIndex != null) {
 			bestVoicing = buildVoicingCandidate(options, forcedInversionIndex, labels[forcedInversionIndex], disposition);
 
-			return voicingDispositionService.chooseCandidate(bestVoicing, options.previousPlan, disposition, scoreOptions(options));
+			return withInversionRunMetadata(voicingDispositionService.chooseCandidate(bestVoicing, options.previousPlan, disposition, scoreOptions(options)), options.previousPlan);
 		}
 
 		for (var i = 0; i < maxInversions; i++) {
@@ -32,7 +32,11 @@
 			}
 		}
 
-		return bestVoicing || voicingDispositionService.chooseCandidate(voicingFactory.create({
+		if (bestVoicing) {
+			return withInversionRunMetadata(bestVoicing, options.previousPlan);
+		}
+
+		return withInversionRunMetadata(voicingDispositionService.chooseCandidate(voicingFactory.create({
 			baseNotes: options.baseNotes,
 			chordName: options.chordName,
 			extraNotes: options.extraNotes,
@@ -41,7 +45,7 @@
 			inversionLabel: '',
 			kind: options.kind,
 			voices: options.voices
-		}), options.previousPlan, disposition, scoreOptions(options));
+		}), options.previousPlan, disposition, scoreOptions(options)), options.previousPlan);
 	}
 
 	function buildVoicingCandidate(options, inversionIndex, inversionLabel, disposition) {
@@ -116,6 +120,34 @@
 		return nextInversionRunLength(previousPlan, voicing) > MAX_INVERSION_RUN ? INVERSION_RUN_PENALTY : 0;
 	}
 
+	function withInversionRunMetadata(voicing, previousPlan) {
+		var runKey = inversionRunKey(voicing);
+		var runLength = nextInversionRunLength(previousPlan, voicing);
+
+		setInternalValue(voicing, 'inversionRunKey', runKey);
+		setInternalValue(voicing, 'inversionRunLength', runLength);
+
+		return voicing;
+	}
+
+	function setInternalValue(target, key, value) {
+		if (!target) {
+			return;
+		}
+
+		if (typeof Object.defineProperty === 'function') {
+			Object.defineProperty(target, key, {
+				configurable: true,
+				enumerable: false,
+				value: value,
+				writable: true
+			});
+			return;
+		}
+
+		target[key] = value;
+	}
+
 	global.CodaProgressionVoicingSelection = {
 		buildVoicingCandidate: buildVoicingCandidate,
 		chooseVoicing: chooseVoicing,
@@ -123,6 +155,7 @@
 		inversionRunPenalty: inversionRunPenalty,
 		nextInversionRunLength: nextInversionRunLength,
 		normalizeVoicingDisposition: normalizeVoicingDisposition,
-		registerCenterMidi: registerCenterMidi
+		registerCenterMidi: registerCenterMidi,
+		withInversionRunMetadata: withInversionRunMetadata
 	};
 })(window);

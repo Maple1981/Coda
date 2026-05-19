@@ -4,6 +4,7 @@
 
 	var arpeggioPatterns = global.CodaProgressionArpeggioPatterns;
 	var articulationInstruments = global.CodaProgressionArticulationInstruments;
+	var noteEventService = global.CodaProgressionPlaybackNoteEvents;
 	var defaultTicksPerBeat = 480;
 	var midiMimeType = 'audio/midi';
 	var noteIndexes = {
@@ -98,12 +99,15 @@
 		var order = isArpeggioArticulation(measure.articulation) ? arpeggioOrderIndexes(notes.length, measure.articulation, measure.bar) : arpeggioPatterns.ascendingIndexes(notes.length);
 		var velocity = expressiveVelocity(measure, options.velocity);
 		var playbackInstrument = articulationInstruments.resolveInstrument(options.instrument, measure.articulation, options.articulationInstruments);
+		var sharedNoteEvents;
 
 		appendProgramChange(events, playbackInstrument, options.channel, startTick);
 
-		if (measure.articulation === 'staccato') {
-			appendStaccatoChordEvents(events, notes, measure, options, startTick, velocity);
-			appendPassingNoteEvents(events, measure, options, startTick);
+		if (shouldUseSharedNoteEvents(measure, options.instrument)) {
+			sharedNoteEvents = noteEventService.build(measureWithMidiNotes(measure, notes, options), ticksToSeconds(durationTicks, measure, options), {
+				instrument: options.instrument
+			});
+			appendSharedNoteEvents(events, sharedNoteEvents, measure, options, startTick, velocity);
 			return;
 		}
 
@@ -139,6 +143,100 @@
 		}
 
 		appendPassingNoteEvents(events, measure, options, startTick);
+	}
+
+	function shouldUseSharedNoteEvents(measure, instrument) {
+		return measure.articulation === 'staccato' ||
+			(hasPedals(measure) && supportsPedalHold(instrument)) ||
+			(!isArpeggioArticulation(measure.articulation) && measure.passingNotes && measure.passingNotes.length);
+	}
+
+	function hasPedals(measure) {
+		return (measure && measure.pedalsIn && measure.pedalsIn.length) ||
+			(measure && measure.pedalsOut && measure.pedalsOut.length);
+	}
+
+	function measureWithMidiNotes(measure, midiNotes, options) {
+		var result = {};
+		var key;
+
+		for (key in measure || {}) {
+			if (Object.prototype.hasOwnProperty.call(measure, key)) {
+				result[key] = measure[key];
+			}
+		}
+
+		result.midiNotes = midiNotes;
+		result.pedalsOut = pedalsWithDurationFallback(result.pedalsOut, options);
+
+		return result;
+	}
+
+	function pedalsWithDurationFallback(pedals, options) {
+		var fallbackDuration = options && options.nextMeasure ?
+			(Number(options.nextMeasure.durationSeconds) || ((Number(options.nextMeasure.durationBeats) || 0) * secondsPerBeatForMeasure(options.nextMeasure))) :
+			0;
+		var result = [];
+
+		for (var i = 0; i < (pedals || []).length; i++) {
+			var pedal = shallowClone(pedals[i]);
+
+			if (!pedal.durationSeconds && fallbackDuration) {
+				pedal.durationSeconds = fallbackDuration;
+			}
+
+			result.push(pedal);
+		}
+
+		return result;
+	}
+
+	function shallowClone(source) {
+		var result = {};
+
+		for (var key in source || {}) {
+			if (Object.prototype.hasOwnProperty.call(source, key)) {
+				result[key] = source[key];
+			}
+		}
+
+		return result;
+	}
+
+	function appendSharedNoteEvents(events, noteEvents, measure, options, startTick, velocity) {
+		var secondsPerBeat = secondsPerBeatForMeasure(measure);
+
+		for (var i = 0; i < noteEvents.length; i++) {
+			var noteStart = startTick + secondsToTicks(noteEvents[i].delay || 0, secondsPerBeat, options);
+			var noteEnd = Math.max(noteStart + 1, noteStart + secondsToTicks(noteEvents[i].duration || 0, secondsPerBeat, options));
+
+			events.push({
+				bar: measure.bar,
+				channel: options.channel,
+				degree: measure.degree,
+				note: noteEvents[i].midiNote,
+				tick: noteStart,
+				type: 'noteOn',
+				velocity: noteEvents[i].velocity || (noteEvents[i].kind === 'passing' ? Math.max(1, Math.round(velocity * 0.82)) : velocity)
+			});
+			events.push({
+				bar: measure.bar,
+				channel: options.channel,
+				degree: measure.degree,
+				note: noteEvents[i].midiNote,
+				tick: noteEnd,
+				type: 'noteOff',
+				velocity: 0
+			});
+		}
+	}
+
+	function secondsToTicks(seconds, secondsPerBeat, options) {
+		return Math.round((Math.max(0, Number(seconds) || 0) / secondsPerBeat) * options.ticksPerBeat);
+	}
+
+	function ticksToSeconds(ticks, measure, options) {
+		return (Math.max(0, Number(ticks) || 0) / options.ticksPerBeat) * secondsPerBeatForMeasure(measure);
 	}
 
 	function appendStaccatoChordEvents(events, notes, measure, options, startTick, velocity) {
@@ -241,7 +339,7 @@
 	}
 
 	function supportsPedalHold(instrument) {
-		return instrument && (instrument.supportsPedalHold === true || instrument.sustained === true || instrument.pedalBehavior === 'sustain');
+		return noteEventService.supportsPedalHold(instrument);
 	}
 
 	function pedalOutTicks(midiNote, measure, options) {
@@ -563,6 +661,7 @@
 		mimeType: midiMimeType,
 		noteIndex: noteIndex,
 		secondsPerBeatForMeasure: secondsPerBeatForMeasure,
+		shouldUseSharedNoteEvents: shouldUseSharedNoteEvents,
 		variableLengthQuantity: variableLengthQuantity
 	};
 })(window);

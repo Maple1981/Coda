@@ -3791,7 +3791,7 @@
 		if (forcedInversionIndex != null) {
 			bestVoicing = buildVoicingCandidate(options, forcedInversionIndex, labels[forcedInversionIndex], disposition);
 
-			return voicingDispositionService.chooseCandidate(bestVoicing, options.previousPlan, disposition, scoreOptions(options));
+			return withInversionRunMetadata(voicingDispositionService.chooseCandidate(bestVoicing, options.previousPlan, disposition, scoreOptions(options)), options.previousPlan);
 		}
 
 		for (var i = 0; i < maxInversions; i++) {
@@ -3805,7 +3805,11 @@
 			}
 		}
 
-		return bestVoicing || voicingDispositionService.chooseCandidate(voicingFactory.create({
+		if (bestVoicing) {
+			return withInversionRunMetadata(bestVoicing, options.previousPlan);
+		}
+
+		return withInversionRunMetadata(voicingDispositionService.chooseCandidate(voicingFactory.create({
 			baseNotes: options.baseNotes,
 			chordName: options.chordName,
 			extraNotes: options.extraNotes,
@@ -3814,7 +3818,7 @@
 			inversionLabel: '',
 			kind: options.kind,
 			voices: options.voices
-		}), options.previousPlan, disposition, scoreOptions(options));
+		}), options.previousPlan, disposition, scoreOptions(options)), options.previousPlan);
 	}
 
 	function buildVoicingCandidate(options, inversionIndex, inversionLabel, disposition) {
@@ -3889,6 +3893,34 @@
 		return nextInversionRunLength(previousPlan, voicing) > MAX_INVERSION_RUN ? INVERSION_RUN_PENALTY : 0;
 	}
 
+	function withInversionRunMetadata(voicing, previousPlan) {
+		var runKey = inversionRunKey(voicing);
+		var runLength = nextInversionRunLength(previousPlan, voicing);
+
+		setInternalValue(voicing, 'inversionRunKey', runKey);
+		setInternalValue(voicing, 'inversionRunLength', runLength);
+
+		return voicing;
+	}
+
+	function setInternalValue(target, key, value) {
+		if (!target) {
+			return;
+		}
+
+		if (typeof Object.defineProperty === 'function') {
+			Object.defineProperty(target, key, {
+				configurable: true,
+				enumerable: false,
+				value: value,
+				writable: true
+			});
+			return;
+		}
+
+		target[key] = value;
+	}
+
 	global.CodaProgressionVoicingSelection = {
 		buildVoicingCandidate: buildVoicingCandidate,
 		chooseVoicing: chooseVoicing,
@@ -3896,7 +3928,8 @@
 		inversionRunPenalty: inversionRunPenalty,
 		nextInversionRunLength: nextInversionRunLength,
 		normalizeVoicingDisposition: normalizeVoicingDisposition,
-		registerCenterMidi: registerCenterMidi
+		registerCenterMidi: registerCenterMidi,
+		withInversionRunMetadata: withInversionRunMetadata
 	};
 })(window);
 
@@ -6308,8 +6341,8 @@
 			degree: resolvedDegree.degreeDisplayName || formattingService.formatDegreeForMeasure(resolvedDegree.degree, chord, useSeventh),
 			inversionIndex: voicing.inversionIndex,
 			inversionLabel: voicing.inversionLabel,
-			inversionRunKey: voicingService.inversionRunKey(voicing),
-			inversionRunLength: voicingService.nextInversionRunLength(context.previousPlan, voicing),
+			inversionRunKey: voicing.inversionRunKey != null ? voicing.inversionRunKey : voicingService.inversionRunKey(voicing),
+			inversionRunLength: voicing.inversionRunLength != null ? voicing.inversionRunLength : voicingService.nextInversionRunLength(context.previousPlan, voicing),
 			kind: useSeventh ? 'seventh' : 'triad',
 			midiNotes: voicing.midiNotes,
 			notes: voicing.notes,
@@ -6758,6 +6791,140 @@
 		baseDegreeDisplayName: baseDegreeDisplayName,
 		resolvedDegreeFromSegment: resolvedDegreeFromSegment,
 		revoiceSegment: revoiceSegment
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-document-transform-service.js */
+// Applies progression controls to an existing editable document without replacing its harmonic content.
+(function (global) {
+	'use strict';
+
+	var measureTimelineService = global.CodaProgressionMeasureTimeline;
+	var revoiceService = global.CodaProgressionRevoice;
+
+	function applyState(progression, options) {
+		var state = options && options.progressionState ? options.progressionState : {};
+		var refreshed;
+		var measures;
+
+		if (!progression || !state) {
+			return progression;
+		}
+
+		refreshed = progressionWithState(progression, state);
+		measures = normalizeMeasureDurations(adjustedMeasuresForState(progression, options), state);
+		refreshed = measureTimelineService.rebuildTimeline(refreshed, measures, {
+			rng: options && options.rng
+		});
+		refreshed = progressionWithState(refreshed, state);
+
+		if (revoiceService && typeof revoiceService.apply === 'function') {
+			refreshed.measures = revoiceService.apply(refreshed, {
+				data: options && options.data,
+				progressionState: state,
+				report: options && options.report,
+				rng: options && options.rng
+			});
+		}
+
+		refreshed.userEdited = true;
+
+		return refreshed;
+	}
+
+	function adjustedMeasuresForState(progression, options) {
+		var state = options && options.progressionState ? options.progressionState : {};
+		var measures = cloneJson(progression && progression.measures ? progression.measures : []);
+		var sections = progression && progression.sections ? progression.sections : [];
+		var firstSection = sections.length ? sections[0] : null;
+		var targetBars = Math.max(1, Number(state.bars) || measures.length);
+		var generated;
+
+		if (sections.length > 1 && firstSection && Number(firstSection.length) === targetBars) {
+			return measures;
+		}
+
+		if (measures.length > targetBars) {
+			return measures.slice(0, targetBars);
+		}
+
+		if (measures.length < targetBars && typeof (options && options.generateProgressionFromState) === 'function' && options.report) {
+			generated = options.generateProgressionFromState({
+				data: options.data,
+				progressionState: state,
+				report: options.report
+			});
+			measures = measures.concat(((generated && generated.measures) || []).slice(measures.length, targetBars));
+		}
+
+		return measures;
+	}
+
+	function progressionWithState(progression, state) {
+		var next = cloneJson(progression) || {};
+		var secondsPerBeat = 60 / (Number(state.bpm) || 120);
+
+		next.articulation = state.articulation;
+		next.beatUnit = state.beatUnit;
+		next.beatsPerBar = state.beatsPerBar;
+		next.bpm = state.bpm;
+		next.harmonicColor = {
+			chromaticism: state.chromaticism,
+			counterpoint: state.counterpoint,
+			modalInterchange: state.modalInterchange,
+			tensions: state.tensions
+		};
+		next.harmonicDensity = state.harmonicDensity;
+		next.humanization = state.humanization;
+		next.intensity = state.intensity;
+		next.meter = state.meter;
+		next.secondsPerBeat = secondsPerBeat;
+		next.style = state.style;
+		next.swing = state.swing;
+		next.totalBeats = (next.measures ? next.measures.length : Number(state.bars) || 0) * state.beatsPerBar;
+		next.totalSeconds = next.totalBeats * secondsPerBeat;
+		next.voicing = state.voicing;
+		next.voices = state.voices;
+
+		return next;
+	}
+
+	function normalizeMeasureDurations(measures, state) {
+		var normalized = cloneJson(measures || []);
+
+		for (var i = 0; i < normalized.length; i++) {
+			applyMeasureState(normalized[i], state);
+			normalized[i].durationBeats = state.beatsPerBar;
+			if (normalized[i].chords && normalized[i].chords.length) {
+				for (var j = 0; j < normalized[i].chords.length; j++) {
+					applyMeasureState(normalized[i].chords[j], state);
+				}
+			}
+		}
+
+		return normalized;
+	}
+
+	function applyMeasureState(measure, state) {
+		measure.articulation = state.articulation;
+		measure.beatUnit = state.beatUnit;
+		measure.beatsPerBar = state.beatsPerBar;
+		measure.humanization = state.humanization;
+		measure.intensity = state.intensity;
+		measure.swing = state.swing;
+	}
+
+	function cloneJson(value) {
+		return value == null ? null : JSON.parse(JSON.stringify(value));
+	}
+
+	global.CodaProgressionDocumentTransform = {
+		adjustedMeasuresForState: adjustedMeasuresForState,
+		applyState: applyState,
+		normalizeMeasureDurations: normalizeMeasureDurations,
+		progressionWithState: progressionWithState
 	};
 })(window);
 
@@ -10066,6 +10233,151 @@
 
 ;
 
+/* Source: js/services/progression-playback-note-event-service.js */
+// Builds per-note playback events, including sustained pedal behavior.
+(function (global) {
+	'use strict';
+
+	function build(measure, duration, options) {
+		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
+		var events = [];
+		var melodicEvents = passingNoteEvents(measure);
+
+		if (measure && measure.articulation === 'staccato') {
+			return staccatoNoteEvents(midiNotes, measure).concat(melodicEvents);
+		}
+
+		if (!hasPedals(measure) || !supportsPedalHold(options ? options.instrument : null)) {
+			return melodicEvents.length ? chordNoteEvents(midiNotes, duration).concat(melodicEvents) : [];
+		}
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			if (isPedalIn(midiNotes[i], measure)) {
+				continue;
+			}
+
+			events.push({
+				duration: duration + pedalOutDuration(midiNotes[i], measure),
+				midiNote: midiNotes[i]
+			});
+		}
+
+		return events.concat(melodicEvents);
+	}
+
+	function staccatoNoteEvents(midiNotes, measure) {
+		var pulseCount = pulseCountForMeasure(measure);
+		var pulseSeconds = pulseSecondsForMeasure(measure, pulseCount);
+		var duration = Math.max(0.05, pulseSeconds * 0.45);
+		var events = [];
+
+		for (var pulseIndex = 0; pulseIndex < pulseCount; pulseIndex++) {
+			for (var noteIndex = 0; noteIndex < midiNotes.length; noteIndex++) {
+				events.push({
+					delay: pulseSeconds * pulseIndex,
+					duration: duration,
+					kind: 'staccato',
+					midiNote: midiNotes[noteIndex]
+				});
+			}
+		}
+
+		return events;
+	}
+
+	function chordNoteEvents(midiNotes, duration) {
+		var events = [];
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			events.push({
+				duration: duration,
+				midiNote: midiNotes[i]
+			});
+		}
+
+		return events;
+	}
+
+	function passingNoteEvents(measure) {
+		var events = [];
+		var passingNotes = measure.passingNotes || [];
+
+		for (var i = 0; i < passingNotes.length; i++) {
+			events.push({
+				delay: Math.max(0, Number(passingNotes[i].delaySeconds) || 0),
+				duration: Math.max(0.05, Number(passingNotes[i].durationSeconds) || 0.12),
+				kind: 'passing',
+				midiNote: passingNotes[i].midiNote
+			});
+		}
+
+		return events;
+	}
+
+	function pulseCountForMeasure(measure) {
+		return Math.max(1, Math.round(Number(measure && measure.durationBeats) || Number(measure && measure.beatsPerBar) || 1));
+	}
+
+	function pulseSecondsForMeasure(measure, pulseCount) {
+		var durationSeconds = Number(measure && measure.durationSeconds) || 0;
+
+		if (durationSeconds > 0 && pulseCount > 0) {
+			return durationSeconds / pulseCount;
+		}
+
+		return 0.5;
+	}
+
+	function hasPedals(measure) {
+		return (measure.pedalsIn && measure.pedalsIn.length) || (measure.pedalsOut && measure.pedalsOut.length);
+	}
+
+	function supportsPedalHold(instrument) {
+		return instrument && (instrument.supportsPedalHold === true || instrument.sustained === true || instrument.pedalBehavior === 'sustain');
+	}
+
+	function isPedalIn(midiNote, measure) {
+		var pedals = measure.pedalsIn || [];
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (pedals[i].midiNote === midiNote) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function pedalOutDuration(midiNote, measure) {
+		var pedals = measure.pedalsOut || [];
+		var duration = 0;
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (pedals[i].midiNote === midiNote) {
+				duration = Math.max(duration, Number(pedals[i].durationSeconds) || 0);
+			}
+		}
+
+		return duration;
+	}
+
+	function notesForVoices(notes, voices) {
+		var voiceCount = Math.max(1, Math.min(Number(voices) || 4, 6));
+
+		return (notes || []).slice(0, voiceCount);
+	}
+
+	global.CodaProgressionPlaybackNoteEvents = {
+		build: build,
+		chordNoteEvents: chordNoteEvents,
+		passingNoteEvents: passingNoteEvents,
+		pulseCountForMeasure: pulseCountForMeasure,
+		supportsPedalHold: supportsPedalHold
+	};
+})(window);
+
+;
+
 /* Source: js/services/midi-export-service.js */
 // Servicio puro de exportación MIDI. Convierte progresiones en eventos MIDI y bytes SMF.
 (function (global) {
@@ -10073,6 +10385,7 @@
 
 	var arpeggioPatterns = global.CodaProgressionArpeggioPatterns;
 	var articulationInstruments = global.CodaProgressionArticulationInstruments;
+	var noteEventService = global.CodaProgressionPlaybackNoteEvents;
 	var defaultTicksPerBeat = 480;
 	var midiMimeType = 'audio/midi';
 	var noteIndexes = {
@@ -10167,12 +10480,15 @@
 		var order = isArpeggioArticulation(measure.articulation) ? arpeggioOrderIndexes(notes.length, measure.articulation, measure.bar) : arpeggioPatterns.ascendingIndexes(notes.length);
 		var velocity = expressiveVelocity(measure, options.velocity);
 		var playbackInstrument = articulationInstruments.resolveInstrument(options.instrument, measure.articulation, options.articulationInstruments);
+		var sharedNoteEvents;
 
 		appendProgramChange(events, playbackInstrument, options.channel, startTick);
 
-		if (measure.articulation === 'staccato') {
-			appendStaccatoChordEvents(events, notes, measure, options, startTick, velocity);
-			appendPassingNoteEvents(events, measure, options, startTick);
+		if (shouldUseSharedNoteEvents(measure, options.instrument)) {
+			sharedNoteEvents = noteEventService.build(measureWithMidiNotes(measure, notes, options), ticksToSeconds(durationTicks, measure, options), {
+				instrument: options.instrument
+			});
+			appendSharedNoteEvents(events, sharedNoteEvents, measure, options, startTick, velocity);
 			return;
 		}
 
@@ -10208,6 +10524,100 @@
 		}
 
 		appendPassingNoteEvents(events, measure, options, startTick);
+	}
+
+	function shouldUseSharedNoteEvents(measure, instrument) {
+		return measure.articulation === 'staccato' ||
+			(hasPedals(measure) && supportsPedalHold(instrument)) ||
+			(!isArpeggioArticulation(measure.articulation) && measure.passingNotes && measure.passingNotes.length);
+	}
+
+	function hasPedals(measure) {
+		return (measure && measure.pedalsIn && measure.pedalsIn.length) ||
+			(measure && measure.pedalsOut && measure.pedalsOut.length);
+	}
+
+	function measureWithMidiNotes(measure, midiNotes, options) {
+		var result = {};
+		var key;
+
+		for (key in measure || {}) {
+			if (Object.prototype.hasOwnProperty.call(measure, key)) {
+				result[key] = measure[key];
+			}
+		}
+
+		result.midiNotes = midiNotes;
+		result.pedalsOut = pedalsWithDurationFallback(result.pedalsOut, options);
+
+		return result;
+	}
+
+	function pedalsWithDurationFallback(pedals, options) {
+		var fallbackDuration = options && options.nextMeasure ?
+			(Number(options.nextMeasure.durationSeconds) || ((Number(options.nextMeasure.durationBeats) || 0) * secondsPerBeatForMeasure(options.nextMeasure))) :
+			0;
+		var result = [];
+
+		for (var i = 0; i < (pedals || []).length; i++) {
+			var pedal = shallowClone(pedals[i]);
+
+			if (!pedal.durationSeconds && fallbackDuration) {
+				pedal.durationSeconds = fallbackDuration;
+			}
+
+			result.push(pedal);
+		}
+
+		return result;
+	}
+
+	function shallowClone(source) {
+		var result = {};
+
+		for (var key in source || {}) {
+			if (Object.prototype.hasOwnProperty.call(source, key)) {
+				result[key] = source[key];
+			}
+		}
+
+		return result;
+	}
+
+	function appendSharedNoteEvents(events, noteEvents, measure, options, startTick, velocity) {
+		var secondsPerBeat = secondsPerBeatForMeasure(measure);
+
+		for (var i = 0; i < noteEvents.length; i++) {
+			var noteStart = startTick + secondsToTicks(noteEvents[i].delay || 0, secondsPerBeat, options);
+			var noteEnd = Math.max(noteStart + 1, noteStart + secondsToTicks(noteEvents[i].duration || 0, secondsPerBeat, options));
+
+			events.push({
+				bar: measure.bar,
+				channel: options.channel,
+				degree: measure.degree,
+				note: noteEvents[i].midiNote,
+				tick: noteStart,
+				type: 'noteOn',
+				velocity: noteEvents[i].velocity || (noteEvents[i].kind === 'passing' ? Math.max(1, Math.round(velocity * 0.82)) : velocity)
+			});
+			events.push({
+				bar: measure.bar,
+				channel: options.channel,
+				degree: measure.degree,
+				note: noteEvents[i].midiNote,
+				tick: noteEnd,
+				type: 'noteOff',
+				velocity: 0
+			});
+		}
+	}
+
+	function secondsToTicks(seconds, secondsPerBeat, options) {
+		return Math.round((Math.max(0, Number(seconds) || 0) / secondsPerBeat) * options.ticksPerBeat);
+	}
+
+	function ticksToSeconds(ticks, measure, options) {
+		return (Math.max(0, Number(ticks) || 0) / options.ticksPerBeat) * secondsPerBeatForMeasure(measure);
 	}
 
 	function appendStaccatoChordEvents(events, notes, measure, options, startTick, velocity) {
@@ -10310,7 +10720,7 @@
 	}
 
 	function supportsPedalHold(instrument) {
-		return instrument && (instrument.supportsPedalHold === true || instrument.sustained === true || instrument.pedalBehavior === 'sustain');
+		return noteEventService.supportsPedalHold(instrument);
 	}
 
 	function pedalOutTicks(midiNote, measure, options) {
@@ -10632,6 +11042,7 @@
 		mimeType: midiMimeType,
 		noteIndex: noteIndex,
 		secondsPerBeatForMeasure: secondsPerBeatForMeasure,
+		shouldUseSharedNoteEvents: shouldUseSharedNoteEvents,
 		variableLengthQuantity: variableLengthQuantity
 	};
 })(window);
@@ -10792,151 +11203,6 @@
 
 	global.CodaProgressionMetronomeSchedule = {
 		build: build
-	};
-})(window);
-
-;
-
-/* Source: js/services/progression-playback-note-event-service.js */
-// Builds per-note playback events, including sustained pedal behavior.
-(function (global) {
-	'use strict';
-
-	function build(measure, duration, options) {
-		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
-		var events = [];
-		var melodicEvents = passingNoteEvents(measure);
-
-		if (measure && measure.articulation === 'staccato') {
-			return staccatoNoteEvents(midiNotes, measure).concat(melodicEvents);
-		}
-
-		if (!hasPedals(measure) || !supportsPedalHold(options ? options.instrument : null)) {
-			return melodicEvents.length ? chordNoteEvents(midiNotes, duration).concat(melodicEvents) : [];
-		}
-
-		for (var i = 0; i < midiNotes.length; i++) {
-			if (isPedalIn(midiNotes[i], measure)) {
-				continue;
-			}
-
-			events.push({
-				duration: duration + pedalOutDuration(midiNotes[i], measure),
-				midiNote: midiNotes[i]
-			});
-		}
-
-		return events.concat(melodicEvents);
-	}
-
-	function staccatoNoteEvents(midiNotes, measure) {
-		var pulseCount = pulseCountForMeasure(measure);
-		var pulseSeconds = pulseSecondsForMeasure(measure, pulseCount);
-		var duration = Math.max(0.05, pulseSeconds * 0.45);
-		var events = [];
-
-		for (var pulseIndex = 0; pulseIndex < pulseCount; pulseIndex++) {
-			for (var noteIndex = 0; noteIndex < midiNotes.length; noteIndex++) {
-				events.push({
-					delay: pulseSeconds * pulseIndex,
-					duration: duration,
-					kind: 'staccato',
-					midiNote: midiNotes[noteIndex]
-				});
-			}
-		}
-
-		return events;
-	}
-
-	function chordNoteEvents(midiNotes, duration) {
-		var events = [];
-
-		for (var i = 0; i < midiNotes.length; i++) {
-			events.push({
-				duration: duration,
-				midiNote: midiNotes[i]
-			});
-		}
-
-		return events;
-	}
-
-	function passingNoteEvents(measure) {
-		var events = [];
-		var passingNotes = measure.passingNotes || [];
-
-		for (var i = 0; i < passingNotes.length; i++) {
-			events.push({
-				delay: Math.max(0, Number(passingNotes[i].delaySeconds) || 0),
-				duration: Math.max(0.05, Number(passingNotes[i].durationSeconds) || 0.12),
-				kind: 'passing',
-				midiNote: passingNotes[i].midiNote
-			});
-		}
-
-		return events;
-	}
-
-	function pulseCountForMeasure(measure) {
-		return Math.max(1, Math.round(Number(measure && measure.durationBeats) || Number(measure && measure.beatsPerBar) || 1));
-	}
-
-	function pulseSecondsForMeasure(measure, pulseCount) {
-		var durationSeconds = Number(measure && measure.durationSeconds) || 0;
-
-		if (durationSeconds > 0 && pulseCount > 0) {
-			return durationSeconds / pulseCount;
-		}
-
-		return 0.5;
-	}
-
-	function hasPedals(measure) {
-		return (measure.pedalsIn && measure.pedalsIn.length) || (measure.pedalsOut && measure.pedalsOut.length);
-	}
-
-	function supportsPedalHold(instrument) {
-		return instrument && (instrument.supportsPedalHold === true || instrument.sustained === true || instrument.pedalBehavior === 'sustain');
-	}
-
-	function isPedalIn(midiNote, measure) {
-		var pedals = measure.pedalsIn || [];
-
-		for (var i = 0; i < pedals.length; i++) {
-			if (pedals[i].midiNote === midiNote) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	function pedalOutDuration(midiNote, measure) {
-		var pedals = measure.pedalsOut || [];
-		var duration = 0;
-
-		for (var i = 0; i < pedals.length; i++) {
-			if (pedals[i].midiNote === midiNote) {
-				duration = Math.max(duration, Number(pedals[i].durationSeconds) || 0);
-			}
-		}
-
-		return duration;
-	}
-
-	function notesForVoices(notes, voices) {
-		var voiceCount = Math.max(1, Math.min(Number(voices) || 4, 6));
-
-		return (notes || []).slice(0, voiceCount);
-	}
-
-	global.CodaProgressionPlaybackNoteEvents = {
-		build: build,
-		chordNoteEvents: chordNoteEvents,
-		passingNoteEvents: passingNoteEvents,
-		pulseCountForMeasure: pulseCountForMeasure,
-		supportsPedalHold: supportsPedalHold
 	};
 })(window);
 
@@ -14488,6 +14754,7 @@
 	var editCommands = global.CodaProgressionEditCommands;
 	var chordPlanService = global.CodaProgressionChordPlan;
 	var chordMenuService = global.CodaProgressionChordMenu;
+	var documentTransform = global.CodaProgressionDocumentTransform;
 	var stateNormalizer = global.CodaProgressionStateNormalizer;
 	var midiFileService = global.CodaProgressionMidiFile;
 	var progressionBuilder = global.CodaProgressionBuilder;
@@ -14624,6 +14891,12 @@
 		return progressionRevoice.apply(progression, options || {});
 	}
 
+	function transformProgressionFromState(progression, options) {
+		return documentTransform.applyState(progression, extendObject(options || {}, {
+			generateProgressionFromState: generateProgressionFromState
+		}));
+	}
+
 	function buildProgressionChordMenu(options) {
 		return chordMenuService.build(options);
 	}
@@ -14644,6 +14917,25 @@
 		return stateNormalizer.normalize(progressionState);
 	}
 
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target || {}) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values || {}) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
 	global.CodaApplication = global.CodaApplication || {};
 	global.CodaApplication.addProgressionMeasureChord = addProgressionMeasureChord;
 	global.CodaApplication.buildProgressionChordMenu = buildProgressionChordMenu;
@@ -14661,6 +14953,7 @@
 	global.CodaApplication.replaceProgressionMeasureChord = replaceProgressionMeasureChord;
 	global.CodaApplication.reorderProgressionMeasureChords = reorderProgressionMeasureChords;
 	global.CodaApplication.reorderProgressionMeasures = reorderProgressionMeasures;
+	global.CodaApplication.transformProgressionFromState = transformProgressionFromState;
 })(window);
 
 ;
@@ -20607,6 +20900,15 @@
 			var refreshed;
 
 			if (!progression || !state) {
+				return;
+			}
+
+			if (options.application && typeof options.application.transformProgressionFromState === 'function') {
+				setProgression(options.application.transformProgressionFromState(progression, {
+					data: options.data,
+					progressionState: state,
+					report: uiState.getReport()
+				}));
 				return;
 			}
 

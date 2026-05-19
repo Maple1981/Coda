@@ -534,6 +534,34 @@ assert.ok(revoicedSplitMeasures[0].chords[0].midiNotes.length > splitProgression
 assert.equal(revoicedSplitMeasures[0].chords[0].voices, 5);
 assert.equal(revoicedSplitMeasures[0].chords[1].voices, 5);
 assert.equal(revoicedSplitMeasures[0].chords[0].articulation, 'sustain');
+const transformedSplitProgression = app.transformProgressionFromState(splitProgression, {
+	data: data,
+	progressionState: {
+		articulation: 'staccato',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 132,
+		counterpoint: 90,
+		harmonicDensity: 70,
+		humanization: 12,
+		intensity: 96,
+		meter: '3/4',
+		modalInterchange: 10,
+		style: 'classic',
+		swing: 18,
+		tensions: 90,
+		voicing: 'open',
+		voices: 5
+	},
+	report: cMajorReport
+});
+assert.equal(transformedSplitProgression.userEdited, true);
+assert.equal(transformedSplitProgression.bpm, 132);
+assert.equal(transformedSplitProgression.measures[0].chords.length, 2);
+assert.deepEqual(transformedSplitProgression.measures[0].chords.map(function (chord) { return chord.chordName; }), splitProgression.measures[0].chords.map(function (chord) { return chord.chordName; }));
+assert.equal(transformedSplitProgression.measures[0].chords[0].articulation, 'staccato');
+assert.equal(transformedSplitProgression.measures[0].chords[0].voices, 5);
 
 const suspendedMeasureProgression = JSON.parse(JSON.stringify(cMajorProgressionPlan));
 suspendedMeasureProgression.measures[0].degree = 'I sus4';

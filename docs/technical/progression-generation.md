@@ -125,20 +125,22 @@ El control **Disposición** alterna entre escritura cerrada y abierta. En dispos
 
 La selección de voicings incluye una fuerza suave de centrado registral. El centro se calcula a partir de la tónica cercana al C central, y la puntuación penaliza progresivamente los voicings cuyo centro de masa se aleja demasiado. Esta regla no impide excepciones ni saltos expresivos, pero evita que las progresiones largas deriven estadísticamente hacia registros demasiado graves o demasiado agudos.
 
-Los controles del constructor se aplican también sobre la progresión en curso. Cuando la progresión ya contiene ediciones del usuario, la aplicación no descarta sus compases, secciones ni acordes añadidos: reinterpreta el material existente con el nuevo estado, recalculando voicings, tensiones, número de voces, duraciones, pedales y parámetros expresivos. El botón **Generar progresión aleatoria** sigue usando esos mismos controles para crear material nuevo desde cero.
+Los controles del constructor se aplican también sobre la progresión en curso mediante `CodaProgressionDocumentTransform`. Cuando la progresión ya contiene ediciones del usuario, la aplicación no descarta sus compases, secciones ni acordes añadidos: reinterpreta el material existente con el nuevo estado, recalculando voicings, tensiones, número de voces, duraciones, pedales y parámetros expresivos. El botón **Generar progresión aleatoria** sigue usando esos mismos controles para crear material nuevo desde cero.
 
 El generador elige inversiones para reducir el desplazamiento entre voces consecutivas. La nomenclatura usada es la tradicional:
 
 - Tríadas: primera inversión `6`, segunda inversión `6/4`.
 - Séptimas: primera inversión `6/5`, segunda inversión `4/3`, tercera inversión `4/2`.
 
-La inversión se muestra junto al nombre del acorde y junto al grado armónico, por ejemplo `Cmaj7 4/3` y `Imaj7 4/3`. Internamente, cada compás conserva las notas por voz y sus alturas MIDI para que la preescucha y la exportación MIDI respeten mejor el voicing generado.
+La inversión se muestra junto al nombre del acorde y junto al grado armónico, por ejemplo `Cmaj7 4/3` y `Imaj7 4/3`. Internamente, cada compás conserva las notas por voz y sus alturas MIDI para que la preescucha y la exportación MIDI respeten mejor el voicing generado. Los metadatos temporales usados para escoger la inversión, como la longitud de la racha de una misma disposición, permanecen en el plan interno de voicing y no forman parte del documento público de la progresión.
 
 ## Expresión, preescucha y MIDI
 
 Los controles expresivos modifican tanto la preescucha como la exportación MIDI. **Intensidad** fija la velocidad base de los eventos `noteOn`; el valor `100 %` del volumen maestro sigue actuando como techo de salida, pero la progresión conserva su propia dinámica musical. **Humanización** añade pequeñas variaciones deterministas de tiempo y velocidad para evitar una ejecución completamente mecánica. **Swing** retrasa ligeramente las subdivisiones débiles cuando la posición rítmica lo permite.
 
 La exportación MIDI debe reflejar el estado editado, no solo el plan original: secciones `B`, `A'` y `C`, acordes añadidos dentro del compás, silencios, inversiones, suspensiones, tensiones, instrumento, tempo y compás. Las reglas de expresión se aplican sobre esos eventos finales para que el archivo exportado coincida con lo que se ha trabajado visualmente.
+
+Las articulaciones y eventos breves compartidos por preescucha y MIDI, como `staccato`, notas de paso y pedales, se construyen desde el mismo servicio de eventos de nota. Así se evita que una articulación suene de una forma en el navegador y se exporte con otra duración o distribución rítmica en el archivo MIDI.
 
 ## Pedales, suspensiones y paralelas
 

@@ -1230,6 +1230,15 @@
 				return;
 			}
 
+			if (options.application && typeof options.application.transformProgressionFromState === 'function') {
+				setProgression(options.application.transformProgressionFromState(progression, {
+					data: options.data,
+					progressionState: state,
+					report: uiState.getReport()
+				}));
+				return;
+			}
+
 			refreshed = progressionWithState(progression, state);
 			if (options.application && typeof options.application.rebuildProgressionTimeline === 'function') {
 				refreshed = options.application.rebuildProgressionTimeline(refreshed, normalizeMeasureDurations(adjustedMeasuresForState(progression, state), state));
