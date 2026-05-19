@@ -20,6 +20,8 @@ El flujo principal del generador se reparte en módulos pequeños para evitar qu
 
 Las pruebas que necesitan cargar pilas largas de módulos deben usar `tests/helpers/script-loader.js` para leer el orden desde `js/bootstrap/script-manifest.js`, en lugar de duplicar listas extensas de scripts.
 
+La forma pública de documentos, secciones, compases y segmentos está fijada en `docs/technical/progression-segment-contract.md`. Las reglas nuevas del generador deben respetar ese contrato antes de llegar a renderers, playback, exportación MIDI o persistencia local.
+
 ## Forma y secciones
 
 La progresión se organiza en secciones musicales. La sección `A` nace de los controles globales del área de trabajo y funciona como punto de referencia formal. Desde el control **Siguiente sección**, el usuario puede añadir `A'` como clon literal de `A`, `A'` con pequeñas variaciones, o una sección `B` contrastante.

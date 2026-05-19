@@ -614,6 +614,80 @@ assert.equal(progressionWorkbenchRenderer.renderTimelineMeasures({
 		}
 	]
 }, { showCircleOfFifths: false }).indexOf('progressionSectionCircleButton'), -1);
+const complexSectionTimeline = progressionWorkbenchRenderer.renderTimeline({
+	measures: [
+		{
+			bar: 1,
+			chordName: 'Cmaj7',
+			degree: 'Imaj7',
+			displayName: 'Cmaj7',
+			notes: ['C', 'E', 'G', 'B'],
+			sectionId: 'A',
+			tonalFunction: 'T'
+		},
+		{
+			bar: 2,
+			chordName: 'G7 4/3',
+			chords: [
+				{ chordName: 'Dm7', degree: 'ii7', displayName: 'Dm7', durationBeats: 1, notes: ['D', 'F', 'A', 'C'], tonalFunction: 'SD' },
+				{ chordName: 'G7 4/3', degree: 'V7 4/3', displayName: 'G7 4/3', durationBeats: 2, notes: ['F', 'G', 'B', 'D'], tonalFunction: 'D' },
+				{ chordName: 'Cmaj7', degree: 'Imaj7', displayName: 'Cmaj7', durationBeats: 1, notes: ['C', 'E', 'G', 'B'], tonalFunction: 'T' }
+			],
+			degree: 'V7 4/3',
+			displayName: 'G7 4/3',
+			sectionId: 'A',
+			tonalFunction: 'D'
+		},
+		{ bar: 3, chordName: 'Am7', degree: 'vi7', displayName: 'Am7', sectionId: 'A\'' },
+		{ bar: 4, chordName: 'Fmaj7', degree: 'IVmaj7', displayName: 'Fmaj7', sectionId: 'B' },
+		{ bar: 5, chordName: 'Bb7', degree: 'SubV7/V', displayName: 'Bb7', sectionId: 'B', tonalFunction: 'D' },
+		{ bar: 6, chordName: 'Gm7', degree: 'ii7', displayName: 'Gm7', sectionId: 'B\'' },
+		{ bar: 7, chordName: 'Ebmaj7', degree: 'Imaj7', displayName: 'Ebmaj7', sectionId: 'C' }
+	],
+	sections: [
+		{ id: 'A', labelKey: 'progression.sectionA', length: 2, startIndex: 0 },
+		{ id: 'A\'', labelKey: 'progression.sectionAprime', length: 1, startIndex: 2 },
+		{
+			circleOfFifths: data.circleOfFifths,
+			contextScaleIndex: 0,
+			contextTonicName: 'F',
+			id: 'B',
+			labelKey: 'progression.sectionB',
+			length: 2,
+			startIndex: 3
+		},
+		{ id: 'B\'', labelKey: 'progression.sectionBprime', length: 1, startIndex: 5 },
+		{
+			contextLabel: 'Eb Mayor',
+			id: 'C',
+			labelKey: 'progression.sectionC',
+			length: 1,
+			startIndex: 6
+		}
+	]
+}, {
+	i18n: englishI18n,
+	notation: notation,
+	notationStyle: 'english'
+});
+assert.ok(complexSectionTimeline.indexOf('progressionSectionNavigator') > -1);
+assert.ok(complexSectionTimeline.indexOf('href="#progression-section-a"') > -1);
+assert.ok(complexSectionTimeline.indexOf('href="#progression-section-aprime"') > -1);
+assert.ok(complexSectionTimeline.indexOf('href="#progression-section-b"') > -1);
+assert.ok(complexSectionTimeline.indexOf('href="#progression-section-bprime"') > -1);
+assert.ok(complexSectionTimeline.indexOf('href="#progression-section-c"') > -1);
+assert.equal((complexSectionTimeline.match(/progressionSectionNavDeleteButton/g) || []).length, 4);
+assert.equal((complexSectionTimeline.match(/progressionSectionDeleteButton/g) || []).length, 4);
+assert.equal(complexSectionTimeline.indexOf('data-section-delete="A"'), -1);
+assert.ok(complexSectionTimeline.indexOf('data-section-delete="A&#39;"') > -1);
+assert.ok(complexSectionTimeline.indexOf('data-section-delete="B"') > -1);
+assert.ok(complexSectionTimeline.indexOf('data-section-delete="B&#39;"') > -1);
+assert.ok(complexSectionTimeline.indexOf('data-section-delete="C"') > -1);
+assert.ok(complexSectionTimeline.indexOf('measure--split') > -1);
+assert.equal((complexSectionTimeline.match(/data-progression-split-action="remove"/g) || []).length, 2);
+assert.ok(complexSectionTimeline.indexOf('<strong>G7 <sub class="musicInversion">4/3</sub></strong>') > -1);
+assert.equal(complexSectionTimeline.indexOf('undefined'), -1);
+assert.equal(complexSectionTimeline.indexOf('NaN'), -1);
 const invertedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [
 		{
