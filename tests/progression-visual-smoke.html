@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Coda progression visual smoke</title>
+	<link rel="stylesheet" href="../dist/css/styles.min.css">
+	<link rel="stylesheet" href="../dist/css/progression-playback.css">
+	<style>
+		body {
+			margin: 0;
+			padding: 24px;
+		}
+
+		.smokeShell {
+			display: grid;
+			gap: 24px;
+			margin: 0 auto;
+			max-width: calc(100vw - 48px);
+			width: min(1280px, 100%);
+		}
+
+		.smokeStatus {
+			border: 1px solid currentColor;
+			font: 14px/1.4 system-ui, sans-serif;
+			padding: 8px 12px;
+		}
+
+		.smokeStatus[data-status="passed"] {
+			color: #2f8f5b;
+		}
+
+		.smokeStatus[data-status="failed"] {
+			color: #bd3f32;
+		}
+
+		.smokeShell .material-icons {
+			display: inline-flex;
+			max-width: 1em;
+			overflow: hidden;
+		}
+	</style>
+</head>
+<body>
+	<main class="smokeShell">
+		<p id="smoke-status" class="smokeStatus" data-status="pending">Progression visual smoke pending</p>
+		<section id="smoke-workbench"></section>
+		<section id="smoke-arpeggio"></section>
+		<section id="smoke-staccato"></section>
+	</main>
+	<script src="../dist/js/coda.bundle.js"></script>
+	<script>
+		(function () {
+			'use strict';
+
+			var app = window.CodaApplication;
+			var data = window.CodaData;
+			var domain = window.CodaDomain;
+			var i18n = window.CodaI18n.create({
+				initialLanguage: 'es',
+				translations: window.CodaTranslations
+			});
+			var notation = window.CodaNotation;
+			var renderer = window.CodaRenderers.progressionWorkbench;
+			var report = app.buildScaleReport({
+				data: data,
+				domain: domain,
+				preferFlats: false,
+				scaleIndex: 0,
+				scaleName: 'Mayor',
+				tonicIndex: noteIndex('C'),
+				tonicName: 'C'
+			});
+			var arpeggioState = {
+				articulation: 'arpeggio_random',
+				bars: 16,
+				beatUnit: 8,
+				beatsPerBar: 7,
+				bpm: 116,
+				chromaticism: 90,
+				counterpoint: 78,
+				harmonicDensity: 95,
+				humanization: 14,
+				intensity: 88,
+				meter: '7/8',
+				modalInterchange: 60,
+				style: 'classic',
+				swing: 18,
+				tensions: 75,
+				voicing: 'open',
+				voices: 5
+			};
+			var progression = app.generateProgressionFromState({
+				data: data,
+				domain: domain,
+				progressionState: arpeggioState,
+				report: report,
+				rng: sequenceRng([0.12, 0.88, 0.42, 0.74, 0.26, 0.64, 0.18, 0.93])
+			});
+			var staccatoState;
+			var staccatoProgression;
+
+			progression = app.generateProgressionSection({
+				data: data,
+				domain: domain,
+				progression: progression,
+				progressionState: arpeggioState,
+				report: report,
+				rng: sequenceRng([0.1, 0.3, 0.7, 0.95, 0.2, 0.55]),
+				sectionType: 'aprimeVariation',
+				selection: { preferFlats: false }
+			});
+			progression = app.generateProgressionSection({
+				data: data,
+				domain: domain,
+				progression: progression,
+				progressionState: arpeggioState,
+				report: report,
+				rng: sequenceRng([0.96, 0.15, 0.4, 0.6, 0.8, 0.22]),
+				sectionType: 'contrast',
+				selection: { preferFlats: false }
+			});
+			staccatoState = shallowExtend(arpeggioState, {
+				articulation: 'staccato'
+			});
+			staccatoProgression = app.transformProgressionFromState(progression, {
+				data: data,
+				progressionState: staccatoState,
+				report: report
+			});
+
+			document.getElementById('smoke-workbench').innerHTML = renderer.render();
+			document.getElementById('smoke-arpeggio').innerHTML = renderer.renderTimeline(progression, renderOptions());
+			document.getElementById('smoke-staccato').innerHTML = renderer.renderTimeline(staccatoProgression, renderOptions());
+
+			finishSmoke();
+
+			function collectChecks() {
+				var arpeggioPanel = document.getElementById('smoke-arpeggio');
+				var staccatoPanel = document.getElementById('smoke-staccato');
+
+				return [
+					{ name: 'arpeggio progression exists', pass: !!arpeggioPanel.querySelector('.progressionTimeline') },
+					{ name: 'staccato progression exists', pass: !!staccatoPanel.querySelector('.progressionTimeline') },
+					{ name: 'section navigator exists', pass: arpeggioPanel.querySelectorAll('.progressionSectionNavigator').length === 1 },
+					{ name: 'multiple sections render', pass: arpeggioPanel.querySelectorAll('.progressionSectionHeader:not(.progressionSectionHeader--next)').length >= 3 },
+					{ name: 'section delete controls render', pass: arpeggioPanel.querySelectorAll('.progressionSectionDeleteButton').length >= 2 },
+					{ name: 'high density split measures render', pass: arpeggioPanel.querySelectorAll('.measure--split').length > 0 },
+					{ name: 'split chord controls render', pass: arpeggioPanel.querySelectorAll('[data-progression-split-action="remove"]').length > 0 },
+					{ name: 'timeline has size', pass: hasPositiveRect(arpeggioPanel.querySelector('.progressionTimeline')) },
+					{ name: 'staccato timeline has size', pass: hasPositiveRect(staccatoPanel.querySelector('.progressionTimeline')) },
+					{ name: 'no horizontal overflow', pass: document.documentElement.scrollWidth <= window.innerWidth + 4 }
+				];
+			}
+
+			function finishSmoke() {
+				var status = document.getElementById('smoke-status');
+				var checks = collectChecks();
+				var failures = checks.filter(function (check) {
+					return !check.pass;
+				});
+
+				if (failures.length) {
+					status.dataset.status = 'failed';
+					status.textContent = failures.map(function (check) {
+						return check.name;
+					}).join(', ');
+					document.documentElement.dataset.smokeStatus = 'failed';
+					return;
+				}
+
+				status.dataset.status = 'passed';
+				status.textContent = 'Progression visual smoke passed';
+				document.documentElement.dataset.smokeStatus = 'passed';
+			}
+
+			function hasPositiveRect(element) {
+				var rect;
+
+				if (!element) {
+					return false;
+				}
+
+				rect = element.getBoundingClientRect();
+				return rect.width > 0 && rect.height > 0;
+			}
+
+			function renderOptions() {
+				return {
+					i18n: i18n,
+					notation: notation,
+					notationStyle: 'anglosaxon'
+				};
+			}
+
+			function noteIndex(name) {
+				return data.notes.findIndex(function (note) {
+					return note.nombre === name || note.enarmonica === name;
+				});
+			}
+
+			function sequenceRng(values) {
+				var index = 0;
+
+				return function () {
+					var value = values[index % values.length];
+					index += 1;
+					return value;
+				};
+			}
+
+			function shallowExtend(source, overrides) {
+				var result = {};
+				var key;
+
+				for (key in source) {
+					if (Object.prototype.hasOwnProperty.call(source, key)) {
+						result[key] = source[key];
+					}
+				}
+
+				for (key in overrides) {
+					if (Object.prototype.hasOwnProperty.call(overrides, key)) {
+						result[key] = overrides[key];
+					}
+				}
+
+				return result;
+			}
+		})();
+	</script>
+</body>
+</html>

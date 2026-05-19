@@ -32,6 +32,10 @@ Write-Host "Ejecutando pruebas de capa de aplicación..."
 node tests\app-layer-tests.js
 Assert-LastCommand "node tests\app-layer-tests.js"
 
+Write-Host "Ejecutando invariantes multi-semilla de progresiones..."
+node tests\progression-invariants-tests.js
+Assert-LastCommand "node tests\progression-invariants-tests.js"
+
 Write-Host "Ejecutando pruebas de renderizado..."
 node tests\renderers-tests.js
 Assert-LastCommand "node tests\renderers-tests.js"

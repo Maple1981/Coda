@@ -38,6 +38,7 @@ Comandos de verificación:
 ```powershell
 node tests\domain-tests.js
 node tests\app-layer-tests.js
+node tests\progression-invariants-tests.js
 node tests\progression-state-tests.js
 node tests\progression-midi-tests.js
 node tests\progression-playback-tests.js
@@ -50,6 +51,7 @@ Cobertura actual:
 
 - `tests/domain-tests.js`: reglas musicales puras.
 - `tests/app-layer-tests.js`: casos de uso de aplicación, informes e instrumentos.
+- `tests/progression-invariants-tests.js`: invariantes multi-semilla del generador de progresiones. Está separado de la capa de aplicación para poder aislar su coste si en el futuro conviene moverlo a una batería extendida.
 - `tests/progression-state-tests.js`: estado normalizado del constructor de progresiones.
 - `tests/progression-midi-tests.js`: conversión de progresiones a eventos MIDI y archivo `.mid`.
 - `tests/progression-playback-tests.js`: secuenciación temporal de progresiones para preescucha.
@@ -169,6 +171,14 @@ Para pruebas de navegador, usar Live Server:
 ```text
 http://127.0.0.1:5500/index.html
 ```
+
+Para validar progresiones complejas con layout real de navegador, abrir también:
+
+```text
+http://127.0.0.1:5500/tests/progression-visual-smoke.html
+```
+
+Este smoke monta el área de progresiones, genera una progresión con densidad armónica alta, secciones derivadas y contrastantes, arpegio aleatorio y una variante staccato, y marca `data-smoke-status="passed"` en el elemento raíz cuando el renderizado conserva navegador de secciones, controles de borrado, compases divididos y tamaños de layout válidos sin desbordamiento horizontal.
 
 Flujos mínimos a comprobar tras cambios de arquitectura o UI:
 
