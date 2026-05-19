@@ -3273,7 +3273,7 @@
 
 	var pitchService = global.CodaProgressionPitch;
 
-	function voiceLeadingTransitionScore(previousPlan, nextPlan) {
+	function voiceLeadingTransitionScore(previousPlan, nextPlan, options) {
 		var score = transitionScore(previousPlan.midiNotes, nextPlan.midiNotes);
 		var commonTones = pitchService.commonPitchNames(previousPlan.notes, nextPlan.notes).length;
 		var parallelPerfects = countParallelPerfects(previousPlan.midiNotes, nextPlan.midiNotes, false);
@@ -3282,6 +3282,7 @@
 		score -= commonTones * 3;
 		score += parallelPerfects * 18;
 		score += exteriorParallelPerfects * 28;
+		score += registerCenterPenalty(nextPlan, options && options.registerCenterMidi);
 
 		return score;
 	}
@@ -3305,8 +3306,8 @@
 		return count;
 	}
 
-	function firstVoicingScore(voicing) {
-		return voicing.inversionIndex * 2 + voiceSpan(voicing.midiNotes) / 12;
+	function firstVoicingScore(voicing, options) {
+		return voicing.inversionIndex * 2 + voiceSpan(voicing.midiNotes) / 12 + registerCenterPenalty(voicing, options && options.registerCenterMidi);
 	}
 
 	function transitionScore(previousMidiNotes, nextMidiNotes) {
@@ -3353,9 +3354,30 @@
 		return midiNotes[midiNotes.length - 1] - midiNotes[0];
 	}
 
+	function registerCenterPenalty(voicing, registerCenterMidi) {
+		var center = Number(registerCenterMidi);
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes : [];
+		var centroid;
+		var distance;
+		var excess;
+
+		if (!isFinite(center) || !midiNotes.length) {
+			return 0;
+		}
+
+		centroid = midiNotes.reduce(function (sum, midiNote) {
+			return sum + midiNote;
+		}, 0) / midiNotes.length;
+		distance = Math.abs(centroid - center);
+		excess = Math.max(0, distance - 6);
+
+		return (excess * excess) / 3;
+	}
+
 	global.CodaProgressionVoiceLeadingScore = {
 		countParallelPerfects: countParallelPerfects,
 		firstVoicingScore: firstVoicingScore,
+		registerCenterPenalty: registerCenterPenalty,
 		voiceLeadingTransitionScore: voiceLeadingTransitionScore
 	};
 })(window);
@@ -3370,14 +3392,14 @@
 	var objectService = global.CodaProgressionObjects;
 	var voiceLeadingScoreService = global.CodaProgressionVoiceLeadingScore;
 
-	function chooseCandidate(voicing, previousPlan, disposition) {
+	function chooseCandidate(voicing, previousPlan, disposition, options) {
 		var normalizedDisposition = normalize(disposition);
 		var candidates = dispositionCandidates(voicing, normalizedDisposition);
 		var bestCandidate = candidates[0];
-		var bestScore = score(bestCandidate, previousPlan, normalizedDisposition);
+		var bestScore = score(bestCandidate, previousPlan, normalizedDisposition, options);
 
 		for (var i = 1; i < candidates.length; i++) {
-			var candidateScore = score(candidates[i], previousPlan, normalizedDisposition);
+			var candidateScore = score(candidates[i], previousPlan, normalizedDisposition, options);
 
 			if (candidateScore < bestScore) {
 				bestScore = candidateScore;
@@ -3389,23 +3411,28 @@
 	}
 
 	function dispositionCandidates(voicing, disposition) {
+		var candidates;
+
 		if (!voicing.midiNotes || voicing.midiNotes.length < 3) {
 			return [voicing];
 		}
 
 		if (disposition === 'open') {
-			return isOpenVoicing(voicing.midiNotes) ? [voicing] : [
+			candidates = isOpenVoicing(voicing.midiNotes) ? [voicing] : [
 				openUpperVoice(voicing, voicing.midiNotes.length - 1)
 			];
+			return registerShiftCandidates(candidates);
 		}
 
-		return isOpenVoicing(voicing.midiNotes) ? [compactUpperVoices(voicing)] : [voicing];
+		candidates = isOpenVoicing(voicing.midiNotes) ? [compactUpperVoices(voicing)] : [voicing];
+
+		return registerShiftCandidates(candidates);
 	}
 
-	function score(voicing, previousPlan, disposition) {
+	function score(voicing, previousPlan, disposition, options) {
 		var baseScore = previousPlan ?
-			voiceLeadingScoreService.voiceLeadingTransitionScore(previousPlan, voicing) :
-			voiceLeadingScoreService.firstVoicingScore(voicing);
+			voiceLeadingScoreService.voiceLeadingTransitionScore(previousPlan, voicing, options) :
+			voiceLeadingScoreService.firstVoicingScore(voicing, options);
 
 		if (normalize(disposition) === 'open') {
 			return baseScore + (isOpenVoicing(voicing.midiNotes) ? 0 : 24);
@@ -3422,6 +3449,35 @@
 		voiceNotes[voiceIndex] = extendObject(voiceNotes[voiceIndex], {
 			midiNote: midiNotes[voiceIndex]
 		});
+
+		return extendObject(voicing, {
+			midiNotes: midiNotes,
+			voiceNotes: voiceNotes
+		});
+	}
+
+	function registerShiftCandidates(candidates) {
+		var result = [];
+
+		for (var i = 0; i < candidates.length; i++) {
+			result.push(shiftRegister(candidates[i], -12));
+			result.push(candidates[i]);
+			result.push(shiftRegister(candidates[i], 12));
+		}
+
+		return result;
+	}
+
+	function shiftRegister(voicing, semitones) {
+		var midiNotes = voicing.midiNotes.slice();
+		var voiceNotes = cloneVoiceNotes(voicing.voiceNotes);
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			midiNotes[i] += semitones;
+			voiceNotes[i] = extendObject(voiceNotes[i], {
+				midiNote: midiNotes[i]
+			});
+		}
 
 		return extendObject(voicing, {
 			midiNotes: midiNotes,
@@ -3474,6 +3530,7 @@
 
 	global.CodaProgressionVoicingDisposition = {
 		chooseCandidate: chooseCandidate,
+		registerShiftCandidates: registerShiftCandidates,
 		score: score,
 		upperVoiceSpan: upperVoiceSpan
 	};
@@ -3732,12 +3789,12 @@
 		if (forcedInversionIndex != null) {
 			bestVoicing = buildVoicingCandidate(options, forcedInversionIndex, labels[forcedInversionIndex], disposition);
 
-			return voicingDispositionService.chooseCandidate(bestVoicing, options.previousPlan, disposition);
+			return voicingDispositionService.chooseCandidate(bestVoicing, options.previousPlan, disposition, scoreOptions(options));
 		}
 
 		for (var i = 0; i < maxInversions; i++) {
 			var voicing = buildVoicingCandidate(options, i, labels[i], disposition);
-			var score = voicingDispositionService.score(voicing, options.previousPlan, disposition);
+			var score = voicingDispositionService.score(voicing, options.previousPlan, disposition, scoreOptions(options));
 
 			if (score < bestScore) {
 				bestScore = score;
@@ -3754,7 +3811,7 @@
 			inversionLabel: '',
 			kind: options.kind,
 			voices: options.voices
-		}), options.previousPlan, disposition);
+		}), options.previousPlan, disposition, scoreOptions(options));
 	}
 
 	function buildVoicingCandidate(options, inversionIndex, inversionLabel, disposition) {
@@ -3773,17 +3830,35 @@
 			voicing = voicingFactory.fitToPrevious(voicing, options.previousPlan);
 		}
 
-		return voicingDispositionService.chooseCandidate(voicing, options.previousPlan, disposition);
+		return voicingDispositionService.chooseCandidate(voicing, options.previousPlan, disposition, scoreOptions(options));
 	}
 
 	function normalizeVoicingDisposition(value) {
 		return value === 'open' ? 'open' : 'closed';
 	}
 
+	function scoreOptions(options) {
+		return {
+			registerCenterMidi: registerCenterMidi(options)
+		};
+	}
+
+	function registerCenterMidi(options) {
+		var center = Number(options && options.registerCenterMidi);
+		var fallback = Number(options && options.initialMidiNote);
+
+		if (isFinite(center)) {
+			return center;
+		}
+
+		return (isFinite(fallback) ? fallback : 60) - 6;
+	}
+
 	global.CodaProgressionVoicingSelection = {
 		buildVoicingCandidate: buildVoicingCandidate,
 		chooseVoicing: chooseVoicing,
-		normalizeVoicingDisposition: normalizeVoicingDisposition
+		normalizeVoicingDisposition: normalizeVoicingDisposition,
+		registerCenterMidi: registerCenterMidi
 	};
 })(window);
 
@@ -3839,6 +3914,10 @@
 		return voicingDispositionService.upperVoiceSpan(midiNotes);
 	}
 
+	function registerCenterMidi(options) {
+		return voicingSelectionService.registerCenterMidi(options);
+	}
+
 	global.CodaProgressionVoicing = {
 		chooseVoicing: chooseVoicing,
 		commonPitchNames: commonPitchNames,
@@ -3848,6 +3927,7 @@
 		normalizePitchName: normalizePitchName,
 		noteIndex: noteIndex,
 		noteNameToMidi: noteNameToMidi,
+		registerCenterMidi: registerCenterMidi,
 		upperVoiceSpan: upperVoiceSpan,
 		voiceLeadingTransitionScore: voiceLeadingTransitionScore
 	};
@@ -6130,6 +6210,7 @@
 	'use strict';
 
 	var formattingService = global.CodaProgressionFormatting;
+	var pitchService = global.CodaProgressionPitch;
 	var seventhDecisionService = global.CodaProgressionSeventhDecision;
 	var suspensionService = global.CodaProgressionSuspension;
 	var tensionService = global.CodaProgressionTensions;
@@ -6168,6 +6249,7 @@
 			initialMidiNote: context.options.initialMidiNote || 60,
 			kind: useSeventh ? 'seventh' : 'triad',
 			previousPlan: context.previousPlan,
+			registerCenterMidi: registerCenterMidi(context.options),
 			voicing: context.progressionState.voicing,
 			voices: context.progressionState.voices
 		});
@@ -6199,9 +6281,23 @@
 		return seventhDecisionService.triadNotes(chord);
 	}
 
+	function registerCenterMidi(options) {
+		var initialMidiNote = Number(options && options.initialMidiNote) || 60;
+		var scaleNotes = options && options.scaleNotes ? options.scaleNotes : [];
+		var tonicName = scaleNotes[0] && (scaleNotes[0].nombre || scaleNotes[0].note || scaleNotes[0].name);
+		var tonicMidi = tonicName ? pitchService.noteNameToMidi(tonicName, initialMidiNote) : initialMidiNote;
+
+		if (tonicMidi == null) {
+			tonicMidi = initialMidiNote;
+		}
+
+		return pitchService.nearestMidiTo(initialMidiNote, tonicMidi) - 6;
+	}
+
 	global.CodaProgressionChordPlan = {
 		build: build,
 		chordNotes: chordNotes,
+		registerCenterMidi: registerCenterMidi,
 		suspendedNotes: suspendedNotes,
 		triadNotes: triadNotes
 	};

@@ -47,6 +47,10 @@
 		return voicingDispositionService.upperVoiceSpan(midiNotes);
 	}
 
+	function registerCenterMidi(options) {
+		return voicingSelectionService.registerCenterMidi(options);
+	}
+
 	global.CodaProgressionVoicing = {
 		chooseVoicing: chooseVoicing,
 		commonPitchNames: commonPitchNames,
@@ -56,6 +60,7 @@
 		normalizePitchName: normalizePitchName,
 		noteIndex: noteIndex,
 		noteNameToMidi: noteNameToMidi,
+		registerCenterMidi: registerCenterMidi,
 		upperVoiceSpan: upperVoiceSpan,
 		voiceLeadingTransitionScore: voiceLeadingTransitionScore
 	};

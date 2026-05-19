@@ -3,6 +3,7 @@
 	'use strict';
 
 	var formattingService = global.CodaProgressionFormatting;
+	var pitchService = global.CodaProgressionPitch;
 	var seventhDecisionService = global.CodaProgressionSeventhDecision;
 	var suspensionService = global.CodaProgressionSuspension;
 	var tensionService = global.CodaProgressionTensions;
@@ -41,6 +42,7 @@
 			initialMidiNote: context.options.initialMidiNote || 60,
 			kind: useSeventh ? 'seventh' : 'triad',
 			previousPlan: context.previousPlan,
+			registerCenterMidi: registerCenterMidi(context.options),
 			voicing: context.progressionState.voicing,
 			voices: context.progressionState.voices
 		});
@@ -72,9 +74,23 @@
 		return seventhDecisionService.triadNotes(chord);
 	}
 
+	function registerCenterMidi(options) {
+		var initialMidiNote = Number(options && options.initialMidiNote) || 60;
+		var scaleNotes = options && options.scaleNotes ? options.scaleNotes : [];
+		var tonicName = scaleNotes[0] && (scaleNotes[0].nombre || scaleNotes[0].note || scaleNotes[0].name);
+		var tonicMidi = tonicName ? pitchService.noteNameToMidi(tonicName, initialMidiNote) : initialMidiNote;
+
+		if (tonicMidi == null) {
+			tonicMidi = initialMidiNote;
+		}
+
+		return pitchService.nearestMidiTo(initialMidiNote, tonicMidi) - 6;
+	}
+
 	global.CodaProgressionChordPlan = {
 		build: build,
 		chordNotes: chordNotes,
+		registerCenterMidi: registerCenterMidi,
 		suspendedNotes: suspendedNotes,
 		triadNotes: triadNotes
 	};

@@ -5,14 +5,14 @@
 	var objectService = global.CodaProgressionObjects;
 	var voiceLeadingScoreService = global.CodaProgressionVoiceLeadingScore;
 
-	function chooseCandidate(voicing, previousPlan, disposition) {
+	function chooseCandidate(voicing, previousPlan, disposition, options) {
 		var normalizedDisposition = normalize(disposition);
 		var candidates = dispositionCandidates(voicing, normalizedDisposition);
 		var bestCandidate = candidates[0];
-		var bestScore = score(bestCandidate, previousPlan, normalizedDisposition);
+		var bestScore = score(bestCandidate, previousPlan, normalizedDisposition, options);
 
 		for (var i = 1; i < candidates.length; i++) {
-			var candidateScore = score(candidates[i], previousPlan, normalizedDisposition);
+			var candidateScore = score(candidates[i], previousPlan, normalizedDisposition, options);
 
 			if (candidateScore < bestScore) {
 				bestScore = candidateScore;
@@ -24,23 +24,28 @@
 	}
 
 	function dispositionCandidates(voicing, disposition) {
+		var candidates;
+
 		if (!voicing.midiNotes || voicing.midiNotes.length < 3) {
 			return [voicing];
 		}
 
 		if (disposition === 'open') {
-			return isOpenVoicing(voicing.midiNotes) ? [voicing] : [
+			candidates = isOpenVoicing(voicing.midiNotes) ? [voicing] : [
 				openUpperVoice(voicing, voicing.midiNotes.length - 1)
 			];
+			return registerShiftCandidates(candidates);
 		}
 
-		return isOpenVoicing(voicing.midiNotes) ? [compactUpperVoices(voicing)] : [voicing];
+		candidates = isOpenVoicing(voicing.midiNotes) ? [compactUpperVoices(voicing)] : [voicing];
+
+		return registerShiftCandidates(candidates);
 	}
 
-	function score(voicing, previousPlan, disposition) {
+	function score(voicing, previousPlan, disposition, options) {
 		var baseScore = previousPlan ?
-			voiceLeadingScoreService.voiceLeadingTransitionScore(previousPlan, voicing) :
-			voiceLeadingScoreService.firstVoicingScore(voicing);
+			voiceLeadingScoreService.voiceLeadingTransitionScore(previousPlan, voicing, options) :
+			voiceLeadingScoreService.firstVoicingScore(voicing, options);
 
 		if (normalize(disposition) === 'open') {
 			return baseScore + (isOpenVoicing(voicing.midiNotes) ? 0 : 24);
@@ -57,6 +62,35 @@
 		voiceNotes[voiceIndex] = extendObject(voiceNotes[voiceIndex], {
 			midiNote: midiNotes[voiceIndex]
 		});
+
+		return extendObject(voicing, {
+			midiNotes: midiNotes,
+			voiceNotes: voiceNotes
+		});
+	}
+
+	function registerShiftCandidates(candidates) {
+		var result = [];
+
+		for (var i = 0; i < candidates.length; i++) {
+			result.push(shiftRegister(candidates[i], -12));
+			result.push(candidates[i]);
+			result.push(shiftRegister(candidates[i], 12));
+		}
+
+		return result;
+	}
+
+	function shiftRegister(voicing, semitones) {
+		var midiNotes = voicing.midiNotes.slice();
+		var voiceNotes = cloneVoiceNotes(voicing.voiceNotes);
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			midiNotes[i] += semitones;
+			voiceNotes[i] = extendObject(voiceNotes[i], {
+				midiNote: midiNotes[i]
+			});
+		}
 
 		return extendObject(voicing, {
 			midiNotes: midiNotes,
@@ -109,6 +143,7 @@
 
 	global.CodaProgressionVoicingDisposition = {
 		chooseCandidate: chooseCandidate,
+		registerShiftCandidates: registerShiftCandidates,
 		score: score,
 		upperVoiceSpan: upperVoiceSpan
 	};

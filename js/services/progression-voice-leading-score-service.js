@@ -4,7 +4,7 @@
 
 	var pitchService = global.CodaProgressionPitch;
 
-	function voiceLeadingTransitionScore(previousPlan, nextPlan) {
+	function voiceLeadingTransitionScore(previousPlan, nextPlan, options) {
 		var score = transitionScore(previousPlan.midiNotes, nextPlan.midiNotes);
 		var commonTones = pitchService.commonPitchNames(previousPlan.notes, nextPlan.notes).length;
 		var parallelPerfects = countParallelPerfects(previousPlan.midiNotes, nextPlan.midiNotes, false);
@@ -13,6 +13,7 @@
 		score -= commonTones * 3;
 		score += parallelPerfects * 18;
 		score += exteriorParallelPerfects * 28;
+		score += registerCenterPenalty(nextPlan, options && options.registerCenterMidi);
 
 		return score;
 	}
@@ -36,8 +37,8 @@
 		return count;
 	}
 
-	function firstVoicingScore(voicing) {
-		return voicing.inversionIndex * 2 + voiceSpan(voicing.midiNotes) / 12;
+	function firstVoicingScore(voicing, options) {
+		return voicing.inversionIndex * 2 + voiceSpan(voicing.midiNotes) / 12 + registerCenterPenalty(voicing, options && options.registerCenterMidi);
 	}
 
 	function transitionScore(previousMidiNotes, nextMidiNotes) {
@@ -84,9 +85,30 @@
 		return midiNotes[midiNotes.length - 1] - midiNotes[0];
 	}
 
+	function registerCenterPenalty(voicing, registerCenterMidi) {
+		var center = Number(registerCenterMidi);
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes : [];
+		var centroid;
+		var distance;
+		var excess;
+
+		if (!isFinite(center) || !midiNotes.length) {
+			return 0;
+		}
+
+		centroid = midiNotes.reduce(function (sum, midiNote) {
+			return sum + midiNote;
+		}, 0) / midiNotes.length;
+		distance = Math.abs(centroid - center);
+		excess = Math.max(0, distance - 6);
+
+		return (excess * excess) / 3;
+	}
+
 	global.CodaProgressionVoiceLeadingScore = {
 		countParallelPerfects: countParallelPerfects,
 		firstVoicingScore: firstVoicingScore,
+		registerCenterPenalty: registerCenterPenalty,
 		voiceLeadingTransitionScore: voiceLeadingTransitionScore
 	};
 })(window);

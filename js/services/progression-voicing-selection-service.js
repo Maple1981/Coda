@@ -16,12 +16,12 @@
 		if (forcedInversionIndex != null) {
 			bestVoicing = buildVoicingCandidate(options, forcedInversionIndex, labels[forcedInversionIndex], disposition);
 
-			return voicingDispositionService.chooseCandidate(bestVoicing, options.previousPlan, disposition);
+			return voicingDispositionService.chooseCandidate(bestVoicing, options.previousPlan, disposition, scoreOptions(options));
 		}
 
 		for (var i = 0; i < maxInversions; i++) {
 			var voicing = buildVoicingCandidate(options, i, labels[i], disposition);
-			var score = voicingDispositionService.score(voicing, options.previousPlan, disposition);
+			var score = voicingDispositionService.score(voicing, options.previousPlan, disposition, scoreOptions(options));
 
 			if (score < bestScore) {
 				bestScore = score;
@@ -38,7 +38,7 @@
 			inversionLabel: '',
 			kind: options.kind,
 			voices: options.voices
-		}), options.previousPlan, disposition);
+		}), options.previousPlan, disposition, scoreOptions(options));
 	}
 
 	function buildVoicingCandidate(options, inversionIndex, inversionLabel, disposition) {
@@ -57,16 +57,34 @@
 			voicing = voicingFactory.fitToPrevious(voicing, options.previousPlan);
 		}
 
-		return voicingDispositionService.chooseCandidate(voicing, options.previousPlan, disposition);
+		return voicingDispositionService.chooseCandidate(voicing, options.previousPlan, disposition, scoreOptions(options));
 	}
 
 	function normalizeVoicingDisposition(value) {
 		return value === 'open' ? 'open' : 'closed';
 	}
 
+	function scoreOptions(options) {
+		return {
+			registerCenterMidi: registerCenterMidi(options)
+		};
+	}
+
+	function registerCenterMidi(options) {
+		var center = Number(options && options.registerCenterMidi);
+		var fallback = Number(options && options.initialMidiNote);
+
+		if (isFinite(center)) {
+			return center;
+		}
+
+		return (isFinite(fallback) ? fallback : 60) - 6;
+	}
+
 	global.CodaProgressionVoicingSelection = {
 		buildVoicingCandidate: buildVoicingCandidate,
 		chooseVoicing: chooseVoicing,
-		normalizeVoicingDisposition: normalizeVoicingDisposition
+		normalizeVoicingDisposition: normalizeVoicingDisposition,
+		registerCenterMidi: registerCenterMidi
 	};
 })(window);

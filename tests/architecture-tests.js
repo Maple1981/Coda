@@ -634,6 +634,40 @@ const openVoicing = global.CodaProgressionVoicing.chooseVoicing({
 	voices: 4
 });
 assert.ok(global.CodaProgressionVoicing.upperVoiceSpan(openVoicing.midiNotes) > global.CodaProgressionVoicing.upperVoiceSpan(closedVoicing.midiNotes));
+assert.equal(global.CodaProgressionChordPlan.registerCenterMidi({
+	initialMidiNote: 60,
+	scaleNotes: [{ nombre: 'A' }]
+}), 51);
+const lowRegisterVoicing = global.CodaProgressionVoicing.chooseVoicing({
+	baseNotes: ['C', 'E', 'G'],
+	chordName: 'C',
+	extraNotes: [],
+	initialMidiNote: 60,
+	kind: 'triad',
+	previousPlan: {
+		midiNotes: [24, 28, 31, 36],
+		notes: ['C', 'E', 'G', 'C']
+	},
+	registerCenterMidi: 54,
+	voicing: 'closed',
+	voices: 4
+});
+assert.deepEqual(lowRegisterVoicing.midiNotes, [40, 43, 48, 60]);
+const highRegisterVoicing = global.CodaProgressionVoicing.chooseVoicing({
+	baseNotes: ['C', 'E', 'G'],
+	chordName: 'C',
+	extraNotes: [],
+	initialMidiNote: 60,
+	kind: 'triad',
+	previousPlan: {
+		midiNotes: [72, 76, 79, 84],
+		notes: ['C', 'E', 'G', 'C']
+	},
+	registerCenterMidi: 54,
+	voicing: 'closed',
+	voices: 4
+});
+assert.deepEqual(highRegisterVoicing.midiNotes, [55, 60, 64, 72]);
 assert.equal(global.CodaProgressionVoicing.commonPitchNames(['C', 'E'], ['E', 'G']).join(','), 'E');
 const voiceLeadingPedalMeasures = global.CodaProgressionVoiceLeading.annotateMeasures([
 	{
