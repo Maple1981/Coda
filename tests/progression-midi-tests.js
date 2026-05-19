@@ -120,7 +120,7 @@ const splitNoteOns = splitEvents.filter(function (event) {
 	return event.type === 'noteOn';
 });
 assert.deepEqual(splitNoteOns.slice(0, 4).map(function (event) { return event.tick; }), [0, 0, 0, 0]);
-assert.deepEqual(splitNoteOns.slice(4, 8).map(function (event) { return event.tick; }), [720, 720, 720, 720]);
+assert.deepEqual(splitNoteOns.slice(4, 8).map(function (event) { return event.tick; }), [960, 960, 960, 960]);
 assert.equal(splitNoteOns[4].degree.indexOf('vi'), 0);
 
 const pluckedPedalEvents = midiExport.createProgressionMidiEvents({

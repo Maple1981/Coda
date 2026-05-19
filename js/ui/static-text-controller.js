@@ -120,6 +120,7 @@
 		}
 		setText(i18n, 'span[data-i18n="progression.time"]', 'progression.time');
 		setText(i18n, 'span[data-i18n="progression.bars"]', 'progression.bars');
+		setText(i18n, 'span[data-i18n="progression.harmonicDensity"]', 'progression.harmonicDensity');
 		setText(i18n, 'span[data-i18n="progression.meter"]', 'progression.meter');
 		setText(i18n, 'span[data-i18n="progression.voices"]', 'progression.voices');
 		setText(i18n, 'span[data-i18n="progression.voicing"]', 'progression.voicing');
@@ -188,6 +189,7 @@
 		setText(i18n, 'option[data-i18n="progression.nextSection.contrastC"]', 'progression.nextSection.contrastC');
 		setTitleAndLabel(i18n, '.progressionSectionCircleButton[data-i18n-title="circle.open"]', 'circle.open');
 		setTitleAndLabel(i18n, '.progressionSectionDeleteButton[data-i18n-title="progression.deleteSection"]', 'progression.deleteSection');
+		setTitleAndLabel(i18n, '.progressionSectionNavDeleteButton[data-i18n-title="progression.deleteSection"]', 'progression.deleteSection');
 		setTitleAndLabel(i18n, '#generateProgressionSectionB[data-i18n-title="progression.generateSectionB"]', 'progression.generateSectionB');
 		setTitleAndLabel(i18n, '#generateProgressionNextSection[data-i18n-title="progression.generateNextSection"]', 'progression.generateNextSection');
 		setText(i18n, '#generateProgressionNextSection span[data-i18n="progression.generateNextSection"]', 'progression.generateNextSection');

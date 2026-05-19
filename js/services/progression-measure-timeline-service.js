@@ -5,7 +5,7 @@
 	var measureCloneService = global.CodaProgressionMeasureClone;
 	var measureSegmentService = global.CodaProgressionMeasureSegments;
 
-	function rebuildTimeline(progression, measures) {
+	function rebuildTimeline(progression, measures, options) {
 		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
 		var beatsPerBar = Number(progression.beatsPerBar) || 4;
 		var rebuiltMeasures = [];
@@ -23,7 +23,7 @@
 			measure.startSeconds = startBeat * secondsPerBeat;
 			measure.endSeconds = measure.endBeat * secondsPerBeat;
 			if (measure.chords && measure.chords.length) {
-				measure.chords = retimeMeasureChords(measure, secondsPerBeat);
+				measure.chords = retimeMeasureChords(measure, secondsPerBeat, options);
 			}
 			rebuiltMeasures.push(measure);
 		}
@@ -44,7 +44,7 @@
 		return measureSegmentService.measureSegments(measure);
 	}
 
-	function measureWithSegments(measure, segments, progression) {
+	function measureWithSegments(measure, segments, progression, options) {
 		var rebuiltMeasure = cloneMeasure(measure);
 		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
 
@@ -58,7 +58,7 @@
 			return rebuiltMeasure;
 		}
 
-		rebuiltMeasure.chords = retimeMeasureChordList(rebuiltMeasure, segments, secondsPerBeat);
+		rebuiltMeasure.chords = retimeMeasureChordList(rebuiltMeasure, segments, secondsPerBeat, options);
 
 		return rebuiltMeasure;
 	}
@@ -67,12 +67,12 @@
 		return measureSegmentService.segmentFromMeasure(measure, timing);
 	}
 
-	function retimeMeasureChords(measure, secondsPerBeat) {
-		return measureSegmentService.retimeMeasureChords(measure, secondsPerBeat);
+	function retimeMeasureChords(measure, secondsPerBeat, options) {
+		return measureSegmentService.retimeMeasureChords(measure, secondsPerBeat, options);
 	}
 
-	function retimeMeasureChordList(measure, chords, secondsPerBeat) {
-		return measureSegmentService.retimeMeasureChordList(measure, chords, secondsPerBeat);
+	function retimeMeasureChordList(measure, chords, secondsPerBeat, options) {
+		return measureSegmentService.retimeMeasureChordList(measure, chords, secondsPerBeat, options);
 	}
 
 	global.CodaProgressionMeasureTimeline = {

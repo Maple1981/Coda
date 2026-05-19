@@ -925,6 +925,18 @@ body[data-theme="day"] .progressionSectionNavLink:focus {
   color: #006e58;
 }
 
+body[data-theme="day"] .progressionSectionNavDeleteButton {
+  background: #ffffff;
+  border-color: #b7c3ca;
+  color: #8f3f4a;
+}
+
+body[data-theme="day"] .progressionSectionNavDeleteButton:hover,
+body[data-theme="day"] .progressionSectionNavDeleteButton:focus {
+  border-color: #7d2785;
+  color: #006e58;
+}
+
 body[data-theme="day"] .progressionSectionCircleButton,
 body[data-theme="day"] .progressionSectionDeleteButton,
 body[data-theme="day"] .progressionSectionRandomButton {
@@ -2842,8 +2854,47 @@ section#bienvenida .columnata article {
   text-decoration: none;
 }
 
+.progressionSectionNavItem {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  gap: .2em;
+}
+
 .progressionSectionNavLink:hover,
 .progressionSectionNavLink:focus {
+  border-color: #a622ae;
+  color: #a3ffd9;
+  outline: none;
+}
+
+.progressionSectionNavDeleteButton {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  width: 1.45em;
+  height: 1.45em;
+  border: 1px solid #444;
+  border-radius: 999px;
+  background: #151515;
+  color: #ff9f9f;
+  font-size: .82em;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.progressionSectionNavDeleteButton:hover,
+.progressionSectionNavDeleteButton:focus {
   border-color: #a622ae;
   color: #a3ffd9;
   outline: none;

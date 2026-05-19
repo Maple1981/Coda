@@ -24,6 +24,7 @@
 				modalInterchange: progressionState.modalInterchange,
 				tensions: progressionState.tensions
 			},
+			harmonicDensity: progressionState.harmonicDensity,
 			humanization: progressionState.humanization,
 			intensity: progressionState.intensity,
 			measures: options.measures || [],

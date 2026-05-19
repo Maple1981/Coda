@@ -3,6 +3,7 @@
 	'use strict';
 
 	var degreeResolver = global.CodaProgressionDegreeResolver;
+	var harmonicDensityService = global.CodaProgressionHarmonicDensity;
 	var measureBuilderService = global.CodaProgressionMeasureBuilder;
 	var plannerService = global.CodaProgressionPlanner;
 	var resultService = global.CodaProgressionResult;
@@ -24,14 +25,17 @@
 			report: options.report
 		});
 		var secondsPerBeat = 60 / progressionState.bpm;
+		var rng = typeof options.rng === 'function' ? options.rng : null;
+		var measures = measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
+			initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
+			interchangeSources: options.report.modalInterchangeSources || [],
+			rng: rng,
+			scaleDefinition: options.report.scaleDefinition,
+			scaleNotes: options.report.scaleNotes
+		});
 
 		return resultService.build({
-			measures: measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
-				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
-				interchangeSources: options.report.modalInterchangeSources || [],
-				scaleDefinition: options.report.scaleDefinition,
-				scaleNotes: options.report.scaleNotes
-			}),
+			measures: applyHarmonicDensity(measures, progressionState, secondsPerBeat, options, rng),
 			progressionState: progressionState,
 			secondsPerBeat: secondsPerBeat
 		});
@@ -52,24 +56,36 @@
 			report: options.report
 		});
 		var secondsPerBeat = 60 / progressionState.bpm;
+		var measures = measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
+			includeTensions: true,
+			initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
+			interchangeSources: options.report.modalInterchangeSources || [],
+			avoidDominantSeventh: isModalReport(options.report),
+			rng: rng,
+			scaleDefinition: options.report.scaleDefinition,
+			scaleNotes: options.report.scaleNotes
+		});
 
 		return resultService.build({
 			generationPlan: generationPlan,
-			measures: measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
-				includeTensions: true,
-				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
-				interchangeSources: options.report.modalInterchangeSources || [],
-				avoidDominantSeventh: isModalReport(options.report),
-				rng: rng,
-				scaleDefinition: options.report.scaleDefinition,
-				scaleNotes: options.report.scaleNotes
-			}),
+			measures: applyHarmonicDensity(measures, progressionState, secondsPerBeat, options, rng),
 			progressionState: progressionState,
 			secondsPerBeat: secondsPerBeat
 		});
 	}
 
+	function applyHarmonicDensity(measures, progressionState, secondsPerBeat, options, rng) {
+		return harmonicDensityService.apply(measures, {
+			data: options.data,
+			progressionState: progressionState,
+			report: options.report,
+			rng: rng || Math.random,
+			secondsPerBeat: secondsPerBeat
+		});
+	}
+
 	global.CodaProgressionBuilder = {
+		applyHarmonicDensity: applyHarmonicDensity,
 		fromDegrees: fromDegrees,
 		fromState: fromState,
 		generate: generate

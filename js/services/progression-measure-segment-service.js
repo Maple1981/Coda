@@ -33,27 +33,105 @@
 		});
 	}
 
-	function retimeMeasureChords(measure, secondsPerBeat) {
+	function retimeMeasureChords(measure, secondsPerBeat, options) {
 		var chords = measure.chords || [];
 
-		return retimeMeasureChordList(measure, chords, secondsPerBeat);
+		return retimeMeasureChordList(measure, chords, secondsPerBeat, options);
 	}
 
-	function retimeMeasureChordList(measure, chords, secondsPerBeat) {
-		var durationBeats = (Number(measure.durationBeats) || 4) / Math.max(1, chords.length);
+	function retimeMeasureChordList(measure, chords, secondsPerBeat, options) {
+		var durationPlan = chordDurationPlan(measure, chords, options);
+		var startBeat = Number(measure.startBeat) || 0;
+		var startSeconds = Number(measure.startSeconds) || 0;
 		var result = [];
 
 		for (var i = 0; i < chords.length; i++) {
+			var durationBeats = durationPlan[i];
 			result.push(segmentFromMeasure(chords[i], {
 				chordIndex: i,
 				durationBeats: durationBeats,
 				durationSeconds: durationBeats * secondsPerBeat,
-				startBeat: (Number(measure.startBeat) || 0) + (durationBeats * i),
-				startSeconds: (Number(measure.startSeconds) || 0) + (durationBeats * secondsPerBeat * i)
+				startBeat: startBeat,
+				startSeconds: startSeconds
 			}));
+			startBeat += durationBeats;
+			startSeconds += durationBeats * secondsPerBeat;
 		}
 
 		return result;
+	}
+
+	function chordDurationPlan(measure, chords, options) {
+		var chordCount = Math.max(1, (chords || []).length);
+		var durationBeats = Number(measure && measure.durationBeats) || 4;
+		var pulseCount = Math.round(durationBeats);
+		var durations;
+		var remainder;
+		var availableIndexes;
+		var rng;
+
+		if (Math.abs(durationBeats - pulseCount) > 0.001 || chordCount > pulseCount) {
+			return proportionalDurationPlan(durationBeats, chordCount);
+		}
+
+		durations = [];
+		for (var i = 0; i < chordCount; i++) {
+			durations.push(Math.floor(pulseCount / chordCount));
+		}
+
+		remainder = pulseCount - (durations[0] * chordCount);
+		availableIndexes = [];
+		for (var j = 0; j < chordCount; j++) {
+			availableIndexes.push(j);
+		}
+
+		rng = options && typeof options.rng === 'function' ? options.rng : deterministicRng(measure, chords);
+		while (remainder > 0 && availableIndexes.length) {
+			var pick = Math.min(availableIndexes.length - 1, Math.floor(rng() * availableIndexes.length));
+			durations[availableIndexes.splice(pick, 1)[0]] += 1;
+			remainder -= 1;
+		}
+
+		return durations;
+	}
+
+	function proportionalDurationPlan(durationBeats, chordCount) {
+		var duration = durationBeats / chordCount;
+		var durations = [];
+
+		for (var i = 0; i < chordCount; i++) {
+			durations.push(duration);
+		}
+
+		return durations;
+	}
+
+	function deterministicRng(measure, chords) {
+		var seed = hashTimingSeed(measure, chords);
+
+		return function () {
+			seed = (seed * 1664525 + 1013904223) >>> 0;
+			return seed / 4294967296;
+		};
+	}
+
+	function hashTimingSeed(measure, chords) {
+		var source = [
+			measure && measure.bar,
+			measure && measure.startBeat,
+			measure && measure.durationBeats,
+			(chords || []).map(function (chord) {
+				return chord && (chord.chordName || chord.displayName || chord.degree || '');
+			}).join('|')
+		].join(':');
+		var hash = 2166136261;
+
+		for (var i = 0; i < source.length; i++) {
+			hash ^= source.charCodeAt(i);
+			hash = Math.imul(hash, 16777619);
+		}
+
+		return hash >>> 0;
 	}
 
 	function cloneMeasure(measure) {
@@ -61,6 +139,7 @@
 	}
 
 	global.CodaProgressionMeasureSegments = {
+		chordDurationPlan: chordDurationPlan,
 		measureSegments: measureSegments,
 		retimeMeasureChordList: retimeMeasureChordList,
 		retimeMeasureChords: retimeMeasureChords,

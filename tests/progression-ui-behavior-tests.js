@@ -148,6 +148,7 @@ assert.deepEqual(initialState, {
 	bpm: 120,
 	chromaticism: 10,
 	counterpoint: 20,
+	harmonicDensity: 0,
 	humanization: 0,
 	intensity: 80,
 	meter: '4/4',
@@ -184,6 +185,7 @@ assert.equal(rendered.progression, 2);
 document.getElementById('progressionBars').value = '4';
 document.getElementById('progressionMeter').value = '3/4';
 document.getElementById('progressionBpm').value = '120';
+document.getElementById('progressionHarmonicDensity').value = '0';
 document.getElementById('progressionVoices').value = '3';
 document.getElementById('progressionArticulation').value = 'staccato';
 document.getElementById('progressionStyle').value = 'classic';
@@ -199,17 +201,20 @@ const changedProgression = initialized.uiState.getProgression();
 assert.equal(changedState.bars, 4);
 assert.equal(changedState.meter, '3/4');
 assert.equal(changedState.bpm, 120);
+assert.equal(changedState.harmonicDensity, 0);
 assert.equal(changedState.voices, 3);
 assert.equal(changedState.articulation, 'staccato');
 assert.equal(changedState.style, 'classic');
 assert.equal(changedState.tensions, 60);
 assert.equal(changedProgression.bars, 4);
+assert.equal(changedProgression.harmonicDensity, 0);
 assert.deepEqual(savedPreferences, {
 	progressionArticulation: 'staccato',
 	progressionBars: '4',
 	progressionBpm: '120',
 	progressionChromaticism: 10,
 	progressionCounterpoint: 20,
+	progressionHarmonicDensity: '0',
 	progressionHumanization: 0,
 	progressionIntensity: 80,
 	progressionMeter: '3/4',
@@ -716,6 +721,7 @@ function createFakeDocument() {
 	addElement('progressionBpm', '120');
 	addElement('progressionChromaticism', '10');
 	addElement('progressionCounterpoint', '20');
+	addElement('progressionHarmonicDensity', '0');
 	addElement('progressionHumanization', '0');
 	addElement('progressionIntensity', '80');
 	addElement('progressionMeter', '4/4');

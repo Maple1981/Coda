@@ -426,6 +426,8 @@ assert.ok(progressionWorkbenchHtml.indexOf('<option value="5/8">5/8</option>') >
 assert.ok(progressionWorkbenchHtml.indexOf('<option value="9/8">9/8</option>') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<option value="12/8">12/8</option>') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="progressionBpm" type="number" value="120" min="20" max="200"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="progressionHarmonicDensity" type="range" value="0" min="0" max="100"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-help-i18n="progression.help.harmonicDensity"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="progressionVoices" type="number" value="4" min="1" max="6"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="progressionVoicing"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.voicing.closed"') > -1);
@@ -583,6 +585,8 @@ const sectionBContextTimeline = progressionWorkbenchRenderer.renderTimelineMeasu
 });
 assert.ok(sectionBContextTimeline.indexOf('progressionSectionCircleButton') > -1);
 assert.ok(sectionBContextTimeline.indexOf('data-section-circle="B"') > -1);
+assert.ok(sectionBContextTimeline.indexOf('progressionSectionNavItem') > -1);
+assert.ok(sectionBContextTimeline.indexOf('progressionSectionNavDeleteButton') > -1);
 assert.ok(sectionBContextTimeline.indexOf('progressionSectionDeleteButton') > -1);
 assert.ok(sectionBContextTimeline.indexOf('data-section-delete="B"') > -1);
 assert.equal(sectionBContextTimeline.indexOf('data-section-delete="A"'), -1);

@@ -105,6 +105,12 @@ El menú contextual de cada acorde incluye una sección **Intercambio** con acor
 
 Las progresiones se construyen por defecto con tríadas. Las cuatríadas con séptima se añaden de forma ocasional y ponderada cuando el nivel de tensiones, el contrapunto o el movimiento parsimonioso entre acordes lo justifican. El primer acorde no añade séptima si es una tónica, y el último acorde tampoco la añade cuando cierra en tónica.
 
+El control **Densidad armónica** regula cuántos acordes se insertan dentro de cada compás. Con valores bajos, el generador mantiene la escritura de un acorde por compás salvo apariciones ocasionales cerca de puntos de llegada. Con valores altos, divide más compases en varios segmentos, usando la misma lógica armónica que el botón `+` de cada acorde para elegir acordes compatibles. La probabilidad aumenta especialmente en los compases que preparan finales de frase o sección, como los compases 3, 7 u 11 en bloques de cuatro compases, aunque no se limita a ellos. El último acorde del conjunto generado queda excluido y ocupa siempre el compás completo.
+
+Cuando un compás contiene varios acordes, sus duraciones se ajustan a pulsos completos siempre que el número de acordes quepa dentro del número de pulsos del compás. Por ejemplo, tres acordes en `4/4` se reparten como `2 + 1 + 1`, con el segmento largo escogido de forma aleatoria; dos acordes en `3/4` se reparten como `2 + 1`. Si hay más acordes que pulsos disponibles, el sistema conserva el reparto proporcional para evitar duraciones nulas.
+
+La elección del número de acordes también se sesga según el tipo de compás: en compases binarios se favorecen `1`, `2` y `4` acordes, por lo que `3` aparece de forma mucho más esporádica; en compases ternarios se favorecen `1` y `3`, reduciendo la aparición de `2` y `4`. Los compases irregulares conservan una distribución más neutra.
+
 El control **Contrapunto** regula el movimiento parsimonioso de voces, su independencia melódica y la adhesión a reglas clásicas como la evitación de quintas y octavas paralelas. En valores altos, el generador elige una voz melódica para cargar con más movimiento independiente: normalmente la voz superior, aunque ocasionalmente puede ser el bajo o una voz interior. Esa voz conserva factores del acorde en los tiempos fuertes y puede insertar notas de paso en tiempos débiles cuando pertenecen a la escala de origen del acorde y enlazan por movimiento cercano hacia el siguiente voicing.
 
 Las notas de paso no sustituyen al acorde: son eventos melódicos breves superpuestos a la duración del compás o segmento. Si el acorde procede de intercambio modal, las notas de paso se toman de la escala fuente del préstamo, no de la escala principal, para mantener coherencia con el color armónico elegido.
@@ -148,7 +154,7 @@ La selección del acorde añadido prioriza tres criterios: notas comunes con el 
 
 Si el acorde desde el que se añade el nuevo segmento está suspendido, la primera regla es resolver la suspensión sobre el mismo acorde antes de buscar otro acompañante. Por ejemplo, después de `Esus4` se elige una variante de `E`, como tríada, cuatríada o inversión, según la conducción de voces más parsimoniosa.
 
-El acorde inicial no puede retirarse. Los acordes añadidos pueden retirarse y, mientras no se haya alcanzado el máximo de cuatro acordes por compás, también pueden servir como punto de inserción para nuevos acordes. La preescucha y la exportación MIDI tratan todos los acordes del compás como eventos reales de duración proporcional, de modo que la división visual coincide con el resultado audible y exportado.
+El acorde inicial no puede retirarse. Los acordes añadidos pueden retirarse y, mientras no se haya alcanzado el máximo de cuatro acordes por compás, también pueden servir como punto de inserción para nuevos acordes. La preescucha y la exportación MIDI tratan todos los acordes del compás como eventos reales; sus duraciones se alinean con pulsos completos cuando es musicalmente posible, de modo que la división visual coincide con el resultado audible y exportado.
 
 ## Sustitución manual de acordes
 

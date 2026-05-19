@@ -30,6 +30,7 @@
 			bpm: valueOf(root, 'progressionBpm'),
 			chromaticism: valueOf(root, 'progressionChromaticism'),
 			counterpoint: valueOf(root, 'progressionCounterpoint'),
+			harmonicDensity: valueOf(root, 'progressionHarmonicDensity'),
 			humanization: valueOf(root, 'progressionHumanization'),
 			intensity: valueOf(root, 'progressionIntensity'),
 			meter: valueOf(root, 'progressionMeter'),

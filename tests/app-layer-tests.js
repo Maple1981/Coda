@@ -24,6 +24,16 @@ function noteIndex(name) {
 	});
 }
 
+function sequenceRng(values) {
+	let index = 0;
+
+	return function () {
+		const value = values[Math.min(index, values.length - 1)];
+		index += 1;
+		return value;
+	};
+}
+
 const cMajorReport = app.buildScaleReport({
 	data: data,
 	domain: domain,
@@ -406,6 +416,39 @@ assert.deepEqual(cMajorProgressionPlan.harmonicColor, {
 	modalInterchange: 10,
 	tensions: 40
 });
+assert.equal(cMajorProgressionPlan.harmonicDensity, 0);
+
+const denseCmajorProgressionPlan = app.buildProgressionFromState({
+	domain: domain,
+	progressionState: {
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 30,
+		harmonicDensity: 100,
+		meter: '4/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: function () { return 0; }
+});
+assert.equal(denseCmajorProgressionPlan.harmonicDensity, 100);
+assert.ok(denseCmajorProgressionPlan.measures[0].chords.length > 1);
+assert.equal(denseCmajorProgressionPlan.measures[2].chords.length, 4);
+assert.equal(denseCmajorProgressionPlan.measures[3].chords, undefined);
+const harmonicDensityService = context.window.CodaProgressionHarmonicDensity;
+assert.equal(harmonicDensityService.meterFamily({ beatsPerBar: 4 }), 'binary');
+assert.equal(harmonicDensityService.meterFamily({ beatsPerBar: 3 }), 'ternary');
+assert.equal(harmonicDensityService.meterFamily({ beatsPerBar: 7 }), 'irregular');
+assert.equal(harmonicDensityService.targetChordCount(0, 8, { beatsPerBar: 4 }, 0.6, sequenceRng([0, 0])), 2);
+assert.equal(harmonicDensityService.targetChordCount(0, 8, { beatsPerBar: 4 }, 0.6, sequenceRng([0, 0.99])), 3);
+assert.equal(harmonicDensityService.targetChordCount(0, 8, { beatsPerBar: 4 }, 0.7, sequenceRng([0, 0])), 4);
+assert.equal(harmonicDensityService.targetChordCount(0, 8, { beatsPerBar: 3 }, 0.5, sequenceRng([0, 0])), 1);
+assert.equal(harmonicDensityService.targetChordCount(0, 8, { beatsPerBar: 3 }, 0.8, sequenceRng([0.5, 0])), 3);
+assert.equal(harmonicDensityService.targetChordCount(0, 8, { beatsPerBar: 9 }, 1, sequenceRng([0, 0])), 3);
 
 const cMajorOpenVoicingPlan = app.buildProgressionFromState({
 	domain: domain,
@@ -462,8 +505,8 @@ assert.equal(splitProgression.measures[0].chords.length, 2);
 assert.equal(splitProgression.measures[0].chords[0].chordName, 'C');
 assert.ok(/^Am/.test(splitProgression.measures[0].chords[1].chordName));
 assert.equal(splitProgression.measures[0].chords[1].tonalFunction, 'T');
-assert.deepEqual(splitProgression.measures[0].chords.map(function (chord) { return chord.durationBeats; }), [1.5, 1.5]);
-assert.equal(splitProgression.measures[0].chords[1].startBeat, 1.5);
+assert.deepEqual(splitProgression.measures[0].chords.map(function (chord) { return chord.durationBeats; }), [2, 1]);
+assert.equal(splitProgression.measures[0].chords[1].startBeat, 2);
 
 const suspendedMeasureProgression = JSON.parse(JSON.stringify(cMajorProgressionPlan));
 suspendedMeasureProgression.measures[0].degree = 'I sus4';
@@ -546,6 +589,48 @@ const removedAdditionalChordProgression = app.removeProgressionMeasureChord(four
 assert.equal(removedAdditionalChordProgression.measures[0].chords.length, 3);
 assert.deepEqual(removedAdditionalChordProgression.measures[0].chords.map(function (chord) { return chord.durationBeats; }), [1, 1, 1]);
 assert.equal(app.removeProgressionMeasureChord(splitProgression, 0, 1).measures[0].chords, undefined);
+const pulseTimedMeasure = {
+	bar: 1,
+	durationBeats: 4,
+	durationSeconds: 2,
+	startBeat: 0,
+	startSeconds: 0
+};
+const pulseTimedChords = [
+	{ chordName: 'C' },
+	{ chordName: 'F' },
+	{ chordName: 'G' }
+];
+assert.deepEqual(context.window.CodaProgressionMeasureSegments.chordDurationPlan(pulseTimedMeasure, pulseTimedChords, {
+	rng: function () { return 0; }
+}), [2, 1, 1]);
+assert.deepEqual(context.window.CodaProgressionMeasureSegments.retimeMeasureChordList(pulseTimedMeasure, pulseTimedChords, 0.5, {
+	rng: function () { return 0.99; }
+}).map(function (chord) {
+	return {
+		durationBeats: chord.durationBeats,
+		startBeat: chord.startBeat
+	};
+}), [
+	{ durationBeats: 1, startBeat: 0 },
+	{ durationBeats: 1, startBeat: 1 },
+	{ durationBeats: 2, startBeat: 2 }
+]);
+assert.deepEqual(context.window.CodaProgressionMeasureSegments.chordDurationPlan({
+	durationBeats: 7
+}, pulseTimedChords, {
+	rng: function () { return 0; }
+}), [3, 2, 2]);
+assert.deepEqual(context.window.CodaProgressionMeasureSegments.chordDurationPlan({
+	durationBeats: 3
+}, [
+	{ chordName: 'C' },
+	{ chordName: 'F' },
+	{ chordName: 'G' },
+	{ chordName: 'Am' }
+], {
+	rng: function () { return 0; }
+}), [0.75, 0.75, 0.75, 0.75]);
 const manualSplitMeasureProgression = {
 	beatsPerBar: 4,
 	bpm: 120,

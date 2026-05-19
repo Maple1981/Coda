@@ -8,6 +8,7 @@
 		{ id: 'progressionBpm', preference: 'progressionBpm', state: 'bpm' },
 		{ id: 'progressionChromaticism', preference: 'progressionChromaticism', state: 'chromaticism' },
 		{ id: 'progressionCounterpoint', preference: 'progressionCounterpoint', state: 'counterpoint' },
+		{ id: 'progressionHarmonicDensity', preference: 'progressionHarmonicDensity', state: 'harmonicDensity' },
 		{ id: 'progressionHumanization', preference: 'progressionHumanization', state: 'humanization' },
 		{ id: 'progressionIntensity', preference: 'progressionIntensity', state: 'intensity' },
 		{ id: 'progressionMeter', preference: 'progressionMeter', state: 'meter' },

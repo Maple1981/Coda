@@ -104,9 +104,14 @@
 				continue;
 			}
 			hasLinks = true;
+			html += '<span class="progressionSectionNavItem">';
 			html += '<a class="progressionSectionNavLink" href="#' + labels.escapeHtml(sectionAnchorId(sections[i].id)) + '">' +
 				'<span data-i18n="' + labels.escapeHtml(sections[i].labelKey) + '"></span>' +
 				'</a>';
+			if (sections[i].id !== 'A') {
+				html += '<button class="progressionSectionNavDeleteButton" type="button" title="" aria-label="" data-section-delete="' + labels.escapeHtml(sections[i].id) + '" data-i18n-title="progression.deleteSection"><span aria-hidden="true">×</span></button>';
+			}
+			html += '</span>';
 		}
 
 		html += '</nav>';

@@ -51,7 +51,9 @@
 			startSeconds: Number(segments[insertAfterIndex].endSeconds) || Number(segments[insertAfterIndex].startSeconds) || Number(measure.startSeconds) || 0
 		});
 		segments.splice(insertAfterIndex + 1, 0, additionalSegment);
-		measures[index] = measureTimelineService.measureWithSegments(measure, segments, progression);
+		measures[index] = measureTimelineService.measureWithSegments(measure, segments, progression, {
+			rng: options.rng
+		});
 
 		return extendObject(progression, {
 			measures: measures

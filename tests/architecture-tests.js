@@ -80,6 +80,7 @@ assert.ok(global.CodaProgressionSuspensionHeuristic.probability);
 assert.ok(global.CodaProgressionSuspension.choose);
 assert.ok(global.CodaProgressionSeventhDecision.shouldUseSeventh);
 assert.ok(global.CodaProgressionChordPlan.build);
+assert.ok(global.CodaProgressionHarmonicDensity.apply);
 assert.ok(global.CodaProgressionMeasureBuilder.build);
 assert.ok(global.CodaProgressionResult.build);
 assert.ok(global.CodaProgressionStyle.isModern);
@@ -257,6 +258,7 @@ assert.ok(manifestScripts.indexOf('js/services/progression-suspension-heuristic-
 assert.ok(manifestScripts.indexOf('js/services/progression-suspension-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-seventh-decision-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-chord-plan-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-harmonic-density-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-measure-builder-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-result-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-chromatic-cadence-service.js') > -1);
@@ -390,6 +392,7 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	progressionBpm: '132',
 	progressionChromaticism: '55',
 	progressionCounterpoint: '65',
+	progressionHarmonicDensity: '48',
 	progressionHumanization: '12',
 	progressionIntensity: '94',
 	progressionMeter: '6/8',
@@ -415,6 +418,7 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	progressionBpm: 132,
 	progressionChromaticism: 55,
 	progressionCounterpoint: 65,
+	progressionHarmonicDensity: 48,
 	progressionHumanization: 12,
 	progressionIntensity: 94,
 	progressionMeter: '6/8',
@@ -459,6 +463,7 @@ assert.deepEqual(global.CodaProgressionPreferences.fromPreferences({
 	progressionBpm: 132,
 	progressionChromaticism: 55,
 	progressionCounterpoint: 65,
+	progressionHarmonicDensity: 48,
 	progressionMeter: '6/8',
 	progressionModalInterchange: 40,
 	progressionStyle: 'classic',
@@ -471,6 +476,7 @@ assert.deepEqual(global.CodaProgressionPreferences.fromPreferences({
 	bpm: 132,
 	chromaticism: 55,
 	counterpoint: 65,
+	harmonicDensity: 48,
 	meter: '6/8',
 	modalInterchange: 40,
 	style: 'classic',
@@ -488,6 +494,7 @@ assert.deepEqual(global.CodaProgressionPreferences.normalizeControls({
 	bpm: 132,
 	chromaticism: 10,
 	counterpoint: 20,
+	harmonicDensity: 0,
 	humanization: 0,
 	intensity: 80,
 	meter: '4/4',
@@ -576,6 +583,7 @@ assert.deepEqual(global.CodaProgressionStateNormalizer.normalize({
 	bpm: 132,
 	chromaticism: 10,
 	counterpoint: 20,
+	harmonicDensity: 0,
 	humanization: 0,
 	intensity: 80,
 	meter: '7/8',
@@ -780,6 +788,7 @@ const progressionResult = global.CodaProgressionResult.build({
 		bpm: 120,
 		chromaticism: 10,
 		counterpoint: 20,
+		harmonicDensity: 0,
 		meter: '4/4',
 		modalInterchange: 25,
 		style: 'modern',
@@ -792,6 +801,7 @@ const progressionResult = global.CodaProgressionResult.build({
 assert.equal(progressionResult.totalSeconds, 2);
 assert.equal(progressionResult.generation.patternId, 'test-pattern');
 assert.deepEqual(progressionResult.harmonicColor, { chromaticism: 10, counterpoint: 20, modalInterchange: 25, tensions: 35 });
+assert.equal(progressionResult.harmonicDensity, 0);
 assert.equal(global.CodaProgressionMidiFile.findInstrument(global.CodaData, 'string_ensemble_1').program, 48);
 assert.equal(global.CodaProgressionMidiFile.findInstrument(global.CodaData, 'missing').id, global.CodaData.midiInstruments[0].id);
 assert.deepEqual(global.CodaProgressionPlanner.createPlan({

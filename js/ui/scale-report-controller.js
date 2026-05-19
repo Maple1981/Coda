@@ -400,7 +400,8 @@
 			});
 
 			on(query('#constructorProgresiones'), 'click', function (event) {
-				var button = closest(event.target, '.progressionSectionDeleteButton');
+				var button = closest(event.target, '.progressionSectionDeleteButton') ||
+					closest(event.target, '.progressionSectionNavDeleteButton');
 
 				if (!button) {
 					return;
@@ -861,6 +862,7 @@
 					bpm: valueOf(query('#progressionBpm')),
 					counterpoint: valueOf(query('#progressionCounterpoint')),
 					format: valueOf(query('#interface input[type="radio"][name="formato"]:checked')),
+					harmonicDensity: valueOf(query('#progressionHarmonicDensity')),
 					humanization: valueOf(query('#progressionHumanization')),
 					intensity: valueOf(query('#progressionIntensity')),
 					instrument: valueOf(query('#instrumentoSonoro')),
@@ -924,6 +926,7 @@
 			setValue(query('#progressionBars'), controls.bars);
 			setValue(query('#progressionBpm'), controls.bpm);
 			setValue(query('#progressionCounterpoint'), controls.counterpoint);
+			setValue(query('#progressionHarmonicDensity'), controls.harmonicDensity);
 			setValue(query('#progressionHumanization'), controls.humanization);
 			setValue(query('#progressionIntensity'), controls.intensity);
 			setValue(query('#progressionMeter'), controls.meter);
@@ -1344,6 +1347,7 @@
 				modalInterchange: state.modalInterchange,
 				tensions: state.tensions
 			};
+			next.harmonicDensity = state.harmonicDensity;
 			next.humanization = state.humanization;
 			next.intensity = state.intensity;
 			next.meter = state.meter;
@@ -1712,6 +1716,7 @@
 		preferences.setValue('progressionBars', valueOf(query('#progressionBars')));
 		preferences.setValue('progressionBpm', valueOf(query('#progressionBpm')));
 		preferences.setValue('progressionCounterpoint', valueOf(query('#progressionCounterpoint')));
+		preferences.setValue('progressionHarmonicDensity', valueOf(query('#progressionHarmonicDensity')));
 		preferences.setValue('progressionMeter', valueOf(query('#progressionMeter')));
 		preferences.setValue('progressionModalInterchange', valueOf(query('#progressionModalInterchange')));
 		preferences.setValue('progressionStyle', valueOf(query('#progressionStyle')));
@@ -1734,6 +1739,7 @@
 			bars: state.bars,
 			bpm: state.bpm,
 			counterpoint: state.counterpoint,
+			harmonicDensity: state.harmonicDensity,
 			meter: state.meter,
 			modalInterchange: state.modalInterchange,
 			style: state.style,

@@ -1547,10 +1547,12 @@
 			'progression.generateSectionB': 'Generar Sección B contrastante',
 			'progression.goStart': 'Inicio',
 			'progression.harmonicColor': 'Color armónico',
+			'progression.harmonicDensity': 'Densidad armónica',
 			'progression.help.articulation': 'Define cómo se atacan y enlazan los acordes durante la preescucha.',
 			'progression.help.bars': 'Longitud total de la progresión generada.',
 			'progression.help.bpm': 'Velocidad de reproducción y exportación MIDI, entre 20 y 200 BPM.',
 			'progression.help.counterpoint': 'Controla el movimiento parsimonioso de voces, su independencia melódica, y el grado de adhesión a las reglas clásicas de contrapunto, como la evitación de quintas y octavas paralelas.',
+			'progression.help.harmonicDensity': 'Controla la cantidad de acordes por compás, aumentando su cantidad especialmente en los finales de frase y de sección.',
 			'progression.help.chromaticism': 'Añade notas ajenas a la escala y acordes de sexta napolitana o de los varios tipos de sexta aumentada.',
 			'progression.help.humanization': 'Introduce pequeñas variaciones de tiempo e intensidad para evitar una reproducción completamente mecánica.',
 			'progression.help.intensity': 'Define la intensidad MIDI base de la preescucha y la exportación, entre 1 y 127.',
@@ -1792,10 +1794,12 @@
 			'progression.generateSectionB': 'Generate contrasting Section B',
 			'progression.goStart': 'Start',
 			'progression.harmonicColor': 'Harmonic color',
+			'progression.harmonicDensity': 'Harmonic density',
 			'progression.help.articulation': 'Sets how chords are attacked and connected during preview.',
 			'progression.help.bars': 'Total length of the generated progression.',
 			'progression.help.bpm': 'Playback and MIDI export tempo, from 20 to 200 BPM.',
 			'progression.help.counterpoint': 'Controls parsimonious voice movement, melodic independence, and adherence to classical counterpoint rules, such as avoiding parallel fifths and octaves.',
+			'progression.help.harmonicDensity': 'Controls the number of chords per bar, increasing that number especially near phrase and section endings.',
 			'progression.help.chromaticism': 'Adds notes outside the scale and Neapolitan-sixth or augmented-sixth chords.',
 			'progression.help.humanization': 'Adds small timing and intensity variations to avoid fully mechanical playback.',
 			'progression.help.intensity': 'Sets the base MIDI intensity for preview and export, from 1 to 127.',
@@ -2205,6 +2209,7 @@
 			progressionBpm: integerRange(20, 200),
 			progressionChromaticism: integerRange(0, 100),
 			progressionCounterpoint: integerRange(0, 100),
+			progressionHarmonicDensity: integerRange(0, 100),
 			progressionHumanization: integerRange(0, 100),
 			progressionIntensity: integerRange(1, 127),
 			progressionMeter: allowList(['4/4', '3/4', '5/4', '7/4', '11/4', '5/8', '6/8', '7/8', '9/8', '12/8']),
@@ -2340,6 +2345,7 @@
 		{ id: 'progressionBpm', preference: 'progressionBpm', state: 'bpm' },
 		{ id: 'progressionChromaticism', preference: 'progressionChromaticism', state: 'chromaticism' },
 		{ id: 'progressionCounterpoint', preference: 'progressionCounterpoint', state: 'counterpoint' },
+		{ id: 'progressionHarmonicDensity', preference: 'progressionHarmonicDensity', state: 'harmonicDensity' },
 		{ id: 'progressionHumanization', preference: 'progressionHumanization', state: 'humanization' },
 		{ id: 'progressionIntensity', preference: 'progressionIntensity', state: 'intensity' },
 		{ id: 'progressionMeter', preference: 'progressionMeter', state: 'meter' },
@@ -2821,6 +2827,7 @@
 			bpm: numberOrDefault(progressionState.bpm, 120),
 			chromaticism: numberOrDefault(progressionState.chromaticism, 10),
 			counterpoint: numberOrDefault(progressionState.counterpoint, 20),
+			harmonicDensity: numberOrDefault(progressionState.harmonicDensity, 0),
 			humanization: numberOrDefault(progressionState.humanization, 0),
 			intensity: numberOrDefault(progressionState.intensity, 80),
 			meter: progressionState.meter || '4/4',
@@ -4271,27 +4278,105 @@
 		});
 	}
 
-	function retimeMeasureChords(measure, secondsPerBeat) {
+	function retimeMeasureChords(measure, secondsPerBeat, options) {
 		var chords = measure.chords || [];
 
-		return retimeMeasureChordList(measure, chords, secondsPerBeat);
+		return retimeMeasureChordList(measure, chords, secondsPerBeat, options);
 	}
 
-	function retimeMeasureChordList(measure, chords, secondsPerBeat) {
-		var durationBeats = (Number(measure.durationBeats) || 4) / Math.max(1, chords.length);
+	function retimeMeasureChordList(measure, chords, secondsPerBeat, options) {
+		var durationPlan = chordDurationPlan(measure, chords, options);
+		var startBeat = Number(measure.startBeat) || 0;
+		var startSeconds = Number(measure.startSeconds) || 0;
 		var result = [];
 
 		for (var i = 0; i < chords.length; i++) {
+			var durationBeats = durationPlan[i];
 			result.push(segmentFromMeasure(chords[i], {
 				chordIndex: i,
 				durationBeats: durationBeats,
 				durationSeconds: durationBeats * secondsPerBeat,
-				startBeat: (Number(measure.startBeat) || 0) + (durationBeats * i),
-				startSeconds: (Number(measure.startSeconds) || 0) + (durationBeats * secondsPerBeat * i)
+				startBeat: startBeat,
+				startSeconds: startSeconds
 			}));
+			startBeat += durationBeats;
+			startSeconds += durationBeats * secondsPerBeat;
 		}
 
 		return result;
+	}
+
+	function chordDurationPlan(measure, chords, options) {
+		var chordCount = Math.max(1, (chords || []).length);
+		var durationBeats = Number(measure && measure.durationBeats) || 4;
+		var pulseCount = Math.round(durationBeats);
+		var durations;
+		var remainder;
+		var availableIndexes;
+		var rng;
+
+		if (Math.abs(durationBeats - pulseCount) > 0.001 || chordCount > pulseCount) {
+			return proportionalDurationPlan(durationBeats, chordCount);
+		}
+
+		durations = [];
+		for (var i = 0; i < chordCount; i++) {
+			durations.push(Math.floor(pulseCount / chordCount));
+		}
+
+		remainder = pulseCount - (durations[0] * chordCount);
+		availableIndexes = [];
+		for (var j = 0; j < chordCount; j++) {
+			availableIndexes.push(j);
+		}
+
+		rng = options && typeof options.rng === 'function' ? options.rng : deterministicRng(measure, chords);
+		while (remainder > 0 && availableIndexes.length) {
+			var pick = Math.min(availableIndexes.length - 1, Math.floor(rng() * availableIndexes.length));
+			durations[availableIndexes.splice(pick, 1)[0]] += 1;
+			remainder -= 1;
+		}
+
+		return durations;
+	}
+
+	function proportionalDurationPlan(durationBeats, chordCount) {
+		var duration = durationBeats / chordCount;
+		var durations = [];
+
+		for (var i = 0; i < chordCount; i++) {
+			durations.push(duration);
+		}
+
+		return durations;
+	}
+
+	function deterministicRng(measure, chords) {
+		var seed = hashTimingSeed(measure, chords);
+
+		return function () {
+			seed = (seed * 1664525 + 1013904223) >>> 0;
+			return seed / 4294967296;
+		};
+	}
+
+	function hashTimingSeed(measure, chords) {
+		var source = [
+			measure && measure.bar,
+			measure && measure.startBeat,
+			measure && measure.durationBeats,
+			(chords || []).map(function (chord) {
+				return chord && (chord.chordName || chord.displayName || chord.degree || '');
+			}).join('|')
+		].join(':');
+		var hash = 2166136261;
+
+		for (var i = 0; i < source.length; i++) {
+			hash ^= source.charCodeAt(i);
+			hash = Math.imul(hash, 16777619);
+		}
+
+		return hash >>> 0;
 	}
 
 	function cloneMeasure(measure) {
@@ -4299,6 +4384,7 @@
 	}
 
 	global.CodaProgressionMeasureSegments = {
+		chordDurationPlan: chordDurationPlan,
 		measureSegments: measureSegments,
 		retimeMeasureChordList: retimeMeasureChordList,
 		retimeMeasureChords: retimeMeasureChords,
@@ -4316,7 +4402,7 @@
 	var measureCloneService = global.CodaProgressionMeasureClone;
 	var measureSegmentService = global.CodaProgressionMeasureSegments;
 
-	function rebuildTimeline(progression, measures) {
+	function rebuildTimeline(progression, measures, options) {
 		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
 		var beatsPerBar = Number(progression.beatsPerBar) || 4;
 		var rebuiltMeasures = [];
@@ -4334,7 +4420,7 @@
 			measure.startSeconds = startBeat * secondsPerBeat;
 			measure.endSeconds = measure.endBeat * secondsPerBeat;
 			if (measure.chords && measure.chords.length) {
-				measure.chords = retimeMeasureChords(measure, secondsPerBeat);
+				measure.chords = retimeMeasureChords(measure, secondsPerBeat, options);
 			}
 			rebuiltMeasures.push(measure);
 		}
@@ -4355,7 +4441,7 @@
 		return measureSegmentService.measureSegments(measure);
 	}
 
-	function measureWithSegments(measure, segments, progression) {
+	function measureWithSegments(measure, segments, progression, options) {
 		var rebuiltMeasure = cloneMeasure(measure);
 		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
 
@@ -4369,7 +4455,7 @@
 			return rebuiltMeasure;
 		}
 
-		rebuiltMeasure.chords = retimeMeasureChordList(rebuiltMeasure, segments, secondsPerBeat);
+		rebuiltMeasure.chords = retimeMeasureChordList(rebuiltMeasure, segments, secondsPerBeat, options);
 
 		return rebuiltMeasure;
 	}
@@ -4378,12 +4464,12 @@
 		return measureSegmentService.segmentFromMeasure(measure, timing);
 	}
 
-	function retimeMeasureChords(measure, secondsPerBeat) {
-		return measureSegmentService.retimeMeasureChords(measure, secondsPerBeat);
+	function retimeMeasureChords(measure, secondsPerBeat, options) {
+		return measureSegmentService.retimeMeasureChords(measure, secondsPerBeat, options);
 	}
 
-	function retimeMeasureChordList(measure, chords, secondsPerBeat) {
-		return measureSegmentService.retimeMeasureChordList(measure, chords, secondsPerBeat);
+	function retimeMeasureChordList(measure, chords, secondsPerBeat, options) {
+		return measureSegmentService.retimeMeasureChordList(measure, chords, secondsPerBeat, options);
 	}
 
 	global.CodaProgressionMeasureTimeline = {
@@ -5477,7 +5563,9 @@
 			startSeconds: Number(segments[insertAfterIndex].endSeconds) || Number(segments[insertAfterIndex].startSeconds) || Number(measure.startSeconds) || 0
 		});
 		segments.splice(insertAfterIndex + 1, 0, additionalSegment);
-		measures[index] = measureTimelineService.measureWithSegments(measure, segments, progression);
+		measures[index] = measureTimelineService.measureWithSegments(measure, segments, progression, {
+			rng: options.rng
+		});
 
 		return extendObject(progression, {
 			measures: measures
@@ -6121,6 +6209,203 @@
 
 ;
 
+/* Source: js/services/progression-harmonic-density-service.js */
+// Applies automatic split-measure harmonic density to generated progressions.
+(function (global) {
+	'use strict';
+
+	var additionalChordService = global.CodaProgressionAdditionalChord;
+	var chordPlanService = global.CodaProgressionChordPlan;
+	var measureTimelineService = global.CodaProgressionMeasureTimeline;
+	var segmentBuilder = global.CodaProgressionSegmentBuilder;
+
+	function apply(measures, options) {
+		var progressionState = options && options.progressionState ? options.progressionState : {};
+		var density = normalizedDensity(progressionState.harmonicDensity);
+		var rng = options && typeof options.rng === 'function' ? options.rng : Math.random;
+		var result;
+		var progression;
+
+		if (!measures || !measures.length || density <= 0) {
+			return measures || [];
+		}
+
+		result = cloneMeasures(measures);
+		progression = progressionContext(progressionState, options);
+
+		for (var i = 0; i < result.length - 1; i++) {
+			var targetCount = targetChordCount(i, result.length, progressionState, density, rng);
+
+			if (targetCount > 1) {
+				result[i] = densifyMeasure(result, i, targetCount, progression, options || {}, rng);
+			}
+		}
+
+		return result;
+	}
+
+	function densifyMeasure(measures, measureIndex, targetCount, progression, options, rng) {
+		var measure = measures[measureIndex];
+		var segments = measureTimelineService.measureSegments(measure);
+		var guard = 0;
+
+		while (segments.length < targetCount && guard < 8) {
+			var insertAfterIndex = segments.length - 1;
+			var anchorSegment = segments[insertAfterIndex];
+			var additionalChord = chooseAdditionalChord(measures, measureIndex, segments, insertAfterIndex, progression, options, rng);
+			var additionalSegment;
+
+			if (!additionalChord) {
+				break;
+			}
+
+			additionalSegment = segmentBuilder.fromPlan(anchorSegment, additionalChord, {
+				chordIndex: insertAfterIndex + 1,
+				durationBeats: Number(anchorSegment.durationBeats) || Number(measure.durationBeats) || Number(progression.beatsPerBar) || 4,
+				durationSeconds: Number(anchorSegment.durationSeconds) || Number(measure.durationSeconds) || 0,
+				startBeat: Number(anchorSegment.endBeat) || Number(anchorSegment.startBeat) || Number(measure.startBeat) || 0,
+				startSeconds: Number(anchorSegment.endSeconds) || Number(anchorSegment.startSeconds) || Number(measure.startSeconds) || 0
+			});
+			segments.splice(insertAfterIndex + 1, 0, additionalSegment);
+			measure = measureTimelineService.measureWithSegments(measure, segments, progression, {
+				rng: rng
+			});
+			segments = measureTimelineService.measureSegments(measure);
+			guard += 1;
+		}
+
+		return measure;
+	}
+
+	function chooseAdditionalChord(measures, measureIndex, segments, insertAfterIndex, progression, options, rng) {
+		return additionalChordService.choose({
+			buildChordPlan: chordPlanService.build,
+			data: options.data,
+			measure: segments[insertAfterIndex],
+			nextMeasure: segments[insertAfterIndex + 1] || measures[measureIndex + 1] || null,
+			progression: progression,
+			progressionState: options.progressionState,
+			report: options.report,
+			rng: rng
+		});
+	}
+
+	function targetChordCount(index, totalMeasures, progressionState, density, rng) {
+		var maxChords = maxChordCount(progressionState);
+		var boost = 0;
+		var extraScore;
+		var extraCount;
+		var targetCount;
+
+		if (maxChords <= 1) {
+			return 1;
+		}
+
+		if (isPhraseApproachMeasure(index)) {
+			boost += 0.28;
+		}
+
+		if (isSectionApproachMeasure(index, totalMeasures)) {
+			boost += 0.25;
+		}
+
+		extraScore = Math.min(maxChords - 1, density * (0.72 + boost) * (maxChords - 1));
+		extraCount = Math.floor(extraScore);
+		if (rng() < extraScore - extraCount) {
+			extraCount += 1;
+		}
+
+		targetCount = Math.max(1, Math.min(maxChords, 1 + extraCount));
+
+		return biasTargetChordCount(targetCount, progressionState, density, rng);
+	}
+
+	function biasTargetChordCount(targetCount, progressionState, density, rng) {
+		var family = meterFamily(progressionState);
+
+		if (family === 'binary' && targetCount === 3 && rng() < 0.82) {
+			return density >= 0.68 && maxChordCount(progressionState) >= 4 ? 4 : 2;
+		}
+
+		if (family === 'ternary' && targetCount === 2 && rng() < 0.82) {
+			return density >= 0.58 ? 3 : 1;
+		}
+
+		if (family === 'ternary' && targetCount === 4 && rng() < 0.88) {
+			return 3;
+		}
+
+		return targetCount;
+	}
+
+	function meterFamily(progressionState) {
+		var beatsPerBar = Math.max(1, Math.round(Number(progressionState && progressionState.beatsPerBar) || 4));
+
+		if (beatsPerBar % 2 === 0) {
+			return 'binary';
+		}
+
+		if (beatsPerBar % 3 === 0) {
+			return 'ternary';
+		}
+
+		return 'irregular';
+	}
+
+	function isPhraseApproachMeasure(index) {
+		return (index + 1) % 4 === 3;
+	}
+
+	function isSectionApproachMeasure(index, totalMeasures) {
+		return totalMeasures > 1 && index === totalMeasures - 2;
+	}
+
+	function maxChordCount(progressionState) {
+		var beatsPerBar = Math.floor(Number(progressionState && progressionState.beatsPerBar) || 4);
+
+		return Math.max(1, Math.min(4, beatsPerBar));
+	}
+
+	function progressionContext(progressionState, options) {
+		return {
+			beatUnit: progressionState.beatUnit,
+			beatsPerBar: progressionState.beatsPerBar,
+			bpm: progressionState.bpm,
+			secondsPerBeat: options && options.secondsPerBeat ? options.secondsPerBeat : 60 / (Number(progressionState.bpm) || 120)
+		};
+	}
+
+	function normalizedDensity(value) {
+		var number = Number(value);
+
+		if (!isFinite(number)) {
+			return 0;
+		}
+
+		return Math.max(0, Math.min(100, number)) / 100;
+	}
+
+	function cloneMeasures(measures) {
+		var result = [];
+
+		for (var i = 0; i < (measures || []).length; i++) {
+			result.push(measureTimelineService.cloneMeasure(measures[i]));
+		}
+
+		return result;
+	}
+
+	global.CodaProgressionHarmonicDensity = {
+		apply: apply,
+		biasTargetChordCount: biasTargetChordCount,
+		maxChordCount: maxChordCount,
+		meterFamily: meterFamily,
+		targetChordCount: targetChordCount
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-measure-builder-service.js */
 // Builds timed progression measures from resolved harmonic degrees.
 (function (global) {
@@ -6296,6 +6581,7 @@
 				modalInterchange: progressionState.modalInterchange,
 				tensions: progressionState.tensions
 			},
+			harmonicDensity: progressionState.harmonicDensity,
 			humanization: progressionState.humanization,
 			intensity: progressionState.intensity,
 			measures: options.measures || [],
@@ -8082,6 +8368,7 @@
 	'use strict';
 
 	var degreeResolver = global.CodaProgressionDegreeResolver;
+	var harmonicDensityService = global.CodaProgressionHarmonicDensity;
 	var measureBuilderService = global.CodaProgressionMeasureBuilder;
 	var plannerService = global.CodaProgressionPlanner;
 	var resultService = global.CodaProgressionResult;
@@ -8103,14 +8390,17 @@
 			report: options.report
 		});
 		var secondsPerBeat = 60 / progressionState.bpm;
+		var rng = typeof options.rng === 'function' ? options.rng : null;
+		var measures = measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
+			initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
+			interchangeSources: options.report.modalInterchangeSources || [],
+			rng: rng,
+			scaleDefinition: options.report.scaleDefinition,
+			scaleNotes: options.report.scaleNotes
+		});
 
 		return resultService.build({
-			measures: measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
-				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
-				interchangeSources: options.report.modalInterchangeSources || [],
-				scaleDefinition: options.report.scaleDefinition,
-				scaleNotes: options.report.scaleNotes
-			}),
+			measures: applyHarmonicDensity(measures, progressionState, secondsPerBeat, options, rng),
 			progressionState: progressionState,
 			secondsPerBeat: secondsPerBeat
 		});
@@ -8131,24 +8421,36 @@
 			report: options.report
 		});
 		var secondsPerBeat = 60 / progressionState.bpm;
+		var measures = measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
+			includeTensions: true,
+			initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
+			interchangeSources: options.report.modalInterchangeSources || [],
+			avoidDominantSeventh: isModalReport(options.report),
+			rng: rng,
+			scaleDefinition: options.report.scaleDefinition,
+			scaleNotes: options.report.scaleNotes
+		});
 
 		return resultService.build({
 			generationPlan: generationPlan,
-			measures: measureBuilderService.build(resolvedDegrees, progressionState, secondsPerBeat, {
-				includeTensions: true,
-				initialMidiNote: options.data && options.data.midi ? options.data.midi.initialMidiNote : 60,
-				interchangeSources: options.report.modalInterchangeSources || [],
-				avoidDominantSeventh: isModalReport(options.report),
-				rng: rng,
-				scaleDefinition: options.report.scaleDefinition,
-				scaleNotes: options.report.scaleNotes
-			}),
+			measures: applyHarmonicDensity(measures, progressionState, secondsPerBeat, options, rng),
 			progressionState: progressionState,
 			secondsPerBeat: secondsPerBeat
 		});
 	}
 
+	function applyHarmonicDensity(measures, progressionState, secondsPerBeat, options, rng) {
+		return harmonicDensityService.apply(measures, {
+			data: options.data,
+			progressionState: progressionState,
+			report: options.report,
+			rng: rng || Math.random,
+			secondsPerBeat: secondsPerBeat
+		});
+	}
+
 	global.CodaProgressionBuilder = {
+		applyHarmonicDensity: applyHarmonicDensity,
 		fromDegrees: fromDegrees,
 		fromState: fromState,
 		generate: generate
@@ -15240,6 +15542,7 @@
 		html += renderControl('progression.bars', '<select id="progressionBars"><option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="8" selected="selected">8</option><option value="12">12</option><option value="16">16</option><option value="32">32</option></select>', '#progressionBars', null, 'progression.help.bars');
 		html += renderControl('progression.meter', renderMeterSelect(), '#progressionMeter', null, 'progression.help.meter');
 		html += renderControl(null, '<input id="progressionBpm" type="number" value="120" min="20" max="200" step="1" />', '#progressionBpm', 'BPM', 'progression.help.bpm');
+		html += renderControl('progression.harmonicDensity', '<input id="progressionHarmonicDensity" type="range" value="0" min="0" max="100" step="1" />', '#progressionHarmonicDensity', null, 'progression.help.harmonicDensity');
 		html += '</fieldset>';
 
 		return html;
@@ -15451,9 +15754,14 @@
 				continue;
 			}
 			hasLinks = true;
+			html += '<span class="progressionSectionNavItem">';
 			html += '<a class="progressionSectionNavLink" href="#' + labels.escapeHtml(sectionAnchorId(sections[i].id)) + '">' +
 				'<span data-i18n="' + labels.escapeHtml(sections[i].labelKey) + '"></span>' +
 				'</a>';
+			if (sections[i].id !== 'A') {
+				html += '<button class="progressionSectionNavDeleteButton" type="button" title="" aria-label="" data-section-delete="' + labels.escapeHtml(sections[i].id) + '" data-i18n-title="progression.deleteSection"><span aria-hidden="true">×</span></button>';
+			}
+			html += '</span>';
 		}
 
 		html += '</nav>';
@@ -16342,6 +16650,7 @@
 		bpm: 120,
 		chromaticism: 10,
 		counterpoint: 20,
+		harmonicDensity: 0,
 		humanization: 0,
 		intensity: 80,
 		meter: '4/4',
@@ -16365,6 +16674,7 @@
 			bpm: clampInteger(values.bpm, 20, 200, fallback.bpm),
 			chromaticism: clampInteger(values.chromaticism, 0, 100, fallback.chromaticism),
 			counterpoint: clampInteger(values.counterpoint, 0, 100, fallback.counterpoint),
+			harmonicDensity: clampInteger(values.harmonicDensity, 0, 100, fallback.harmonicDensity),
 			humanization: clampInteger(values.humanization, 0, 100, fallback.humanization),
 			intensity: clampInteger(values.intensity, 1, 127, fallback.intensity),
 			meter: pick(values.meter, allowedMeters, fallback.meter),
@@ -16386,6 +16696,7 @@
 			bpm: value.bpm,
 			chromaticism: value.chromaticism,
 			counterpoint: value.counterpoint,
+			harmonicDensity: value.harmonicDensity,
 			humanization: value.humanization,
 			intensity: value.intensity,
 			meter: value.meter,
@@ -16473,6 +16784,7 @@
 			bpm: valueOf(root, 'progressionBpm'),
 			chromaticism: valueOf(root, 'progressionChromaticism'),
 			counterpoint: valueOf(root, 'progressionCounterpoint'),
+			harmonicDensity: valueOf(root, 'progressionHarmonicDensity'),
 			humanization: valueOf(root, 'progressionHumanization'),
 			intensity: valueOf(root, 'progressionIntensity'),
 			meter: valueOf(root, 'progressionMeter'),
@@ -16637,6 +16949,7 @@
 		}
 		setText(i18n, 'span[data-i18n="progression.time"]', 'progression.time');
 		setText(i18n, 'span[data-i18n="progression.bars"]', 'progression.bars');
+		setText(i18n, 'span[data-i18n="progression.harmonicDensity"]', 'progression.harmonicDensity');
 		setText(i18n, 'span[data-i18n="progression.meter"]', 'progression.meter');
 		setText(i18n, 'span[data-i18n="progression.voices"]', 'progression.voices');
 		setText(i18n, 'span[data-i18n="progression.voicing"]', 'progression.voicing');
@@ -16705,6 +17018,7 @@
 		setText(i18n, 'option[data-i18n="progression.nextSection.contrastC"]', 'progression.nextSection.contrastC');
 		setTitleAndLabel(i18n, '.progressionSectionCircleButton[data-i18n-title="circle.open"]', 'circle.open');
 		setTitleAndLabel(i18n, '.progressionSectionDeleteButton[data-i18n-title="progression.deleteSection"]', 'progression.deleteSection');
+		setTitleAndLabel(i18n, '.progressionSectionNavDeleteButton[data-i18n-title="progression.deleteSection"]', 'progression.deleteSection');
 		setTitleAndLabel(i18n, '#generateProgressionSectionB[data-i18n-title="progression.generateSectionB"]', 'progression.generateSectionB');
 		setTitleAndLabel(i18n, '#generateProgressionNextSection[data-i18n-title="progression.generateNextSection"]', 'progression.generateNextSection');
 		setText(i18n, '#generateProgressionNextSection span[data-i18n="progression.generateNextSection"]', 'progression.generateNextSection');
@@ -19103,7 +19417,8 @@
 			});
 
 			on(query('#constructorProgresiones'), 'click', function (event) {
-				var button = closest(event.target, '.progressionSectionDeleteButton');
+				var button = closest(event.target, '.progressionSectionDeleteButton') ||
+					closest(event.target, '.progressionSectionNavDeleteButton');
 
 				if (!button) {
 					return;
@@ -19564,6 +19879,7 @@
 					bpm: valueOf(query('#progressionBpm')),
 					counterpoint: valueOf(query('#progressionCounterpoint')),
 					format: valueOf(query('#interface input[type="radio"][name="formato"]:checked')),
+					harmonicDensity: valueOf(query('#progressionHarmonicDensity')),
 					humanization: valueOf(query('#progressionHumanization')),
 					intensity: valueOf(query('#progressionIntensity')),
 					instrument: valueOf(query('#instrumentoSonoro')),
@@ -19627,6 +19943,7 @@
 			setValue(query('#progressionBars'), controls.bars);
 			setValue(query('#progressionBpm'), controls.bpm);
 			setValue(query('#progressionCounterpoint'), controls.counterpoint);
+			setValue(query('#progressionHarmonicDensity'), controls.harmonicDensity);
 			setValue(query('#progressionHumanization'), controls.humanization);
 			setValue(query('#progressionIntensity'), controls.intensity);
 			setValue(query('#progressionMeter'), controls.meter);
@@ -20047,6 +20364,7 @@
 				modalInterchange: state.modalInterchange,
 				tensions: state.tensions
 			};
+			next.harmonicDensity = state.harmonicDensity;
 			next.humanization = state.humanization;
 			next.intensity = state.intensity;
 			next.meter = state.meter;
@@ -20415,6 +20733,7 @@
 		preferences.setValue('progressionBars', valueOf(query('#progressionBars')));
 		preferences.setValue('progressionBpm', valueOf(query('#progressionBpm')));
 		preferences.setValue('progressionCounterpoint', valueOf(query('#progressionCounterpoint')));
+		preferences.setValue('progressionHarmonicDensity', valueOf(query('#progressionHarmonicDensity')));
 		preferences.setValue('progressionMeter', valueOf(query('#progressionMeter')));
 		preferences.setValue('progressionModalInterchange', valueOf(query('#progressionModalInterchange')));
 		preferences.setValue('progressionStyle', valueOf(query('#progressionStyle')));
@@ -20437,6 +20756,7 @@
 			bars: state.bars,
 			bpm: state.bpm,
 			counterpoint: state.counterpoint,
+			harmonicDensity: state.harmonicDensity,
 			meter: state.meter,
 			modalInterchange: state.modalInterchange,
 			style: state.style,

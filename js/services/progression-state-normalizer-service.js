@@ -15,6 +15,7 @@
 			bpm: numberOrDefault(progressionState.bpm, 120),
 			chromaticism: numberOrDefault(progressionState.chromaticism, 10),
 			counterpoint: numberOrDefault(progressionState.counterpoint, 20),
+			harmonicDensity: numberOrDefault(progressionState.harmonicDensity, 0),
 			humanization: numberOrDefault(progressionState.humanization, 0),
 			intensity: numberOrDefault(progressionState.intensity, 80),
 			meter: progressionState.meter || '4/4',

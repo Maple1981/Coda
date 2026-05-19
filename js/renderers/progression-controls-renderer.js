@@ -17,6 +17,7 @@
 		html += renderControl('progression.bars', '<select id="progressionBars"><option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="8" selected="selected">8</option><option value="12">12</option><option value="16">16</option><option value="32">32</option></select>', '#progressionBars', null, 'progression.help.bars');
 		html += renderControl('progression.meter', renderMeterSelect(), '#progressionMeter', null, 'progression.help.meter');
 		html += renderControl(null, '<input id="progressionBpm" type="number" value="120" min="20" max="200" step="1" />', '#progressionBpm', 'BPM', 'progression.help.bpm');
+		html += renderControl('progression.harmonicDensity', '<input id="progressionHarmonicDensity" type="range" value="0" min="0" max="100" step="1" />', '#progressionHarmonicDensity', null, 'progression.help.harmonicDensity');
 		html += '</fieldset>';
 
 		return html;
