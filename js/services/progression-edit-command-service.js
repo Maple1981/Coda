@@ -10,6 +10,7 @@
 		generateSectionB: 'generateSectionB',
 		generateSection: 'generateSection',
 		removeMeasureChord: 'removeMeasureChord',
+		removeSection: 'removeSection',
 		reorderMeasureChords: 'reorderMeasureChords',
 		reorderMeasures: 'reorderMeasures',
 		replaceMeasureChord: 'replaceMeasureChord'
@@ -27,6 +28,9 @@
 			break;
 		case commandTypes.removeMeasureChord:
 			nextProgression = editingService.removeMeasureChord(context.progression, command.measureIndex, command.chordIndex);
+			break;
+		case commandTypes.removeSection:
+			nextProgression = editingService.removeSection(context.progression, command.sectionId);
 			break;
 		case commandTypes.reorderMeasureChords:
 			nextProgression = editingService.reorderMeasureChords(context.progression, command.measureIndex, command.fromChordIndex, command.toChordIndex);

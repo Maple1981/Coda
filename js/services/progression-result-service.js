@@ -5,7 +5,8 @@
 	var explicitCadences = {
 		augmented6: true,
 		cadential64: true,
-		neapolitan: true
+		neapolitan: true,
+		subFive: true
 	};
 
 	function build(options) {

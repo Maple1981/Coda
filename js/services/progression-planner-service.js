@@ -67,7 +67,7 @@
 	}
 
 	function effectiveEndingCadence(pattern, finalCadence) {
-		if (finalCadence === 'cadential64' || finalCadence === 'neapolitan' || finalCadence === 'augmented6') {
+		if (finalCadence === 'cadential64' || finalCadence === 'neapolitan' || finalCadence === 'augmented6' || finalCadence === 'subFive') {
 			return finalCadence;
 		}
 

@@ -109,6 +109,15 @@
 		});
 	}
 
+	function removeProgressionSection(progression, sectionId) {
+		return editCommands.apply({
+			sectionId: sectionId,
+			type: editCommands.types.removeSection
+		}, {
+			progression: progression
+		});
+	}
+
 	function replaceProgressionMeasureChord(progression, measureIndex, chordIndex, replacement, options) {
 		return editCommands.apply({
 			chordIndex: chordIndex,
@@ -161,6 +170,7 @@
 	global.CodaApplication.formatProgressionDegreeForChord = formatDegreeForChord;
 	global.CodaApplication.rebuildProgressionTimeline = rebuildProgressionTimeline;
 	global.CodaApplication.removeProgressionMeasureChord = removeProgressionMeasureChord;
+	global.CodaApplication.removeProgressionSection = removeProgressionSection;
 	global.CodaApplication.replaceProgressionMeasureChord = replaceProgressionMeasureChord;
 	global.CodaApplication.reorderProgressionMeasureChords = reorderProgressionMeasureChords;
 	global.CodaApplication.reorderProgressionMeasures = reorderProgressionMeasures;

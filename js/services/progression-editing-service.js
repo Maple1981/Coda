@@ -22,6 +22,10 @@
 		return structureEditingService.removeMeasureChord(progression, measureIndex, chordIndex);
 	}
 
+	function removeSection(progression, sectionId) {
+		return structureEditingService.removeSection(progression, sectionId);
+	}
+
 	function replaceMeasureChord(progression, measureIndex, chordIndex, replacement, options, dependencies) {
 		return measureChordReplacementService.replaceMeasureChord(progression, measureIndex, chordIndex, replacement, options, dependencies);
 	}
@@ -29,6 +33,7 @@
 	global.CodaProgressionEditing = {
 		addMeasureChord: addMeasureChord,
 		removeMeasureChord: removeMeasureChord,
+		removeSection: removeSection,
 		reorderMeasureChords: reorderMeasureChords,
 		reorderMeasures: reorderMeasures,
 		replaceMeasureChord: replaceMeasureChord

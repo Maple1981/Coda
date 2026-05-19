@@ -101,7 +101,9 @@
 
 		if (cadence === 'cadential64') {
 			forceCadentialSixFourEnding(degrees, options);
-		} else if (cadence === 'neapolitan' || cadence === 'augmented6') {
+		} else if (cadence === 'neapolitan' || cadence === 'augmented6' || cadence === 'subFive') {
+			options.pattern = pattern;
+			options.patternCadence = pattern ? pattern.cadence : '';
 			chromaticCadenceService.forceChromaticEnding(degrees, options);
 		} else if (cadence === 'authentic') {
 			degrees[degrees.length - 2] = { index: 4, source: 'diatonic' };
@@ -205,6 +207,10 @@
 	function matchesCadence(block, cadence) {
 		if (cadence === 'cadential64') {
 			return block.cadence === 'authentic';
+		}
+
+		if (cadence === 'subFive') {
+			return block.cadence === 'authentic' || block.cadence === 'half';
 		}
 
 		return block.cadence === cadence || (cadence === 'mixed-plagal' && block.cadence === 'plagal');

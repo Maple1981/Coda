@@ -284,7 +284,7 @@ header{
 	position:fixed;
 	top:58px;
 	right:1.2em;
-	z-index:40;
+	z-index:1200;
 	width:min(300px, calc(100vw - 2.4em));
 }
 
@@ -1828,7 +1828,39 @@ section#bienvenida .columnata article{
 	text-transform:none;
 }
 
+.progressionSectionNavigator{
+	grid-column:1 / -1;
+	display:flex;
+	flex-wrap:wrap;
+	gap:.45em;
+	align-items:center;
+	margin:0 0 .35em 0;
+	padding:.15em 0;
+}
+
+.progressionSectionNavLink{
+	display:inline-flex;
+	align-items:center;
+	min-height:2em;
+	padding:.25em .65em;
+	border:1px solid $basic_fillbrightgrad_color;
+	border-radius:5px;
+	background:$basic_filldarkgrad_color;
+	color:$corporative_complementarybright_color;
+	font-size:.82em;
+	font-weight:700;
+	text-decoration:none;
+}
+
+.progressionSectionNavLink:hover,
+.progressionSectionNavLink:focus{
+	border-color:$corporative_complementary_color;
+	color:$corporative_mainbright_color;
+	outline:none;
+}
+
 .progressionSectionCircleButton,
+.progressionSectionDeleteButton,
 .progressionSectionRandomButton{
 	width:2em;
 	height:2em;
@@ -1842,8 +1874,14 @@ section#bienvenida .columnata article{
 	cursor:pointer;
 }
 
+.progressionSectionDeleteButton{
+	color:#ff9f9f;
+}
+
 .progressionSectionCircleButton:hover,
 .progressionSectionCircleButton:focus,
+.progressionSectionDeleteButton:hover,
+.progressionSectionDeleteButton:focus,
 .progressionSectionRandomButton:hover,
 .progressionSectionRandomButton:focus{
 	border-color:$corporative_complementary_color;
@@ -1852,6 +1890,7 @@ section#bienvenida .columnata article{
 }
 
 .progressionSectionCircleButton .material-icons,
+.progressionSectionDeleteButton .material-icons,
 .progressionSectionRandomButton .material-icons{
 	font-size:1.05em;
 	line-height:1;
@@ -1870,13 +1909,18 @@ section#bienvenida .columnata article{
 
 .progressionSectionTypeSelect{
 	box-sizing:border-box;
-	min-width:8.4em;
+	min-width:15em;
 	background:$basic_fill_color;
 	color:$basic_front_color;
 	border:1px solid $basic_fillbrightgrad_color;
 	border-radius:4px;
 	padding:.35em .55em;
 	font-weight:600;
+}
+
+.progressionSectionGenerateButton{
+	min-height:2.35em;
+	white-space:nowrap;
 }
 
 .progressionChordMenu h3{
@@ -2529,15 +2573,34 @@ body[data-theme="day"] .progressionSectionHeader h3{
 	color:#006e58;
 }
 
+body[data-theme="day"] .progressionSectionNavLink{
+	background:#ffffff;
+	border-color:#b7c3ca;
+	color:#7d2785;
+}
+
+body[data-theme="day"] .progressionSectionNavLink:hover,
+body[data-theme="day"] .progressionSectionNavLink:focus{
+	border-color:#7d2785;
+	color:#006e58;
+}
+
 body[data-theme="day"] .progressionSectionCircleButton,
+body[data-theme="day"] .progressionSectionDeleteButton,
 body[data-theme="day"] .progressionSectionRandomButton{
 	background:#ffffff;
 	border-color:#b7c3ca;
 	color:#7d2785;
 }
 
+body[data-theme="day"] .progressionSectionDeleteButton{
+	color:#8f3f4a;
+}
+
 body[data-theme="day"] .progressionSectionCircleButton:hover,
 body[data-theme="day"] .progressionSectionCircleButton:focus,
+body[data-theme="day"] .progressionSectionDeleteButton:hover,
+body[data-theme="day"] .progressionSectionDeleteButton:focus,
 body[data-theme="day"] .progressionSectionRandomButton:hover,
 body[data-theme="day"] .progressionSectionRandomButton:focus{
 	border-color:#7d2785;

@@ -466,9 +466,13 @@ assert.ok(progressionWorkbenchHtml.indexOf('id="progressionMetronome"') < progre
 assert.ok(progressionWorkbenchHtml.indexOf('id="progressionLoop"') < progressionWorkbenchHtml.indexOf('transportButton--goStart'));
 assert.ok(progressionWorkbenchHtml.indexOf('transportButton--goStart') < progressionWorkbenchHtml.indexOf('transportButton--listen'));
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.sectionA"') > -1);
-assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.sectionB"') > -1);
-assert.ok(progressionWorkbenchHtml.indexOf('id="generateProgressionSectionB"') > -1);
-assert.ok(progressionWorkbenchHtml.indexOf('casino') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSection"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('value="aprimeClone"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('value="aprimeVariation"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSection.contrastB"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="generateProgressionNextSection"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('auto_awesome') > -1);
+assert.equal(progressionWorkbenchHtml.indexOf('id="generateProgressionSectionB"'), -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<strong>Imaj7</strong>') > -1);
 
 const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
@@ -492,7 +496,8 @@ const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineM
 });
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-bar="1"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-section="A"') > -1);
-assert.ok(renderedProgressionTimeline.indexOf('data-progression-section="B"') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('progression.nextSection.aprimeClone') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('progression.nextSection.aprimeVariation') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-index="0"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('measureDragHandle') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-split-action="add"') > -1);
@@ -519,6 +524,19 @@ assert.ok(context.window.CodaRenderers.progressionTimeline.renderMeasureChord({
 	restorableKind: 'triad',
 	restorableSource: 'diatonic'
 }, 0, 1).indexOf('measureChordQuickToggle') > -1);
+const renderedFullTimeline = progressionWorkbenchRenderer.renderTimeline({
+	measures: [
+		{ bar: 1, chordName: 'C', sectionId: 'A' },
+		{ bar: 2, chordName: 'F', sectionId: 'B' }
+	],
+	sections: [
+		{ id: 'A', labelKey: 'progression.sectionA', length: 1, startIndex: 0 },
+		{ id: 'B', labelKey: 'progression.sectionB', length: 1, startIndex: 1 }
+	]
+});
+assert.ok(renderedFullTimeline.indexOf('progressionSectionNavigator') > -1);
+assert.ok(renderedFullTimeline.indexOf('href="#progression-section-a"') > -1);
+assert.ok(renderedFullTimeline.indexOf('href="#progression-section-b"') > -1);
 const neapolitanQuickHtml = context.window.CodaRenderers.progressionTimeline.renderMeasureChord({
 	chromaticRole: 'neapolitan',
 	degreeIndex: 1,
@@ -565,8 +583,15 @@ const sectionBContextTimeline = progressionWorkbenchRenderer.renderTimelineMeasu
 });
 assert.ok(sectionBContextTimeline.indexOf('progressionSectionCircleButton') > -1);
 assert.ok(sectionBContextTimeline.indexOf('data-section-circle="B"') > -1);
+assert.ok(sectionBContextTimeline.indexOf('progressionSectionDeleteButton') > -1);
+assert.ok(sectionBContextTimeline.indexOf('data-section-delete="B"') > -1);
+assert.equal(sectionBContextTimeline.indexOf('data-section-delete="A"'), -1);
 assert.ok(sectionBContextTimeline.indexOf('Do Major') > -1);
 assert.ok(sectionBContextTimeline.indexOf('progressionSectionContext') < sectionBContextTimeline.indexOf('progressionSectionCircleButton'));
+assert.ok(sectionBContextTimeline.indexOf('progressionSectionCircleButton') < sectionBContextTimeline.indexOf('progressionSectionDeleteButton'));
+assert.ok(sectionBContextTimeline.indexOf('value="bprimeClone"') > -1);
+assert.ok(sectionBContextTimeline.indexOf('value="bprimeVariation"') > -1);
+assert.ok(sectionBContextTimeline.indexOf('progression.nextSection.contrastC') > -1);
 assert.equal(progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [
 		{ bar: 1, chordName: 'C' },

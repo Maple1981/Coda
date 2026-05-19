@@ -386,13 +386,28 @@
 			});
 
 			on(query('#constructorProgresiones'), 'click', function (event) {
+				var sectionType;
+
 				if (!closest(event.target, '#generateProgressionNextSection')) {
 					return;
 				}
 
+				sectionType = valueOf(query('#progressionNextSectionType'));
 				cancelProgressionStateUpdate();
 				updateProgressionStateFromControls();
-				generateProgressionNextSection();
+				generateProgressionNextSection(sectionType);
+				recordHistorySnapshot();
+			});
+
+			on(query('#constructorProgresiones'), 'click', function (event) {
+				var button = closest(event.target, '.progressionSectionDeleteButton');
+
+				if (!button) {
+					return;
+				}
+
+				cancelProgressionStateUpdate();
+				removeProgressionSection(button.getAttribute('data-section-delete'));
 				recordHistorySnapshot();
 			});
 		}
@@ -1047,8 +1062,8 @@
 			}
 		}
 
-		function generateProgressionNextSection() {
-			var sectionType = availableNextSectionType(valueOf(query('#progressionNextSectionType')), uiState.getProgression());
+		function generateProgressionNextSection(requestedSectionType) {
+			var sectionType = availableNextSectionType(requestedSectionType || valueOf(query('#progressionNextSectionType')), uiState.getProgression());
 
 			if (
 				options.application &&
@@ -1070,24 +1085,48 @@
 			}
 		}
 
+		function removeProgressionSection(sectionId) {
+			if (
+				!sectionId ||
+				sectionId === 'A' ||
+				!options.application ||
+				typeof options.application.removeProgressionSection !== 'function' ||
+				!uiState.getProgression()
+			) {
+				return;
+			}
+
+			setProgression(markProgressionAsUserEdited(options.application.removeProgressionSection(uiState.getProgression(), sectionId)));
+		}
+
 		function availableNextSectionType(sectionType, progression) {
 			var hasAprime = hasProgressionSection(progression, 'A\'');
+			var hasB = hasProgressionSection(progression, 'B');
+			var hasBprime = hasProgressionSection(progression, 'B\'');
 			var hasC = hasProgressionSection(progression, 'C');
 
-			if ((sectionType === 'ap' || sectionType === 'A\'') && !hasAprime) {
-				return 'ap';
+			if ((sectionType === 'aprimeClone' || sectionType === 'aprimeVariation' || sectionType === 'ap' || sectionType === 'A\'') && !hasAprime && !hasB) {
+				return sectionType === 'aprimeClone' ? 'aprimeClone' : 'aprimeVariation';
 			}
 
-			if ((sectionType === 'C' || sectionType === 'c') && !hasC) {
-				return 'C';
+			if ((sectionType === 'bprimeClone' || sectionType === 'bprimeVariation') && hasB && !hasBprime) {
+				return sectionType;
 			}
 
-			if (!hasAprime) {
-				return 'ap';
+			if ((sectionType === 'contrast' || sectionType === 'C' || sectionType === 'c') && !hasC) {
+				return 'contrast';
+			}
+
+			if (!hasAprime && !hasB) {
+				return 'aprimeClone';
+			}
+
+			if (hasB && !hasBprime) {
+				return 'bprimeClone';
 			}
 
 			if (!hasC) {
-				return 'C';
+				return 'contrast';
 			}
 
 			return '';

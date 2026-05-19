@@ -43,12 +43,32 @@
 	function chooseChromaticCadenceType(progressionState, rng) {
 		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
 		var value = typeof rng === 'function' ? rng() : Math.random();
+		var subFiveChance = subFiveCadenceChance(progressionState);
+
+		if (subFiveChance > 0 && value >= 1 - subFiveChance) {
+			return 'subFive';
+		}
 
 		if (value < (chromaticism >= 75 ? 0.42 : 0.58)) {
 			return 'neapolitan';
 		}
 
 		return 'augmented6';
+	}
+
+	function subFiveCadenceChance(progressionState) {
+		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
+		var styleBonus = progressionState && progressionState.style === 'modern' ? 0.04 : 0;
+
+		if (chromaticism < 75) {
+			return 0;
+		}
+
+		if (chromaticism >= 95) {
+			return 0.18 + styleBonus;
+		}
+
+		return 0.08 + styleBonus / 2;
 	}
 
 	function forceChromaticEnding(degrees, options) {
@@ -58,7 +78,50 @@
 			forceNeapolitanEnding(degrees, options);
 		} else if (cadence === 'augmented6') {
 			forceAugmentedSixthEnding(degrees, options);
+		} else if (cadence === 'subFive') {
+			forceSubFiveEnding(degrees, options);
 		}
+	}
+
+	function forceSubFiveEnding(degrees, options) {
+		var cadence = options.patternCadence || (options.pattern ? options.pattern.cadence : '');
+		var resolvesToDominant = cadence === 'half';
+		var canUseDominantChain = degrees.length >= 3 && !resolvesToDominant && shouldResolveSubFiveToDominant(options.progressionState, options.rng);
+		var start;
+
+		if (degrees.length < 2) {
+			forceShortAuthenticEnding(degrees);
+			return;
+		}
+
+		if (resolvesToDominant) {
+			degrees[degrees.length - 2] = subFiveDegree(options.report, {
+				progressionState: options.progressionState,
+				rng: options.rng,
+				targetDegreeIndex: 4
+			});
+			degrees[degrees.length - 1] = dominantDegree(options);
+			return;
+		}
+
+		if (canUseDominantChain) {
+			start = degrees.length - 3;
+			degrees[start] = subFiveDegree(options.report, {
+				progressionState: options.progressionState,
+				rng: options.rng,
+				targetDegreeIndex: 4
+			});
+			degrees[start + 1] = dominantDegree(options);
+			degrees[start + 2] = tonicResolutionDegree();
+			return;
+		}
+
+		degrees[degrees.length - 2] = subFiveDegree(options.report, {
+			progressionState: options.progressionState,
+			rng: options.rng,
+			targetDegreeIndex: 0
+		});
+		degrees[degrees.length - 1] = tonicResolutionDegree();
 	}
 
 	function forceNeapolitanEnding(degrees, options) {
@@ -195,6 +258,66 @@
 		return [flatSix, tonic, spellChromaticDegree(tonicName, tonicIndex, 2, 3), sharpFour];
 	}
 
+	function subFiveDegree(report, options) {
+		var targetDegreeIndex = numberOrDefault(options && options.targetDegreeIndex, 0);
+		var targetPitch = targetPitchClass(report, targetDegreeIndex);
+		var rootIndex = normalizeIndex(targetPitch + 1);
+		var root = noteName(rootIndex, 'flat');
+		var third = noteName(rootIndex + 4, 'flat');
+		var fifth = noteName(rootIndex + 7, 'flat');
+		var seventh = noteName(rootIndex + 10, 'flat');
+
+		return {
+			chord: {
+				factorNotes: [root, third, fifth, seventh],
+				fundamental: root,
+				nombre: root + '7',
+				quinta: fifth,
+				septima: seventh,
+				tercera: third
+			},
+			chromaticRole: 'subFive',
+			degreeDisplayName: targetDegreeIndex === 4 ? 'SubV/V' : 'SubV/I',
+			forceInversionIndex: subFiveInversionIndex(options && options.progressionState, options && options.rng),
+			forceKind: 'seventh',
+			index: targetDegreeIndex,
+			preventSuspension: true,
+			preventTensions: true,
+			source: 'chromatic',
+			sourceLabelKey: 'progression.chromatic.subFive',
+			tonalFunctionOverride: 'D'
+		};
+	}
+
+	function shouldResolveSubFiveToDominant(progressionState, rng) {
+		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
+		var value = typeof rng === 'function' ? rng() : Math.random();
+		var probability = chromaticism >= 95 ? 0.42 : 0.28;
+
+		return value < probability;
+	}
+
+	function subFiveInversionIndex(progressionState, rng) {
+		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
+		var voices = numberOrDefault(progressionState && progressionState.voices, 4);
+		var value = typeof rng === 'function' ? rng() : Math.random();
+		var thirdInversionChance = chromaticism >= 95 ? 0.34 : 0.22;
+
+		if (voices >= 4 && value < thirdInversionChance) {
+			return 3;
+		}
+
+		if (value < thirdInversionChance + 0.16) {
+			return 1;
+		}
+
+		if (value < thirdInversionChance + 0.24) {
+			return 2;
+		}
+
+		return 0;
+	}
+
 	function cadentialSixFourDegree() {
 		return {
 			cadentialRole: 'cadential64',
@@ -288,6 +411,21 @@
 		}
 
 		return noteName(tonicIndex, 'sharp');
+	}
+
+	function targetPitchClass(report, degreeIndex) {
+		var pitchService = global.CodaProgressionPitch || global.CodaProgressionVoicing;
+		var chord = report && report.scaleChords ? report.scaleChords[degreeIndex] : null;
+		var pitch;
+
+		if (chord && chord.fundamental && pitchService && typeof pitchService.noteIndex === 'function') {
+			pitch = pitchService.noteIndex(chord.fundamental);
+			if (pitch != null) {
+				return pitch;
+			}
+		}
+
+		return normalizeIndex(tonicIndexFromReport(report) + (degreeIndex === 4 ? 7 : 0));
 	}
 
 	function spellChromaticDegree(tonicName, tonicIndex, degreeNumber, semitoneOffset) {
@@ -397,8 +535,13 @@
 		forceAugmentedSixthEnding: forceAugmentedSixthEnding,
 		forceChromaticEnding: forceChromaticEnding,
 		forceNeapolitanEnding: forceNeapolitanEnding,
+		forceSubFiveEnding: forceSubFiveEnding,
 		neapolitanDegree: neapolitanDegree,
 		shouldUseCadentialBridge: shouldUseCadentialBridge,
-		shouldUseChromaticCadence: shouldUseChromaticCadence
+		shouldUseChromaticCadence: shouldUseChromaticCadence,
+		shouldResolveSubFiveToDominant: shouldResolveSubFiveToDominant,
+		subFiveCadenceChance: subFiveCadenceChance,
+		subFiveDegree: subFiveDegree,
+		subFiveInversionIndex: subFiveInversionIndex
 	};
 })(window);

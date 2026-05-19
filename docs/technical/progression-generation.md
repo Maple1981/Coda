@@ -22,11 +22,11 @@ Las pruebas que necesitan cargar pilas largas de módulos deben usar `tests/help
 
 ## Forma y secciones
 
-La progresión se organiza en secciones musicales. La sección `A` nace de los controles globales del área de trabajo y funciona como punto de referencia formal. La sección `B` se genera como contraste: puede conservar la tonalidad con apertura de función subdominante, usar la relativa, la paralela o desplazarse a una vecina del círculo de quintas.
+La progresión se organiza en secciones musicales. La sección `A` nace de los controles globales del área de trabajo y funciona como punto de referencia formal. Desde el control **Siguiente sección**, el usuario puede añadir `A'` como clon literal de `A`, `A'` con pequeñas variaciones, o una sección `B` contrastante.
 
-Las secciones posteriores pueden añadir una `A'` o una `C`. La `A'` copia la estructura de `A` y sustituye de forma ligera entre uno y tres acordes, según la duración y el azar, para producir una variación reconocible. La `C` busca un contraste nuevo frente a los contextos ya usados por `A` y `B`, priorizando de nuevo opciones cercanas antes que saltos más bruscos.
+Una sección contrastante puede conservar la tonalidad con apertura de función subdominante, usar la relativa, la paralela o desplazarse a una vecina del círculo de quintas. Después de crear `B`, el mismo control puede añadir `B'` como clon literal o como variación ligera. La siguiente sección contrastante toma la letra `B` si todavía no existe, o `C` si `B` ya está presente, y busca un contexto nuevo frente a los ya usados por `A`, `A'` y `B`.
 
-Cada sección generada guarda una copia del estado de escritura con el que nació: compases, compás, tempo, voces, disposición, articulación, estilo, intercambio, cromatismo, tensiones, contrapunto y parámetros expresivos. Ese dato prepara una futura tarjeta o menú contextual de sección para duplicar, regenerar solo ese bloque o cambiar su contraste sin depender siempre de los controles globales.
+Cada sección generada guarda una copia del estado de escritura con el que nació: compases, compás, tempo, voces, disposición, articulación, estilo, intercambio, cromatismo, tensiones, contrapunto y parámetros expresivos. Los clones copian los compases ya editados por el usuario; las variaciones sustituyen de forma ligera entre uno y tres acordes, según la duración y el azar, para producir una variación reconocible sin descartar la sección fuente.
 
 ## Estilo de escritura
 
@@ -65,7 +65,9 @@ La **sexta napolitana** se modela como un acorde mayor sobre el `♭II`, normalm
 
 Los **acordes de sexta aumentada** se modelan como sonoridades de área subdominante que contienen `♭6`, `1` y `#4`, con variantes italiana, francesa y suiza. Su destino preferente es el dominante; cuando el contexto lo favorece, pueden resolver primero en un `I 6/4` cadencial para suavizar la conducción de voces antes de alcanzar `V` o `V7`.
 
-Estas cadencias cromáticas tienen más peso con valores altos de **Cromatismo**, con estilo **Clásico** y con mayor **Contrapunto**, porque necesitan una conducción clara de las notas alteradas hacia el dominante. No se aplican al inicio de la progresión ni al núcleo modal básico, donde podrían destruir la gravitación modal y convertir el resultado en una progresión funcional.
+El **Sub Five** se modela como dominante sustituto con función `D`: un acorde mayor con séptima menor cuya fundamental queda un semitono por encima del acorde de destino, por ejemplo `D♭7` como sustituto de `G7` para resolver en `C`. Solo entra de forma esporádica con **Cromatismo** alto o muy alto. Puede resolver directamente en `I`, o aparecer como `SubV/V -> V -> I`; en semicadencias puede cerrar como `SubV/V -> V`. Algunas apariciones fuerzan inversión `4/2` cuando hay voces suficientes, para reflejar el uso habitual del acorde con la séptima en el bajo.
+
+Estas cadencias cromáticas tienen más peso con valores altos de **Cromatismo**, con estilo **Clásico** y con mayor **Contrapunto**, porque necesitan una conducción clara de las notas alteradas hacia su destino. No se aplican al inicio de la progresión ni al núcleo modal básico, donde podrían destruir la gravitación modal y convertir el resultado en una progresión funcional.
 
 ## Armonía modal básica
 

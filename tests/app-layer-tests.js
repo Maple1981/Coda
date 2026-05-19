@@ -141,6 +141,83 @@ assert.equal(contrastingSectionProgression.measures[4].bar, 5);
 assert.equal(contrastingSectionProgression.measures[4].sectionId, 'B');
 assert.equal(contrastingSectionProgression.measures[4].tonalFunction, 'SD');
 
+const aprimeCloneProgression = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	progression: cMajorProgressionPlan,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '3/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 3
+	},
+	report: cMajorReport,
+	sectionType: 'aprimeClone',
+	selection: { preferFlats: false }
+});
+assert.deepEqual(aprimeCloneProgression.sections.map(function (section) { return section.id; }), ['A', 'A\'']);
+assert.equal(aprimeCloneProgression.sections[1].variationKind, 'clone');
+assert.equal(aprimeCloneProgression.sections[1].variationOf, 'A');
+assert.deepEqual(aprimeCloneProgression.measures.slice(4).map(function (measure) { return measure.displayName; }), cMajorProgressionPlan.measures.map(function (measure) { return measure.displayName; }));
+assert.equal(aprimeCloneProgression.measures[4].sectionId, 'A\'');
+
+const bAfterAprimeProgression = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	progression: aprimeCloneProgression,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '3/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 3
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0.95, 0.1, 0.1, 0.1]),
+	sectionType: 'contrast',
+	selection: { preferFlats: false }
+});
+assert.deepEqual(bAfterAprimeProgression.sections.map(function (section) { return section.id; }), ['A', 'A\'', 'B']);
+assert.equal(bAfterAprimeProgression.sections[2].labelKey, 'progression.sectionB');
+assert.notEqual(bAfterAprimeProgression.sections[2].contextLabel, bAfterAprimeProgression.sections[0].contextLabel);
+
+const bprimeCloneProgression = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	progression: contrastingSectionProgression,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '3/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 3
+	},
+	report: cMajorReport,
+	sectionType: 'bprimeClone',
+	selection: { preferFlats: false }
+});
+assert.deepEqual(bprimeCloneProgression.sections.map(function (section) { return section.id; }), ['A', 'B', 'B\'']);
+assert.equal(bprimeCloneProgression.sections[2].labelKey, 'progression.sectionBprime');
+assert.equal(bprimeCloneProgression.sections[2].variationKind, 'clone');
+assert.equal(bprimeCloneProgression.sections[2].variationOf, 'B');
+assert.deepEqual(bprimeCloneProgression.measures.slice(8).map(function (measure) { return measure.displayName; }), contrastingSectionProgression.measures.slice(4).map(function (measure) { return measure.displayName; }));
+
 const aprimeProgression = app.generateProgressionSection({
 	data: data,
 	domain: domain,
@@ -167,6 +244,46 @@ assert.equal(aprimeProgression.sections[2].labelKey, 'progression.sectionAprime'
 assert.equal(aprimeProgression.sections[2].variationOf, 'A');
 assert.equal(aprimeProgression.sections[2].state.bars, 4);
 assert.equal(aprimeProgression.measures[8].sectionId, 'A\'');
+assert.ok(changedMeasureCount(contrastingSectionProgression.measures.slice(0, 4), aprimeProgression.measures.slice(8, 12)) >= 1);
+
+const twoBarProgressionPlan = app.buildProgressionFromState({
+	domain: domain,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 2,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '4/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 3
+	},
+	report: cMajorReport
+});
+const twoBarAprimeVariation = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	progression: twoBarProgressionPlan,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 2,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 30,
+		meter: '4/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 3
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0, 0, 0.25, 0.75]),
+	sectionType: 'aprimeVariation',
+	selection: { preferFlats: false }
+});
+assert.ok(changedMeasureCount(twoBarProgressionPlan.measures, twoBarAprimeVariation.measures.slice(2, 4)) >= 1);
 
 const sectionCProgression = app.generateProgressionSection({
 	data: data,
@@ -193,6 +310,22 @@ assert.deepEqual(sectionCProgression.sections.map(function (section) { return se
 assert.equal(sectionCProgression.sections[3].labelKey, 'progression.sectionC');
 assert.notEqual(sectionCProgression.sections[3].contextLabel, sectionCProgression.sections[0].contextLabel);
 assert.equal(sectionCProgression.measures[12].sectionId, 'C');
+const sectionRemovedProgression = app.removeProgressionSection(sectionCProgression, 'A\'');
+assert.deepEqual(sectionRemovedProgression.sections.map(function (section) { return section.id; }), ['A', 'B', 'C']);
+assert.deepEqual(sectionRemovedProgression.sections.map(function (section) { return section.startIndex; }), [0, 4, 8]);
+assert.equal(sectionRemovedProgression.measures.length, 12);
+assert.equal(sectionRemovedProgression.bars, 12);
+assert.equal(sectionRemovedProgression.measures[4].sectionId, 'B');
+assert.equal(sectionRemovedProgression.measures[8].sectionId, 'C');
+assert.equal(sectionRemovedProgression.measures[8].bar, 9);
+assert.equal(app.removeProgressionSection(sectionRemovedProgression, 'A'), sectionRemovedProgression);
+const sectionBRemovedProgression = app.removeProgressionSection(sectionCProgression, 'B');
+assert.deepEqual(sectionBRemovedProgression.sections.map(function (section) { return section.id; }), ['A', 'A\'', 'B']);
+assert.deepEqual(sectionBRemovedProgression.sections.map(function (section) { return section.startIndex; }), [0, 4, 8]);
+assert.equal(sectionBRemovedProgression.sections[2].labelKey, 'progression.sectionB');
+assert.equal(sectionBRemovedProgression.measures[8].sectionId, 'B');
+assert.equal(sectionBRemovedProgression.measures[8].sectionLabelKey, 'progression.sectionB');
+assert.equal(sectionBRemovedProgression.measures[8].bar, 9);
 [
 	{ expected: 'relative', rng: sequenceRng([0.5, 0.1, 0.1, 0.1]) },
 	{ expected: 'parallel', rng: sequenceRng([0.75, 0.1, 0.1, 0.1]) },
@@ -910,6 +1043,26 @@ const cadentialSixFourPredominantProgression = app.generateProgressionFromState(
 assert.equal(cadentialSixFourPredominantProgression.generation.cadence, 'cadential64');
 assert.deepEqual(cadentialSixFourPredominantProgression.measures.map(function (measure) { return measure.degree; }), ['IV', 'I 6/4', 'V7', 'I']);
 assert.equal(cadentialSixFourPredominantProgression.measures[0].cadentialRole, 'cadential-predominant');
+const subFiveCadenceProgression = app.generateProgressionFromState({
+	progressionState: {
+		bars: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		chromaticism: 100,
+		meter: '4/4',
+		style: 'classic',
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0, 0, 0.9, 0.9, 0.7]),
+	rules: forcedCadenceRules
+});
+assert.equal(subFiveCadenceProgression.generation.cadence, 'subFive');
+assert.equal(subFiveCadenceProgression.measures[2].source, 'chromatic');
+assert.equal(subFiveCadenceProgression.measures[2].chromaticRole, 'subFive');
+assert.equal(subFiveCadenceProgression.measures[2].tonalFunction, 'D');
+assert.equal(subFiveCadenceProgression.measures[2].displayName, 'Db7');
+assert.equal(subFiveCadenceProgression.measures[2].degree, 'SubV/I');
 const dDorianReport = app.buildScaleReport({
 	data: data,
 	domain: domain,
@@ -1094,4 +1247,28 @@ function sequenceRng(values) {
 
 function upperVoiceSpan(midiNotes) {
 	return midiNotes[midiNotes.length - 1] - midiNotes[1];
+}
+
+function changedMeasureCount(sourceMeasures, variationMeasures) {
+	var count = 0;
+
+	for (var i = 0; i < sourceMeasures.length && i < variationMeasures.length; i++) {
+		if (measureSignature(sourceMeasures[i]) !== measureSignature(variationMeasures[i])) {
+			count += 1;
+		}
+	}
+
+	return count;
+}
+
+function measureSignature(measure) {
+	if (measure && measure.chords && measure.chords.length) {
+		return measure.chords.map(measureSignature).join('|');
+	}
+
+	return [
+		measure && measure.displayName,
+		measure && measure.chordName,
+		measure && measure.label
+	].join('::');
 }

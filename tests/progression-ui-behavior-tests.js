@@ -453,6 +453,21 @@ assert.deepEqual(initialized.uiState.getProgression().measures.map(function (mea
 	return measure.degree;
 }), randomGeneratedDegrees);
 
+document.getElementById('progressionNextSectionType').value = 'aprimeVariation';
+document.getElementById('constructorProgresiones').dispatchEvent({
+	target: document.getElementById('generateProgressionNextSection'),
+	type: 'click'
+});
+const aprimeUiProgression = initialized.uiState.getProgression();
+const aprimeUiSection = aprimeUiProgression.sections.find(function (section) {
+	return section.id === 'A\'';
+});
+assert.ok(aprimeUiSection);
+assert.ok(changedMeasureCount(
+	aprimeUiProgression.measures.slice(0, aprimeUiSection.length),
+	aprimeUiProgression.measures.slice(aprimeUiSection.startIndex, aprimeUiSection.startIndex + aprimeUiSection.length)
+) >= 1);
+
 const liveProgression = initialized.uiState.getProgression();
 const liveProgressionRendersBefore = rendered.progression;
 const liveWorkspaceCountBefore = savedWorkspaces.length;
@@ -675,6 +690,8 @@ function createFakeDocument() {
 	addElement('constructorProgresiones');
 	addElement('generateProgression');
 	addElement('generateProgressionSectionB');
+	addElement('generateProgressionNextSection');
+	addElement('progressionNextSectionType', 'aprimeClone');
 	addElement('progressionControls');
 	addElement('workbenchContext');
 	addElement('workbenchContextKeyToggle');
@@ -790,4 +807,28 @@ function createFakeElement(id, value) {
 			}
 		}
 	};
+}
+
+function changedMeasureCount(sourceMeasures, variationMeasures) {
+	let count = 0;
+
+	for (let i = 0; i < sourceMeasures.length && i < variationMeasures.length; i++) {
+		if (measureSignature(sourceMeasures[i]) !== measureSignature(variationMeasures[i])) {
+			count += 1;
+		}
+	}
+
+	return count;
+}
+
+function measureSignature(measure) {
+	if (measure && measure.chords && measure.chords.length) {
+		return measure.chords.map(measureSignature).join('|');
+	}
+
+	return [
+		measure && measure.displayName,
+		measure && measure.chordName,
+		measure && measure.label
+	].join('::');
 }

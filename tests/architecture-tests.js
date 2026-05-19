@@ -65,6 +65,7 @@ assert.ok(global.CodaProgressionTonalFunction.forDegree);
 assert.ok(global.CodaProgressionMeasureContext.resolvedDegreeFromMeasure);
 assert.ok(global.CodaProgressionStructureIndex.clampMeasureIndex);
 assert.ok(global.CodaProgressionStructureEditing.reorderMeasures);
+assert.ok(global.CodaProgressionStructureEditing.removeSection);
 assert.ok(global.CodaProgressionSuspensionResolution.choose);
 assert.ok(global.CodaProgressionAdditionalChordScore.score);
 assert.ok(global.CodaProgressionAdditionalChord.choose);
@@ -145,6 +146,7 @@ assert.ok(global.CodaApplication.buildScheduledProgressionMeasures);
 assert.ok(global.CodaApplication.createProgressionPlayback);
 assert.ok(global.CodaApplication.formatProgressionDegreeForChord);
 assert.ok(global.CodaApplication.reorderProgressionMeasures);
+assert.ok(global.CodaApplication.removeProgressionSection);
 assert.ok(global.CodaRenderers.scaleSummary);
 assert.ok(global.CodaRenderers.scaleChords);
 assert.ok(global.CodaRenderers.extendedHarmony);
@@ -888,6 +890,52 @@ assert.equal(global.CodaProgressionCadencePlanner.finalCadenceForPattern({
 	counterpoint: 80,
 	style: 'classic'
 }, sequenceRng([0, 0])), 'neapolitan');
+assert.equal(global.CodaProgressionChromaticCadence.subFiveCadenceChance({
+	chromaticism: 70
+}), 0);
+assert.equal(global.CodaProgressionChromaticCadence.chooseChromaticCadenceType({
+	chromaticism: 100,
+	style: 'classic'
+}, sequenceRng([0.9])), 'subFive');
+const cMajorScaleChords = [
+	{ fundamental: 'C', nombre: 'Cmaj7', quinta: 'G', septima: 'B', tercera: 'E' },
+	{ fundamental: 'D', nombre: 'Dm7', quinta: 'A', septima: 'C', tercera: 'F' },
+	{ fundamental: 'E', nombre: 'Em7', quinta: 'B', septima: 'D', tercera: 'G' },
+	{ fundamental: 'F', nombre: 'Fmaj7', quinta: 'C', septima: 'E', tercera: 'A' },
+	{ fundamental: 'G', nombre: 'G7', quinta: 'D', septima: 'F', tercera: 'B' },
+	{ fundamental: 'A', nombre: 'Am7', quinta: 'E', septima: 'G', tercera: 'C' },
+	{ fundamental: 'B', nombre: 'Bm7b5', quinta: 'F', septima: 'A', tercera: 'D' }
+];
+const cMajorSubFive = global.CodaProgressionChromaticCadence.subFiveDegree({
+	scaleChords: cMajorScaleChords,
+	tonicIndex: 0
+}, {
+	progressionState: {
+		chromaticism: 100,
+		voices: 4
+	},
+	rng: sequenceRng([0.7]),
+	targetDegreeIndex: 0
+});
+assert.deepEqual(cMajorSubFive.chord.factorNotes, ['Db', 'F', 'Ab', 'B']);
+assert.equal(cMajorSubFive.chord.nombre, 'Db7');
+assert.equal(cMajorSubFive.degreeDisplayName, 'SubV/I');
+assert.equal(cMajorSubFive.forceKind, 'seventh');
+assert.equal(cMajorSubFive.tonalFunctionOverride, 'D');
+const cMajorSubFiveOfDominant = global.CodaProgressionChromaticCadence.subFiveDegree({
+	scaleChords: cMajorScaleChords,
+	tonicIndex: 0
+}, {
+	progressionState: {
+		chromaticism: 100,
+		voices: 4
+	},
+	rng: sequenceRng([0.1]),
+	targetDegreeIndex: 4
+});
+assert.deepEqual(cMajorSubFiveOfDominant.chord.factorNotes, ['Ab', 'C', 'Eb', 'Gb']);
+assert.equal(cMajorSubFiveOfDominant.degreeDisplayName, 'SubV/V');
+assert.equal(cMajorSubFiveOfDominant.forceInversionIndex, 3);
 const chromaticEndingDegrees = [
 	{ index: 0, source: 'diatonic' },
 	{ index: 1, source: 'diatonic' },
@@ -908,6 +956,49 @@ global.CodaProgressionCadencePlanner.forceCadentialEnding(chromaticEndingDegrees
 assert.equal(chromaticEndingDegrees[1].chromaticRole, 'neapolitan');
 assert.equal(chromaticEndingDegrees[1].tonalFunctionOverride, 'SD');
 assert.equal(chromaticEndingDegrees[2].index, 4);
+const subFiveHalfCadenceDegrees = [
+	{ index: 0, source: 'diatonic' },
+	{ index: 3, source: 'diatonic' },
+	{ index: 1, source: 'diatonic' },
+	{ index: 4, source: 'diatonic' }
+];
+global.CodaProgressionCadencePlanner.forceCadentialEnding(subFiveHalfCadenceDegrees, { cadence: 'half' }, {
+	cadence: 'subFive',
+	progressionState: {
+		chromaticism: 100,
+		voices: 4
+	},
+	report: {
+		scaleChords: cMajorScaleChords,
+		tonicIndex: 0
+	},
+	rng: sequenceRng([0.7, 0])
+});
+assert.equal(subFiveHalfCadenceDegrees[2].chromaticRole, 'subFive');
+assert.equal(subFiveHalfCadenceDegrees[2].degreeDisplayName, 'SubV/V');
+assert.equal(subFiveHalfCadenceDegrees[3].cadentialRole, 'cadential-dominant');
+assert.equal(subFiveHalfCadenceDegrees[3].index, 4);
+const subFiveAuthenticCadenceDegrees = [
+	{ index: 0, source: 'diatonic' },
+	{ index: 3, source: 'diatonic' },
+	{ index: 4, source: 'diatonic' },
+	{ index: 0, source: 'diatonic' }
+];
+global.CodaProgressionCadencePlanner.forceCadentialEnding(subFiveAuthenticCadenceDegrees, { cadence: 'authentic' }, {
+	cadence: 'subFive',
+	progressionState: {
+		chromaticism: 80,
+		voices: 4
+	},
+	report: {
+		scaleChords: cMajorScaleChords,
+		tonicIndex: 0
+	},
+	rng: sequenceRng([0.9, 0.7])
+});
+assert.equal(subFiveAuthenticCadenceDegrees[2].chromaticRole, 'subFive');
+assert.equal(subFiveAuthenticCadenceDegrees[2].degreeDisplayName, 'SubV/I');
+assert.equal(subFiveAuthenticCadenceDegrees[3].cadentialRole, 'cadential-resolution');
 const variedTonicBlock = global.CodaProgressionPlanner.varyBlockOpening([
 	{ index: 0, source: 'diatonic' },
 	{ index: 3, source: 'diatonic' }

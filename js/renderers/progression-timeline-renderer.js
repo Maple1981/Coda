@@ -17,7 +17,7 @@
 		var progressionMeasures = progression && progression.measures ? progression.measures : null;
 		var measures = hasRenderableMeasures(progressionMeasures) ? progressionMeasures : fallbackMeasures();
 		var sections = timelineSections(progression, measures);
-		var html = '';
+		var html = renderSectionNavigator(sections, options);
 
 		for (var i = 0; i < sections.length; i++) {
 			html += renderSectionHeader(sections[i], options);
@@ -26,14 +26,7 @@
 			}
 		}
 
-		if (!hasSection(sections, 'B')) {
-			html += renderSectionHeader({
-				id: 'B',
-				labelKey: 'progression.sectionB',
-				length: 0,
-				startIndex: measures.length
-			}, options);
-		} else if (sections.length < 4) {
+		if (nextSectionOptions(sections).length) {
 			html += renderNextSectionHeader(sections);
 		}
 
@@ -68,18 +61,18 @@
 	}
 
 	function renderSectionHeader(section, options) {
-		var html = '<div class="progressionSectionHeader" data-progression-section="' + labels.escapeHtml(section.id) + '">';
+		var html = '<div id="' + labels.escapeHtml(sectionAnchorId(section.id)) + '" class="progressionSectionHeader" data-progression-section="' + labels.escapeHtml(section.id) + '">';
 		var contextLabel = sectionContextLabel(section, options || {});
 
 		html += '<h3 data-i18n="' + labels.escapeHtml(section.labelKey) + '"></h3>';
 		if (contextLabel) {
 			html += '<span class="progressionSectionContext">' + labels.escapeHtml(contextLabel) + '</span>';
 		}
-		if (section.id === 'B' && section.circleOfFifths && options.showCircleOfFifths !== false) {
-			html += '<button class="progressionSectionCircleButton" type="button" title="" aria-label="" aria-controls="circleOfFifthsPopover" aria-expanded="false" data-section-circle="B" data-i18n-title="circle.open"><span class="material-icons" aria-hidden="true">donut_large</span></button>';
+		if (section.circleOfFifths && options.showCircleOfFifths !== false) {
+			html += '<button class="progressionSectionCircleButton" type="button" title="" aria-label="" aria-controls="circleOfFifthsPopover" aria-expanded="false" data-section-circle="' + labels.escapeHtml(section.id) + '" data-i18n-title="circle.open"><span class="material-icons" aria-hidden="true">donut_large</span></button>';
 		}
-		if (section.id === 'B') {
-			html += '<button id="generateProgressionSectionB" class="progressionSectionRandomButton" type="button" title="" aria-label="" data-i18n-title="progression.generateSectionB"><span class="material-icons" aria-hidden="true">casino</span></button>';
+		if (section.id !== 'A') {
+			html += '<button class="progressionSectionDeleteButton" type="button" title="" aria-label="" data-section-delete="' + labels.escapeHtml(section.id) + '" data-i18n-title="progression.deleteSection"><span class="material-icons" aria-hidden="true">delete_outline</span></button>';
 		}
 		html += '</div>';
 
@@ -87,23 +80,69 @@
 	}
 
 	function renderNextSectionHeader(sections) {
-		var hasAprime = hasSection(sections, 'A\'');
-		var hasC = hasSection(sections, 'C');
+		var options = nextSectionOptions(sections);
 		var html = '<div class="progressionSectionHeader progressionSectionHeader--next">';
 
 		html += '<h3 data-i18n="progression.nextSection"></h3>';
 		html += '<select id="progressionNextSectionType" class="progressionSectionTypeSelect" aria-label="" data-i18n-title="progression.nextSectionType">';
-		if (!hasAprime) {
-			html += '<option value="ap" data-i18n="progression.sectionAprime"></option>';
-		}
-		if (!hasC) {
-			html += '<option value="C" data-i18n="progression.sectionC"></option>';
+		for (var i = 0; i < options.length; i++) {
+			html += '<option value="' + labels.escapeHtml(options[i].value) + '" data-i18n="' + labels.escapeHtml(options[i].labelKey) + '"></option>';
 		}
 		html += '</select>';
-		html += '<button id="generateProgressionNextSection" class="progressionSectionRandomButton" type="button" title="" aria-label="" data-i18n-title="progression.generateNextSection"><span class="material-icons" aria-hidden="true">casino</span></button>';
+		html += '<button id="generateProgressionNextSection" type="button" class="transportButton transportButton--generate progressionSectionGenerateButton" title="" aria-label="" data-i18n-title="progression.generateNextSection"><span class="material-icons" aria-hidden="true">auto_awesome</span><span data-i18n="progression.generateNextSection"></span></button>';
 		html += '</div>';
 
 		return html;
+	}
+
+	function renderSectionNavigator(sections, options) {
+		var html = '<nav class="progressionSectionNavigator" aria-label="" data-i18n-label="progression.sectionNavigator">';
+		var hasLinks = false;
+
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (!sections[i].length) {
+				continue;
+			}
+			hasLinks = true;
+			html += '<a class="progressionSectionNavLink" href="#' + labels.escapeHtml(sectionAnchorId(sections[i].id)) + '">' +
+				'<span data-i18n="' + labels.escapeHtml(sections[i].labelKey) + '"></span>' +
+				'</a>';
+		}
+
+		html += '</nav>';
+
+		return hasLinks ? html : '';
+	}
+
+	function nextSectionOptions(sections) {
+		var hasAprime = hasSection(sections, 'A\'');
+		var hasB = hasSection(sections, 'B');
+		var hasBprime = hasSection(sections, 'B\'');
+		var hasC = hasSection(sections, 'C');
+		var options = [];
+
+		if (!hasAprime && !hasB) {
+			return [
+				{ labelKey: 'progression.nextSection.aprimeClone', value: 'aprimeClone' },
+				{ labelKey: 'progression.nextSection.aprimeVariation', value: 'aprimeVariation' },
+				{ labelKey: 'progression.nextSection.contrastB', value: 'contrast' }
+			];
+		}
+
+		if (hasB && !hasBprime) {
+			options.push({ labelKey: 'progression.nextSection.bprimeClone', value: 'bprimeClone' });
+			options.push({ labelKey: 'progression.nextSection.bprimeVariation', value: 'bprimeVariation' });
+		}
+
+		if (!hasC) {
+			options.push({ labelKey: hasB ? 'progression.nextSection.contrastC' : 'progression.nextSection.contrastB', value: 'contrast' });
+		}
+
+		return options;
+	}
+
+	function sectionAnchorId(sectionId) {
+		return 'progression-section-' + String(sectionId || 'A').replace(/'/g, 'prime').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 	}
 
 	function sectionContextLabel(section, options) {
@@ -407,7 +446,9 @@
 		renderQuickControls: renderQuickControls,
 		renderQuickEditor: renderQuickEditor,
 		renderSectionHeader: renderSectionHeader,
+		renderSectionNavigator: renderSectionNavigator,
 		notesLabel: notesLabel,
+		nextSectionOptions: nextSectionOptions,
 		sectionContextLabel: sectionContextLabel,
 		sourceLabel: sourceLabel,
 		renderTimeline: renderTimeline,

@@ -471,7 +471,39 @@
   text-transform: none;
 }
 
+.progressionSectionNavigator {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45em;
+  align-items: center;
+  margin: 0 0 0.35em 0;
+  padding: 0.15em 0;
+}
+
+.progressionSectionNavLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2em;
+  padding: 0.25em 0.65em;
+  border: 1px solid #444;
+  border-radius: 5px;
+  background: #151515;
+  color: #d85ee0;
+  font-size: 0.82em;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.progressionSectionNavLink:hover,
+.progressionSectionNavLink:focus {
+  border-color: #a622ae;
+  color: #a3ffd9;
+  outline: none;
+}
+
 .progressionSectionCircleButton,
+.progressionSectionDeleteButton,
 .progressionSectionRandomButton {
   width: 2em;
   height: 2em;
@@ -485,8 +517,14 @@
   cursor: pointer;
 }
 
+.progressionSectionDeleteButton {
+  color: #ff9f9f;
+}
+
 .progressionSectionCircleButton:hover,
 .progressionSectionCircleButton:focus,
+.progressionSectionDeleteButton:hover,
+.progressionSectionDeleteButton:focus,
 .progressionSectionRandomButton:hover,
 .progressionSectionRandomButton:focus {
   border-color: #a622ae;
@@ -495,6 +533,7 @@
 }
 
 .progressionSectionCircleButton .material-icons,
+.progressionSectionDeleteButton .material-icons,
 .progressionSectionRandomButton .material-icons {
   font-size: 1.05em;
   line-height: 1;
@@ -504,6 +543,27 @@
   color: #bbb;
   font-size: 0.82em;
   font-weight: 600;
+}
+
+.progressionSectionHeader--next {
+  justify-content: flex-start;
+  margin-top: 0.45em;
+}
+
+.progressionSectionTypeSelect {
+  box-sizing: border-box;
+  min-width: 15em;
+  background: #222;
+  color: #eee;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 0.35em 0.55em;
+  font-weight: 600;
+}
+
+.progressionSectionGenerateButton {
+  min-height: 2.35em;
+  white-space: nowrap;
 }
 
 .progressionChordMenu h3 {
@@ -864,15 +924,34 @@ body[data-theme="day"] .progressionSectionHeader h3 {
   color: #006e58;
 }
 
+body[data-theme="day"] .progressionSectionNavLink {
+  background: #ffffff;
+  border-color: #b7c3ca;
+  color: #7d2785;
+}
+
+body[data-theme="day"] .progressionSectionNavLink:hover,
+body[data-theme="day"] .progressionSectionNavLink:focus {
+  border-color: #7d2785;
+  color: #006e58;
+}
+
 body[data-theme="day"] .progressionSectionCircleButton,
+body[data-theme="day"] .progressionSectionDeleteButton,
 body[data-theme="day"] .progressionSectionRandomButton {
   background: #ffffff;
   border-color: #b7c3ca;
   color: #7d2785;
 }
 
+body[data-theme="day"] .progressionSectionDeleteButton {
+  color: #8f3f4a;
+}
+
 body[data-theme="day"] .progressionSectionCircleButton:hover,
 body[data-theme="day"] .progressionSectionCircleButton:focus,
+body[data-theme="day"] .progressionSectionDeleteButton:hover,
+body[data-theme="day"] .progressionSectionDeleteButton:focus,
 body[data-theme="day"] .progressionSectionRandomButton:hover,
 body[data-theme="day"] .progressionSectionRandomButton:focus {
   border-color: #7d2785;
@@ -881,6 +960,12 @@ body[data-theme="day"] .progressionSectionRandomButton:focus {
 
 body[data-theme="day"] .progressionSectionContext {
   color: #59656b;
+}
+
+body[data-theme="day"] .progressionSectionTypeSelect {
+  background: #ffffff;
+  border-color: #b7c3ca;
+  color: #1f2528;
 }
 
 body[data-theme="day"] .progressionChordMenu h3 {
