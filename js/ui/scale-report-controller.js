@@ -1234,6 +1234,14 @@
 			if (options.application && typeof options.application.rebuildProgressionTimeline === 'function') {
 				refreshed = options.application.rebuildProgressionTimeline(refreshed, normalizeMeasureDurations(adjustedMeasuresForState(progression, state), state));
 			}
+			if (options.application && typeof options.application.revoiceProgression === 'function') {
+				refreshed = progressionWithState(refreshed, state);
+				refreshed.measures = options.application.revoiceProgression(refreshed, {
+					data: options.data,
+					progressionState: state,
+					report: uiState.getReport()
+				});
+			}
 			refreshed.userEdited = true;
 			setProgression(refreshed);
 		}

@@ -141,6 +141,7 @@ assert.ok(global.CodaApplication.playMidiNote);
 assert.ok(global.CodaApplication.buildProgressionFromDegrees);
 assert.ok(global.CodaApplication.buildProgressionFromState);
 assert.ok(global.CodaApplication.generateProgressionFromState);
+assert.ok(global.CodaApplication.revoiceProgression);
 assert.ok(global.CodaApplication.generateContrastingProgressionSection);
 assert.ok(global.CodaApplication.buildProgressionPlaybackSchedule);
 assert.ok(global.CodaApplication.buildScheduledProgressionMeasures);
@@ -259,6 +260,7 @@ assert.ok(manifestScripts.indexOf('js/services/progression-suspension-service.js
 assert.ok(manifestScripts.indexOf('js/services/progression-seventh-decision-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-chord-plan-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-harmonic-density-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-revoice-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-measure-builder-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-result-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-chromatic-cadence-service.js') > -1);

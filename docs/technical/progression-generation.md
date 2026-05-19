@@ -123,6 +123,8 @@ El control **Disposición** alterna entre escritura cerrada y abierta. En dispos
 
 La selección de voicings incluye una fuerza suave de centrado registral. El centro se calcula a partir de la tónica cercana al C central, y la puntuación penaliza progresivamente los voicings cuyo centro de masa se aleja demasiado. Esta regla no impide excepciones ni saltos expresivos, pero evita que las progresiones largas deriven estadísticamente hacia registros demasiado graves o demasiado agudos.
 
+Los controles del constructor se aplican también sobre la progresión en curso. Cuando la progresión ya contiene ediciones del usuario, la aplicación no descarta sus compases, secciones ni acordes añadidos: reinterpreta el material existente con el nuevo estado, recalculando voicings, tensiones, número de voces, duraciones, pedales y parámetros expresivos. El botón **Generar progresión aleatoria** sigue usando esos mismos controles para crear material nuevo desde cero.
+
 El generador elige inversiones para reducir el desplazamiento entre voces consecutivas. La nomenclatura usada es la tradicional:
 
 - Tríadas: primera inversión `6`, segunda inversión `6/4`.

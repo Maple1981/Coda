@@ -66,6 +66,7 @@
 			'js/services/progression-seventh-decision-service.js',
 			'js/services/progression-chord-plan-service.js',
 			'js/services/progression-harmonic-density-service.js',
+			'js/services/progression-revoice-service.js',
 			'js/services/progression-measure-builder-service.js',
 			'js/services/progression-result-service.js',
 			'js/services/progression-chromatic-cadence-service.js',
