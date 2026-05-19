@@ -53,6 +53,7 @@ assert.ok(global.CodaProgressionVoicingFactors.prepareBaseNotesForVoiceCount);
 assert.ok(global.CodaProgressionVoicingMidi.notesToAscendingMidi);
 assert.ok(global.CodaProgressionVoicingFactory.create);
 assert.ok(global.CodaProgressionVoicingSelection.chooseVoicing);
+assert.ok(global.CodaProgressionVoicingSelection.inversionRunPenalty);
 assert.ok(global.CodaProgressionVoicing.chooseVoicing);
 assert.ok(global.CodaProgressionPedalLinks.commonVoiceLinks);
 assert.ok(global.CodaProgressionVoiceLeading.annotateMeasures);
@@ -75,6 +76,7 @@ assert.ok(global.CodaProgressionMeasureChordAddition.addMeasureChord);
 assert.ok(global.CodaProgressionMeasureChordReplacement.replaceMeasureChord);
 assert.ok(global.CodaProgressionEditing.addMeasureChord);
 assert.ok(global.CodaProgressionEditCommands.apply);
+assert.ok(global.CodaProgressionRevoice.baseDegreeDisplayName);
 assert.ok(global.CodaProgressionTensions.addToNotes);
 assert.ok(global.CodaProgressionSuspensionHeuristic.probability);
 assert.ok(global.CodaProgressionSuspension.choose);
@@ -670,7 +672,45 @@ const highRegisterVoicing = global.CodaProgressionVoicing.chooseVoicing({
 	voices: 4
 });
 assert.deepEqual(highRegisterVoicing.midiNotes, [55, 60, 64, 72]);
+const repeatedInversionPenalty = global.CodaProgressionVoicingSelection.inversionRunPenalty({
+	inversionIndex: 2
+}, {
+	inversionIndex: 2,
+	inversionRunKey: '2',
+	inversionRunLength: 3
+});
+assert.ok(repeatedInversionPenalty >= 1000);
+assert.equal(global.CodaProgressionVoicingSelection.nextInversionRunLength({
+	inversionIndex: 2,
+	inversionRunKey: '2',
+	inversionRunLength: 3
+}, {
+	inversionIndex: 2
+}), 4);
+const repeatedInversionBreakVoicing = global.CodaProgressionVoicing.chooseVoicing({
+	baseNotes: ['D', 'F', 'A'],
+	chordName: 'Dm',
+	extraNotes: [],
+	initialMidiNote: 60,
+	kind: 'triad',
+	previousPlan: {
+		inversionIndex: 2,
+		inversionRunKey: '2',
+		inversionRunLength: 3,
+		midiNotes: [55, 60, 65],
+		notes: ['G', 'C', 'F']
+	},
+	registerCenterMidi: 54,
+	voicing: 'closed',
+	voices: 3
+});
+assert.notEqual(repeatedInversionBreakVoicing.inversionIndex, 2);
 assert.equal(global.CodaProgressionVoicing.commonPitchNames(['C', 'E'], ['E', 'G']).join(','), 'E');
+assert.equal(global.CodaProgressionRevoice.baseDegreeDisplayName({
+	degree: 'IV7 4/3 sus4',
+	inversion: '4/3',
+	suspension: 'sus4'
+}), 'IV7');
 const voiceLeadingPedalMeasures = global.CodaProgressionVoiceLeading.annotateMeasures([
 	{
 		bar: 1,

@@ -51,12 +51,22 @@
 		return voicingSelectionService.registerCenterMidi(options);
 	}
 
+	function inversionRunKey(plan) {
+		return voicingSelectionService.inversionRunKey(plan);
+	}
+
+	function nextInversionRunLength(previousPlan, nextPlan) {
+		return voicingSelectionService.nextInversionRunLength(previousPlan, nextPlan);
+	}
+
 	global.CodaProgressionVoicing = {
 		chooseVoicing: chooseVoicing,
 		commonPitchNames: commonPitchNames,
 		countParallelPerfects: countParallelPerfects,
 		firstVoicingScore: firstVoicingScore,
+		inversionRunKey: inversionRunKey,
 		nearestMidiTo: nearestMidiTo,
+		nextInversionRunLength: nextInversionRunLength,
 		normalizePitchName: normalizePitchName,
 		noteIndex: noteIndex,
 		noteNameToMidi: noteNameToMidi,

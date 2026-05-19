@@ -53,6 +53,8 @@
 			degree: resolvedDegree.degreeDisplayName || formattingService.formatDegreeForMeasure(resolvedDegree.degree, chord, useSeventh),
 			inversionIndex: voicing.inversionIndex,
 			inversionLabel: voicing.inversionLabel,
+			inversionRunKey: voicingService.inversionRunKey(voicing),
+			inversionRunLength: voicingService.nextInversionRunLength(context.previousPlan, voicing),
 			kind: useSeventh ? 'seventh' : 'triad',
 			midiNotes: voicing.midiNotes,
 			notes: voicing.notes,

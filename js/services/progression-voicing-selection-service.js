@@ -4,6 +4,8 @@
 
 	var voicingDispositionService = global.CodaProgressionVoicingDisposition;
 	var voicingFactory = global.CodaProgressionVoicingFactory;
+	var MAX_INVERSION_RUN = 3;
+	var INVERSION_RUN_PENALTY = 1000;
 
 	function chooseVoicing(options) {
 		var labels = options.kind === 'seventh' ? ['', '6/5', '4/3', '4/2'] : ['', '6', '6/4'];
@@ -21,7 +23,8 @@
 
 		for (var i = 0; i < maxInversions; i++) {
 			var voicing = buildVoicingCandidate(options, i, labels[i], disposition);
-			var score = voicingDispositionService.score(voicing, options.previousPlan, disposition, scoreOptions(options));
+			var score = voicingDispositionService.score(voicing, options.previousPlan, disposition, scoreOptions(options)) +
+				inversionRunPenalty(voicing, options.previousPlan);
 
 			if (score < bestScore) {
 				bestScore = score;
@@ -81,9 +84,44 @@
 		return (isFinite(fallback) ? fallback : 60) - 6;
 	}
 
+	function inversionRunKey(plan) {
+		var inversionIndex = Number(plan && plan.inversionIndex);
+
+		return isFinite(inversionIndex) ? String(inversionIndex) : '';
+	}
+
+	function nextInversionRunLength(previousPlan, nextPlan) {
+		var previousKey = previousPlan && previousPlan.inversionRunKey != null ?
+			String(previousPlan.inversionRunKey) :
+			inversionRunKey(previousPlan);
+		var nextKey = inversionRunKey(nextPlan);
+		var previousLength = Number(previousPlan && previousPlan.inversionRunLength);
+
+		if (!nextKey) {
+			return 0;
+		}
+
+		if (previousKey === nextKey) {
+			return (isFinite(previousLength) && previousLength > 0 ? previousLength : 1) + 1;
+		}
+
+		return 1;
+	}
+
+	function inversionRunPenalty(voicing, previousPlan) {
+		if (!previousPlan || inversionRunKey(voicing) !== (previousPlan.inversionRunKey != null ? String(previousPlan.inversionRunKey) : inversionRunKey(previousPlan))) {
+			return 0;
+		}
+
+		return nextInversionRunLength(previousPlan, voicing) > MAX_INVERSION_RUN ? INVERSION_RUN_PENALTY : 0;
+	}
+
 	global.CodaProgressionVoicingSelection = {
 		buildVoicingCandidate: buildVoicingCandidate,
 		chooseVoicing: chooseVoicing,
+		inversionRunKey: inversionRunKey,
+		inversionRunPenalty: inversionRunPenalty,
+		nextInversionRunLength: nextInversionRunLength,
 		normalizeVoicingDisposition: normalizeVoicingDisposition,
 		registerCenterMidi: registerCenterMidi
 	};

@@ -3777,6 +3777,8 @@
 
 	var voicingDispositionService = global.CodaProgressionVoicingDisposition;
 	var voicingFactory = global.CodaProgressionVoicingFactory;
+	var MAX_INVERSION_RUN = 3;
+	var INVERSION_RUN_PENALTY = 1000;
 
 	function chooseVoicing(options) {
 		var labels = options.kind === 'seventh' ? ['', '6/5', '4/3', '4/2'] : ['', '6', '6/4'];
@@ -3794,7 +3796,8 @@
 
 		for (var i = 0; i < maxInversions; i++) {
 			var voicing = buildVoicingCandidate(options, i, labels[i], disposition);
-			var score = voicingDispositionService.score(voicing, options.previousPlan, disposition, scoreOptions(options));
+			var score = voicingDispositionService.score(voicing, options.previousPlan, disposition, scoreOptions(options)) +
+				inversionRunPenalty(voicing, options.previousPlan);
 
 			if (score < bestScore) {
 				bestScore = score;
@@ -3854,9 +3857,44 @@
 		return (isFinite(fallback) ? fallback : 60) - 6;
 	}
 
+	function inversionRunKey(plan) {
+		var inversionIndex = Number(plan && plan.inversionIndex);
+
+		return isFinite(inversionIndex) ? String(inversionIndex) : '';
+	}
+
+	function nextInversionRunLength(previousPlan, nextPlan) {
+		var previousKey = previousPlan && previousPlan.inversionRunKey != null ?
+			String(previousPlan.inversionRunKey) :
+			inversionRunKey(previousPlan);
+		var nextKey = inversionRunKey(nextPlan);
+		var previousLength = Number(previousPlan && previousPlan.inversionRunLength);
+
+		if (!nextKey) {
+			return 0;
+		}
+
+		if (previousKey === nextKey) {
+			return (isFinite(previousLength) && previousLength > 0 ? previousLength : 1) + 1;
+		}
+
+		return 1;
+	}
+
+	function inversionRunPenalty(voicing, previousPlan) {
+		if (!previousPlan || inversionRunKey(voicing) !== (previousPlan.inversionRunKey != null ? String(previousPlan.inversionRunKey) : inversionRunKey(previousPlan))) {
+			return 0;
+		}
+
+		return nextInversionRunLength(previousPlan, voicing) > MAX_INVERSION_RUN ? INVERSION_RUN_PENALTY : 0;
+	}
+
 	global.CodaProgressionVoicingSelection = {
 		buildVoicingCandidate: buildVoicingCandidate,
 		chooseVoicing: chooseVoicing,
+		inversionRunKey: inversionRunKey,
+		inversionRunPenalty: inversionRunPenalty,
+		nextInversionRunLength: nextInversionRunLength,
 		normalizeVoicingDisposition: normalizeVoicingDisposition,
 		registerCenterMidi: registerCenterMidi
 	};
@@ -3918,12 +3956,22 @@
 		return voicingSelectionService.registerCenterMidi(options);
 	}
 
+	function inversionRunKey(plan) {
+		return voicingSelectionService.inversionRunKey(plan);
+	}
+
+	function nextInversionRunLength(previousPlan, nextPlan) {
+		return voicingSelectionService.nextInversionRunLength(previousPlan, nextPlan);
+	}
+
 	global.CodaProgressionVoicing = {
 		chooseVoicing: chooseVoicing,
 		commonPitchNames: commonPitchNames,
 		countParallelPerfects: countParallelPerfects,
 		firstVoicingScore: firstVoicingScore,
+		inversionRunKey: inversionRunKey,
 		nearestMidiTo: nearestMidiTo,
+		nextInversionRunLength: nextInversionRunLength,
 		normalizePitchName: normalizePitchName,
 		noteIndex: noteIndex,
 		noteNameToMidi: noteNameToMidi,
@@ -6260,6 +6308,8 @@
 			degree: resolvedDegree.degreeDisplayName || formattingService.formatDegreeForMeasure(resolvedDegree.degree, chord, useSeventh),
 			inversionIndex: voicing.inversionIndex,
 			inversionLabel: voicing.inversionLabel,
+			inversionRunKey: voicingService.inversionRunKey(voicing),
+			inversionRunLength: voicingService.nextInversionRunLength(context.previousPlan, voicing),
 			kind: useSeventh ? 'seventh' : 'triad',
 			midiNotes: voicing.midiNotes,
 			notes: voicing.notes,
@@ -6610,7 +6660,7 @@
 			chord: segment.chord,
 			chromaticRole: segment.chromaticRole,
 			degree: segment.degree || '',
-			degreeDisplayName: segment.degree,
+			degreeDisplayName: baseDegreeDisplayName(segment),
 			degreeIndex: numberOrDefault(segment.degreeIndex, 0),
 			source: segment.source || 'diatonic',
 			sourceLabelKey: segment.sourceLabelKey,
@@ -6618,6 +6668,36 @@
 			sourceTonicName: segment.sourceTonicName,
 			tonalFunctionOverride: segment.tonalFunction
 		};
+	}
+
+	function baseDegreeDisplayName(segment) {
+		var degree = segment && segment.degree ? String(segment.degree) : '';
+		var suffixes = [
+			segment && segment.suspension,
+			segment && segment.inversion,
+			'4/2',
+			'4/3',
+			'6/5',
+			'6/4',
+			'6'
+		];
+
+		for (var i = 0; i < suffixes.length; i++) {
+			degree = removeSuffix(degree, suffixes[i]);
+		}
+
+		return degree;
+	}
+
+	function removeSuffix(value, suffix) {
+		var text = String(value || '');
+		var ending = suffix ? String(suffix) : '';
+
+		if (!ending || text.length <= ending.length || text.slice(-ending.length) !== ending) {
+			return text;
+		}
+
+		return text.slice(0, -ending.length).replace(/\s+$/, '');
 	}
 
 	function resolvedDegreesForSegment(segment, report) {
@@ -6675,6 +6755,7 @@
 
 	global.CodaProgressionRevoice = {
 		apply: apply,
+		baseDegreeDisplayName: baseDegreeDisplayName,
 		resolvedDegreeFromSegment: resolvedDegreeFromSegment,
 		revoiceSegment: revoiceSegment
 	};

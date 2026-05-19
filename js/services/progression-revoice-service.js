@@ -105,7 +105,7 @@
 			chord: segment.chord,
 			chromaticRole: segment.chromaticRole,
 			degree: segment.degree || '',
-			degreeDisplayName: segment.degree,
+			degreeDisplayName: baseDegreeDisplayName(segment),
 			degreeIndex: numberOrDefault(segment.degreeIndex, 0),
 			source: segment.source || 'diatonic',
 			sourceLabelKey: segment.sourceLabelKey,
@@ -113,6 +113,36 @@
 			sourceTonicName: segment.sourceTonicName,
 			tonalFunctionOverride: segment.tonalFunction
 		};
+	}
+
+	function baseDegreeDisplayName(segment) {
+		var degree = segment && segment.degree ? String(segment.degree) : '';
+		var suffixes = [
+			segment && segment.suspension,
+			segment && segment.inversion,
+			'4/2',
+			'4/3',
+			'6/5',
+			'6/4',
+			'6'
+		];
+
+		for (var i = 0; i < suffixes.length; i++) {
+			degree = removeSuffix(degree, suffixes[i]);
+		}
+
+		return degree;
+	}
+
+	function removeSuffix(value, suffix) {
+		var text = String(value || '');
+		var ending = suffix ? String(suffix) : '';
+
+		if (!ending || text.length <= ending.length || text.slice(-ending.length) !== ending) {
+			return text;
+		}
+
+		return text.slice(0, -ending.length).replace(/\s+$/, '');
 	}
 
 	function resolvedDegreesForSegment(segment, report) {
@@ -170,6 +200,7 @@
 
 	global.CodaProgressionRevoice = {
 		apply: apply,
+		baseDegreeDisplayName: baseDegreeDisplayName,
 		resolvedDegreeFromSegment: resolvedDegreeFromSegment,
 		revoiceSegment: revoiceSegment
 	};
