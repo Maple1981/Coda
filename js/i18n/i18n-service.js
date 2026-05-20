@@ -7,8 +7,8 @@
 		var currentLanguage = normalizeLanguage(options.initialLanguage, translations);
 
 		function t(key, values) {
-			var dictionary = translations[currentLanguage] || translations.es || {};
-			var fallback = translations.es || {};
+			var dictionary = translations[currentLanguage] || translations.en || translations.es || {};
+			var fallback = translations.en || translations.es || {};
 			var text = dictionary[key] != null ? dictionary[key] : fallback[key];
 
 			if (text == null) {
@@ -52,7 +52,7 @@
 			return language;
 		}
 
-		return 'es';
+		return 'en';
 	}
 
 	global.CodaI18n = {

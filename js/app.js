@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	var storedProgressionWorkspace = CodaProgressionWorkspaceStorage.read();
 	var languageSelector = document.getElementById('selectorIdioma');
 	var i18n = CodaI18n.create({
-		initialLanguage: storedPreferences.language || (languageSelector ? languageSelector.value : 'es'),
+		initialLanguage: storedPreferences.language || (languageSelector ? languageSelector.value : 'en'),
 		translations: CodaTranslations
 	});
 

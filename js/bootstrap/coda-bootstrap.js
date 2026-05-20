@@ -32,7 +32,7 @@
 		var musicalContextFactory = options.musicalContextFactory || global.CodaMusicalContext;
 		var uiState = uiStateFactory.create({
 			initialNotation: options.initialNotation,
-			language: options.i18n && options.i18n.getLanguage ? options.i18n.getLanguage() : 'es'
+			language: options.i18n && options.i18n.getLanguage ? options.i18n.getLanguage() : 'en'
 		});
 
 		var controller = options.controller.initialize({

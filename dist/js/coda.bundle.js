@@ -1925,8 +1925,8 @@
 		var currentLanguage = normalizeLanguage(options.initialLanguage, translations);
 
 		function t(key, values) {
-			var dictionary = translations[currentLanguage] || translations.es || {};
-			var fallback = translations.es || {};
+			var dictionary = translations[currentLanguage] || translations.en || translations.es || {};
+			var fallback = translations.en || translations.es || {};
 			var text = dictionary[key] != null ? dictionary[key] : fallback[key];
 
 			if (text == null) {
@@ -1970,7 +1970,7 @@
 			return language;
 		}
 
-		return 'es';
+		return 'en';
 	}
 
 	global.CodaI18n = {
@@ -17800,7 +17800,7 @@
 		options = options || {};
 
 		var state = {
-			language: options.language || 'es',
+			language: options.language || 'en',
 			musicalContext: null,
 			notationStyle: options.initialNotation || 'anglosaxon',
 			progression: null,
@@ -20306,7 +20306,7 @@
 		var staticText = options.staticText || global.CodaStaticText;
 		var uiState = options.uiState || global.CodaUiState.create({
 			initialNotation: notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon',
-			language: i18n && i18n.getLanguage ? i18n.getLanguage() : 'es'
+			language: i18n && i18n.getLanguage ? i18n.getLanguage() : 'en'
 		});
 		var circleOfFifthsAnchorId = '';
 		var circleOfFifthsDragged = false;
@@ -22719,7 +22719,7 @@
 		var musicalContextFactory = options.musicalContextFactory || global.CodaMusicalContext;
 		var uiState = uiStateFactory.create({
 			initialNotation: options.initialNotation,
-			language: options.i18n && options.i18n.getLanguage ? options.i18n.getLanguage() : 'es'
+			language: options.i18n && options.i18n.getLanguage ? options.i18n.getLanguage() : 'en'
 		});
 
 		var controller = options.controller.initialize({
@@ -22806,7 +22806,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	var storedProgressionWorkspace = CodaProgressionWorkspaceStorage.read();
 	var languageSelector = document.getElementById('selectorIdioma');
 	var i18n = CodaI18n.create({
-		initialLanguage: storedPreferences.language || (languageSelector ? languageSelector.value : 'es'),
+		initialLanguage: storedPreferences.language || (languageSelector ? languageSelector.value : 'en'),
 		translations: CodaTranslations
 	});
 

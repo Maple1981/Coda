@@ -19,7 +19,7 @@
 		var staticText = options.staticText || global.CodaStaticText;
 		var uiState = options.uiState || global.CodaUiState.create({
 			initialNotation: notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon',
-			language: i18n && i18n.getLanguage ? i18n.getLanguage() : 'es'
+			language: i18n && i18n.getLanguage ? i18n.getLanguage() : 'en'
 		});
 		var circleOfFifthsAnchorId = '';
 		var circleOfFifthsDragged = false;

@@ -355,6 +355,7 @@ manifestScripts.forEach(function (scriptPath) {
 	assert.ok(bundleSource.indexOf('Source: ' + scriptPath) > -1);
 });
 assert.equal(indexHtml.indexOf('Novedades de la versión actual beta 0.5'), -1);
+assert.ok(indexHtml.indexOf('<html lang="en">') > -1);
 assert.ok(indexHtml.indexOf('<section id="controlVersiones" aria-live="polite"></section>') > -1);
 assert.ok(indexHtml.indexOf('<section id="constructorProgresiones" class="progression-workbench"></section>') > -1);
 assert.ok(indexHtml.indexOf('<section id="bienvenida"></section>') > -1);
@@ -365,7 +366,8 @@ assert.ok(indexHtml.indexOf('id="undoChange"') > -1);
 assert.ok(indexHtml.indexOf('id="redoChange"') > -1);
 assert.ok(indexHtml.indexOf('<span data-i18n="ui.language">') === -1);
 assert.ok(indexHtml.indexOf('<span data-i18n="ui.notation">') === -1);
-assert.ok(indexHtml.indexOf('<select id="selectorIdioma" title="Idioma" aria-label="Idioma">') > -1);
+assert.ok(indexHtml.indexOf('<select id="selectorIdioma" title="Language" aria-label="Language">') > -1);
+assert.ok(indexHtml.indexOf('<option value="en" selected>EN</option>') > -1);
 assert.ok(indexHtml.indexOf('<select id="selectorNotacion" title="Notación" aria-label="Notación">') > -1);
 assert.ok(indexHtml.indexOf('id="toggleCircleOfFifthsFromForm"') > -1);
 assert.ok(indexHtml.indexOf('id="dashboardColumnResizer"') > -1);
@@ -1197,6 +1199,12 @@ const englishI18n = global.CodaI18n.create({
 	initialLanguage: 'en',
 	translations: global.CodaTranslations
 });
+const defaultI18n = global.CodaI18n.create({
+	initialLanguage: '',
+	translations: global.CodaTranslations
+});
+assert.equal(defaultI18n.getLanguage(), 'en');
+assert.equal(global.CodaUiState.create().getLanguage(), 'en');
 const preferences = global.CodaPreferences.create();
 let playbackOptions;
 let loadCalled = false;

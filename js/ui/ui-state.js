@@ -6,7 +6,7 @@
 		options = options || {};
 
 		var state = {
-			language: options.language || 'es',
+			language: options.language || 'en',
 			musicalContext: null,
 			notationStyle: options.initialNotation || 'anglosaxon',
 			progression: null,
