@@ -439,16 +439,58 @@ assert.equal(denseCmajorProgressionPlan.harmonicDensity, 100);
 assert.ok(denseCmajorProgressionPlan.measures[0].chords.length > 1);
 assert.equal(denseCmajorProgressionPlan.measures[2].chords.length, 4);
 assert.equal(denseCmajorProgressionPlan.measures[3].chords, undefined);
+assert.ok(cMajorProgressionPlan.measures.every(function (measure) {
+	return !measure.chords || measure.chords.length <= 1;
+}));
 const harmonicDensityService = context.window.CodaProgressionHarmonicDensity;
 assert.equal(harmonicDensityService.meterFamily({ beatsPerBar: 4 }), 'binary');
 assert.equal(harmonicDensityService.meterFamily({ beatsPerBar: 3 }), 'ternary');
 assert.equal(harmonicDensityService.meterFamily({ beatsPerBar: 7 }), 'irregular');
+assert.equal(harmonicDensityService.chordCountForMeasure({
+	index: 2,
+	progressionState: { beatsPerBar: 4, harmonicDensity: 0 },
+	rng: sequenceRng([0]),
+	totalMeasures: 8
+}), 1);
 assert.equal(harmonicDensityService.targetChordCount(0, 8, { beatsPerBar: 4 }, 0.6, sequenceRng([0, 0])), 2);
-assert.equal(harmonicDensityService.targetChordCount(0, 8, { beatsPerBar: 4 }, 0.6, sequenceRng([0, 0.99])), 3);
-assert.equal(harmonicDensityService.targetChordCount(0, 8, { beatsPerBar: 4 }, 0.7, sequenceRng([0, 0])), 4);
+assert.equal(harmonicDensityService.targetChordCount(2, 8, { beatsPerBar: 4 }, 0.6, sequenceRng([0, 0.99])), 3);
+assert.equal(harmonicDensityService.targetChordCount(2, 8, { beatsPerBar: 4 }, 0.7, sequenceRng([0, 0])), 4);
 assert.equal(harmonicDensityService.targetChordCount(0, 8, { beatsPerBar: 3 }, 0.5, sequenceRng([0, 0])), 1);
-assert.equal(harmonicDensityService.targetChordCount(0, 8, { beatsPerBar: 3 }, 0.8, sequenceRng([0.5, 0])), 3);
+assert.equal(harmonicDensityService.targetChordCount(2, 8, { beatsPerBar: 3 }, 0.8, sequenceRng([0.5, 0])), 3);
 assert.equal(harmonicDensityService.targetChordCount(0, 8, { beatsPerBar: 9 }, 1, sequenceRng([0, 0])), 3);
+assert.equal(harmonicDensityService.chordCountForMeasure({
+	density: 0.55,
+	index: 1,
+	measure: { tonalFunction: 'T' },
+	nextMeasure: { tonalFunction: 'SD' },
+	progressionState: { beatsPerBar: 4 },
+	rng: sequenceRng([0.8]),
+	totalMeasures: 8
+}), 1);
+assert.equal(harmonicDensityService.chordCountForMeasure({
+	density: 0.55,
+	index: 1,
+	measure: { tonalFunction: 'D' },
+	nextMeasure: { tonalFunction: 'T' },
+	progressionState: { beatsPerBar: 4 },
+	rng: sequenceRng([0.8]),
+	totalMeasures: 8
+}), 2);
+assert.equal(harmonicDensityService.chordCountForMeasure({
+	denseRun: 2,
+	density: 0.9,
+	index: 5,
+	progressionState: { beatsPerBar: 4 },
+	rng: sequenceRng([0]),
+	totalMeasures: 8
+}), 2);
+assert.equal(harmonicDensityService.chordCountForMeasure({
+	density: 0.8,
+	index: 6,
+	progressionState: { beatsPerBar: 4 },
+	rng: sequenceRng([0]),
+	totalMeasures: 8
+}), 4);
 
 const cMajorOpenVoicingPlan = app.buildProgressionFromState({
 	domain: domain,

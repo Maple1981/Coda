@@ -162,6 +162,12 @@ La puntuación de conducción penaliza quintas y octavas paralelas. La penalizac
 
 Cada compás de la progresión puede dividirse en hasta cuatro acordes. El primer acorde conserva la función original del compás y los acordes añadidos se calculan como extensiones armónicas ponderadas, no como elecciones totalmente aleatorias.
 
+La decisión de cuántos acordes aparecen en un compás pertenece a `js/services/progression-harmonic-density-service.js`. Con **Densidad armónica** a `0`, el generador conserva siempre un solo acorde por compás. Al subir el fader, la probabilidad de dividir compases crece siguiendo una curva formal: menor al inicio de frase o sección, mayor en los compases que preparan finales de frase y especialmente en el penúltimo compás de sección. El último compás de la progresión no se divide para que el cierre ocupe todo el compás.
+
+La densidad también escucha la tensión armónica. Las dominantes, cadencias cromáticas, roles cadenciales y preparaciones que resuelven hacia tónica admiten algo más de actividad; las tónicas estables frenan la división. El estilo clásico, el contrapunto, las tensiones y el cromatismo añaden un pequeño empuje contextual, pero no sustituyen al valor principal del fader.
+
+La métrica sesga el número de acordes elegido antes de repartir duraciones: en compases binarios se favorecen `1`, `2` o `4` acordes y se hace más raro `3`; en compases ternarios se favorecen `1` o `3` y se penalizan `2` y `4`; en compases irregulares se prefiere evitar divisiones demasiado mecánicas y se aceptan agrupaciones de tres acordes con más naturalidad. Además, salvo en densidades extremas, el servicio evita acumular más de dos compases muy densos seguidos.
+
 La selección del acorde añadido prioriza tres criterios: notas comunes con el acorde inicial del compás, notas comunes con el acorde siguiente y coincidencia de función tonal. Esta regla favorece movimientos parsimoniosos y extensiones funcionales, especialmente extensiones de tónica. Por ejemplo, en `C` mayor, entre `C` y `F` puede aparecer `Am`, porque comparte `C` y `E` con `C`, y `A` y `C` con `F`.
 
 Si el acorde desde el que se añade el nuevo segmento está suspendido, la primera regla es resolver la suspensión sobre el mismo acorde antes de buscar otro acompañante. Por ejemplo, después de `Esus4` se elige una variante de `E`, como tríada, cuatríada o inversión, según la conducción de voces más parsimoniosa.

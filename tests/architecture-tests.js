@@ -84,6 +84,7 @@ assert.ok(global.CodaProgressionSuspension.choose);
 assert.ok(global.CodaProgressionSeventhDecision.shouldUseSeventh);
 assert.ok(global.CodaProgressionChordPlan.build);
 assert.ok(global.CodaProgressionHarmonicDensity.apply);
+assert.ok(global.CodaProgressionHarmonicDensity.chordCountForMeasure);
 assert.ok(global.CodaProgressionMeasureBuilder.build);
 assert.ok(global.CodaProgressionResult.build);
 assert.ok(global.CodaProgressionStyle.isModern);
