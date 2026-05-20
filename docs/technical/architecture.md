@@ -57,7 +57,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI y alturas MIDI de instrumentos a eventos de playback.
 - `js/application/progression-application.js`: casos de uso iniciales para progresiones armónicas. Convierte el estado normalizado de progresiones en un plan diatónico con compases, duración en beats/segundos y acordes resueltos.
 - `js/domain/music-utils.js`: patrones, nombres de nota, índices circulares e intervalos compartidos.
-- `js/domain/scale-domain.js`: construcción de escalas y notas características modales.
+- `js/domain/scale-domain.js`: construcción de escalas, ortografía por grado y notas características modales. La regla de ortografía vive en `docs/technical/scale-spelling.md`.
 - `js/domain/chord-domain.js`: acordes diatónicos, acordes desde fundamental y etiquetas modales.
 - `js/domain/extended-harmony-domain.js`: dominantes secundarios, subdominantes secundarios, sustitutos tritonales e ii relativos.
 - `js/domain/circle-of-fifths-domain.js`: normalización de tonalidad y ordenación del círculo de quintas.

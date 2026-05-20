@@ -70,13 +70,14 @@
 		}
 
 		var parallelScaleDefinition = options.data.scales[parallelScaleIndex];
+		var parallelPreferFlats = preferFlatsForScale(options, parallelScaleDefinition, parallelScaleIndex, options.tonicName);
 		var parallelScaleNotes = options.domain.buildScale({
 			tonicIndex: options.tonicIndex,
 			scaleDefinition: parallelScaleDefinition,
 			notes: options.data.notes,
 			intervals: options.data.intervals,
 			octaveSemitones: options.data.constants.octaveSemitones,
-			preferFlats: options.preferFlats
+			preferFlats: parallelPreferFlats
 		});
 		var isParallelDegreeSuppressed = createIsDegreeSuppressed(parallelScaleDefinition, parallelScaleNotes);
 
@@ -126,7 +127,7 @@
 			notes: options.data.notes,
 			intervals: options.data.intervals,
 			octaveSemitones: options.data.constants.octaveSemitones,
-			preferFlats: options.preferFlats
+			preferFlats: preferFlatsForScale(options, scaleDefinition, scaleIndex, options.tonicName)
 		});
 
 		if (scaleNotes.length !== report.scaleNotes.length) {
@@ -156,6 +157,19 @@
 		if (value != null && values.indexOf(value) === -1) {
 			values.push(value);
 		}
+	}
+
+	function preferFlatsForScale(options, scaleDefinition, scaleIndex, tonicName) {
+		var preferFlats = options.domain && typeof options.domain.shouldPreferFlatsForKeySignature === 'function' ?
+			options.domain.shouldPreferFlatsForKeySignature({
+				notes: options.data.notes,
+				scaleDefinition: scaleDefinition,
+				selectedScaleIndex: scaleIndex,
+				tonicName: tonicName
+			}) :
+			null;
+
+		return preferFlats == null ? options.preferFlats : preferFlats;
 	}
 
 	function buildInstrumentView(options) {
@@ -226,6 +240,7 @@
 		buildScaleReport: buildScaleReport,
 		buildInterchangeSource: buildInterchangeSource,
 		createIsDegreeSuppressed: createIsDegreeSuppressed,
-		findParallelScaleIndex: findParallelScaleIndex
+		findParallelScaleIndex: findParallelScaleIndex,
+		preferFlatsForScale: preferFlatsForScale
 	};
 })(window);

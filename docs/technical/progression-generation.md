@@ -103,6 +103,8 @@ Las fuentes disponibles son:
 
 El acorde inicial de la progresión queda excluido del intercambio para conservar una referencia tonal clara al comienzo. Cuando un acorde se genera por intercambio, la tarjeta de progresión conserva el grado funcional, pero muestra también la escala o tonalidad fuente de la que procede.
 
+Las escalas fuente de intercambio y la escala paralela usan su propia preferencia de armadura, calculada con las reglas del círculo de quintas. Así, desde `C` mayor, la paralela `C` menor se escribe con `E♭`, `A♭` y `B♭`, aunque la escala principal no necesite alteraciones. Para favorecer esa lectura, `C` mayor recomienda bemoles como formato inicial cuando no hay una preferencia guardada del usuario.
+
 El menú contextual de cada acorde incluye una sección **Intercambio** con acordes del mismo grado tomados de esas mismas fuentes. Cada entrada permite elegir tríada o cuatríada y sus inversiones, igual que los acordes diatónicos.
 
 ## Densidad armónica y conducción de voces

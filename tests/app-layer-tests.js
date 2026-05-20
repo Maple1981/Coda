@@ -48,7 +48,7 @@ assert.equal(cMajorReport.scaleDefinition.nombre, 'Mayor');
 assert.deepEqual(cMajorReport.scaleNotes.map(function (note) { return note.nombre; }), ['C', 'D', 'E', 'F', 'G', 'A', 'B']);
 assert.deepEqual(cMajorReport.scaleNotes.map(function (note) { return note.midiNote; }), [60, 62, 64, 65, 67, 69, 71]);
 assert.deepEqual(cMajorReport.scaleChords.map(function (chord) { return chord.nombre; }), ['Cmaj7', 'Dm7', 'Em7', 'Fmaj7', 'G7', 'Am7', 'Bm7♭5']);
-assert.deepEqual(cMajorReport.parallelScaleChords.map(function (chord) { return chord.nombre; }), ['Cm7', 'Dm7♭5', 'D#maj7', 'Fm7', 'Gm7', 'G#maj7', 'A#7']);
+assert.deepEqual(cMajorReport.parallelScaleChords.map(function (chord) { return chord.nombre; }), ['Cm7', 'Dm7♭5', 'Ebmaj7', 'Fm7', 'Gm7', 'Abmaj7', 'Bb7']);
 assert.ok(cMajorReport.modalInterchangeSources.some(function (source) { return source.scaleIndex === 3 && source.scaleChords[4].nombre === 'G7'; }));
 assert.ok(cMajorReport.modalInterchangeSources.some(function (source) { return source.scaleIndex === 15 && source.scaleChords[3].nombre === 'Fm7'; }));
 assert.equal(cMajorReport.extendedHarmonyEnabled, true);

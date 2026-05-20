@@ -14267,6 +14267,7 @@
 		var modalPrincipal = 0;
 		var modalSecondary = 0;
 		var scaleNotes = [];
+		var spellByDegree = shouldSpellByDegree(scaleDefinition, scalePattern);
 
 		if (scaleDefinition.modal === 'true') {
 			var characteristicNotes = scaleDefinition.caracteristicas.split('-');
@@ -14285,7 +14286,9 @@
 			var interval = utils.findInterval(options.intervals, semitoneSum);
 			var scaleNote = {
 				midiNote: 60 + options.tonicIndex + semitoneSum,
-				nombre: utils.noteName(options.notes[position], options.preferFlats),
+				nombre: spellByDegree ?
+					spelledDegreeName(options, i, position) :
+					utils.noteName(options.notes[position], options.preferFlats),
 				semitonos: semitoneSum,
 				nombreGrado: interval.nombre,
 				grado: interval.grado
@@ -14307,8 +14310,83 @@
 		return scaleNotes;
 	}
 
+	function shouldSpellByDegree(scaleDefinition, scalePattern) {
+		return scalePattern.length === 7 && (
+			scaleDefinition.tonal === 'true' ||
+			scaleDefinition.modal === 'true'
+		);
+	}
+
+	function spelledDegreeName(options, degreeIndex, chromaticPosition) {
+		var tonicName = utils.noteName(options.notes[options.tonicIndex], options.preferFlats);
+		var letter = letterAt(tonicName, degreeIndex);
+		var targetIndex = chromaticPosition % options.octaveSemitones;
+		var naturalIndex = naturalNoteIndex(letter);
+		var accidental = accidentalForDistance(targetIndex - naturalIndex, options.octaveSemitones);
+
+		return letter + accidental;
+	}
+
+	function letterAt(tonicName, degreeIndex) {
+		var letters = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+		var tonicLetter = String(tonicName || 'C').charAt(0);
+		var tonicLetterIndex = letters.indexOf(tonicLetter);
+
+		if (tonicLetterIndex < 0) {
+			tonicLetterIndex = 0;
+		}
+
+		return letters[(tonicLetterIndex + degreeIndex) % letters.length];
+	}
+
+	function naturalNoteIndex(letter) {
+		var indexes = {
+			C: 0,
+			D: 2,
+			E: 4,
+			F: 5,
+			G: 7,
+			A: 9,
+			B: 11
+		};
+
+		return indexes[letter];
+	}
+
+	function accidentalForDistance(distance, octaveSemitones) {
+		while (distance > octaveSemitones / 2) {
+			distance -= octaveSemitones;
+		}
+
+		while (distance < -octaveSemitones / 2) {
+			distance += octaveSemitones;
+		}
+
+		if (distance === 2) {
+			return '##';
+		}
+
+		if (distance === 1) {
+			return '#';
+		}
+
+		if (distance === -1) {
+			return 'b';
+		}
+
+		if (distance === -2) {
+			return 'bb';
+		}
+
+		return '';
+	}
+
 	global.CodaScaleDomain = {
-		buildScale: buildScale
+		accidentalForDistance: accidentalForDistance,
+		buildScale: buildScale,
+		letterAt: letterAt,
+		shouldSpellByDegree: shouldSpellByDegree,
+		spelledDegreeName: spelledDegreeName
 	};
 })(window);
 
@@ -14673,7 +14751,7 @@
 	}
 
 	function preferFlatsForMajorKey(keyName) {
-		var flatKeys = ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'];
+		var flatKeys = ['C', 'F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'];
 
 		return flatKeys.indexOf(keyName) > -1;
 	}
@@ -15126,13 +15204,14 @@
 		}
 
 		var parallelScaleDefinition = options.data.scales[parallelScaleIndex];
+		var parallelPreferFlats = preferFlatsForScale(options, parallelScaleDefinition, parallelScaleIndex, options.tonicName);
 		var parallelScaleNotes = options.domain.buildScale({
 			tonicIndex: options.tonicIndex,
 			scaleDefinition: parallelScaleDefinition,
 			notes: options.data.notes,
 			intervals: options.data.intervals,
 			octaveSemitones: options.data.constants.octaveSemitones,
-			preferFlats: options.preferFlats
+			preferFlats: parallelPreferFlats
 		});
 		var isParallelDegreeSuppressed = createIsDegreeSuppressed(parallelScaleDefinition, parallelScaleNotes);
 
@@ -15182,7 +15261,7 @@
 			notes: options.data.notes,
 			intervals: options.data.intervals,
 			octaveSemitones: options.data.constants.octaveSemitones,
-			preferFlats: options.preferFlats
+			preferFlats: preferFlatsForScale(options, scaleDefinition, scaleIndex, options.tonicName)
 		});
 
 		if (scaleNotes.length !== report.scaleNotes.length) {
@@ -15212,6 +15291,19 @@
 		if (value != null && values.indexOf(value) === -1) {
 			values.push(value);
 		}
+	}
+
+	function preferFlatsForScale(options, scaleDefinition, scaleIndex, tonicName) {
+		var preferFlats = options.domain && typeof options.domain.shouldPreferFlatsForKeySignature === 'function' ?
+			options.domain.shouldPreferFlatsForKeySignature({
+				notes: options.data.notes,
+				scaleDefinition: scaleDefinition,
+				selectedScaleIndex: scaleIndex,
+				tonicName: tonicName
+			}) :
+			null;
+
+		return preferFlats == null ? options.preferFlats : preferFlats;
 	}
 
 	function buildInstrumentView(options) {
@@ -15282,7 +15374,8 @@
 		buildScaleReport: buildScaleReport,
 		buildInterchangeSource: buildInterchangeSource,
 		createIsDegreeSuppressed: createIsDegreeSuppressed,
-		findParallelScaleIndex: findParallelScaleIndex
+		findParallelScaleIndex: findParallelScaleIndex,
+		preferFlatsForScale: preferFlatsForScale
 	};
 })(window);
 

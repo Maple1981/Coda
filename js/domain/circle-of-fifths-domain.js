@@ -147,7 +147,7 @@
 	}
 
 	function preferFlatsForMajorKey(keyName) {
-		var flatKeys = ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'];
+		var flatKeys = ['C', 'F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'];
 
 		return flatKeys.indexOf(keyName) > -1;
 	}

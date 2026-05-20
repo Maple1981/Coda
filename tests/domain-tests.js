@@ -72,6 +72,12 @@ assert.equal(domain.shouldPreferFlatsForKeySignature({
 	notes: data.notes,
 	scaleDefinition: data.scales[0],
 	selectedScaleIndex: 0,
+	tonicName: 'C'
+}), true);
+assert.equal(domain.shouldPreferFlatsForKeySignature({
+	notes: data.notes,
+	scaleDefinition: data.scales[0],
+	selectedScaleIndex: 0,
 	tonicName: 'F'
 }), true);
 assert.equal(domain.shouldPreferFlatsForKeySignature({
@@ -204,6 +210,14 @@ function names(items) {
 	});
 }
 
+function assertNoRepeatedLetters(scaleNotes) {
+	var letters = scaleNotes.map(function (note) {
+		return note.nombre.charAt(0);
+	});
+
+	assert.equal(new Set(letters).size, letters.length);
+}
+
 function types(items) {
 	return items.map(function (item) {
 		return item.tipo || '';
@@ -296,6 +310,14 @@ const bbMajor = buildScale('Bb', 'Mayor', true);
 assert.deepEqual(names(bbMajor), ['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A']);
 
 const bbMajorChords = buildScaleChords(bbMajor, 'Mayor');
+
+const fSharpMajor = buildScale('F#', 'Mayor', false);
+assert.deepEqual(names(fSharpMajor), ['F#', 'G#', 'A#', 'B', 'C#', 'D#', 'E#']);
+assertNoRepeatedLetters(fSharpMajor);
+
+const cMinorNaturalAsSharps = buildScale('C', 'Menor natural', false);
+assert.deepEqual(names(cMinorNaturalAsSharps), ['C', 'D', 'Eb', 'F', 'G', 'Ab', 'Bb']);
+assertNoRepeatedLetters(cMinorNaturalAsSharps);
 
 const cMinorNatural = buildScale('C', 'Menor natural', true);
 assert.deepEqual(names(cMinorNatural), ['C', 'D', 'Eb', 'F', 'G', 'Ab', 'Bb']);
