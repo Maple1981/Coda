@@ -1489,6 +1489,9 @@
 			'extended.tritoneSubstitutes': 'Tritonos sustitutos (D)',
 			'footer.author': 'Maple81, 2013-2026.',
 			'footer.beta': '<strong>CODA está en fase beta</strong>. Puede contener errores. Por favor, todavía no te tomes la aplicación demasiado en serio.',
+			'footer.contact': 'Si tienes algún consejo, idea de mejora o crítica furibunda, puedes contactar con Maple81 a través de <a href="https://github.com/Maple1981/" title="Ver perfil de Maple81 en GitHub" target="_blank" rel="noopener noreferrer">GitHub</a>.',
+			'footer.github': 'Ver repositorio GitHub',
+			'footer.githubTitle': 'Ver repositorio GitHub',
 			'footer.licenseTitle': 'Licencia Creative Commons Reconocimiento - Compartir igual Internacional',
 			'footer.news': 'Ver novedades y mejoras',
 			'footer.newsTitle': 'Ver novedades y mejoras',
@@ -1736,6 +1739,9 @@
 			'extended.tritoneSubstitutes': 'Tritone substitutes (D)',
 			'footer.author': 'Maple81, 2013-2026.',
 			'footer.beta': '<strong>CODA is in beta</strong>. It may contain errors. Please do not take the application too seriously yet.',
+			'footer.contact': 'If you have advice, an improvement idea or fierce criticism, you can contact Maple81 through <a href="https://github.com/Maple1981/" title="View Maple81 on GitHub" target="_blank" rel="noopener noreferrer">GitHub</a>.',
+			'footer.github': 'View GitHub repository',
+			'footer.githubTitle': 'View GitHub repository',
 			'footer.licenseTitle': 'Creative Commons Attribution-ShareAlike International license',
 			'footer.news': 'View news and improvements',
 			'footer.newsTitle': 'View news and improvements',
@@ -17963,10 +17969,13 @@
 	function applyFooter(i18n) {
 		setText(i18n, '#enlaceNovedades', 'footer.news');
 		setAttribute(i18n, '#enlaceNovedades', 'title', 'footer.newsTitle');
+		setText(i18n, 'footer a[href="https://github.com/Maple1981/Coda"]', 'footer.github');
+		setAttribute(i18n, 'footer a[href="https://github.com/Maple1981/Coda"]', 'title', 'footer.githubTitle');
 		setAttribute(i18n, 'footer a[href="https://creativecommons.org/licenses/by-sa/4.0/"]', 'title', 'footer.licenseTitle');
 		setText(i18n, '#creditoAutor', 'footer.author');
 		setTrustedHtml(i18n, '#creditosSoundfonts', 'footer.soundfonts');
 		setTrustedHtml(i18n, '#estadoBeta', 'footer.beta');
+		setTrustedHtml(i18n, '#contactoAutor', 'footer.contact');
 	}
 
 	function forEachElement(selector, callback) {

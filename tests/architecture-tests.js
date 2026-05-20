@@ -393,6 +393,10 @@ assert.equal(global.CodaTranslations.es['changelog.html'], undefined);
 assert.equal(global.CodaTranslations.en['changelog.html'], undefined);
 assert.equal(global.CodaTranslations.es['welcome.main1'], undefined);
 assert.equal(global.CodaTranslations.en['welcome.main1'], undefined);
+assert.ok(global.CodaTranslations.es['footer.author'].indexOf('Maple81') > -1);
+assert.ok(global.CodaTranslations.es['footer.contact'].indexOf('https://github.com/Maple1981/') > -1);
+assert.equal(global.CodaTranslations.es['footer.contact'].indexOf('SoundCloud'), -1);
+assert.ok(global.CodaTranslations.en['footer.github'].indexOf('GitHub repository') > -1);
 assert.ok(global.CodaTranslations.es['footer.soundfonts'].indexOf('MIDI.js Soundfonts') > -1);
 assert.ok(global.CodaTranslations.en['footer.soundfonts'].indexOf('Creative Commons Attribution 3.0') > -1);
 assert.deepEqual(global.CodaPreferences.sanitizeValues({

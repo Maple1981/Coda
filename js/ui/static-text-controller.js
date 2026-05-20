@@ -245,10 +245,13 @@
 	function applyFooter(i18n) {
 		setText(i18n, '#enlaceNovedades', 'footer.news');
 		setAttribute(i18n, '#enlaceNovedades', 'title', 'footer.newsTitle');
+		setText(i18n, 'footer a[href="https://github.com/Maple1981/Coda"]', 'footer.github');
+		setAttribute(i18n, 'footer a[href="https://github.com/Maple1981/Coda"]', 'title', 'footer.githubTitle');
 		setAttribute(i18n, 'footer a[href="https://creativecommons.org/licenses/by-sa/4.0/"]', 'title', 'footer.licenseTitle');
 		setText(i18n, '#creditoAutor', 'footer.author');
 		setTrustedHtml(i18n, '#creditosSoundfonts', 'footer.soundfonts');
 		setTrustedHtml(i18n, '#estadoBeta', 'footer.beta');
+		setTrustedHtml(i18n, '#contactoAutor', 'footer.contact');
 	}
 
 	function forEachElement(selector, callback) {
