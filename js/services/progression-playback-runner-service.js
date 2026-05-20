@@ -67,8 +67,127 @@
 			if (args.getActiveRun() === args.run) {
 				nextEvent = refreshPlaybackEvent(args, event);
 				args.eventPlayer.play(args.playbackService, args.eventPlayer.asImmediateEvent(nextEvent));
+				scheduleInstrumentNoteCallbacks(args, nextEvent);
 			}
 		};
+	}
+
+	function scheduleInstrumentNoteCallbacks(args, event) {
+		var noteEvents;
+
+		if (!args.run || (!args.run.callbacks.onNoteStart && !args.run.callbacks.onNoteEnd)) {
+			return;
+		}
+
+		noteEvents = instrumentNoteEvents(args, event);
+		for (var i = 0; i < noteEvents.length; i++) {
+			scheduleNoteStart(args, noteEvents[i]);
+			scheduleNoteEnd(args, noteEvents[i]);
+		}
+	}
+
+	function scheduleNoteStart(args, noteEvent) {
+		args.playbackTimers.schedule(args.run, noteEvent.delay, function () {
+			if (args.getActiveRun() === args.run) {
+				args.playbackCallbacks.run(args.run.callbacks.onNoteStart, noteEvent.midiNotes);
+			}
+		});
+	}
+
+	function scheduleNoteEnd(args, noteEvent) {
+		args.playbackTimers.schedule(args.run, noteEvent.delay + noteEvent.duration, function () {
+			if (args.getActiveRun() === args.run) {
+				args.playbackCallbacks.run(args.run.callbacks.onNoteEnd, noteEvent.midiNotes);
+			}
+		});
+	}
+
+	function instrumentNoteEvents(args, event) {
+		if (event.midiNoteEvents && event.midiNoteEvents.length) {
+			return midiNoteEvents(event.midiNoteEvents);
+		}
+
+		if (event.mode === 'arpeggio') {
+			return arpeggioNoteEvents(args, event);
+		}
+
+		return chordNoteEvents(args, event);
+	}
+
+	function midiNoteEvents(events) {
+		var result = [];
+
+		for (var i = 0; i < events.length; i++) {
+			if (events[i].midiNote != null) {
+				result.push({
+					delay: Math.max(0, Number(events[i].delay) || 0),
+					duration: Math.max(0, Number(events[i].duration) || 0),
+					midiNotes: [events[i].midiNote]
+				});
+			}
+		}
+
+		return result;
+	}
+
+	function arpeggioNoteEvents(args, event) {
+		var midiNotes = midiNotesForEvent(args, event);
+		var order = event.arpeggioOrder && event.arpeggioOrder.length ? event.arpeggioOrder : [];
+		var step = Number(event.arpeggioStep) || 0;
+		var result = [];
+		var noteIndex;
+
+		if (!midiNotes.length) {
+			return result;
+		}
+
+		if (!order.length) {
+			for (var i = 0; i < midiNotes.length; i++) {
+				order.push(i);
+			}
+		}
+
+		for (var j = 0; j < order.length; j++) {
+			noteIndex = Math.max(0, Math.min(midiNotes.length - 1, order[j]));
+			result.push({
+				delay: Math.max(0, step * j),
+				duration: Math.max(0.1, (Number(event.duration) || 0) - (step * j)),
+				midiNotes: [midiNotes[noteIndex]]
+			});
+		}
+
+		return result;
+	}
+
+	function chordNoteEvents(args, event) {
+		var midiNotes = midiNotesForEvent(args, event);
+
+		if (!midiNotes.length) {
+			return [];
+		}
+
+		return [{
+			delay: 0,
+			duration: Math.max(0, Number(event.duration) || 0),
+			midiNotes: midiNotes
+		}];
+	}
+
+	function midiNotesForEvent(args, event) {
+		if (event.midiNotes && event.midiNotes.length) {
+			return event.midiNotes.slice();
+		}
+
+		if (
+			args.playbackService &&
+			typeof args.playbackService.chordNamesToMidi === 'function' &&
+			event.notes &&
+			event.notes.length
+		) {
+			return args.playbackService.chordNamesToMidi(event.notes, 0) || [];
+		}
+
+		return [];
 	}
 
 	function refreshPlaybackEvent(args, event) {

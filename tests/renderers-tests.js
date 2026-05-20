@@ -122,6 +122,22 @@ const cMinorNaturalChords = domain.buildScaleChords({
 	octaveSemitones: data.constants.octaveSemitones
 });
 
+const cAcoustic = domain.buildScale({
+	tonicIndex: noteIndex('C'),
+	scaleDefinition: byName(data.scales, 'Acústica'),
+	notes: data.notes,
+	intervals: data.intervals,
+	octaveSemitones: data.constants.octaveSemitones,
+	preferFlats: false
+});
+
+const cAcousticChords = domain.buildScaleChords({
+	scaleNotes: cAcoustic,
+	scaleDefinition: byName(data.scales, 'Acústica'),
+	chordDefinitions: data.chords,
+	octaveSemitones: data.constants.octaveSemitones
+});
+
 const scaleSummaryHtml = scaleSummaryRenderer.render({
 	circleOfFifths: data.circleOfFifths,
 	isDegreeSuppressed: function () { return false; },
@@ -324,6 +340,7 @@ const scaleChordsHtml = scaleChordsRenderer.render({
 });
 
 assert.ok(scaleChordsHtml.indexOf('<table class="acordesEscala">') > -1);
+assert.ok(scaleChordsHtml.indexOf('<h4>Acordes de la tonalidad</h4>') > -1);
 assert.ok(scaleChordsHtml.indexOf('Cmaj7') > -1);
 assert.ok(scaleChordsHtml.indexOf('class="celdaAcorde" id="G-B-D-F"') > -1);
 assert.ok(scaleChordsHtml.indexOf('<td>V7</td>') > -1);
@@ -345,6 +362,19 @@ assert.ok(bMajorScaleChordsHtml.indexOf('F#sus2') > -1);
 assert.ok(bMajorScaleChordsHtml.indexOf('F#sus4') > -1);
 assert.equal(scaleChordsRenderer.suspendedName('F#7', 'sus4'), 'F#sus4');
 assert.equal(scaleChordsRenderer.suspendedName('B♭7', 'sus2'), 'B♭sus2');
+
+const acousticScaleChordsHtml = scaleChordsRenderer.render({
+	mode: '',
+	parallelScaleChords: [],
+	scaleChords: cAcousticChords,
+	scaleDefinition: byName(data.scales, 'Acústica'),
+	scaleNotes: cAcoustic
+});
+assert.ok(acousticScaleChordsHtml.indexOf('<h4>Acordes de la escala</h4>') > -1);
+assert.ok(acousticScaleChordsHtml.indexOf('<td>iv7♭5</td>') > -1);
+assert.equal(acousticScaleChordsHtml.indexOf('ivaug7'), -1);
+assert.ok(acousticScaleChordsHtml.indexOf('F#dim') > -1);
+assert.ok(acousticScaleChordsHtml.indexOf('F#m7♭5') > -1);
 
 const latinScaleChordsHtml = scaleChordsRenderer.render({
 	mode: 'M',
@@ -400,6 +430,7 @@ const modalChordsHtml = scaleChordsRenderer.render({
 	scaleNotes: dDorian
 });
 
+assert.ok(modalChordsHtml.indexOf('<h4>Acordes de la modalidad</h4>') > -1);
 assert.ok(modalChordsHtml.indexOf('<span class="cadencial">') > -1);
 assert.ok(modalChordsHtml.indexOf('<span class="evitar">') > -1);
 assert.ok(modalChordsHtml.indexOf('Acorde cadencial') > -1);

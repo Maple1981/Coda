@@ -1506,6 +1506,11 @@ section#notacion .scaleDegreeNoteButton:focus {
   outline: none;
 }
 
+section#notacion .scaleDegreeNoteButton.isPlayingScaleNote {
+  color: #d85ee0;
+  text-shadow: 0 0 10px #d85ee0;
+}
+
 section#notacion ul li.principal {
   font-weight: 600;
 }
@@ -1727,7 +1732,8 @@ section#instrumento div.teclado table td.perteneceEscala span {
   background-color: #00ff95;
 }
 
-section#instrumento table td.celdaNota span.resaltada {
+section#instrumento table td.celdaNota span.resaltada,
+section#instrumento table td.celdaNota span.isPlayingInstrumentNote {
   background-color: #a622ae !important;
 }
 
@@ -2243,6 +2249,12 @@ section#bienvenida .columnata article {
   grid-template-columns: repeat(4, minmax(120px, 1fr));
   gap: .7em;
   margin-top: .5em;
+}
+
+.progressionUnavailable {
+  grid-column: 1 / -1;
+  width: 100%;
+  white-space: nowrap;
 }
 
 .measure {

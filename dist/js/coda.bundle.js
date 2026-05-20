@@ -1636,9 +1636,11 @@
 			'scaleChords.degrees': 'Grados',
 			'scaleChords.functionLegend': '<strong>T</strong>: tónica, <strong>SD</strong>: subdominante, <strong>D</strong>: dominante',
 			'scaleChords.functionRow': 'Función',
+			'scaleChords.modalChordsTitle': 'Acordes de la modalidad',
 			'scaleChords.notes': 'Notas',
 			'scaleChords.parallel': 'Paralela',
 			'scaleChords.parallelSeventh': 'Paralela 7',
+			'scaleChords.scaleChordsTitle': 'Acordes de la escala',
 			'scaleChords.seventh': 'Cuatríada',
 			'scaleChords.triad': 'Tríada',
 			'scaleSummary.collapseDetails': 'Contraer detalles de escala',
@@ -1887,9 +1889,11 @@
 			'scaleChords.degrees': 'Degrees',
 			'scaleChords.functionLegend': '<strong>T</strong>: tonic, <strong>SD</strong>: subdominant, <strong>D</strong>: dominant',
 			'scaleChords.functionRow': 'Function',
+			'scaleChords.modalChordsTitle': 'Chords in the modality',
 			'scaleChords.notes': 'Notes',
 			'scaleChords.parallel': 'Parallel',
 			'scaleChords.parallelSeventh': 'Parallel 7',
+			'scaleChords.scaleChordsTitle': 'Chords in the scale',
 			'scaleChords.seventh': 'Seventh',
 			'scaleChords.triad': 'Triad',
 			'scaleSummary.collapseDetails': 'Collapse scale details',
@@ -12355,6 +12359,90 @@
 
 ;
 
+/* Source: js/services/instrument-note-highlight-service.js */
+// Highlights notes currently sounding in the rendered instrument view.
+(function (global) {
+	'use strict';
+
+	var activeCounts = {};
+	var activeClass = 'isPlayingInstrumentNote';
+
+	function noteOn(midiNotes) {
+		var notes = normalizeMidiNotes(midiNotes);
+
+		for (var i = 0; i < notes.length; i++) {
+			activeCounts[notes[i]] = (activeCounts[notes[i]] || 0) + 1;
+			setNoteClass(notes[i], true);
+		}
+	}
+
+	function noteOff(midiNotes) {
+		var notes = normalizeMidiNotes(midiNotes);
+
+		for (var i = 0; i < notes.length; i++) {
+			if (activeCounts[notes[i]]) {
+				activeCounts[notes[i]] -= 1;
+			}
+
+			if (!activeCounts[notes[i]]) {
+				delete activeCounts[notes[i]];
+				setNoteClass(notes[i], false);
+			}
+		}
+	}
+
+	function clear() {
+		var elements = instrumentNoteElements('.' + activeClass);
+
+		activeCounts = {};
+		for (var i = 0; i < elements.length; i++) {
+			elements[i].classList.remove(activeClass);
+		}
+	}
+
+	function setNoteClass(midiNote, active) {
+		var elements = instrumentNoteElements('[data-midi-note="' + String(midiNote) + '"]');
+
+		for (var i = 0; i < elements.length; i++) {
+			elements[i].classList.toggle(activeClass, active);
+		}
+	}
+
+	function instrumentNoteElements(selectorSuffix) {
+		if (!global.document || typeof global.document.querySelectorAll !== 'function') {
+			return [];
+		}
+
+		return global.document.querySelectorAll('#instrumento td.celdaNota span' + selectorSuffix);
+	}
+
+	function normalizeMidiNotes(midiNotes) {
+		var source = Array.isArray(midiNotes) ? midiNotes : [midiNotes];
+		var normalized = [];
+		var seen = {};
+		var value;
+
+		for (var i = 0; i < source.length; i++) {
+			value = Number(source[i]);
+			if (isFinite(value) && !seen[value]) {
+				seen[value] = true;
+				normalized.push(value);
+			}
+		}
+
+		return normalized;
+	}
+
+	global.CodaInstrumentNoteHighlight = {
+		clear: clear,
+		noteOff: noteOff,
+		noteOn: noteOn,
+		normalizeMidiNotes: normalizeMidiNotes
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-playback-callbacks-service.js */
 // Normalizes runtime callbacks used by progression playback.
 (function (global) {
@@ -12526,8 +12614,127 @@
 			if (args.getActiveRun() === args.run) {
 				nextEvent = refreshPlaybackEvent(args, event);
 				args.eventPlayer.play(args.playbackService, args.eventPlayer.asImmediateEvent(nextEvent));
+				scheduleInstrumentNoteCallbacks(args, nextEvent);
 			}
 		};
+	}
+
+	function scheduleInstrumentNoteCallbacks(args, event) {
+		var noteEvents;
+
+		if (!args.run || (!args.run.callbacks.onNoteStart && !args.run.callbacks.onNoteEnd)) {
+			return;
+		}
+
+		noteEvents = instrumentNoteEvents(args, event);
+		for (var i = 0; i < noteEvents.length; i++) {
+			scheduleNoteStart(args, noteEvents[i]);
+			scheduleNoteEnd(args, noteEvents[i]);
+		}
+	}
+
+	function scheduleNoteStart(args, noteEvent) {
+		args.playbackTimers.schedule(args.run, noteEvent.delay, function () {
+			if (args.getActiveRun() === args.run) {
+				args.playbackCallbacks.run(args.run.callbacks.onNoteStart, noteEvent.midiNotes);
+			}
+		});
+	}
+
+	function scheduleNoteEnd(args, noteEvent) {
+		args.playbackTimers.schedule(args.run, noteEvent.delay + noteEvent.duration, function () {
+			if (args.getActiveRun() === args.run) {
+				args.playbackCallbacks.run(args.run.callbacks.onNoteEnd, noteEvent.midiNotes);
+			}
+		});
+	}
+
+	function instrumentNoteEvents(args, event) {
+		if (event.midiNoteEvents && event.midiNoteEvents.length) {
+			return midiNoteEvents(event.midiNoteEvents);
+		}
+
+		if (event.mode === 'arpeggio') {
+			return arpeggioNoteEvents(args, event);
+		}
+
+		return chordNoteEvents(args, event);
+	}
+
+	function midiNoteEvents(events) {
+		var result = [];
+
+		for (var i = 0; i < events.length; i++) {
+			if (events[i].midiNote != null) {
+				result.push({
+					delay: Math.max(0, Number(events[i].delay) || 0),
+					duration: Math.max(0, Number(events[i].duration) || 0),
+					midiNotes: [events[i].midiNote]
+				});
+			}
+		}
+
+		return result;
+	}
+
+	function arpeggioNoteEvents(args, event) {
+		var midiNotes = midiNotesForEvent(args, event);
+		var order = event.arpeggioOrder && event.arpeggioOrder.length ? event.arpeggioOrder : [];
+		var step = Number(event.arpeggioStep) || 0;
+		var result = [];
+		var noteIndex;
+
+		if (!midiNotes.length) {
+			return result;
+		}
+
+		if (!order.length) {
+			for (var i = 0; i < midiNotes.length; i++) {
+				order.push(i);
+			}
+		}
+
+		for (var j = 0; j < order.length; j++) {
+			noteIndex = Math.max(0, Math.min(midiNotes.length - 1, order[j]));
+			result.push({
+				delay: Math.max(0, step * j),
+				duration: Math.max(0.1, (Number(event.duration) || 0) - (step * j)),
+				midiNotes: [midiNotes[noteIndex]]
+			});
+		}
+
+		return result;
+	}
+
+	function chordNoteEvents(args, event) {
+		var midiNotes = midiNotesForEvent(args, event);
+
+		if (!midiNotes.length) {
+			return [];
+		}
+
+		return [{
+			delay: 0,
+			duration: Math.max(0, Number(event.duration) || 0),
+			midiNotes: midiNotes
+		}];
+	}
+
+	function midiNotesForEvent(args, event) {
+		if (event.midiNotes && event.midiNotes.length) {
+			return event.midiNotes.slice();
+		}
+
+		if (
+			args.playbackService &&
+			typeof args.playbackService.chordNamesToMidi === 'function' &&
+			event.notes &&
+			event.notes.length
+		) {
+			return args.playbackService.chordNamesToMidi(event.notes, 0) || [];
+		}
+
+		return [];
 	}
 
 	function refreshPlaybackEvent(args, event) {
@@ -13682,6 +13889,7 @@
 			onComplete: function () {
 				global.CodaProgressionTransportView.setPlayingState(listenButton, false, options.i18n);
 				global.CodaProgressionTransportView.setPlaybackHead(playbackHeadIndex, false);
+				clearInstrumentHighlight();
 			},
 			onCycleComplete: function () {
 				playbackHeadIndex = 0;
@@ -13697,12 +13905,20 @@
 				}
 				global.CodaProgressionTransportView.setPlaybackHead(index, true);
 			},
+			onNoteEnd: function (midiNotes) {
+				instrumentHighlightOff(midiNotes);
+			},
+			onNoteStart: function (midiNotes) {
+				instrumentHighlightOn(midiNotes);
+			},
 			onStart: function () {
 				global.CodaProgressionTransportView.setPlayingState(listenButton, true, options.i18n);
+				clearInstrumentHighlight();
 			},
 			onStop: function () {
 				global.CodaProgressionTransportView.setPlayingState(listenButton, false, options.i18n);
 				global.CodaProgressionTransportView.setPlaybackHead(playbackHeadIndex, false);
+				clearInstrumentHighlight();
 			},
 			shouldLoop: function () {
 				return isLoopEnabled();
@@ -13721,6 +13937,25 @@
 
 		global.CodaProgressionTransportView.setPlayingState(listenButton, false, options.i18n);
 		global.CodaProgressionTransportView.setPlaybackHead(playbackHeadIndex || 0, false);
+		clearInstrumentHighlight();
+	}
+
+	function instrumentHighlightOn(midiNotes) {
+		if (global.CodaInstrumentNoteHighlight && typeof global.CodaInstrumentNoteHighlight.noteOn === 'function') {
+			global.CodaInstrumentNoteHighlight.noteOn(midiNotes);
+		}
+	}
+
+	function instrumentHighlightOff(midiNotes) {
+		if (global.CodaInstrumentNoteHighlight && typeof global.CodaInstrumentNoteHighlight.noteOff === 'function') {
+			global.CodaInstrumentNoteHighlight.noteOff(midiNotes);
+		}
+	}
+
+	function clearInstrumentHighlight() {
+		if (global.CodaInstrumentNoteHighlight && typeof global.CodaInstrumentNoteHighlight.clear === 'function') {
+			global.CodaInstrumentNoteHighlight.clear();
+		}
 	}
 
 	function normalizeHeadIndex(index, progression) {
@@ -16054,7 +16289,7 @@
 		}
 
 		var rows = buildRows(options);
-		var html = '<h4>' + t(options, 'scaleChords.chordsTitle') + '</h4>';
+		var html = '<h4>' + t(options, chordsTitleKey(options.scaleDefinition)) + '</h4>';
 
 		html += '<table class="acordesEscala">';
 		html += '<thead><tr><td>' + t(options, 'scaleChords.degrees') + '</td>' + rows.degrees + '</tr></thead>';
@@ -16088,6 +16323,18 @@
 		}
 
 		return html;
+	}
+
+	function chordsTitleKey(scaleDefinition) {
+		if (scaleDefinition && scaleDefinition.modal === 'true') {
+			return 'scaleChords.modalChordsTitle';
+		}
+
+		if (scaleDefinition && scaleDefinition.tonal != null) {
+			return 'scaleChords.chordsTitle';
+		}
+
+		return 'scaleChords.scaleChordsTitle';
 	}
 
 	function buildRows(options) {
@@ -16195,7 +16442,7 @@
 
 	function formatDegreeForChord(degree, chordName) {
 		var transformedDegree = '';
-		var cleanDegree = degree.replace('J', '').replace('M', '').replace('m', '');
+		var cleanDegree = degree.replace('aug', '').replace('J', '').replace('M', '').replace('m', '');
 
 		if (chordName.indexOf('mmaj7') >= 0) {
 			transformedDegree = cleanDegree.toLowerCase();
@@ -16234,9 +16481,11 @@
 			'scaleChords.degrees': 'Grados',
 			'scaleChords.functionLegend': '<strong>T</strong>: tónica, <strong>SD</strong>: subdominante, <strong>D</strong>: dominante',
 			'scaleChords.functionRow': 'Función',
+			'scaleChords.modalChordsTitle': 'Acordes de la modalidad',
 			'scaleChords.notes': 'Notas',
 			'scaleChords.parallel': 'Paralela',
 			'scaleChords.parallelSeventh': 'Paralela 7',
+			'scaleChords.scaleChordsTitle': 'Acordes de la escala',
 			'scaleChords.seventh': 'Cuatriada',
 			'scaleChords.triad': 'Triada'
 		};
@@ -16264,6 +16513,7 @@
 	global.CodaRenderers.scaleChords = {
 		buildRows: buildRows,
 		chordRoot: chordRoot,
+		chordsTitleKey: chordsTitleKey,
 		formatDegreeForChord: formatDegreeForChord,
 		render: render,
 		suspendedName: suspendedName
@@ -21971,6 +22221,8 @@
 				.map(function (value) { return Number(value); })
 				.filter(function (value) { return isFinite(value); });
 
+			clearActiveScaleNotes();
+
 			for (var i = 0; i < midiNotes.length; i++) {
 				scheduleScaleNote(instrumentPlayback, midiNotes[i], i * stepMs, duration);
 			}
@@ -21991,16 +22243,50 @@
 	function scheduleScaleNote(instrumentPlayback, midiNote, delayMs, duration) {
 		if (typeof global.setTimeout === 'function') {
 			global.setTimeout(function () {
+				activateScaleNote(midiNote);
 				instrumentPlayback.playMidiNote(midiNote, {
 					duration: duration
 				});
 			}, delayMs);
+			global.setTimeout(function () {
+				clearActiveScaleNotes();
+			}, delayMs + Math.round(duration * 1000));
 			return;
 		}
 
+		activateScaleNote(midiNote);
 		instrumentPlayback.playMidiNote(midiNote, {
 			duration: duration
 		});
+		clearActiveScaleNotes();
+	}
+
+	function activateScaleNote(midiNote) {
+		var buttons = scaleDegreeNoteButtons();
+
+		clearActiveScaleNotes();
+
+		for (var i = 0; i < buttons.length; i++) {
+			if (String(buttons[i].getAttribute('data-midi-note')) === String(midiNote)) {
+				buttons[i].classList.add('isPlayingScaleNote');
+			}
+		}
+	}
+
+	function clearActiveScaleNotes() {
+		var buttons = scaleDegreeNoteButtons();
+
+		for (var i = 0; i < buttons.length; i++) {
+			buttons[i].classList.remove('isPlayingScaleNote');
+		}
+	}
+
+	function scaleDegreeNoteButtons() {
+		if (!global.document || typeof global.document.querySelectorAll !== 'function') {
+			return [];
+		}
+
+		return global.document.querySelectorAll('#notacion .scaleDegreeNoteButton[data-midi-note]');
 	}
 
 	function midiNoteForScaleNote(data, noteName) {

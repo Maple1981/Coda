@@ -99,6 +99,7 @@
 			'js/services/progression-playback-event-normalizer-service.js',
 			'js/services/progression-midi-event-player-service.js',
 			'js/services/progression-event-player-service.js',
+			'js/services/instrument-note-highlight-service.js',
 			'js/services/progression-playback-callbacks-service.js',
 			'js/services/progression-playback-timer-service.js',
 			'js/services/progression-playback-runner-service.js',

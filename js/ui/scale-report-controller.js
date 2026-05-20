@@ -1578,6 +1578,8 @@
 				.map(function (value) { return Number(value); })
 				.filter(function (value) { return isFinite(value); });
 
+			clearActiveScaleNotes();
+
 			for (var i = 0; i < midiNotes.length; i++) {
 				scheduleScaleNote(instrumentPlayback, midiNotes[i], i * stepMs, duration);
 			}
@@ -1598,16 +1600,50 @@
 	function scheduleScaleNote(instrumentPlayback, midiNote, delayMs, duration) {
 		if (typeof global.setTimeout === 'function') {
 			global.setTimeout(function () {
+				activateScaleNote(midiNote);
 				instrumentPlayback.playMidiNote(midiNote, {
 					duration: duration
 				});
 			}, delayMs);
+			global.setTimeout(function () {
+				clearActiveScaleNotes();
+			}, delayMs + Math.round(duration * 1000));
 			return;
 		}
 
+		activateScaleNote(midiNote);
 		instrumentPlayback.playMidiNote(midiNote, {
 			duration: duration
 		});
+		clearActiveScaleNotes();
+	}
+
+	function activateScaleNote(midiNote) {
+		var buttons = scaleDegreeNoteButtons();
+
+		clearActiveScaleNotes();
+
+		for (var i = 0; i < buttons.length; i++) {
+			if (String(buttons[i].getAttribute('data-midi-note')) === String(midiNote)) {
+				buttons[i].classList.add('isPlayingScaleNote');
+			}
+		}
+	}
+
+	function clearActiveScaleNotes() {
+		var buttons = scaleDegreeNoteButtons();
+
+		for (var i = 0; i < buttons.length; i++) {
+			buttons[i].classList.remove('isPlayingScaleNote');
+		}
+	}
+
+	function scaleDegreeNoteButtons() {
+		if (!global.document || typeof global.document.querySelectorAll !== 'function') {
+			return [];
+		}
+
+		return global.document.querySelectorAll('#notacion .scaleDegreeNoteButton[data-midi-note]');
 	}
 
 	function midiNoteForScaleNote(data, noteName) {

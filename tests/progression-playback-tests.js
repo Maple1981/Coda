@@ -26,6 +26,7 @@ runScript('js/services/progression-playback-schedule-service.js');
 runScript('js/services/progression-playback-event-normalizer-service.js');
 runScript('js/services/progression-midi-event-player-service.js');
 runScript('js/services/progression-event-player-service.js');
+runScript('js/services/instrument-note-highlight-service.js');
 runScript('js/services/progression-playback-callbacks-service.js');
 runScript('js/services/progression-playback-timer-service.js');
 runScript('js/services/progression-playback-runner-service.js');
@@ -659,6 +660,93 @@ assert.deepEqual(liveChordCalls, [
 	}
 ]);
 
+const visualNoteTimers = [];
+const visualNoteStarts = [];
+const visualNoteEnds = [];
+const visualNotePlayback = app.createProgressionPlayback({
+	playbackService: {
+		playMidiChord: function () {},
+		stopAllNotes: function () {}
+	},
+	timerApi: {
+		clearTimeout: function () {},
+		setTimeout: function (callback, milliseconds) {
+			visualNoteTimers.push({
+				callback: callback,
+				done: false,
+				milliseconds: milliseconds
+			});
+			return visualNoteTimers.length;
+		}
+	}
+});
+
+visualNotePlayback.play({
+	measures: [
+		{
+			articulation: 'sustain',
+			bar: 1,
+			degree: 'I',
+			durationSeconds: 1,
+			midiNotes: [60, 64],
+			notes: ['C', 'E'],
+			startSeconds: 0,
+			voices: 2
+		}
+	],
+	totalSeconds: 1
+}, {
+	onNoteEnd: function (midiNotes) {
+		visualNoteEnds.push(midiNotes.slice());
+	},
+	onNoteStart: function (midiNotes) {
+		visualNoteStarts.push(midiNotes.slice());
+	}
+});
+runVisualNoteTimersAt(0);
+assert.deepEqual(visualNoteStarts, [[60, 64]]);
+runVisualNoteTimersAt(950);
+assert.deepEqual(visualNoteEnds, [[60, 64]]);
+
+const note60a = fakeInstrumentNoteElement();
+const note60b = fakeInstrumentNoteElement();
+const note64 = fakeInstrumentNoteElement();
+context.window.document = {
+	querySelectorAll: function (selector) {
+		if (selector === '#instrumento td.celdaNota span[data-midi-note="60"]') {
+			return [note60a, note60b];
+		}
+
+		if (selector === '#instrumento td.celdaNota span[data-midi-note="64"]') {
+			return [note64];
+		}
+
+		if (selector === '#instrumento td.celdaNota span.isPlayingInstrumentNote') {
+			return [note60a, note60b, note64].filter(function (element) {
+				return element.classList.contains('isPlayingInstrumentNote');
+			});
+		}
+
+		return [];
+	}
+};
+
+const highlighter = context.window.CodaInstrumentNoteHighlight;
+highlighter.noteOn([60, 60, 64]);
+assert.equal(note60a.classList.contains('isPlayingInstrumentNote'), true);
+assert.equal(note60b.classList.contains('isPlayingInstrumentNote'), true);
+assert.equal(note64.classList.contains('isPlayingInstrumentNote'), true);
+highlighter.noteOn(60);
+highlighter.noteOff(60);
+assert.equal(note60a.classList.contains('isPlayingInstrumentNote'), true);
+highlighter.noteOff(60);
+assert.equal(note60a.classList.contains('isPlayingInstrumentNote'), false);
+assert.equal(note60b.classList.contains('isPlayingInstrumentNote'), false);
+assert.equal(note64.classList.contains('isPlayingInstrumentNote'), true);
+highlighter.clear();
+assert.equal(note64.classList.contains('isPlayingInstrumentNote'), false);
+delete context.window.document;
+
 console.log('Progression playback tests passed');
 
 function runTimersAt(milliseconds) {
@@ -667,4 +755,44 @@ function runTimersAt(milliseconds) {
 	}).forEach(function (timer) {
 		timer.callback();
 	});
+}
+
+function runVisualNoteTimersAt(milliseconds) {
+	let ran;
+
+	do {
+		ran = false;
+		visualNoteTimers.filter(function (timer) {
+			return timer.milliseconds === milliseconds && timer.done === false;
+		}).forEach(function (timer) {
+			timer.done = true;
+			ran = true;
+			timer.callback();
+		});
+	} while (ran);
+}
+
+function fakeInstrumentNoteElement() {
+	const classes = {};
+
+	return {
+		classList: {
+			add: function (className) {
+				classes[className] = true;
+			},
+			contains: function (className) {
+				return classes[className] === true;
+			},
+			remove: function (className) {
+				delete classes[className];
+			},
+			toggle: function (className, force) {
+				if (force) {
+					classes[className] = true;
+				} else {
+					delete classes[className];
+				}
+			}
+		}
+	};
 }

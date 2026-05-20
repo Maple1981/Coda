@@ -36,6 +36,7 @@
 			onComplete: function () {
 				global.CodaProgressionTransportView.setPlayingState(listenButton, false, options.i18n);
 				global.CodaProgressionTransportView.setPlaybackHead(playbackHeadIndex, false);
+				clearInstrumentHighlight();
 			},
 			onCycleComplete: function () {
 				playbackHeadIndex = 0;
@@ -51,12 +52,20 @@
 				}
 				global.CodaProgressionTransportView.setPlaybackHead(index, true);
 			},
+			onNoteEnd: function (midiNotes) {
+				instrumentHighlightOff(midiNotes);
+			},
+			onNoteStart: function (midiNotes) {
+				instrumentHighlightOn(midiNotes);
+			},
 			onStart: function () {
 				global.CodaProgressionTransportView.setPlayingState(listenButton, true, options.i18n);
+				clearInstrumentHighlight();
 			},
 			onStop: function () {
 				global.CodaProgressionTransportView.setPlayingState(listenButton, false, options.i18n);
 				global.CodaProgressionTransportView.setPlaybackHead(playbackHeadIndex, false);
+				clearInstrumentHighlight();
 			},
 			shouldLoop: function () {
 				return isLoopEnabled();
@@ -75,6 +84,25 @@
 
 		global.CodaProgressionTransportView.setPlayingState(listenButton, false, options.i18n);
 		global.CodaProgressionTransportView.setPlaybackHead(playbackHeadIndex || 0, false);
+		clearInstrumentHighlight();
+	}
+
+	function instrumentHighlightOn(midiNotes) {
+		if (global.CodaInstrumentNoteHighlight && typeof global.CodaInstrumentNoteHighlight.noteOn === 'function') {
+			global.CodaInstrumentNoteHighlight.noteOn(midiNotes);
+		}
+	}
+
+	function instrumentHighlightOff(midiNotes) {
+		if (global.CodaInstrumentNoteHighlight && typeof global.CodaInstrumentNoteHighlight.noteOff === 'function') {
+			global.CodaInstrumentNoteHighlight.noteOff(midiNotes);
+		}
+	}
+
+	function clearInstrumentHighlight() {
+		if (global.CodaInstrumentNoteHighlight && typeof global.CodaInstrumentNoteHighlight.clear === 'function') {
+			global.CodaInstrumentNoteHighlight.clear();
+		}
 	}
 
 	function normalizeHeadIndex(index, progression) {

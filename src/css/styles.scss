@@ -701,6 +701,11 @@ section#notacion{
 		outline:none;
 	}
 
+	.scaleDegreeNoteButton.isPlayingScaleNote{
+		color:$corporative_complementarybright_color;
+		text-shadow:0 0 10px $corporative_complementarybright_color;
+	}
+
 	ul li.principal{
 		font-weight:600;
 	}
@@ -921,7 +926,8 @@ section#instrumento{
 		background-color: $corporative_main_color;
 	}
 
-	table td.celdaNota span.resaltada{
+	table td.celdaNota span.resaltada,
+	table td.celdaNota span.isPlayingInstrumentNote{
 		background-color:$corporative_complementary_color !important; 
 	}
 
@@ -1350,6 +1356,12 @@ section#bienvenida .columnata article{
 	grid-template-columns:repeat(4, minmax(120px, 1fr));
 	gap:.7em;
 	margin-top:.5em;
+}
+
+.progressionUnavailable{
+	grid-column:1 / -1;
+	width:100%;
+	white-space:nowrap;
 }
 
 .measure{

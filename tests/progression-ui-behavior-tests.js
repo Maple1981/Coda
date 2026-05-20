@@ -136,9 +136,15 @@ rendered.scaleReportOptions.onScalePlaybackClick({
 		return name === 'data-midi-notes' ? '60,62,64' : '';
 	}
 });
-assert.deepEqual(pendingTimers.map(function (timer) { return timer.delay; }), [0, 500, 1000]);
+assert.deepEqual(pendingTimers.map(function (timer) { return timer.delay; }), [0, 410, 500, 910, 1000, 1410]);
+runNextPendingTimer();
+assert.equal(document.scaleDegreeNoteButtons[0].classList.contains('isPlayingScaleNote'), true);
+assert.equal(document.scaleDegreeNoteButtons[1].classList.contains('isPlayingScaleNote'), false);
+runNextPendingTimer();
+assert.equal(document.scaleDegreeNoteButtons[0].classList.contains('isPlayingScaleNote'), false);
 runPendingTimers();
 assert.deepEqual(playedScaleMidiNotes, ['60', 60, 62, 64]);
+assert.equal(document.scaleDegreeNoteButtons[2].classList.contains('isPlayingScaleNote'), false);
 assert.equal(playbackInstruments[playbackInstruments.length - 1], 'acoustic_grand_piano');
 assert.deepEqual(initialState, {
 	articulation: 'sustain',
@@ -627,11 +633,15 @@ function createFakeUi(fakeDocument, renderedCounter) {
 
 function runPendingTimers() {
 	while (pendingTimers.length) {
-		const timer = pendingTimers.shift();
+		runNextPendingTimer();
+	}
+}
 
-		if (!timer.cleared) {
-			timer.callback();
-		}
+function runNextPendingTimer() {
+	const timer = pendingTimers.shift();
+
+	if (timer && !timer.cleared) {
+		timer.callback();
 	}
 }
 
@@ -689,6 +699,10 @@ function createFakeDocument() {
 		return null;
 	};
 	fakeDocument.querySelectorAll = function (selector) {
+		if (selector === '#notacion .scaleDegreeNoteButton[data-midi-note]') {
+			return fakeDocument.scaleDegreeNoteButtons;
+		}
+
 		if (selector === '#tonica, #escala') {
 			return [elements.tonica, elements.escala];
 		}
@@ -745,6 +759,11 @@ function createFakeDocument() {
 	addElement('progressionVoices', '4');
 	addElement('progressionLoop');
 	addElement('progressionMetronome');
+	fakeDocument.scaleDegreeNoteButtons = ['60', '62', '64'].map(function (midiNote) {
+		const button = createFakeElement('scaleNote' + midiNote);
+		button.setAttribute('data-midi-note', midiNote);
+		return button;
+	});
 
 	return fakeDocument;
 

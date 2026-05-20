@@ -11,7 +11,7 @@
 		}
 
 		var rows = buildRows(options);
-		var html = '<h4>' + t(options, 'scaleChords.chordsTitle') + '</h4>';
+		var html = '<h4>' + t(options, chordsTitleKey(options.scaleDefinition)) + '</h4>';
 
 		html += '<table class="acordesEscala">';
 		html += '<thead><tr><td>' + t(options, 'scaleChords.degrees') + '</td>' + rows.degrees + '</tr></thead>';
@@ -45,6 +45,18 @@
 		}
 
 		return html;
+	}
+
+	function chordsTitleKey(scaleDefinition) {
+		if (scaleDefinition && scaleDefinition.modal === 'true') {
+			return 'scaleChords.modalChordsTitle';
+		}
+
+		if (scaleDefinition && scaleDefinition.tonal != null) {
+			return 'scaleChords.chordsTitle';
+		}
+
+		return 'scaleChords.scaleChordsTitle';
 	}
 
 	function buildRows(options) {
@@ -152,7 +164,7 @@
 
 	function formatDegreeForChord(degree, chordName) {
 		var transformedDegree = '';
-		var cleanDegree = degree.replace('J', '').replace('M', '').replace('m', '');
+		var cleanDegree = degree.replace('aug', '').replace('J', '').replace('M', '').replace('m', '');
 
 		if (chordName.indexOf('mmaj7') >= 0) {
 			transformedDegree = cleanDegree.toLowerCase();
@@ -191,9 +203,11 @@
 			'scaleChords.degrees': 'Grados',
 			'scaleChords.functionLegend': '<strong>T</strong>: tónica, <strong>SD</strong>: subdominante, <strong>D</strong>: dominante',
 			'scaleChords.functionRow': 'Función',
+			'scaleChords.modalChordsTitle': 'Acordes de la modalidad',
 			'scaleChords.notes': 'Notas',
 			'scaleChords.parallel': 'Paralela',
 			'scaleChords.parallelSeventh': 'Paralela 7',
+			'scaleChords.scaleChordsTitle': 'Acordes de la escala',
 			'scaleChords.seventh': 'Cuatriada',
 			'scaleChords.triad': 'Triada'
 		};
@@ -221,6 +235,7 @@
 	global.CodaRenderers.scaleChords = {
 		buildRows: buildRows,
 		chordRoot: chordRoot,
+		chordsTitleKey: chordsTitleKey,
 		formatDegreeForChord: formatDegreeForChord,
 		render: render,
 		suspendedName: suspendedName
