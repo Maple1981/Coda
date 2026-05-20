@@ -14,6 +14,10 @@
 	}
 
 	function renderTimelineMeasures(progression, options) {
+		if (progression && progression.unsupportedScale) {
+			return renderUnsupportedScaleMessage(options);
+		}
+
 		var progressionMeasures = progression && progression.measures ? progression.measures : null;
 		var measures = hasRenderableMeasures(progressionMeasures) ? progressionMeasures : fallbackMeasures();
 		var sections = timelineSections(progression, measures);
@@ -31,6 +35,12 @@
 		}
 
 		return html;
+	}
+
+	function renderUnsupportedScaleMessage(options) {
+		return '<div class="progressionUnavailable" role="status">' +
+			labels.escapeHtml(translate(options, 'progression.unavailableForScale')) +
+			'</div>';
 	}
 
 	function timelineSections(progression, measures) {
@@ -450,6 +460,7 @@
 		renderMeasureChord: renderMeasureChord,
 		renderQuickControls: renderQuickControls,
 		renderQuickEditor: renderQuickEditor,
+		renderUnsupportedScaleMessage: renderUnsupportedScaleMessage,
 		renderSectionHeader: renderSectionHeader,
 		renderSectionNavigator: renderSectionNavigator,
 		notesLabel: notesLabel,

@@ -253,9 +253,6 @@
 				tonicName: musicalContext.tonicName
 			});
 			uiState.setReport(report);
-			if (!restoreInitialProgressionWorkspace(selection)) {
-				syncProgressionPlan();
-			}
 
 			options.ui.renderScaleReport({
 				data: options.data,
@@ -276,6 +273,12 @@
 			updateCircleOfFifthsAccess(report);
 
 			renderInstrument(true);
+
+			if (!canBuildProgressionForReport(report)) {
+				setProgression(unavailableProgressionForReport(report));
+			} else if (!restoreInitialProgressionWorkspace(selection)) {
+				syncProgressionPlan();
+			}
 		}
 
 		function renderInstrument(resetTuning) {
@@ -1020,7 +1023,7 @@
 			if (
 				options.application &&
 				typeof options.application.buildProgressionFromState === 'function' &&
-				uiState.getReport() &&
+				canBuildProgressionForReport(uiState.getReport()) &&
 				uiState.getProgressionState()
 			) {
 				setProgression(options.application.buildProgressionFromState({
@@ -1035,7 +1038,7 @@
 			if (
 				options.application &&
 				typeof options.application.generateProgressionFromState === 'function' &&
-				uiState.getReport() &&
+				canBuildProgressionForReport(uiState.getReport()) &&
 				uiState.getProgressionState()
 			) {
 				setProgression(markProgressionAsUserEdited(options.application.generateProgressionFromState({
@@ -1051,7 +1054,7 @@
 				options.application &&
 				typeof options.application.generateContrastingProgressionSection === 'function' &&
 				uiState.getProgression() &&
-				uiState.getReport() &&
+				canBuildProgressionForReport(uiState.getReport()) &&
 				uiState.getProgressionState()
 			) {
 				setProgression(markProgressionAsUserEdited(options.application.generateContrastingProgressionSection({
@@ -1072,7 +1075,7 @@
 				options.application &&
 				typeof options.application.generateProgressionSection === 'function' &&
 				uiState.getProgression() &&
-				uiState.getReport() &&
+				canBuildProgressionForReport(uiState.getReport()) &&
 				uiState.getProgressionState() &&
 				sectionType
 			) {
@@ -1145,6 +1148,23 @@
 			}
 
 			return false;
+		}
+
+		function canBuildProgressionForReport(report) {
+			return !!(report && report.scaleChords && report.scaleChords.length);
+		}
+
+		function unavailableProgressionForReport(report) {
+			return {
+				bars: 0,
+				measures: [],
+				meter: '',
+				scaleIndex: report ? report.scaleIndex : null,
+				sections: [],
+				totalBeats: 0,
+				totalSeconds: 0,
+				unsupportedScale: true
+			};
 		}
 
 		function setProgression(progression, renderOptions) {

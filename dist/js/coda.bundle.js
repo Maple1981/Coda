@@ -250,7 +250,7 @@
 	escalas.push({"nombre" : "Prometeo napolitana", "patron" : "0-1-3-2-3-1"});
 	escalas.push({"nombre" : "Super locria", "patron" : "0-1-2-1-2-2-2"});
 	escalas.push({"nombre" : "Ultra locria", "patron" : "0-1-2-1-2-2-1"});
-	escalas.push({"nombre" : "Whole-tone", "patron" : "0-2-2-2-2-2-1"});
+	escalas.push({"nombre" : "Whole-tone", "patron" : "0-2-2-2-2-2"});
 	escalas.push({"nombre" : "Dórica b2", "patron" : "0-1-2-2-2-2-1"});
 
 	global.CodaDataCatalogs.scales = escalas;
@@ -1620,6 +1620,7 @@
 			'progression.tensions': 'Tensiones',
 			'progression.time': 'Tiempo',
 			'progression.title': 'Área de trabajo armónica',
+			'progression.unavailableForScale': 'La progresión armónica requiere una escala heptatónica.',
 			'progression.voicing': 'Disposición',
 			'progression.voicing.closed': 'Cerrada',
 			'progression.voicing.open': 'Abierta',
@@ -1870,6 +1871,7 @@
 			'progression.tensions': 'Tensions',
 			'progression.time': 'Time',
 			'progression.title': 'Harmonic workspace',
+			'progression.unavailableForScale': 'Harmonic progressions require a heptatonic scale.',
 			'progression.voicing': 'Voicing',
 			'progression.voicing.closed': 'Closed',
 			'progression.voicing.open': 'Open',
@@ -17024,6 +17026,10 @@
 	}
 
 	function renderTimelineMeasures(progression, options) {
+		if (progression && progression.unsupportedScale) {
+			return renderUnsupportedScaleMessage(options);
+		}
+
 		var progressionMeasures = progression && progression.measures ? progression.measures : null;
 		var measures = hasRenderableMeasures(progressionMeasures) ? progressionMeasures : fallbackMeasures();
 		var sections = timelineSections(progression, measures);
@@ -17041,6 +17047,12 @@
 		}
 
 		return html;
+	}
+
+	function renderUnsupportedScaleMessage(options) {
+		return '<div class="progressionUnavailable" role="status">' +
+			labels.escapeHtml(translate(options, 'progression.unavailableForScale')) +
+			'</div>';
 	}
 
 	function timelineSections(progression, measures) {
@@ -17460,6 +17472,7 @@
 		renderMeasureChord: renderMeasureChord,
 		renderQuickControls: renderQuickControls,
 		renderQuickEditor: renderQuickEditor,
+		renderUnsupportedScaleMessage: renderUnsupportedScaleMessage,
 		renderSectionHeader: renderSectionHeader,
 		renderSectionNavigator: renderSectionNavigator,
 		notesLabel: notesLabel,
@@ -20633,9 +20646,6 @@
 				tonicName: musicalContext.tonicName
 			});
 			uiState.setReport(report);
-			if (!restoreInitialProgressionWorkspace(selection)) {
-				syncProgressionPlan();
-			}
 
 			options.ui.renderScaleReport({
 				data: options.data,
@@ -20656,6 +20666,12 @@
 			updateCircleOfFifthsAccess(report);
 
 			renderInstrument(true);
+
+			if (!canBuildProgressionForReport(report)) {
+				setProgression(unavailableProgressionForReport(report));
+			} else if (!restoreInitialProgressionWorkspace(selection)) {
+				syncProgressionPlan();
+			}
 		}
 
 		function renderInstrument(resetTuning) {
@@ -21400,7 +21416,7 @@
 			if (
 				options.application &&
 				typeof options.application.buildProgressionFromState === 'function' &&
-				uiState.getReport() &&
+				canBuildProgressionForReport(uiState.getReport()) &&
 				uiState.getProgressionState()
 			) {
 				setProgression(options.application.buildProgressionFromState({
@@ -21415,7 +21431,7 @@
 			if (
 				options.application &&
 				typeof options.application.generateProgressionFromState === 'function' &&
-				uiState.getReport() &&
+				canBuildProgressionForReport(uiState.getReport()) &&
 				uiState.getProgressionState()
 			) {
 				setProgression(markProgressionAsUserEdited(options.application.generateProgressionFromState({
@@ -21431,7 +21447,7 @@
 				options.application &&
 				typeof options.application.generateContrastingProgressionSection === 'function' &&
 				uiState.getProgression() &&
-				uiState.getReport() &&
+				canBuildProgressionForReport(uiState.getReport()) &&
 				uiState.getProgressionState()
 			) {
 				setProgression(markProgressionAsUserEdited(options.application.generateContrastingProgressionSection({
@@ -21452,7 +21468,7 @@
 				options.application &&
 				typeof options.application.generateProgressionSection === 'function' &&
 				uiState.getProgression() &&
-				uiState.getReport() &&
+				canBuildProgressionForReport(uiState.getReport()) &&
 				uiState.getProgressionState() &&
 				sectionType
 			) {
@@ -21525,6 +21541,23 @@
 			}
 
 			return false;
+		}
+
+		function canBuildProgressionForReport(report) {
+			return !!(report && report.scaleChords && report.scaleChords.length);
+		}
+
+		function unavailableProgressionForReport(report) {
+			return {
+				bars: 0,
+				measures: [],
+				meter: '',
+				scaleIndex: report ? report.scaleIndex : null,
+				sections: [],
+				totalBeats: 0,
+				totalSeconds: 0,
+				unsupportedScale: true
+			};
 		}
 
 		function setProgression(progression, renderOptions) {

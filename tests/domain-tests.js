@@ -242,6 +242,18 @@ function buildExtendedHarmonyChord(options) {
 const cMajor = buildScale('C', 'Mayor', false);
 assert.deepEqual(names(cMajor), ['C', 'D', 'E', 'F', 'G', 'A', 'B']);
 
+const cMajorPentatonic = buildScale('C', 'Pentatónica Mayor', false);
+assert.deepEqual(names(cMajorPentatonic), ['C', 'D', 'E', 'G', 'A']);
+
+const cMinorPentatonic = buildScale('C', 'Pentatónica menor', true);
+assert.deepEqual(names(cMinorPentatonic), ['C', 'Eb', 'F', 'G', 'Bb']);
+
+const cBluesHexatonic = buildScale('C', 'Blues hexatónica', true);
+assert.deepEqual(names(cBluesHexatonic), ['C', 'Eb', 'F', 'Gb', 'G', 'Bb']);
+
+const cWholeTone = buildScale('C', 'Whole-tone', false);
+assert.deepEqual(names(cWholeTone), ['C', 'D', 'E', 'F#', 'G#', 'A#']);
+
 const cMajorGuitar = domain.buildGuitarFretboard({
 	fretCount: data.constants.fretCount,
 	isDegreeSuppressed: function () { return false; },

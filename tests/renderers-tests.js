@@ -148,6 +148,48 @@ assert.ok(scaleSummaryHtml.indexOf('data-midi-note="60"') > -1);
 assert.ok(scaleSummaryHtml.indexOf('data-midi-note="72"') > -1);
 assert.equal((scaleSummaryHtml.match(/class="scaleDegreeNoteButton"/g) || []).length, 8);
 
+const pentatonicSummaryHtml = scaleSummaryRenderer.render({
+	circleOfFifths: data.circleOfFifths,
+	isDegreeSuppressed: function () { return false; },
+	scaleDefinition: byName(data.scales, 'Pentatónica Mayor'),
+	scaleName: 'Pentatónica Mayor',
+	scaleNotes: domain.buildScale({
+		tonicIndex: 0,
+		scaleDefinition: byName(data.scales, 'Pentatónica Mayor'),
+		notes: data.notes,
+		intervals: data.intervals,
+		octaveSemitones: data.constants.octaveSemitones,
+		preferFlats: false
+	}),
+	selectedScaleIndex: 8,
+	tonicName: 'C'
+});
+
+assert.ok(pentatonicSummaryHtml.indexOf('data-midi-notes="60,62,64,67,69,72"') > -1);
+assert.equal((pentatonicSummaryHtml.match(/class="scaleDegreeNoteButton"/g) || []).length, 6);
+assert.ok(pentatonicSummaryHtml.indexOf('data-midi-note="72"') > -1);
+
+const bluesHexatonicSummaryHtml = scaleSummaryRenderer.render({
+	circleOfFifths: data.circleOfFifths,
+	isDegreeSuppressed: function () { return false; },
+	scaleDefinition: byName(data.scales, 'Blues hexatónica'),
+	scaleName: 'Blues hexatónica',
+	scaleNotes: domain.buildScale({
+		tonicIndex: 0,
+		scaleDefinition: byName(data.scales, 'Blues hexatónica'),
+		notes: data.notes,
+		intervals: data.intervals,
+		octaveSemitones: data.constants.octaveSemitones,
+		preferFlats: true
+	}),
+	selectedScaleIndex: 10,
+	tonicName: 'C'
+});
+
+assert.ok(bluesHexatonicSummaryHtml.indexOf('data-midi-notes="60,63,65,66,67,70,72"') > -1);
+assert.equal((bluesHexatonicSummaryHtml.match(/class="scaleDegreeNoteButton"/g) || []).length, 7);
+assert.ok(bluesHexatonicSummaryHtml.indexOf('data-midi-note="72"') > -1);
+
 const circleHtml = circleOfFifthsRenderer.render({
 	orderedKeys: data.circleOfFifths.slice(0, 12),
 	selectedKey: 'C'
@@ -476,6 +518,14 @@ assert.ok(progressionWorkbenchHtml.indexOf('id="generateProgressionNextSection"'
 assert.ok(progressionWorkbenchHtml.indexOf('auto_awesome') > -1);
 assert.equal(progressionWorkbenchHtml.indexOf('id="generateProgressionSectionB"'), -1);
 assert.ok(progressionWorkbenchHtml.indexOf('<strong>Imaj7</strong>') > -1);
+
+const unavailableProgressionTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
+	unsupportedScale: true
+}, {
+	i18n: englishI18n
+});
+assert.ok(unavailableProgressionTimeline.indexOf('Harmonic progressions require a heptatonic scale.') > -1);
+assert.equal(unavailableProgressionTimeline.indexOf('Imaj7'), -1);
 
 const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [

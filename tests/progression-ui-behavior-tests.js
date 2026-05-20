@@ -569,6 +569,18 @@ document.dispatchDocumentEvent({
 assert.equal(document.getElementById('workbenchInstrumentMenu').hidden, true);
 assert.equal(document.getElementById('workbenchContextInstrumentToggle').getAttribute('aria-expanded'), 'false');
 
+const renderedBeforePentatonic = rendered.scaleReport;
+document.getElementById('escala').value = '8';
+document.getElementById('escala').dispatchEvent({
+	target: document.getElementById('escala'),
+	type: 'change'
+});
+assert.equal(rendered.scaleReport, renderedBeforePentatonic + 1);
+assert.equal(rendered.scaleReportOptions.report.scaleIndex, 8);
+assert.deepEqual(rendered.scaleReportOptions.report.scaleNotes.map(function (note) { return note.nombre; }), ['C', 'D', 'E', 'G', 'A']);
+assert.equal(rendered.scaleReportOptions.report.scaleChords.length, 0);
+assert.equal(initialized.uiState.getProgression().unsupportedScale, true);
+
 console.log('Progression UI behavior tests passed');
 
 function createFakeUi(fakeDocument, renderedCounter) {

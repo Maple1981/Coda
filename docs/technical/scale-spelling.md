@@ -27,6 +27,8 @@ El algoritmo toma la letra de la tónica como punto de partida y avanza una letr
 
 Las escalas no tonales o no modales conservan de momento la preferencia general de sostenidos/bemoles, porque algunas escalas sintéticas, pentatónicas, hexatónicas u octatónicas no responden siempre al mismo contrato de siete letras.
 
+El resumen visual añade la tónica superior de cierre para completar la escala en la octava. Esa nota de cierre facilita la lectura y la escucha, pero no forma parte del recuento interno de grados: las pentatónicas siguen teniendo cinco grados reales, las hexatónicas seis y las heptatónicas siete.
+
 ## Relación con armaduras
 
 La preferencia de armadura sigue decidiendo la forma de la tónica cuando hay enarmonías disponibles, pero ya no puede producir grados con letras duplicadas en escalas tonales o modales de siete notas. Si la armadura sugiere una zona de bemoles, la escala seguirá usando bemoles allí donde corresponda; si sugiere sostenidos, se usarán sostenidos, dobles sostenidos o alteraciones equivalentes cuando sean necesarios para preservar la letra del grado.

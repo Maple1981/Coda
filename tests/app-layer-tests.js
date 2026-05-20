@@ -55,6 +55,34 @@ assert.equal(cMajorReport.extendedHarmonyEnabled, true);
 assert.equal(cMajorReport.mode, 'M');
 assert.equal(cMajorReport.circleOfFifths.selectedKey, 'C');
 
+const cMajorPentatonicReport = app.buildScaleReport({
+	data: data,
+	domain: domain,
+	preferFlats: false,
+	scaleIndex: 8,
+	scaleName: 'Pentatónica Mayor',
+	tonicIndex: noteIndex('C'),
+	tonicName: 'C'
+});
+
+assert.deepEqual(cMajorPentatonicReport.scaleNotes.map(function (note) { return note.nombre; }), ['C', 'D', 'E', 'G', 'A']);
+assert.equal(cMajorPentatonicReport.scaleChords.length, 0);
+assert.equal(cMajorPentatonicReport.parallelScaleChords.length, 0);
+
+const cBluesHexatonicReport = app.buildScaleReport({
+	data: data,
+	domain: domain,
+	preferFlats: true,
+	scaleIndex: 10,
+	scaleName: 'Blues hexatónica',
+	tonicIndex: noteIndex('C'),
+	tonicName: 'C'
+});
+
+assert.deepEqual(cBluesHexatonicReport.scaleNotes.map(function (note) { return note.nombre; }), ['C', 'Eb', 'F', 'Gb', 'G', 'Bb']);
+assert.equal(cBluesHexatonicReport.scaleChords.length, 0);
+assert.equal(cBluesHexatonicReport.parallelScaleChords.length, 0);
+
 const fSharpMajorReport = app.buildScaleReport({
 	data: data,
 	domain: domain,
