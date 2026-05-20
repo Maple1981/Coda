@@ -2,6 +2,7 @@
 (function (global) {
 	'use strict';
 
+	var classicalDissonanceService = global.CodaProgressionClassicalDissonance;
 	var pitchService = global.CodaProgressionPitch;
 
 	function annotateMeasures(measures, progressionState, options) {
@@ -17,7 +18,7 @@
 
 		melodicVoiceIndex = chooseMelodicVoiceIndex(progressionState.voices, rng);
 		for (var i = 0; i < measures.length - 1; i++) {
-			addPassingNote(measures[i], measures[i + 1], melodicVoiceIndex, counterpoint, rng, options);
+			addPassingNote(measures[i], measures[i + 1], melodicVoiceIndex, counterpoint, rng, options, progressionState);
 		}
 
 		return measures;
@@ -42,7 +43,7 @@
 		return Math.max(1, Math.min(voiceCount - 2, Math.floor(rng() * voiceCount)));
 	}
 
-	function addPassingNote(measure, nextMeasure, voiceIndex, counterpoint, rng, options) {
+	function addPassingNote(measure, nextMeasure, voiceIndex, counterpoint, rng, options, progressionState) {
 		var currentNote = voiceNoteAt(measure, voiceIndex);
 		var nextNote = voiceNoteAt(nextMeasure, voiceIndex);
 		var scaleNotes = scaleNotesForMeasure(measure, options);
@@ -57,7 +58,7 @@
 			return;
 		}
 
-		passingNote = choosePassingNote(currentNote, nextNote, scaleNotes, measure.notes || [], options.initialMidiNote || 60);
+		passingNote = choosePassingNote(currentNote, nextNote, scaleNotes, measure.notes || [], options.initialMidiNote || 60, progressionState);
 		if (!passingNote) {
 			return;
 		}
@@ -73,7 +74,7 @@
 		}]);
 	}
 
-	function choosePassingNote(currentNote, nextNote, scaleNotes, chordNotes, initialMidiNote) {
+	function choosePassingNote(currentNote, nextNote, scaleNotes, chordNotes, initialMidiNote, progressionState) {
 		var currentMidi = currentNote.midiNote;
 		var nextMidi = nextNote.midiNote;
 		var low = Math.min(currentMidi, nextMidi);
@@ -90,7 +91,10 @@
 			}
 
 			midiNote = pitchService.nearestMidiTo(currentMidi + direction * 2, midiNote);
-			if (midiNote > low && midiNote < high) {
+			if (midiNote > low && midiNote < high && classicalDissonanceService.allowsPassingNote(currentNote, {
+				midiNote: midiNote,
+				note: noteName
+			}, nextNote, progressionState)) {
 				candidates.push({
 					midiNote: midiNote,
 					note: noteName,

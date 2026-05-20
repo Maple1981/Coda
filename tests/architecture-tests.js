@@ -46,6 +46,7 @@ assert.ok(global.CodaProgressionStateNormalizer.normalize);
 assert.ok(global.CodaProgressionDocumentTransform.applyState);
 assert.ok(global.CodaProgressionDegreeResolver.fromGeneratedPlan);
 assert.ok(global.CodaProgressionPitch.normalizePitchName);
+assert.ok(global.CodaProgressionClassicalDissonance.allowsSuspension);
 assert.ok(global.CodaProgressionObjects.extendObject);
 assert.ok(global.CodaProgressionChordQuality.chordQualitySuffix);
 assert.ok(global.CodaProgressionVoiceLeadingScore.voiceLeadingTransitionScore);
@@ -234,6 +235,7 @@ assert.ok(manifestScripts.indexOf('js/services/progression-workspace-storage-ser
 assert.ok(manifestScripts.indexOf('js/services/progression-state-normalizer-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-degree-resolver-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-pitch-service.js') > -1);
+assert.ok(manifestScripts.indexOf('js/services/progression-classical-dissonance-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-object-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-chord-quality-service.js') > -1);
 assert.ok(manifestScripts.indexOf('js/services/progression-voice-leading-score-service.js') > -1);

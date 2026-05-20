@@ -7,6 +7,7 @@
 	var seventhDecisionService = global.CodaProgressionSeventhDecision;
 	var suspensionService = global.CodaProgressionSuspension;
 	var tensionService = global.CodaProgressionTensions;
+	var tonalFunctionService = global.CodaProgressionTonalFunction;
 	var voicingService = global.CodaProgressionVoicing;
 
 	function build(context) {
@@ -25,10 +26,15 @@
 
 		tensionOptions = context.options.includeTensions && !context.options.preventTensions ? tensionService.addToNotes(baseNotes, {
 			degreeIndex: resolvedDegree.degreeIndex,
+			cadentialRole: resolvedDegree.cadentialRole,
+			chromaticRole: resolvedDegree.chromaticRole,
 			kind: useSeventh ? 'seventh' : 'triad',
+			nextChordNotes: nextTriadNotes(context),
 			rng: context.options.rng,
 			scaleNotes: context.options.scaleNotes,
+			style: context.progressionState.style,
 			tensions: context.progressionState.tensions,
+			tonalFunction: resolvedDegree.tonalFunctionOverride || tonalFunctionForDegree(context.options.scaleDefinition, resolvedDegree.degreeIndex),
 			voices: context.progressionState.voices
 		}) : {
 			label: '',
@@ -76,6 +82,16 @@
 		return seventhDecisionService.triadNotes(chord);
 	}
 
+	function nextTriadNotes(context) {
+		var nextResolvedDegree = context.resolvedDegrees[context.index + 1];
+
+		return nextResolvedDegree && nextResolvedDegree.chord ? triadNotes(nextResolvedDegree.chord) : [];
+	}
+
+	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
+		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
+	}
+
 	function registerCenterMidi(options) {
 		var initialMidiNote = Number(options && options.initialMidiNote) || 60;
 		var scaleNotes = options && options.scaleNotes ? options.scaleNotes : [];
@@ -92,6 +108,7 @@
 	global.CodaProgressionChordPlan = {
 		build: build,
 		chordNotes: chordNotes,
+		nextTriadNotes: nextTriadNotes,
 		registerCenterMidi: registerCenterMidi,
 		suspendedNotes: suspendedNotes,
 		triadNotes: triadNotes

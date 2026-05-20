@@ -3,13 +3,14 @@
 	'use strict';
 
 	var pitchService = global.CodaProgressionPitch;
+	var classicalDissonanceService = global.CodaProgressionClassicalDissonance;
 
 	function addToNotes(notes, options) {
 		var result = notes.slice();
 		var labels = [];
 		var maxVoices = Math.max(1, Math.min(numberOrDefault(options.voices, 4), 6));
 		var slots = Math.max(0, maxVoices - result.length);
-		var desiredTensions = desiredTensionCount(options.tensions);
+		var desiredTensions = classicalDissonanceService.desiredTensionCount(desiredTensionCount(options.tensions), options);
 		var candidates = availableCandidates(notes, options);
 		var selectedCount = Math.min(slots, desiredTensions, candidates.length);
 
@@ -55,6 +56,10 @@
 			var scaleNote = scaleNotes.length ? scaleNotes[(options.degreeIndex + candidates[i].degreeOffset) % scaleNotes.length] : null;
 
 			if (!scaleNote || containsPitchName(notes, scaleNote.nombre) || createsUpperSemitone(scaleNote.nombre, notes)) {
+				continue;
+			}
+
+			if (!classicalDissonanceService.allowsAddedTension(scaleNote.nombre, notes, options)) {
 				continue;
 			}
 

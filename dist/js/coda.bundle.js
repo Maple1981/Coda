@@ -1561,7 +1561,7 @@
 			'progression.help.intensity': 'Define la intensidad MIDI base de la preescucha y la exportación, entre 1 y 127.',
 			'progression.help.meter': 'Organización rítmica de cada compás.',
 			'progression.help.modalInterchange': 'Controla la frecuencia de acordes préstamo por intercambio modal de escalas, tonalidades o modos relacionados.',
-			'progression.help.style': 'El estilo moderno evita cadencias auténticas; el clásico favorece su aparición al final de bloques de secuencia.',
+			'progression.help.style': 'El estilo moderno evita cadencias auténticas; el clásico favorece su aparición al final de bloques de secuencia. El estilo clásico también procura preparar y resolver las disonancias, incluyendo las séptimas.',
 			'progression.help.swing': 'Retrasa levemente subdivisiones débiles cuando el patrón rítmico lo permite.',
 			'progression.help.tensions': 'Controla suspensiones sus2/sus4 y tensiones disponibles de novena, oncena o trecena.',
 			'progression.help.voicing': 'En disposición cerrada, las voces superiores están lo más juntas posible, sin poder insertar otra nota del acorde entre ellas. En disposición abierta, entre voces superiores podría insertarse otra nota del acorde.',
@@ -1811,7 +1811,7 @@
 			'progression.help.intensity': 'Sets the base MIDI intensity for preview and export, from 1 to 127.',
 			'progression.help.meter': 'Rhythmic organization of each bar.',
 			'progression.help.modalInterchange': 'Controls how often borrowed chords appear through modal interchange from related scales, keys or modes.',
-			'progression.help.style': 'Modern style avoids authentic cadences; classical style favors them at the end of sequence blocks.',
+			'progression.help.style': 'Modern style avoids authentic cadences; classical style favors them at the end of sequence blocks. Classical style also tries to prepare and resolve dissonances, including sevenths.',
 			'progression.help.swing': 'Slightly delays weak subdivisions when the rhythmic pattern allows it.',
 			'progression.help.tensions': 'Controls sus2/sus4 suspensions and available ninth, eleventh or thirteenth tensions.',
 			'progression.help.voicing': 'In closed voicing, the upper voices are as close together as possible, with no other chord tone fitting between them. In open voicing, another chord tone could fit between upper voices.',
@@ -3146,6 +3146,177 @@
 
 ;
 
+/* Source: js/services/progression-classical-dissonance-service.js */
+// Classical preparation, appearance and resolution checks for generated dissonances.
+(function (global) {
+	'use strict';
+
+	var pitchService = global.CodaProgressionPitch;
+	var styleService = global.CodaProgressionStyle;
+
+	function isClassic(progressionState) {
+		return styleService && styleService.isClassic ? styleService.isClassic(progressionState) : progressionState && progressionState.style === 'classic';
+	}
+
+	function allowsSuspension(context, baseNotes, suspensionNote) {
+		if (!isClassic(context && context.progressionState)) {
+			return true;
+		}
+
+		return isPreparedByPreviousHarmony(context && context.previousPlan, suspensionNote) &&
+			resolvesByStepToChordThird(baseNotes, suspensionNote);
+	}
+
+	function isPreparedByPreviousHarmony(previousPlan, dissonantNote) {
+		return containsPitchClass(notesFromPlan(previousPlan), dissonantNote);
+	}
+
+	function resolvesByStepToChordThird(baseNotes, dissonantNote) {
+		var resolutionNote = baseNotes && baseNotes[1];
+
+		return stepDistance(dissonantNote, resolutionNote) > 0 && stepDistance(dissonantNote, resolutionNote) <= 2;
+	}
+
+	function allowsAddedTension(tensionNote, chordNotes, options) {
+		if (!isClassic({ style: options && options.style })) {
+			return true;
+		}
+
+		if (!isFunctionalDissonancePosition(options)) {
+			return false;
+		}
+
+		return resolvesByStepToAny(tensionNote, options && options.nextChordNotes);
+	}
+
+	function desiredTensionCount(desiredCount, options) {
+		if (!isClassic({ style: options && options.style })) {
+			return desiredCount;
+		}
+
+		return Math.min(desiredCount, 1);
+	}
+
+	function allowsPassingNote(currentNote, passingNote, nextNote, progressionState) {
+		var currentMidi;
+		var passingMidi;
+		var nextMidi;
+		var direction;
+
+		if (!isClassic(progressionState)) {
+			return true;
+		}
+
+		currentMidi = midiFromValue(currentNote);
+		passingMidi = midiFromValue(passingNote);
+		nextMidi = midiFromValue(nextNote);
+		if (currentMidi == null || passingMidi == null || nextMidi == null || currentMidi === nextMidi) {
+			return false;
+		}
+
+		direction = nextMidi > currentMidi ? 1 : -1;
+
+		return (passingMidi - currentMidi) * direction > 0 &&
+			(nextMidi - passingMidi) * direction > 0 &&
+			Math.abs(passingMidi - currentMidi) <= 2 &&
+			Math.abs(nextMidi - passingMidi) <= 2;
+	}
+
+	function resolvesByStepToAny(noteName, targetNotes) {
+		for (var i = 0; i < (targetNotes || []).length; i++) {
+			var distance = stepDistance(noteName, targetNotes[i]);
+
+			if (distance > 0 && distance <= 2) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function isFunctionalDissonancePosition(options) {
+		if (!options) {
+			return false;
+		}
+
+		return options.tonalFunction === 'D' || !!options.cadentialRole || !!options.chromaticRole;
+	}
+
+	function notesFromPlan(plan) {
+		var result = [];
+		var voiceNotes = plan && plan.voiceNotes ? plan.voiceNotes : [];
+		var notes = plan && plan.notes ? plan.notes : [];
+
+		for (var i = 0; i < voiceNotes.length; i++) {
+			result.push(voiceNotes[i].note || voiceNotes[i]);
+		}
+
+		return result.concat(notes);
+	}
+
+	function containsPitchClass(notes, noteName) {
+		var targetIndex = pitchService.noteIndex(noteName);
+
+		if (targetIndex == null) {
+			return false;
+		}
+
+		for (var i = 0; i < (notes || []).length; i++) {
+			if (pitchService.noteIndex(notes[i]) === targetIndex) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function stepDistance(firstNote, secondNote) {
+		var firstIndex = pitchService.noteIndex(firstNote);
+		var secondIndex = pitchService.noteIndex(secondNote);
+		var up;
+		var down;
+
+		if (firstIndex == null || secondIndex == null) {
+			return 99;
+		}
+
+		up = (secondIndex - firstIndex + 12) % 12;
+		down = (firstIndex - secondIndex + 12) % 12;
+
+		return Math.min(up, down);
+	}
+
+	function midiFromValue(value) {
+		if (value == null) {
+			return null;
+		}
+
+		if (typeof value === 'number') {
+			return value;
+		}
+
+		if (value.midiNote != null) {
+			return Number(value.midiNote);
+		}
+
+		return null;
+	}
+
+	global.CodaProgressionClassicalDissonance = {
+		allowsAddedTension: allowsAddedTension,
+		allowsPassingNote: allowsPassingNote,
+		allowsSuspension: allowsSuspension,
+		containsPitchClass: containsPitchClass,
+		desiredTensionCount: desiredTensionCount,
+		isPreparedByPreviousHarmony: isPreparedByPreviousHarmony,
+		resolvesByStepToAny: resolvesByStepToAny,
+		resolvesByStepToChordThird: resolvesByStepToChordThird,
+		stepDistance: stepDistance
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-object-service.js */
 // Shared object helpers for progression services.
 (function (global) {
@@ -4189,6 +4360,7 @@
 (function (global) {
 	'use strict';
 
+	var classicalDissonanceService = global.CodaProgressionClassicalDissonance;
 	var pitchService = global.CodaProgressionPitch;
 
 	function annotateMeasures(measures, progressionState, options) {
@@ -4204,7 +4376,7 @@
 
 		melodicVoiceIndex = chooseMelodicVoiceIndex(progressionState.voices, rng);
 		for (var i = 0; i < measures.length - 1; i++) {
-			addPassingNote(measures[i], measures[i + 1], melodicVoiceIndex, counterpoint, rng, options);
+			addPassingNote(measures[i], measures[i + 1], melodicVoiceIndex, counterpoint, rng, options, progressionState);
 		}
 
 		return measures;
@@ -4229,7 +4401,7 @@
 		return Math.max(1, Math.min(voiceCount - 2, Math.floor(rng() * voiceCount)));
 	}
 
-	function addPassingNote(measure, nextMeasure, voiceIndex, counterpoint, rng, options) {
+	function addPassingNote(measure, nextMeasure, voiceIndex, counterpoint, rng, options, progressionState) {
 		var currentNote = voiceNoteAt(measure, voiceIndex);
 		var nextNote = voiceNoteAt(nextMeasure, voiceIndex);
 		var scaleNotes = scaleNotesForMeasure(measure, options);
@@ -4244,7 +4416,7 @@
 			return;
 		}
 
-		passingNote = choosePassingNote(currentNote, nextNote, scaleNotes, measure.notes || [], options.initialMidiNote || 60);
+		passingNote = choosePassingNote(currentNote, nextNote, scaleNotes, measure.notes || [], options.initialMidiNote || 60, progressionState);
 		if (!passingNote) {
 			return;
 		}
@@ -4260,7 +4432,7 @@
 		}]);
 	}
 
-	function choosePassingNote(currentNote, nextNote, scaleNotes, chordNotes, initialMidiNote) {
+	function choosePassingNote(currentNote, nextNote, scaleNotes, chordNotes, initialMidiNote, progressionState) {
 		var currentMidi = currentNote.midiNote;
 		var nextMidi = nextNote.midiNote;
 		var low = Math.min(currentMidi, nextMidi);
@@ -4277,7 +4449,10 @@
 			}
 
 			midiNote = pitchService.nearestMidiTo(currentMidi + direction * 2, midiNote);
-			if (midiNote > low && midiNote < high) {
+			if (midiNote > low && midiNote < high && classicalDissonanceService.allowsPassingNote(currentNote, {
+				midiNote: midiNote,
+				note: noteName
+			}, nextNote, progressionState)) {
 				candidates.push({
 					midiNote: midiNote,
 					note: noteName,
@@ -5914,13 +6089,14 @@
 	'use strict';
 
 	var pitchService = global.CodaProgressionPitch;
+	var classicalDissonanceService = global.CodaProgressionClassicalDissonance;
 
 	function addToNotes(notes, options) {
 		var result = notes.slice();
 		var labels = [];
 		var maxVoices = Math.max(1, Math.min(numberOrDefault(options.voices, 4), 6));
 		var slots = Math.max(0, maxVoices - result.length);
-		var desiredTensions = desiredTensionCount(options.tensions);
+		var desiredTensions = classicalDissonanceService.desiredTensionCount(desiredTensionCount(options.tensions), options);
 		var candidates = availableCandidates(notes, options);
 		var selectedCount = Math.min(slots, desiredTensions, candidates.length);
 
@@ -5966,6 +6142,10 @@
 			var scaleNote = scaleNotes.length ? scaleNotes[(options.degreeIndex + candidates[i].degreeOffset) % scaleNotes.length] : null;
 
 			if (!scaleNote || containsPitchName(notes, scaleNote.nombre) || createsUpperSemitone(scaleNote.nombre, notes)) {
+				continue;
+			}
+
+			if (!classicalDissonanceService.allowsAddedTension(scaleNote.nombre, notes, options)) {
 				continue;
 			}
 
@@ -6113,6 +6293,7 @@
 	'use strict';
 
 	var formattingService = global.CodaProgressionFormatting;
+	var classicalDissonanceService = global.CodaProgressionClassicalDissonance;
 	var suspensionHeuristic = global.CodaProgressionSuspensionHeuristic;
 	var voicingService = global.CodaProgressionVoicing;
 
@@ -6139,6 +6320,10 @@
 		suspensionNote = label === 'sus2' ? chord.segunda : chord.cuarta;
 		originalVoicing = chooseCandidateVoicing(context, baseNotes, kind);
 		suspendedVoicing = chooseCandidateVoicing(context, suspendedNotes(baseNotes, suspensionNote), kind);
+		if (!classicalDissonanceService.allowsSuspension(context, baseNotes, suspensionNote)) {
+			return null;
+		}
+
 		probability = suspensionHeuristic.probability({
 			originalScore: voicingService.voiceLeadingTransitionScore(previousPlan, originalVoicing),
 			progressionState: progressionState,
@@ -6330,6 +6515,7 @@
 	var seventhDecisionService = global.CodaProgressionSeventhDecision;
 	var suspensionService = global.CodaProgressionSuspension;
 	var tensionService = global.CodaProgressionTensions;
+	var tonalFunctionService = global.CodaProgressionTonalFunction;
 	var voicingService = global.CodaProgressionVoicing;
 
 	function build(context) {
@@ -6348,10 +6534,15 @@
 
 		tensionOptions = context.options.includeTensions && !context.options.preventTensions ? tensionService.addToNotes(baseNotes, {
 			degreeIndex: resolvedDegree.degreeIndex,
+			cadentialRole: resolvedDegree.cadentialRole,
+			chromaticRole: resolvedDegree.chromaticRole,
 			kind: useSeventh ? 'seventh' : 'triad',
+			nextChordNotes: nextTriadNotes(context),
 			rng: context.options.rng,
 			scaleNotes: context.options.scaleNotes,
+			style: context.progressionState.style,
 			tensions: context.progressionState.tensions,
+			tonalFunction: resolvedDegree.tonalFunctionOverride || tonalFunctionForDegree(context.options.scaleDefinition, resolvedDegree.degreeIndex),
 			voices: context.progressionState.voices
 		}) : {
 			label: '',
@@ -6399,6 +6590,16 @@
 		return seventhDecisionService.triadNotes(chord);
 	}
 
+	function nextTriadNotes(context) {
+		var nextResolvedDegree = context.resolvedDegrees[context.index + 1];
+
+		return nextResolvedDegree && nextResolvedDegree.chord ? triadNotes(nextResolvedDegree.chord) : [];
+	}
+
+	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
+		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
+	}
+
 	function registerCenterMidi(options) {
 		var initialMidiNote = Number(options && options.initialMidiNote) || 60;
 		var scaleNotes = options && options.scaleNotes ? options.scaleNotes : [];
@@ -6415,6 +6616,7 @@
 	global.CodaProgressionChordPlan = {
 		build: build,
 		chordNotes: chordNotes,
+		nextTriadNotes: nextTriadNotes,
 		registerCenterMidi: registerCenterMidi,
 		suspendedNotes: suspendedNotes,
 		triadNotes: triadNotes

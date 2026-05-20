@@ -1415,6 +1415,45 @@ assert.equal(cMinorRelativeSection.sections[1].contextTonicName, 'Eb');
 assert.equal(cMinorRelativeSection.sections[1].contextScaleName, 'Mayor');
 assert.equal(cMinorRelativeSection.sections[1].circleOfFifths.selectedKey, 'Eb');
 
+const classicalDissonance = context.window.CodaProgressionClassicalDissonance;
+assert.equal(classicalDissonance.isPreparedByPreviousHarmony({
+	voiceNotes: [{ note: 'F', midiNote: 65 }, { note: 'A', midiNote: 69 }],
+	notes: ['D', 'F', 'A']
+}, 'F'), true);
+assert.equal(classicalDissonance.isPreparedByPreviousHarmony({
+	voiceNotes: [{ note: 'E', midiNote: 64 }, { note: 'G', midiNote: 67 }],
+	notes: ['C', 'E', 'G']
+}, 'F'), false);
+assert.equal(classicalDissonance.resolvesByStepToChordThird(['C', 'E', 'G'], 'F'), true);
+assert.equal(classicalDissonance.resolvesByStepToChordThird(['C', 'E', 'G'], 'A'), false);
+assert.equal(classicalDissonance.allowsPassingNote({ midiNote: 60 }, { midiNote: 62 }, { midiNote: 64 }, { style: 'classic' }), true);
+assert.equal(classicalDissonance.allowsPassingNote({ midiNote: 60 }, { midiNote: 62 }, { midiNote: 65 }, { style: 'classic' }), false);
+
+const classicTonicTension = context.window.CodaProgressionTensions.addToNotes(['C', 'E', 'G'], {
+	degreeIndex: 0,
+	kind: 'triad',
+	nextChordNotes: ['F', 'A', 'C'],
+	scaleNotes: cMajorReport.scaleNotes,
+	style: 'classic',
+	tensions: 100,
+	tonalFunction: 'T',
+	voices: 4
+});
+assert.deepEqual(classicTonicTension, { label: '', notes: ['C', 'E', 'G'] });
+
+const classicDominantTension = context.window.CodaProgressionTensions.addToNotes(['G', 'B', 'D'], {
+	degreeIndex: 4,
+	kind: 'triad',
+	nextChordNotes: ['C', 'E', 'G'],
+	scaleNotes: cMajorReport.scaleNotes,
+	style: 'classic',
+	tensions: 100,
+	tonalFunction: 'D',
+	voices: 4
+});
+assert.equal(classicDominantTension.notes.length, 4);
+assert.ok(classicDominantTension.label.length > 0);
+
 console.log('Application layer tests passed');
 
 function sequenceRng(values) {

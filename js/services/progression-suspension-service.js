@@ -3,6 +3,7 @@
 	'use strict';
 
 	var formattingService = global.CodaProgressionFormatting;
+	var classicalDissonanceService = global.CodaProgressionClassicalDissonance;
 	var suspensionHeuristic = global.CodaProgressionSuspensionHeuristic;
 	var voicingService = global.CodaProgressionVoicing;
 
@@ -29,6 +30,10 @@
 		suspensionNote = label === 'sus2' ? chord.segunda : chord.cuarta;
 		originalVoicing = chooseCandidateVoicing(context, baseNotes, kind);
 		suspendedVoicing = chooseCandidateVoicing(context, suspendedNotes(baseNotes, suspensionNote), kind);
+		if (!classicalDissonanceService.allowsSuspension(context, baseNotes, suspensionNote)) {
+			return null;
+		}
+
 		probability = suspensionHeuristic.probability({
 			originalScore: voicingService.voiceLeadingTransitionScore(previousPlan, originalVoicing),
 			progressionState: progressionState,

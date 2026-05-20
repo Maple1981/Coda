@@ -32,6 +32,7 @@
 			'js/services/progression-state-normalizer-service.js',
 			'js/services/progression-degree-resolver-service.js',
 			'js/services/progression-pitch-service.js',
+			'js/services/progression-classical-dissonance-service.js',
 			'js/services/progression-object-service.js',
 			'js/services/progression-chord-quality-service.js',
 			'js/services/progression-voice-leading-score-service.js',
