@@ -1,52 +1,117 @@
 # Coda
 
-![codapreview](https://user-images.githubusercontent.com/88559684/128783209-bfd3ba43-08a9-4968-9e2d-7723d1e31472.jpg)
+![Coda preview](https://user-images.githubusercontent.com/88559684/128783209-bfd3ba43-08a9-4968-9e2d-7723d1e31472.jpg)
 
+Coda is a browser-based music theory and composition tool for exploring scales, chords and harmonic progressions. It is designed for composers, producers, arrangers, guitarists, pianists and harmony students who want fast, playable musical material without leaving the browser.
 
+The app is a pure frontend project: HTML, CSS/Sass and vanilla JavaScript. It has no backend, database, accounts, authentication or remote persistence layer.
 
-FEATURES
-=================
-This is a scale/chord generator written in Spanish language. It can generate the degrees and chords of any diatonic scale (triads and quatriads with their respective harmonic functions), as well as offer alternatives
-such as sus2 and sus4 chords, secondary dominants and subdominants, substitute tritones and relative minors II, relative and parallel scales, and so on.
+## What It Does
 
-It also includes modal harmony and exotic scales.
+- Builds scales and modes from a selected tonic.
+- Generates diatonic triads and seventh chords with degree labels and harmonic functions.
+- Shows relative and parallel relationships, modal sources and circle-of-fifths context.
+- Provides guitar fretboard and piano keyboard views.
+- Plays chords and generated progressions in the browser through Web Audio/Web MIDI utilities and local soundfonts.
+- Generates editable harmonic progressions with sections, voicings, inversions, chromatic cadences, modal interchange, harmonic density, articulations, arpeggios, staccato playback and expressive controls.
+- Exports generated or edited progressions as Standard MIDI Files for use in DAWs and sequencers such as Cubase, Ableton Live, Logic Pro, Digital Performer, Pro Tools and similar tools.
 
-Each chord can be heard by clicking on it.
+## Progression Engine
 
-The system supports guitar fretboard view (with different tunings) and keyboard view.
+The progression workspace is the most active part of the project. It can generate and transform progressions using:
 
-CODE AND IMPROVEMENTS
-=============================
-This is a pure frontend web application based on HTML5, CSS3 and JavaScript.
+- modern or classical writing styles;
+- major, minor and modal harmonic contexts;
+- modal interchange from related scales and modes;
+- secondary dominants, tritone substitutes and other extended-harmony resources;
+- cadential chromaticism, including Neapolitan and augmented-sixth sonorities;
+- SubV/Sub Five dominant substitutes at high chromaticism settings;
+- harmonic density control for multiple chords per bar;
+- section generation, cloning, variation and contrast;
+- editable measure order and chord replacements;
+- voice-leading, register centering, inversion-run limits and parallel-perfect penalties;
+- classical dissonance handling for prepared/resolved suspensions, passing tones and restrained added tensions.
 
-It uses locally vendored jQuery 4.0.0 and jQuery UI 1.14.2 for the current legacy interface. It also uses Web MIDI / Web Audio utilities and MP3 soundfonts to play chords in the browser, plus Google Fonts / Material Icons for typography and icons.
+The exported MIDI is intended to match the visible progression, including sections, user edits, split bars, articulations, tempo, meter, voicing and expressive timing.
 
-The long-term direction is to keep extracting music-domain logic into small JavaScript modules and progressively reduce UI coupling with jQuery where it makes the code easier to maintain.
+## Interface And Language
 
-Run the domain checks with:
+The default interface language is English, with Spanish also available. Note names can be displayed in either Anglo-Saxon notation (`C, D, E, F, G, A, B`) or Latin notation (`Do, Re, Mi, Fa, Sol, La, Si`).
 
-```bash
-node tests/domain-tests.js
-node tests/app-layer-tests.js
-node tests/architecture-tests.js
-node tests/renderers-tests.js
+The current UI uses native browser APIs and modular renderers.
+
+## Technical Shape
+
+Coda is organized as small browser modules loaded through `js/bootstrap/script-manifest.js` and published as `dist/js/coda.bundle.js`.
+
+Main areas:
+
+- `js/data/`: musical catalogs and static data.
+- `js/domain/`: pure music-domain rules.
+- `js/application/`: use cases that coordinate domain and services.
+- `js/services/`: progression generation, playback, MIDI export, preferences and shared utilities.
+- `js/renderers/`: HTML rendering without direct business logic.
+- `js/ui/`: DOM coordination and user interaction.
+- `docs/technical/`: architecture, workflow, security, soundfonts and progression-generation notes.
+- `Docs/` and `Docs/teoria-md/`: music-theory reference material used to guide future rules.
+
+When application scripts are added, removed or reordered, update `js/bootstrap/script-manifest.js` and regenerate the published bundle:
+
+```powershell
+.\tools\build-js-bundle.ps1
 ```
 
-These checks cover representative scales, diatonic chords, modal chord labels, application report orchestration, chord playback use cases, architecture wiring, instrument models, secondary dominants, tritone substitutes and relative minor seconds.
+## Local Development
 
-The layout needs some small improvements to be fully responsive.
+The recommended local workflow is to serve the repository as static files, for example with VS Code Live Server:
 
-I should translate the app into English. 
+```text
+http://127.0.0.1:5500/index.html
+```
 
-I will probably change the CSS nomenclature to BEM, and the CSS architecture to Atomic.
+Avoid `file://` for full functional testing, because browsers can block soundfont or Web Audio/MIDI-related loads from local files.
 
-It would be nice to use TypeScript in the app.js to get static typing and convert the primitive types to class properties. 
+## Tests
 
-The folder structure is ready to use with Visual Studio Code and Watch SASS extension.
+Run the full local verification suite with:
 
-LICENSE
-===============================
-Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
-https://creativecommons.org/licenses/by-sa/4.0/
+```powershell
+.\tools\run-tests.ps1
+```
 
-Enjoy coding!
+The runner regenerates `dist/js/coda.bundle.js` and executes the project checks. Individual test files include:
+
+```powershell
+node tests\domain-tests.js
+node tests\app-layer-tests.js
+node tests\progression-invariants-tests.js
+node tests\progression-state-tests.js
+node tests\progression-midi-tests.js
+node tests\progression-playback-tests.js
+node tests\progression-transport-tests.js
+node tests\progression-ui-behavior-tests.js
+node tests\renderers-tests.js
+node tests\architecture-tests.js
+```
+
+## Documentation
+
+Useful technical entry points:
+
+- `docs/technical/architecture.md`
+- `docs/technical/development-workflow.md`
+- `docs/technical/progression-generation.md`
+- `docs/technical/progression-segment-contract.md`
+- `docs/technical/classical-dissonance.md`
+- `docs/technical/security.md`
+- `docs/technical/soundfonts.md`
+
+## Status
+
+Coda is still in beta. It is usable, but the harmonic engine and playback behavior are evolving actively.
+
+## License
+
+Application content and code: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0).
+
+Soundfont assets are based on MIDI.js Soundfonts and keep their own attribution and license notes in the app and technical documentation.
