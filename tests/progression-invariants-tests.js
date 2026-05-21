@@ -48,7 +48,7 @@ for (let invariantSeed = 1; invariantSeed <= 40; invariantSeed++) {
 		intensity: 82,
 		meter: invariantSeed % 5 === 0 ? '7/8' : (invariantSeed % 4 === 0 ? '3/4' : '4/4'),
 		modalInterchange: invariantSeed % 4 === 0 ? 70 : 20,
-		style: invariantSeed % 2 === 0 ? 'classic' : 'modern',
+		style: invariantSeed % 2 === 0 ? 'classic' : 'contemporary',
 		swing: invariantSeed % 3 === 0 ? 18 : 0,
 		tensions: invariantSeed % 2 === 0 ? 80 : 35,
 		voicing: invariantSeed % 2 === 0 ? 'open' : 'closed',

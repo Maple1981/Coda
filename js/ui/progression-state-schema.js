@@ -16,7 +16,10 @@
 	];
 	var allowedBars = [2, 4, 6, 8, 12, 16, 32];
 	var allowedMeters = ['4/4', '3/4', '5/4', '7/4', '11/4', '5/8', '6/8', '7/8', '9/8', '12/8'];
-	var allowedStyles = ['modern', 'classic'];
+	var allowedStyles = ['renaissance', 'baroque', 'classic', 'romantic', 'impressionist', 'contemporary'];
+	var legacyStyles = {
+		modern: 'contemporary'
+	};
 	var allowedVoicings = ['closed', 'open'];
 	var defaults = {
 		articulation: 'sustain',
@@ -29,7 +32,7 @@
 		intensity: 80,
 		meter: '4/4',
 		modalInterchange: 25,
-		style: 'modern',
+		style: 'contemporary',
 		swing: 0,
 		tensions: 35,
 		voicing: 'closed',
@@ -53,7 +56,7 @@
 			intensity: clampInteger(values.intensity, 1, 127, fallback.intensity),
 			meter: pick(values.meter, allowedMeters, fallback.meter),
 			modalInterchange: clampInteger(values.modalInterchange, 0, 100, fallback.modalInterchange),
-			style: pick(values.style, allowedStyles, fallback.style),
+			style: pickStyle(values.style, fallback.style),
 			swing: clampInteger(values.swing, 0, 75, fallback.swing),
 			tensions: clampInteger(values.tensions, 0, 100, fallback.tensions),
 			voicing: pick(values.voicing, allowedVoicings, fallback.voicing),
@@ -85,6 +88,12 @@
 
 	function pick(value, allowedValues, fallback) {
 		return allowedValues.indexOf(value) > -1 ? value : fallback;
+	}
+
+	function pickStyle(value, fallback) {
+		var normalized = legacyStyles[value] || value;
+
+		return pick(normalized, allowedStyles, fallback);
 	}
 
 	function pickNumber(value, allowedValues, fallback) {

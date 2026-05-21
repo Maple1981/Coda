@@ -220,7 +220,7 @@
 		var result = [];
 		var source = harmonicMinorDominantSource(report);
 
-		if (!styleService.isClassic(progressionState) || mode !== 'minor' || !source) {
+		if (!styleService.usesFunctionalMinorDominant(progressionState) || mode !== 'minor' || !source) {
 			return degrees;
 		}
 
@@ -293,10 +293,9 @@
 		var borrowedIndexes = pattern.borrowed || [];
 
 		for (var i = 0; i < normalizedBars; i++) {
-			fitted.push({
-				index: sourceDegrees[i % sourceDegrees.length],
+			fitted.push(degreeFromSource(sourceDegrees[i % sourceDegrees.length], {
 				source: borrowedIndexes.indexOf(i % sourceDegrees.length) > -1 ? 'parallel' : 'diatonic'
-			});
+			}));
 		}
 
 		cadencePlanner.forceCadentialEnding(fitted, pattern, cadenceOptions || {});
@@ -416,6 +415,16 @@
 		return result;
 	}
 
+	function degreeFromSource(sourceDegree, defaults) {
+		if (phraseBlockSelector && typeof phraseBlockSelector.degreeFromSource === 'function') {
+			return phraseBlockSelector.degreeFromSource(sourceDegree, defaults);
+		}
+
+		return typeof sourceDegree === 'object' ? extendObject(sourceDegree, defaults || {}) : extendObject(defaults || {}, {
+			index: sourceDegree
+		});
+	}
+
 	global.CodaProgressionPlanner = {
 		applyClassicMinorDominants: applyClassicMinorDominants,
 		applyModalInterchangeSources: applyModalInterchangeSources,
@@ -426,6 +435,7 @@
 		degreeIndexesForFunction: degreeIndexesForFunction,
 		effectiveEndingCadence: effectiveEndingCadence,
 		fitDegreesToBars: fitDegreesToBars,
+		degreeFromSource: degreeFromSource,
 		harmonicMinorDominantSource: harmonicMinorDominantSource,
 		repetitionChance: repetitionChance,
 		shouldUseClassicMinorDominant: shouldUseClassicMinorDominant,

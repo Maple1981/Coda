@@ -8,7 +8,11 @@
 	function adjustedPatternWeight(pattern, progressionState, mode) {
 		var weight = pattern.weight || 1;
 
-		if (styleService.isModern(progressionState) && cadencePlanner.isAuthenticCadence(pattern.cadence)) {
+		if (!matchesStyle(pattern, progressionState)) {
+			return 0;
+		}
+
+		if (styleService.avoidsStrongDominantResolution(progressionState) && cadencePlanner.isAuthenticCadence(pattern.cadence)) {
 			return 0;
 		}
 
@@ -16,10 +20,17 @@
 			return 0;
 		}
 
+		if (styleService.usesFunctionalCadence(progressionState) && !cadencePlanner.isAuthenticCadence(pattern.cadence)) {
+			weight *= 0.45;
+		}
+
+		weight *= styleService.patternAffinity(progressionState, pattern);
 		weight += affinityScore(progressionState.counterpoint, pattern.counterpoint);
 		weight += affinityScore(progressionState.modalInterchange, pattern.modalColor);
 		weight += affinityScore(progressionState.tensions, pattern.tensionAffinity);
 		weight += commonToneDegreeScore(pattern.degrees, progressionState);
+		weight += stepwiseBassScore(pattern.degrees, progressionState);
+		weight += sequentialBassScore(pattern.degrees, progressionState);
 		weight *= sensitiveDegreeFactor(pattern.degrees, mode, progressionState);
 
 		if (isArpeggioArticulation(progressionState.articulation) && pattern.form === 'circle-of-fifths') {
@@ -41,12 +52,12 @@
 		var sensitiveDegree = mode === 'major' ? 6 : 1;
 		var factor = 1;
 
-		if (!styleService.isModern(progressionState) || !degrees) {
+		if (!styleService.minimizesDiminishedHarmony(progressionState) || !degrees) {
 			return factor;
 		}
 
 		for (var i = 0; i < degrees.length; i++) {
-			if (degrees[i] === sensitiveDegree) {
+			if (degreeIndex(degrees[i]) === sensitiveDegree) {
 				factor *= 0.32;
 			}
 		}
@@ -63,7 +74,7 @@
 		}
 
 		for (var i = 1; i < degrees.length; i++) {
-			var distance = Math.abs((degrees[i] % 7) - (degrees[i - 1] % 7));
+			var distance = Math.abs((degreeIndex(degrees[i]) % 7) - (degreeIndex(degrees[i - 1]) % 7));
 			var circularDistance = Math.min(distance, 7 - distance);
 
 			if (circularDistance === 0) {
@@ -80,6 +91,59 @@
 		return score * affinity;
 	}
 
+	function stepwiseBassScore(degrees, progressionState) {
+		var score = 0;
+
+		if (!styleService.prefersStepwiseBass(progressionState) || !degrees || degrees.length < 2) {
+			return 0;
+		}
+
+		for (var i = 1; i < degrees.length; i++) {
+			var distance = circularDegreeDistance(degreeIndex(degrees[i - 1]), degreeIndex(degrees[i]));
+
+			if (distance === 1) {
+				score += 2.4;
+			} else if (distance === 2) {
+				score += 1.1;
+			}
+		}
+
+		return score;
+	}
+
+	function sequentialBassScore(degrees, progressionState) {
+		var score = 0;
+
+		if (!styleService.prefersSequentialPatterns(progressionState) || !degrees || degrees.length < 3) {
+			return 0;
+		}
+
+		for (var i = 2; i < degrees.length; i++) {
+			var first = circularDegreeDistance(degreeIndex(degrees[i - 2]), degreeIndex(degrees[i - 1]));
+			var second = circularDegreeDistance(degreeIndex(degrees[i - 1]), degreeIndex(degrees[i]));
+
+			if ((first === 3 && second === 1) || (first === 1 && second === 3) || (first === 4 && second === 3)) {
+				score += 2.8;
+			}
+		}
+
+		return score;
+	}
+
+	function circularDegreeDistance(first, second) {
+		var distance = Math.abs((Number(first) || 0) % 7 - (Number(second) || 0) % 7);
+
+		return Math.min(distance, 7 - distance);
+	}
+
+	function degreeIndex(degree) {
+		if (degree && typeof degree === 'object') {
+			return Number(degree.index) || 0;
+		}
+
+		return Number(degree) || 0;
+	}
+
 	function numberOrDefault(value, fallback) {
 		var number = Number(value);
 
@@ -90,10 +154,16 @@
 		return String(articulation || '').indexOf('arpeggio') === 0;
 	}
 
+	function matchesStyle(pattern, progressionState) {
+		return !pattern.styles || pattern.styles.indexOf(styleService.normalize(progressionState)) > -1;
+	}
+
 	global.CodaProgressionPatternWeight = {
 		adjustedPatternWeight: adjustedPatternWeight,
 		affinityScore: affinityScore,
 		commonToneDegreeScore: commonToneDegreeScore,
+		degreeIndex: degreeIndex,
+		matchesStyle: matchesStyle,
 		sensitiveDegreeFactor: sensitiveDegreeFactor
 	};
 })(window);

@@ -522,7 +522,7 @@ assert.deepEqual(global.CodaProgressionPreferences.normalizeControls({
 	intensity: 80,
 	meter: '4/4',
 	modalInterchange: 25,
-	style: 'modern',
+	style: 'contemporary',
 	swing: 0,
 	tensions: 35,
 	voicing: 'open',
@@ -888,7 +888,7 @@ const progressionResult = global.CodaProgressionResult.build({
 		harmonicDensity: 0,
 		meter: '4/4',
 		modalInterchange: 25,
-		style: 'modern',
+		style: 'contemporary',
 		tensions: 35,
 		voicing: 'closed',
 		voices: 4

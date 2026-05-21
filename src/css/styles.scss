@@ -1211,12 +1211,61 @@ section#bienvenida .columnata article{
 	font-weight:600;
 }
 
-.progressionControls label{
+.progressionControls fieldset.workbenchPanel > label,
+.progressionExpressiveControls > label,
+.progressionControls .workbenchControl--withAction{
 	display:grid;
 	grid-template-columns:minmax(6.6em, .7fr) minmax(0, 1fr) auto;
 	gap:.55em;
 	align-items:center;
 	font-size:.9em;
+}
+
+.workbenchControlLabel{
+	display:flex;
+	align-items:center;
+	gap:.3em;
+	min-width:0;
+}
+
+.workbenchControl--withAction .workbenchControlLabel{
+	gap:.12em;
+}
+
+.workbenchControlText{
+	display:inline;
+	font-size:1em;
+	font-weight:600;
+	font-family:inherit;
+	color:inherit;
+	line-height:inherit;
+}
+
+.workbenchHelpButton{
+	display:inline-grid;
+	place-items:center;
+	flex:0 0 auto;
+	width:1.15em;
+	height:1.15em;
+	border:0;
+	border-radius:0;
+	background:transparent;
+	color:$basic_front_color;
+	padding:0;
+	cursor:pointer;
+	line-height:1;
+}
+
+.workbenchHelpButton:hover,
+.workbenchHelpButton:focus{
+	color:$corporative_complementarybright_color;
+	outline:none;
+}
+
+.workbenchHelpButton .material-icons{
+	font-size:1.15em;
+	line-height:1;
+	pointer-events:none;
 }
 
 .progressionExpressiveControls[hidden]{
@@ -2312,6 +2361,21 @@ body.hasOpenDialog{
 	color:$basic_front_color;
 }
 
+.progressionStyleDialog .dialogoNovedades__content dl{
+	margin:.65em 0 1.45em 0;
+}
+
+.progressionStyleDialog .dialogoNovedades__content dt{
+	font-size:1em;
+	line-height:1.45;
+}
+
+.progressionStyleDialog .dialogoNovedades__content dd{
+	font-size:1em;
+	line-height:1.45;
+	margin:0 0 .65em 1em;
+}
+
 .dialogoNovedades__content::-webkit-scrollbar{
 	width:12px;
 }
@@ -2382,6 +2446,10 @@ body[data-theme="day"] .loopControl input{
 }
 
 body[data-theme="day"] .workbenchControlHeader{
+	color:#1f2528;
+}
+
+body[data-theme="day"] .workbenchHelpButton{
 	color:#1f2528;
 }
 
@@ -2796,7 +2864,9 @@ footer{
 		justify-content:center;
 	}
 
-	.progressionControls label{
+	.progressionControls fieldset.workbenchPanel > label,
+	.progressionExpressiveControls > label,
+	.progressionControls .workbenchControl--withAction{
 		grid-template-columns:1fr;
 	}
 }

@@ -14,7 +14,7 @@
 			return 'cadential64';
 		}
 
-		if (styleService.isModern(progressionState)) {
+		if (styleService.avoidsStrongDominantResolution(progressionState)) {
 			return modernFinalCadence(pattern, rng);
 		}
 
@@ -40,19 +40,20 @@
 
 	function cadentialSixFourProbability(pattern, progressionState) {
 		var counterpoint = numberOrDefault(progressionState && progressionState.counterpoint, 0);
-		var probability = styleService.isClassic(progressionState) ? 0.12 : 0.025;
+		var usesCadentialSixFour = styleService.usesCadentialSixFour(progressionState);
+		var probability = usesCadentialSixFour ? 0.12 : 0.025;
 
 		if (pattern && pattern.cadence && !isAuthenticCadence(pattern.cadence)) {
 			return 0;
 		}
 
-		probability += counterpoint / (styleService.isClassic(progressionState) ? 260 : 780);
+		probability += counterpoint / (usesCadentialSixFour ? 260 : 780);
 
 		if (pattern && isAuthenticCadence(pattern.cadence)) {
-			probability += styleService.isClassic(progressionState) ? 0.1 : 0.025;
+			probability += usesCadentialSixFour ? 0.1 : 0.025;
 		}
 
-		return Math.min(styleService.isClassic(progressionState) ? 0.58 : 0.18, probability);
+		return Math.min(usesCadentialSixFour ? 0.58 : 0.18, probability);
 	}
 
 	function modernFinalCadence(pattern, rng) {

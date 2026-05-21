@@ -36,7 +36,7 @@ assert.deepEqual(progressionState.defaults, {
 	intensity: 80,
 	meter: '4/4',
 	modalInterchange: 25,
-	style: 'modern',
+	style: 'contemporary',
 	swing: 0,
 	tensions: 35,
 	voicing: 'closed',
@@ -108,7 +108,7 @@ assert.deepEqual(progressionState.normalize({
 	intensity: 127,
 	meter: '4/4',
 	modalInterchange: 25,
-	style: 'modern',
+	style: 'contemporary',
 	swing: 75,
 	tensions: 100,
 	voicing: 'closed',
@@ -134,12 +134,16 @@ assert.deepEqual(state.get(), {
 	intensity: 80,
 	meter: '3/4',
 	modalInterchange: 25,
-	style: 'modern',
+	style: 'contemporary',
 	swing: 0,
 	tensions: 35,
 	voicing: 'closed',
 	voices: 4
 });
+
+assert.equal(progressionState.normalize({ style: 'modern' }).style, 'contemporary');
+assert.equal(progressionState.normalize({ style: 'renaissance' }).style, 'renaissance');
+assert.equal(progressionState.allowedStyles.indexOf('baroque') > -1, true);
 
 state.set({
 	articulation: 'missing',

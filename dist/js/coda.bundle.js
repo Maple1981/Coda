@@ -408,7 +408,7 @@
 
 /* Source: js/data/progression-rules-data.js */
 // Reglas iniciales para generar progresiones semialeatorias.
-// Derivadas de docs/teoria-md/12-progresiones.md, 13-cadencias.md,
+// Derivadas de docs/theory/12-progresiones.md, 13-cadencias.md,
 // 14-contrapunto.md y 20-forma.md.
 (function (global) {
 	'use strict';
@@ -503,6 +503,40 @@
 				modalColor: 18,
 				tensionAffinity: 55,
 				weight: 16
+			},
+			{
+				cadence: 'half',
+				counterpoint: 88,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					4
+				],
+				form: 'partimento-rule-octave',
+				id: 'baroque-rule-octave-half',
+				modes: ['major', 'minor'],
+				modalColor: 14,
+				styles: ['baroque'],
+				tensionAffinity: 52,
+				weight: 18
+			},
+			{
+				cadence: 'half',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 6 },
+					{ forceInversionIndex: 1, index: 5 },
+					4
+				],
+				form: 'partimento-suspension',
+				id: 'baroque-descending-76-half',
+				modes: ['major'],
+				modalColor: 18,
+				styles: ['baroque'],
+				tensionAffinity: 62,
+				weight: 14
 			},
 			{
 				cadence: 'half',
@@ -617,6 +651,35 @@
 			},
 			{
 				cadence: 'authentic',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					0
+				],
+				form: 'partimento-rule-octave',
+				id: 'baroque-rule-octave-authentic',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 58,
+				weight: 18
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 92,
+				degrees: [5, 1, 4, 0],
+				form: 'circle-fragment',
+				id: 'baroque-circle-fragment-authentic',
+				modes: ['major', 'minor'],
+				modalColor: 14,
+				styles: ['baroque'],
+				tensionAffinity: 68,
+				weight: 17
+			},
+			{
+				cadence: 'authentic',
 				counterpoint: 86,
 				degrees: [5, 1, 4, 0],
 				id: 'vi-ii-V-I',
@@ -727,6 +790,39 @@
 				weight: 9
 			},
 			{
+				cadence: 'half',
+				counterpoint: 88,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					3,
+					{ forceInversionIndex: 0, index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					{ forceInversionIndex: 1, index: 4 },
+					4
+				],
+				form: 'partimento-rule-octave',
+				id: 'baroque-rule-octave',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 55,
+				weight: 13
+			},
+			{
+				cadence: 'half',
+				counterpoint: 86,
+				degrees: [0, 4, 5, 2, 3, 0, 3, 4],
+				form: 'romanesca',
+				id: 'baroque-romanesca',
+				modes: ['major', 'minor'],
+				modalColor: 20,
+				styles: ['baroque'],
+				tensionAffinity: 58,
+				weight: 12
+			},
+			{
 				cadence: 'authentic',
 				counterpoint: 84,
 				degrees: [0, 5, 1, 4, 0, 3, 4, 0],
@@ -791,6 +887,18 @@
 				modalColor: 25,
 				tensionAffinity: 70,
 				weight: 11
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 90,
+				degrees: [0, 3, 6, 2, 5, 1, 4, 0],
+				form: 'circle-of-fifths',
+				id: 'circle-fifths-major',
+				modes: ['major'],
+				modalColor: 18,
+				styles: ['baroque', 'romantic'],
+				tensionAffinity: 72,
+				weight: 10
 			}
 		]
 	};
@@ -1561,7 +1669,7 @@
 			'progression.help.intensity': 'Define la intensidad MIDI base de la preescucha y la exportación, entre 1 y 127.',
 			'progression.help.meter': 'Organización rítmica de cada compás.',
 			'progression.help.modalInterchange': 'Controla la frecuencia de acordes préstamo por intercambio modal de escalas, tonalidades o modos relacionados.',
-			'progression.help.style': 'El estilo moderno evita cadencias auténticas; el clásico favorece su aparición al final de bloques de secuencia. El estilo clásico también procura preparar y resolver las disonancias, incluyendo las séptimas.',
+			'progression.help.style': 'Selecciona un marco histórico de reglas. Todos comparten movimiento parsimonioso; los estilos funcionales refuerzan la relación tónica-dominante, y el contemporáneo evita la resolución fuerte de Dominante.',
 			'progression.help.swing': 'Retrasa levemente subdivisiones débiles cuando el patrón rítmico lo permite.',
 			'progression.help.tensions': 'Controla suspensiones sus2/sus4 y tensiones disponibles de novena, oncena o trecena.',
 			'progression.help.voicing': 'En disposición cerrada, las voces superiores están lo más juntas posible, sin poder insertar otra nota del acorde entre ellas. En disposición abierta, entre voces superiores podría insertarse otra nota del acorde.',
@@ -1612,8 +1720,32 @@
 			'progression.sectionC': 'Sección C',
 			'progression.sectionNavigator': 'Navegador de secciones',
 			'progression.style': 'Estilo',
+			'progression.style.baroque': 'Barroco',
 			'progression.style.classic': 'Clásico',
-			'progression.style.modern': 'Moderno',
+			'progression.style.contemporary': 'Contemporáneo',
+			'progression.style.impressionist': 'Impresionista',
+			'progression.style.modern': 'Contemporáneo',
+			'progression.style.renaissance': 'Renacimiento',
+			'progression.style.romantic': 'Romántico',
+			'progression.styleDialog.baroque.body': 'Contrapunto instrumental armónico. Toma como referencia práctica a Bach: bajo direccional, secuencias, dominantes y disonancias preparadas dentro de una textura más activa.',
+			'progression.styleDialog.baroque.title': 'Barroco',
+			'progression.styleDialog.classic.body': 'Marco tónica-dominante clásico. Favorece cadencias auténticas, 6/4 cadenciales y preparación y resolución de disonancias, incluyendo séptimas.',
+			'progression.styleDialog.classic.title': 'Clásico',
+			'progression.styleDialog.close': 'Cerrar ayuda de estilos',
+			'progression.styleDialog.contemporary.body': 'Continuación moderna del motor anterior. Mantiene la conducción parsimoniosa, pero evita la resolución fuerte de Dominante y prefiere cierres más abiertos, plagales, semicadenciales o deceptivos.',
+			'progression.styleDialog.contemporary.title': 'Contemporáneo',
+			'progression.styleDialog.general.body': 'Es una capa común a todos los estilos: intenta mover las voces con economía, evitar encadenamientos rígidos, controlar paralelismos y mantener la progresión centrada en un registro musical útil.',
+			'progression.styleDialog.general.title': 'Capa general: movimiento parsimonioso',
+			'progression.styleDialog.impressionist.body': 'Giro hacia la disolución funcional. De momento suaviza la atracción dominante y deja preparado el espacio para color modal, acordes paralelos, planing y ambigüedad tonal.',
+			'progression.styleDialog.impressionist.title': 'Impresionista',
+			'progression.styleDialog.intro': 'Los estilos se ordenan como módulos históricos. Cada etapa añade hábitos propios sobre una base común, aunque algunos perfiles todavía son una preparación arquitectónica para reglas más finas.',
+			'progression.styleDialog.open': 'Abrir ayuda de estilos',
+			'progression.styleDialog.references': 'Referencias de partida: Palestrina, Tallis y Du Fay para el contrapunto vocal modal; Bach para el contrapunto instrumental barroco; el marco tónica-dominante clásico; la expansión funcional romántica; y el giro impresionista hacia color, modalidad y ambigüedad.',
+			'progression.styleDialog.renaissance.body': 'Contrapunto vocal modal. Prioriza independencia de líneas, preparación de disonancias y cadencias menos dependientes del Dominante funcional. Es una base aún inicial dentro del generador.',
+			'progression.styleDialog.renaissance.title': 'Renacimiento',
+			'progression.styleDialog.romantic.body': 'Marco funcional extendido. Hereda la lógica clásica, pero acepta más cromatismo, intercambio modal, dominantes y tensiones que empujan hacia la expansión y la disolución de la tonalidad estricta.',
+			'progression.styleDialog.romantic.title': 'Romántico',
+			'progression.styleDialog.title': 'Estilos de progresión',
 			'progression.swing': 'Swing',
 			'progression.subtitle': 'Constructor de progresiones',
 			'progression.stop': 'Detener',
@@ -1814,7 +1946,7 @@
 			'progression.help.intensity': 'Sets the base MIDI intensity for preview and export, from 1 to 127.',
 			'progression.help.meter': 'Rhythmic organization of each bar.',
 			'progression.help.modalInterchange': 'Controls how often borrowed chords appear through modal interchange from related scales, keys or modes.',
-			'progression.help.style': 'Modern style avoids authentic cadences; classical style favors them at the end of sequence blocks. Classical style also tries to prepare and resolve dissonances, including sevenths.',
+			'progression.help.style': 'Selects a historical rule framework. All styles share parsimonious motion; functional styles reinforce tonic-dominant motion, and contemporary style avoids strong Dominant resolution.',
 			'progression.help.swing': 'Slightly delays weak subdivisions when the rhythmic pattern allows it.',
 			'progression.help.tensions': 'Controls sus2/sus4 suspensions and available ninth, eleventh or thirteenth tensions.',
 			'progression.help.voicing': 'In closed voicing, the upper voices are as close together as possible, with no other chord tone fitting between them. In open voicing, another chord tone could fit between upper voices.',
@@ -1865,8 +1997,32 @@
 			'progression.sectionC': 'Section C',
 			'progression.sectionNavigator': 'Section navigator',
 			'progression.style': 'Style',
+			'progression.style.baroque': 'Baroque',
 			'progression.style.classic': 'Classical',
-			'progression.style.modern': 'Modern',
+			'progression.style.contemporary': 'Contemporary',
+			'progression.style.impressionist': 'Impressionist',
+			'progression.style.modern': 'Contemporary',
+			'progression.style.renaissance': 'Renaissance',
+			'progression.style.romantic': 'Romantic',
+			'progression.styleDialog.baroque.body': 'Harmonic instrumental counterpoint. Bach is the practical reference: directed bass, sequences, dominants, and prepared dissonances in a more active texture.',
+			'progression.styleDialog.baroque.title': 'Baroque',
+			'progression.styleDialog.classic.body': 'Classical tonic-dominant framework. It favors authentic cadences, cadential 6/4 sonorities, and prepared/resolved dissonances, including sevenths.',
+			'progression.styleDialog.classic.title': 'Classical',
+			'progression.styleDialog.close': 'Close style help',
+			'progression.styleDialog.contemporary.body': 'Modern continuation of the previous engine. It keeps parsimonious voice leading, but avoids strong Dominant resolution and prefers more open, plagal, half, or deceptive endings.',
+			'progression.styleDialog.contemporary.title': 'Contemporary',
+			'progression.styleDialog.general.body': 'This layer is common to every style: it tries to move voices economically, avoid rigid chains, control parallels, and keep progressions centered in a useful musical register.',
+			'progression.styleDialog.general.title': 'General layer: parsimonious motion',
+			'progression.styleDialog.impressionist.body': 'The turn toward functional dissolution. For now it softens dominant pull and reserves space for modal color, parallel chords, planing, and tonal ambiguity.',
+			'progression.styleDialog.impressionist.title': 'Impressionist',
+			'progression.styleDialog.intro': 'Styles are ordered as historical modules. Each stage adds its own habits over a shared base, although some profiles are still architectural preparation for finer rules.',
+			'progression.styleDialog.open': 'Open style help',
+			'progression.styleDialog.references': 'Starting references: Palestrina, Tallis, and Du Fay for modal vocal counterpoint; Bach for Baroque instrumental counterpoint; the Classical tonic-dominant framework; Romantic functional expansion; and the Impressionist turn toward color, modality, and ambiguity.',
+			'progression.styleDialog.renaissance.body': 'Modal vocal counterpoint. It prioritizes line independence, prepared dissonance, and cadences less dependent on functional Dominant motion. This is still an initial layer inside the generator.',
+			'progression.styleDialog.renaissance.title': 'Renaissance',
+			'progression.styleDialog.romantic.body': 'Extended functional framework. It inherits Classical logic, but accepts more chromaticism, modal interchange, dominants, and tensions that push toward the expansion and dissolution of strict tonality.',
+			'progression.styleDialog.romantic.title': 'Romantic',
+			'progression.styleDialog.title': 'Progression styles',
 			'progression.swing': 'Swing',
 			'progression.subtitle': 'Progression builder',
 			'progression.stop': 'Stop',
@@ -2226,7 +2382,7 @@
 			progressionIntensity: integerRange(1, 127),
 			progressionMeter: allowList(['4/4', '3/4', '5/4', '7/4', '11/4', '5/8', '6/8', '7/8', '9/8', '12/8']),
 			progressionModalInterchange: integerRange(0, 100),
-			progressionStyle: allowList(['modern', 'classic']),
+			progressionStyle: allowList(['modern', 'renaissance', 'baroque', 'classic', 'romantic', 'impressionist', 'contemporary']),
 			progressionSwing: integerRange(0, 75),
 			progressionTensions: integerRange(0, 100),
 			progressionVoicing: allowList(['closed', 'open']),
@@ -2796,26 +2952,225 @@
 ;
 
 /* Source: js/services/progression-style-service.js */
-// Normalized style checks for progression generation rules.
+// Historical style profiles and normalized rule checks for progression generation.
 (function (global) {
 	'use strict';
 
+	var styles = ['renaissance', 'baroque', 'classic', 'romantic', 'impressionist', 'contemporary'];
+	var aliases = {
+		classical: 'classic',
+		modern: 'contemporary'
+	};
+	var profiles = {
+		renaissance: {
+			avoidsStrongDominantResolution: true,
+			harmonicDensityBias: -0.04,
+			minimizesDiminishedHarmony: true,
+			patternAffinities: {
+				'borrowed-plagal': 1.2,
+				'plagal-return': 1.3,
+				'tonic-substitution': 1.15
+			},
+			prefersStepwiseBass: true,
+			seventhProbabilityScale: 0.48,
+			requiresPreparedDissonance: true,
+			usesCadentialSixFour: false,
+			usesFunctionalCadence: false,
+			usesFunctionalMinorDominant: false
+		},
+		baroque: {
+			avoidsStrongDominantResolution: false,
+			harmonicDensityBias: 0.08,
+			minimizesDiminishedHarmony: false,
+			patternAffinities: {
+				'circle-fragment': 1.3,
+				'circle-of-fifths': 1.55,
+				'partimento-36': 1.45,
+				'partimento-suspension': 1.4,
+				'partimento-rule-octave': 1.5,
+				'romanesca': 1.35,
+				'subdominant-dominant': 1.18
+			},
+			prefersPartimentoBass: true,
+			prefersSequentialPatterns: true,
+			prefersStepwiseBass: true,
+			seventhProbabilityScale: 1.16,
+			requiresPreparedDissonance: true,
+			usesCadentialSixFour: true,
+			usesFunctionalCadence: true,
+			usesFunctionalMinorDominant: true
+		},
+		classic: {
+			avoidsStrongDominantResolution: false,
+			harmonicDensityBias: 0.02,
+			minimizesDiminishedHarmony: false,
+			patternAffinities: {
+				'period': 1.28,
+				'sentence': 1.18,
+				'subdominant-dominant': 1.15
+			},
+			prefersPartimentoBass: false,
+			prefersSequentialPatterns: false,
+			prefersStepwiseBass: false,
+			seventhProbabilityScale: 0.92,
+			requiresPreparedDissonance: true,
+			usesCadentialSixFour: true,
+			usesFunctionalCadence: true,
+			usesFunctionalMinorDominant: true
+		},
+		romantic: {
+			avoidsStrongDominantResolution: false,
+			harmonicDensityBias: 0.08,
+			minimizesDiminishedHarmony: false,
+			patternAffinities: {
+				'circle-of-fifths': 1.18,
+				'deceptive-cadence': 1.2,
+				'minor-cadential': 1.22,
+				'sentence': 1.16
+			},
+			prefersPartimentoBass: false,
+			prefersSequentialPatterns: true,
+			prefersStepwiseBass: false,
+			seventhProbabilityScale: 1.22,
+			requiresPreparedDissonance: true,
+			usesCadentialSixFour: true,
+			usesFunctionalCadence: true,
+			usesFunctionalMinorDominant: true
+		},
+		impressionist: {
+			avoidsStrongDominantResolution: true,
+			harmonicDensityBias: 0.03,
+			minimizesDiminishedHarmony: true,
+			patternAffinities: {
+				'borrowed-plagal': 1.28,
+				'plagal-return': 1.16,
+				'tonic-substitution': 1.18
+			},
+			prefersPartimentoBass: false,
+			prefersSequentialPatterns: false,
+			prefersStepwiseBass: false,
+			seventhProbabilityScale: 0.82,
+			requiresPreparedDissonance: false,
+			usesCadentialSixFour: false,
+			usesFunctionalCadence: false,
+			usesFunctionalMinorDominant: false
+		},
+		contemporary: {
+			avoidsStrongDominantResolution: true,
+			harmonicDensityBias: 0,
+			minimizesDiminishedHarmony: true,
+			patternAffinities: {
+				'borrowed-plagal': 1.18,
+				'deceptive-cadence': 1.16,
+				'plagal-return': 1.14,
+				'tonic-substitution': 1.2
+			},
+			prefersPartimentoBass: false,
+			prefersSequentialPatterns: false,
+			prefersStepwiseBass: false,
+			seventhProbabilityScale: 0.78,
+			requiresPreparedDissonance: false,
+			usesCadentialSixFour: false,
+			usesFunctionalCadence: false,
+			usesFunctionalMinorDominant: false
+		}
+	};
+
 	function normalize(progressionState) {
-		return progressionState && progressionState.style === 'classic' ? 'classic' : 'modern';
+		var value = typeof progressionState === 'string' ? progressionState : progressionState && progressionState.style;
+		var normalized = aliases[value] || value;
+
+		return styles.indexOf(normalized) > -1 ? normalized : 'contemporary';
 	}
 
 	function isModern(progressionState) {
-		return normalize(progressionState) === 'modern';
+		return avoidsStrongDominantResolution(progressionState);
 	}
 
 	function isClassic(progressionState) {
 		return normalize(progressionState) === 'classic';
 	}
 
+	function isAtLeast(progressionState, style) {
+		return styles.indexOf(normalize(progressionState)) >= styles.indexOf(normalize(style));
+	}
+
+	function profile(progressionState) {
+		return profiles[normalize(progressionState)] || profiles.contemporary;
+	}
+
+	function avoidsStrongDominantResolution(progressionState) {
+		return profile(progressionState).avoidsStrongDominantResolution === true;
+	}
+
+	function requiresPreparedDissonance(progressionState) {
+		return profile(progressionState).requiresPreparedDissonance === true;
+	}
+
+	function usesCadentialSixFour(progressionState) {
+		return profile(progressionState).usesCadentialSixFour === true;
+	}
+
+	function usesFunctionalCadence(progressionState) {
+		return profile(progressionState).usesFunctionalCadence === true;
+	}
+
+	function usesFunctionalMinorDominant(progressionState) {
+		return profile(progressionState).usesFunctionalMinorDominant === true;
+	}
+
+	function harmonicDensityBias(progressionState) {
+		return Number(profile(progressionState).harmonicDensityBias) || 0;
+	}
+
+	function minimizesDiminishedHarmony(progressionState) {
+		return profile(progressionState).minimizesDiminishedHarmony === true;
+	}
+
+	function patternAffinity(progressionState, pattern) {
+		var affinities = profile(progressionState).patternAffinities || {};
+		var form = pattern && pattern.form;
+
+		return form && affinities[form] ? Number(affinities[form]) || 1 : 1;
+	}
+
+	function prefersPartimentoBass(progressionState) {
+		return profile(progressionState).prefersPartimentoBass === true;
+	}
+
+	function prefersSequentialPatterns(progressionState) {
+		return profile(progressionState).prefersSequentialPatterns === true;
+	}
+
+	function prefersStepwiseBass(progressionState) {
+		return profile(progressionState).prefersStepwiseBass === true;
+	}
+
+	function seventhProbabilityScale(progressionState) {
+		var scale = Number(profile(progressionState).seventhProbabilityScale);
+
+		return isFinite(scale) && scale > 0 ? scale : 1;
+	}
+
 	global.CodaProgressionStyle = {
+		avoidsStrongDominantResolution: avoidsStrongDominantResolution,
+		harmonicDensityBias: harmonicDensityBias,
 		isClassic: isClassic,
+		isAtLeast: isAtLeast,
 		isModern: isModern,
-		normalize: normalize
+		minimizesDiminishedHarmony: minimizesDiminishedHarmony,
+		normalize: normalize,
+		patternAffinity: patternAffinity,
+		prefersPartimentoBass: prefersPartimentoBass,
+		prefersSequentialPatterns: prefersSequentialPatterns,
+		prefersStepwiseBass: prefersStepwiseBass,
+		profile: profile,
+		requiresPreparedDissonance: requiresPreparedDissonance,
+		seventhProbabilityScale: seventhProbabilityScale,
+		styles: styles.slice(),
+		usesCadentialSixFour: usesCadentialSixFour,
+		usesFunctionalCadence: usesFunctionalCadence,
+		usesFunctionalMinorDominant: usesFunctionalMinorDominant
 	};
 })(window);
 
@@ -2844,7 +3199,7 @@
 			intensity: numberOrDefault(progressionState.intensity, 80),
 			meter: progressionState.meter || '4/4',
 			modalInterchange: numberOrDefault(progressionState.modalInterchange, 25),
-			style: styleService.normalize(progressionState),
+			style: styleService.normalize(progressionState && progressionState.style),
 			swing: numberOrDefault(progressionState.swing, 0),
 			tensions: numberOrDefault(progressionState.tensions, 35),
 			voicing: progressionState.voicing === 'open' ? 'open' : 'closed',
@@ -3161,7 +3516,9 @@
 	var styleService = global.CodaProgressionStyle;
 
 	function isClassic(progressionState) {
-		return styleService && styleService.isClassic ? styleService.isClassic(progressionState) : progressionState && progressionState.style === 'classic';
+		return styleService && styleService.requiresPreparedDissonance ?
+			styleService.requiresPreparedDissonance(progressionState) :
+			progressionState && progressionState.style === 'classic';
 	}
 
 	function allowsSuspension(context, baseNotes, suspensionNote) {
@@ -6387,6 +6744,7 @@
 	'use strict';
 
 	var voicingService = global.CodaProgressionVoicing;
+	var styleService = global.CodaProgressionStyle;
 
 	function shouldUseSeventh(context) {
 		var progressionState = context.progressionState;
@@ -6423,6 +6781,7 @@
 		if (seventhImprovesMovement(context)) {
 			probability += 0.22;
 		}
+		probability *= styleService.seventhProbabilityScale(progressionState);
 
 		return rng() < Math.min(0.72, probability);
 	}
@@ -6636,6 +6995,8 @@
 (function (global) {
 	'use strict';
 
+	var styleService = global.CodaProgressionStyle;
+
 	var additionalChordService = global.CodaProgressionAdditionalChord;
 	var chordPlanService = global.CodaProgressionChordPlan;
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
@@ -6843,9 +7204,10 @@
 	function writingDensityBoost(progressionState) {
 		var boost = 0;
 
-		if (progressionState && progressionState.style === 'classic') {
+		if (styleService.usesFunctionalCadence(progressionState)) {
 			boost += 0.05;
 		}
+		boost += styleService.harmonicDensityBias(progressionState);
 
 		boost += normalizedControl(progressionState && progressionState.counterpoint) * 0.08;
 		boost += normalizedControl(progressionState && progressionState.tensions) * 0.05;
@@ -7581,6 +7943,7 @@
 	'use strict';
 
 	var OCTAVE = 12;
+	var styleService = global.CodaProgressionStyle;
 
 	function shouldUseChromaticCadence(pattern, progressionState, rng) {
 		var probability = chromaticCadenceProbability(pattern, progressionState);
@@ -7607,7 +7970,7 @@
 		probability = (chromaticism - 25) / 105;
 		probability += counterpoint / 480;
 
-		if (progressionState && progressionState.style === 'classic') {
+		if (styleService.usesFunctionalCadence(progressionState)) {
 			probability += 0.1;
 		}
 
@@ -7636,7 +7999,7 @@
 
 	function subFiveCadenceChance(progressionState) {
 		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
-		var styleBonus = progressionState && progressionState.style === 'modern' ? 0.04 : 0;
+		var styleBonus = styleService.avoidsStrongDominantResolution(progressionState) ? 0.04 : 0;
 
 		if (chromaticism < 75) {
 			return 0;
@@ -7960,7 +8323,7 @@
 		var value = typeof rng === 'function' ? rng() : Math.random();
 		var probability = 0.18 + counterpoint / 360 + chromaticism / 500;
 
-		if (progressionState && progressionState.style === 'classic') {
+		if (styleService.usesFunctionalCadence(progressionState)) {
 			probability += 0.12;
 		}
 
@@ -8143,7 +8506,7 @@
 			return 'cadential64';
 		}
 
-		if (styleService.isModern(progressionState)) {
+		if (styleService.avoidsStrongDominantResolution(progressionState)) {
 			return modernFinalCadence(pattern, rng);
 		}
 
@@ -8169,19 +8532,20 @@
 
 	function cadentialSixFourProbability(pattern, progressionState) {
 		var counterpoint = numberOrDefault(progressionState && progressionState.counterpoint, 0);
-		var probability = styleService.isClassic(progressionState) ? 0.12 : 0.025;
+		var usesCadentialSixFour = styleService.usesCadentialSixFour(progressionState);
+		var probability = usesCadentialSixFour ? 0.12 : 0.025;
 
 		if (pattern && pattern.cadence && !isAuthenticCadence(pattern.cadence)) {
 			return 0;
 		}
 
-		probability += counterpoint / (styleService.isClassic(progressionState) ? 260 : 780);
+		probability += counterpoint / (usesCadentialSixFour ? 260 : 780);
 
 		if (pattern && isAuthenticCadence(pattern.cadence)) {
-			probability += styleService.isClassic(progressionState) ? 0.1 : 0.025;
+			probability += usesCadentialSixFour ? 0.1 : 0.025;
 		}
 
-		return Math.min(styleService.isClassic(progressionState) ? 0.58 : 0.18, probability);
+		return Math.min(usesCadentialSixFour ? 0.58 : 0.18, probability);
 	}
 
 	function modernFinalCadence(pattern, rng) {
@@ -8383,7 +8747,11 @@
 	function adjustedPatternWeight(pattern, progressionState, mode) {
 		var weight = pattern.weight || 1;
 
-		if (styleService.isModern(progressionState) && cadencePlanner.isAuthenticCadence(pattern.cadence)) {
+		if (!matchesStyle(pattern, progressionState)) {
+			return 0;
+		}
+
+		if (styleService.avoidsStrongDominantResolution(progressionState) && cadencePlanner.isAuthenticCadence(pattern.cadence)) {
 			return 0;
 		}
 
@@ -8391,10 +8759,17 @@
 			return 0;
 		}
 
+		if (styleService.usesFunctionalCadence(progressionState) && !cadencePlanner.isAuthenticCadence(pattern.cadence)) {
+			weight *= 0.45;
+		}
+
+		weight *= styleService.patternAffinity(progressionState, pattern);
 		weight += affinityScore(progressionState.counterpoint, pattern.counterpoint);
 		weight += affinityScore(progressionState.modalInterchange, pattern.modalColor);
 		weight += affinityScore(progressionState.tensions, pattern.tensionAffinity);
 		weight += commonToneDegreeScore(pattern.degrees, progressionState);
+		weight += stepwiseBassScore(pattern.degrees, progressionState);
+		weight += sequentialBassScore(pattern.degrees, progressionState);
 		weight *= sensitiveDegreeFactor(pattern.degrees, mode, progressionState);
 
 		if (isArpeggioArticulation(progressionState.articulation) && pattern.form === 'circle-of-fifths') {
@@ -8416,12 +8791,12 @@
 		var sensitiveDegree = mode === 'major' ? 6 : 1;
 		var factor = 1;
 
-		if (!styleService.isModern(progressionState) || !degrees) {
+		if (!styleService.minimizesDiminishedHarmony(progressionState) || !degrees) {
 			return factor;
 		}
 
 		for (var i = 0; i < degrees.length; i++) {
-			if (degrees[i] === sensitiveDegree) {
+			if (degreeIndex(degrees[i]) === sensitiveDegree) {
 				factor *= 0.32;
 			}
 		}
@@ -8438,7 +8813,7 @@
 		}
 
 		for (var i = 1; i < degrees.length; i++) {
-			var distance = Math.abs((degrees[i] % 7) - (degrees[i - 1] % 7));
+			var distance = Math.abs((degreeIndex(degrees[i]) % 7) - (degreeIndex(degrees[i - 1]) % 7));
 			var circularDistance = Math.min(distance, 7 - distance);
 
 			if (circularDistance === 0) {
@@ -8455,6 +8830,59 @@
 		return score * affinity;
 	}
 
+	function stepwiseBassScore(degrees, progressionState) {
+		var score = 0;
+
+		if (!styleService.prefersStepwiseBass(progressionState) || !degrees || degrees.length < 2) {
+			return 0;
+		}
+
+		for (var i = 1; i < degrees.length; i++) {
+			var distance = circularDegreeDistance(degreeIndex(degrees[i - 1]), degreeIndex(degrees[i]));
+
+			if (distance === 1) {
+				score += 2.4;
+			} else if (distance === 2) {
+				score += 1.1;
+			}
+		}
+
+		return score;
+	}
+
+	function sequentialBassScore(degrees, progressionState) {
+		var score = 0;
+
+		if (!styleService.prefersSequentialPatterns(progressionState) || !degrees || degrees.length < 3) {
+			return 0;
+		}
+
+		for (var i = 2; i < degrees.length; i++) {
+			var first = circularDegreeDistance(degreeIndex(degrees[i - 2]), degreeIndex(degrees[i - 1]));
+			var second = circularDegreeDistance(degreeIndex(degrees[i - 1]), degreeIndex(degrees[i]));
+
+			if ((first === 3 && second === 1) || (first === 1 && second === 3) || (first === 4 && second === 3)) {
+				score += 2.8;
+			}
+		}
+
+		return score;
+	}
+
+	function circularDegreeDistance(first, second) {
+		var distance = Math.abs((Number(first) || 0) % 7 - (Number(second) || 0) % 7);
+
+		return Math.min(distance, 7 - distance);
+	}
+
+	function degreeIndex(degree) {
+		if (degree && typeof degree === 'object') {
+			return Number(degree.index) || 0;
+		}
+
+		return Number(degree) || 0;
+	}
+
 	function numberOrDefault(value, fallback) {
 		var number = Number(value);
 
@@ -8465,10 +8893,16 @@
 		return String(articulation || '').indexOf('arpeggio') === 0;
 	}
 
+	function matchesStyle(pattern, progressionState) {
+		return !pattern.styles || pattern.styles.indexOf(styleService.normalize(progressionState)) > -1;
+	}
+
 	global.CodaProgressionPatternWeight = {
 		adjustedPatternWeight: adjustedPatternWeight,
 		affinityScore: affinityScore,
 		commonToneDegreeScore: commonToneDegreeScore,
+		degreeIndex: degreeIndex,
+		matchesStyle: matchesStyle,
 		sensitiveDegreeFactor: sensitiveDegreeFactor
 	};
 })(window);
@@ -8525,7 +8959,7 @@
 	}
 
 	function fallbackPatternForStyle(progressionState) {
-		if (styleService.isModern(progressionState)) {
+		if (styleService.avoidsStrongDominantResolution(progressionState)) {
 			return {
 				cadence: 'half',
 				counterpoint: 70,
@@ -8577,6 +9011,7 @@
 	var cadencePlanner = global.CodaProgressionCadencePlanner;
 	var patternWeight = global.CodaProgressionPatternWeight;
 	var patternSelector = global.CodaProgressionPatternSelector;
+	var styleService = global.CodaProgressionStyle;
 
 	function choose(options) {
 		var blocks = options.rules && options.rules.phraseBlocks ? options.rules.phraseBlocks : fallbackPhraseBlocks();
@@ -8588,6 +9023,10 @@
 			var weight;
 
 			if (!patternSelector.matchesMode(blocks[i], options.mode) || !cadencePlanner.matchesCadence(blocks[i], options.cadence)) {
+				continue;
+			}
+
+			if (!patternWeight.matchesStyle(blocks[i], options.progressionState)) {
 				continue;
 			}
 
@@ -8635,6 +9074,7 @@
 	function adjustedBlockWeight(block, progressionState, previousBlockId, mode) {
 		var weight = block.weight || 1;
 
+		weight *= styleService.patternAffinity(progressionState, block);
 		weight += patternWeight.affinityScore(progressionState.counterpoint, block.counterpoint);
 		weight += patternWeight.affinityScore(progressionState.modalInterchange, block.modalColor);
 		weight += patternWeight.affinityScore(progressionState.tensions, block.tensionAffinity);
@@ -8654,13 +9094,42 @@
 		var fitted = [];
 
 		for (var i = 0; i < bars; i++) {
-			fitted.push({
-				index: sourceDegrees[i % sourceDegrees.length],
+			var sourceDegree = sourceDegrees[i % sourceDegrees.length];
+			var degree = degreeFromSource(sourceDegree, {
 				source: borrowedIndexes.indexOf(i % sourceDegrees.length) > -1 ? 'parallel' : 'diatonic'
 			});
+
+			fitted.push(degree);
 		}
 
 		return fitted;
+	}
+
+	function degreeFromSource(sourceDegree, defaults) {
+		var result = {};
+		var key;
+
+		defaults = defaults || {};
+		if (sourceDegree && typeof sourceDegree === 'object') {
+			for (key in sourceDegree) {
+				if (Object.prototype.hasOwnProperty.call(sourceDegree, key)) {
+					result[key] = sourceDegree[key];
+				}
+			}
+			if (!result.source) {
+				result.source = defaults.source || 'diatonic';
+			}
+			return result;
+		}
+
+		for (key in defaults) {
+			if (Object.prototype.hasOwnProperty.call(defaults, key)) {
+				result[key] = defaults[key];
+			}
+		}
+		result.index = sourceDegree;
+
+		return result;
 	}
 
 	function fallbackPhraseBlocks() {
@@ -8684,6 +9153,7 @@
 
 	global.CodaProgressionPhraseBlockSelector = {
 		choose: choose,
+		degreeFromSource: degreeFromSource,
 		fallbackPhraseBlocks: fallbackPhraseBlocks,
 		fitBlockToBars: fitBlockToBars
 	};
@@ -9106,7 +9576,7 @@
 		var result = [];
 		var source = harmonicMinorDominantSource(report);
 
-		if (!styleService.isClassic(progressionState) || mode !== 'minor' || !source) {
+		if (!styleService.usesFunctionalMinorDominant(progressionState) || mode !== 'minor' || !source) {
 			return degrees;
 		}
 
@@ -9179,10 +9649,9 @@
 		var borrowedIndexes = pattern.borrowed || [];
 
 		for (var i = 0; i < normalizedBars; i++) {
-			fitted.push({
-				index: sourceDegrees[i % sourceDegrees.length],
+			fitted.push(degreeFromSource(sourceDegrees[i % sourceDegrees.length], {
 				source: borrowedIndexes.indexOf(i % sourceDegrees.length) > -1 ? 'parallel' : 'diatonic'
-			});
+			}));
 		}
 
 		cadencePlanner.forceCadentialEnding(fitted, pattern, cadenceOptions || {});
@@ -9302,6 +9771,16 @@
 		return result;
 	}
 
+	function degreeFromSource(sourceDegree, defaults) {
+		if (phraseBlockSelector && typeof phraseBlockSelector.degreeFromSource === 'function') {
+			return phraseBlockSelector.degreeFromSource(sourceDegree, defaults);
+		}
+
+		return typeof sourceDegree === 'object' ? extendObject(sourceDegree, defaults || {}) : extendObject(defaults || {}, {
+			index: sourceDegree
+		});
+	}
+
 	global.CodaProgressionPlanner = {
 		applyClassicMinorDominants: applyClassicMinorDominants,
 		applyModalInterchangeSources: applyModalInterchangeSources,
@@ -9312,6 +9791,7 @@
 		degreeIndexesForFunction: degreeIndexesForFunction,
 		effectiveEndingCadence: effectiveEndingCadence,
 		fitDegreesToBars: fitDegreesToBars,
+		degreeFromSource: degreeFromSource,
 		harmonicMinorDominantSource: harmonicMinorDominantSource,
 		repetitionChance: repetitionChance,
 		shouldUseClassicMinorDominant: shouldUseClassicMinorDominant,
@@ -17144,7 +17624,8 @@
 			renderTimePanel() +
 			renderWritingPanel() +
 			renderColorPanel() +
-			'</div>';
+			'</div>' +
+			renderStyleDialog();
 	}
 
 	function renderTimePanel() {
@@ -17166,7 +17647,7 @@
 		html += '<legend><span data-i18n="progression.writing"></span></legend>';
 		html += renderControl('progression.voices', '<input id="progressionVoices" type="number" value="4" min="1" max="6" step="1" />', '#progressionVoices', null, 'progression.help.voices');
 		html += renderControl('progression.voicing', '<select id="progressionVoicing"><option value="closed" selected="selected" data-i18n="progression.voicing.closed"></option><option value="open" data-i18n="progression.voicing.open"></option></select>', '#progressionVoicing', null, 'progression.help.voicing');
-		html += renderControl('progression.style', '<select id="progressionStyle"><option value="modern" selected="selected" data-i18n="progression.style.modern"></option><option value="classic" data-i18n="progression.style.classic"></option></select>', '#progressionStyle', null, 'progression.help.style');
+		html += renderControl('progression.style', renderStyleSelect(), '#progressionStyle', null, 'progression.help.style', renderStyleHelpButton());
 		html += renderControl('progression.articulation', renderArticulationSelect(), '#progressionArticulation', null, 'progression.help.articulation');
 		html += '<div class="progressionExpressiveControls" data-articulation-detail hidden>';
 		html += renderKnobControl('progression.intensity', '<input id="progressionIntensity" class="knobControl__input" type="range" value="80" min="1" max="127" step="1" />', '#progressionIntensity', 'progression.help.intensity', '');
@@ -17191,6 +17672,21 @@
 			'<option value="9/8">9/8</option>' +
 			'<option value="12/8">12/8</option>' +
 			'</select>';
+	}
+
+	function renderStyleSelect() {
+		return '<select id="progressionStyle">' +
+			'<option value="renaissance" data-i18n="progression.style.renaissance"></option>' +
+			'<option value="baroque" data-i18n="progression.style.baroque"></option>' +
+			'<option value="classic" data-i18n="progression.style.classic"></option>' +
+			'<option value="romantic" data-i18n="progression.style.romantic"></option>' +
+			'<option value="impressionist" data-i18n="progression.style.impressionist"></option>' +
+			'<option value="contemporary" selected="selected" data-i18n="progression.style.contemporary"></option>' +
+			'</select>';
+	}
+
+	function renderStyleHelpButton() {
+		return '<button id="progressionStyleHelp" class="workbenchHelpButton" type="button" aria-haspopup="dialog" aria-controls="progressionStyleDialog" data-i18n-title="progression.styleDialog.open"><span class="material-icons" aria-hidden="true">help_outline</span></button>';
 	}
 
 	function renderColorPanel() {
@@ -17222,11 +17718,46 @@
 			'</select>';
 	}
 
-	function renderControl(labelKey, controlHtml, targetSelector, fallbackLabel, helpKey) {
+	function renderControl(labelKey, controlHtml, targetSelector, fallbackLabel, helpKey, labelActionHtml) {
 		var labelHtml = labelKey ? '<span data-i18n="' + labelKey + '"></span>' : '<span>' + fallbackLabel + '</span>';
 		var helpAttribute = helpKey ? ' class="workbenchControl" data-help-i18n="' + helpKey + '" title=""' : '';
 
-		return '<label' + helpAttribute + '>' + labelHtml + controlHtml + renderRandomButton(targetSelector) + '</label>';
+		if (labelActionHtml) {
+			return '<div' + helpAttribute.replace('workbenchControl', 'workbenchControl workbenchControl--withAction') + '><span class="workbenchControlLabel"><label class="workbenchControlText" for="' + targetSelector.replace('#', '') + '">' + labelHtml + '</label>' + labelActionHtml + '</span>' + controlHtml + renderRandomButton(targetSelector) + '</div>';
+		}
+
+		return '<label' + helpAttribute + '><span class="workbenchControlLabel">' + labelHtml + (labelActionHtml || '') + '</span>' + controlHtml + renderRandomButton(targetSelector) + '</label>';
+	}
+
+	function renderStyleDialog() {
+		return '<div id="progressionStyleDialog" class="dialogoNovedades progressionStyleDialog" role="dialog" aria-modal="true" aria-labelledby="progressionStyleDialogTitle" hidden>' +
+			'<div class="dialogoNovedades__surface">' +
+			'<div class="dialogoNovedades__titlebar">' +
+			'<h2 class="dialogoNovedades__title" id="progressionStyleDialogTitle" data-i18n="progression.styleDialog.title"></h2>' +
+			'<button class="dialogoNovedades__close" id="progressionStyleDialogClose" type="button" data-i18n-title="progression.styleDialog.close"><span class="material-icons" aria-hidden="true">close</span></button>' +
+			'</div>' +
+			'<div class="dialogoNovedades__content">' +
+			'<p data-i18n="progression.styleDialog.intro"></p>' +
+			'<dl>' +
+			'<dt data-i18n="progression.styleDialog.general.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.general.body"></dd>' +
+			'<dt data-i18n="progression.styleDialog.renaissance.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.renaissance.body"></dd>' +
+			'<dt data-i18n="progression.styleDialog.baroque.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.baroque.body"></dd>' +
+			'<dt data-i18n="progression.styleDialog.classic.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.classic.body"></dd>' +
+			'<dt data-i18n="progression.styleDialog.romantic.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.romantic.body"></dd>' +
+			'<dt data-i18n="progression.styleDialog.impressionist.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.impressionist.body"></dd>' +
+			'<dt data-i18n="progression.styleDialog.contemporary.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.contemporary.body"></dd>' +
+			'</dl>' +
+			'<p data-i18n="progression.styleDialog.references"></p>' +
+			'</div>' +
+			'</div>' +
+			'</div>';
 	}
 
 	function renderKnobControl(labelKey, controlHtml, targetSelector, helpKey, unit) {
@@ -17251,6 +17782,8 @@
 		renderMeterSelect: renderMeterSelect,
 		renderKnobControl: renderKnobControl,
 		renderPanels: renderPanels,
+		renderStyleDialog: renderStyleDialog,
+		renderStyleSelect: renderStyleSelect,
 		renderArticulationSelect: renderArticulationSelect,
 		renderTimePanel: renderTimePanel,
 		renderWritingPanel: renderWritingPanel
@@ -18265,7 +18798,10 @@
 	];
 	var allowedBars = [2, 4, 6, 8, 12, 16, 32];
 	var allowedMeters = ['4/4', '3/4', '5/4', '7/4', '11/4', '5/8', '6/8', '7/8', '9/8', '12/8'];
-	var allowedStyles = ['modern', 'classic'];
+	var allowedStyles = ['renaissance', 'baroque', 'classic', 'romantic', 'impressionist', 'contemporary'];
+	var legacyStyles = {
+		modern: 'contemporary'
+	};
 	var allowedVoicings = ['closed', 'open'];
 	var defaults = {
 		articulation: 'sustain',
@@ -18278,7 +18814,7 @@
 		intensity: 80,
 		meter: '4/4',
 		modalInterchange: 25,
-		style: 'modern',
+		style: 'contemporary',
 		swing: 0,
 		tensions: 35,
 		voicing: 'closed',
@@ -18302,7 +18838,7 @@
 			intensity: clampInteger(values.intensity, 1, 127, fallback.intensity),
 			meter: pick(values.meter, allowedMeters, fallback.meter),
 			modalInterchange: clampInteger(values.modalInterchange, 0, 100, fallback.modalInterchange),
-			style: pick(values.style, allowedStyles, fallback.style),
+			style: pickStyle(values.style, fallback.style),
 			swing: clampInteger(values.swing, 0, 75, fallback.swing),
 			tensions: clampInteger(values.tensions, 0, 100, fallback.tensions),
 			voicing: pick(values.voicing, allowedVoicings, fallback.voicing),
@@ -18334,6 +18870,12 @@
 
 	function pick(value, allowedValues, fallback) {
 		return allowedValues.indexOf(value) > -1 ? value : fallback;
+	}
+
+	function pickStyle(value, fallback) {
+		var normalized = legacyStyles[value] || value;
+
+		return pick(normalized, allowedStyles, fallback);
 	}
 
 	function pickNumber(value, allowedValues, fallback) {
@@ -18601,8 +19143,14 @@
 		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.random"]', 'progression.articulation.arpeggio.random');
 		setText(i18n, 'option[data-i18n="progression.voicing.closed"]', 'progression.voicing.closed');
 		setText(i18n, 'option[data-i18n="progression.voicing.open"]', 'progression.voicing.open');
-		setText(i18n, 'option[data-i18n="progression.style.modern"]', 'progression.style.modern');
+		setText(i18n, 'option[data-i18n="progression.style.renaissance"]', 'progression.style.renaissance');
+		setText(i18n, 'option[data-i18n="progression.style.baroque"]', 'progression.style.baroque');
 		setText(i18n, 'option[data-i18n="progression.style.classic"]', 'progression.style.classic');
+		setText(i18n, 'option[data-i18n="progression.style.romantic"]', 'progression.style.romantic');
+		setText(i18n, 'option[data-i18n="progression.style.impressionist"]', 'progression.style.impressionist');
+		setText(i18n, 'option[data-i18n="progression.style.contemporary"]', 'progression.style.contemporary');
+		setText(i18n, 'option[data-i18n="progression.style.modern"]', 'progression.style.contemporary');
+		applyProgressionStyleDialog(i18n);
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'aria-label', 'circle.open');
 		setAttribute(i18n, '#workbenchContextKeyToggle', 'title', 'circle.open');
@@ -18661,6 +19209,28 @@
 			element.setAttribute('title', text);
 			element.setAttribute('aria-description', text);
 		});
+	}
+
+	function applyProgressionStyleDialog(i18n) {
+		setTitleAndLabel(i18n, '#progressionStyleHelp[data-i18n-title="progression.styleDialog.open"]', 'progression.styleDialog.open');
+		setTitleAndLabel(i18n, '#progressionStyleDialogClose[data-i18n-title="progression.styleDialog.close"]', 'progression.styleDialog.close');
+		setText(i18n, '#progressionStyleDialogTitle', 'progression.styleDialog.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.intro"]', 'progression.styleDialog.intro');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.general.title"]', 'progression.styleDialog.general.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.general.body"]', 'progression.styleDialog.general.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.renaissance.title"]', 'progression.styleDialog.renaissance.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.renaissance.body"]', 'progression.styleDialog.renaissance.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.baroque.title"]', 'progression.styleDialog.baroque.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.baroque.body"]', 'progression.styleDialog.baroque.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.classic.title"]', 'progression.styleDialog.classic.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.classic.body"]', 'progression.styleDialog.classic.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.romantic.title"]', 'progression.styleDialog.romantic.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.romantic.body"]', 'progression.styleDialog.romantic.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.impressionist.title"]', 'progression.styleDialog.impressionist.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.impressionist.body"]', 'progression.styleDialog.impressionist.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.contemporary.title"]', 'progression.styleDialog.contemporary.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.contemporary.body"]', 'progression.styleDialog.contemporary.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.references"]', 'progression.styleDialog.references');
 	}
 
 	function ensureProgressionWorkbench() {
@@ -20738,6 +21308,7 @@
 		bindProgressionGeneration();
 		bindCircleOfFifthsPopover();
 		bindWorkbenchInstrumentMenu();
+		bindProgressionStyleDialog();
 		bindHistoryControls();
 		updateCollapsiblePanelStates(i18n);
 		options.ui.scheduleDashboardWorkspaceHeight();
@@ -21119,6 +21690,62 @@
 					closeWorkbenchInstrumentMenu();
 				}
 			});
+		}
+
+		function bindProgressionStyleDialog() {
+			var openButton = query('#progressionStyleHelp');
+			var closeButton = query('#progressionStyleDialogClose');
+			var dialog = query('#progressionStyleDialog');
+
+			if (!openButton || !closeButton || !dialog || dialog.getAttribute('data-coda-style-dialog') === 'true') {
+				return;
+			}
+
+			dialog.setAttribute('data-coda-style-dialog', 'true');
+			on(openButton, 'click', function () {
+				openProgressionStyleDialog();
+			});
+			on(closeButton, 'click', function () {
+				closeProgressionStyleDialog();
+			});
+			on(dialog, 'mousedown', function (event) {
+				if (event.target === dialog) {
+					closeProgressionStyleDialog();
+				}
+			});
+			on(global.document, 'keydown', function (event) {
+				if (event.key === 'Escape' && isProgressionStyleDialogOpen()) {
+					closeProgressionStyleDialog();
+				}
+			});
+		}
+
+		function openProgressionStyleDialog() {
+			var dialog = query('#progressionStyleDialog');
+
+			if (!dialog) {
+				return;
+			}
+
+			dialog.removeAttribute('hidden');
+			dialog.classList.add('isOpen');
+		}
+
+		function closeProgressionStyleDialog() {
+			var dialog = query('#progressionStyleDialog');
+
+			if (!dialog) {
+				return;
+			}
+
+			dialog.setAttribute('hidden', 'hidden');
+			dialog.classList.remove('isOpen');
+		}
+
+		function isProgressionStyleDialogOpen() {
+			var dialog = query('#progressionStyleDialog');
+
+			return !!(dialog && dialog.classList.contains('isOpen'));
 		}
 
 		function bindHistoryControls() {
@@ -21562,6 +22189,8 @@
 		}
 
 		function restoreProgressionControls(controls) {
+			controls = normalizeProgressionControls(controls);
+
 			if (progressionPreferences && typeof progressionPreferences.writeControls === 'function') {
 				progressionPreferences.writeControls(global.document, controls);
 				updateProgressionExpressiveControls();
@@ -21571,6 +22200,7 @@
 			setValue(query('#progressionArticulation'), controls.articulation);
 			setValue(query('#progressionBars'), controls.bars);
 			setValue(query('#progressionBpm'), controls.bpm);
+			setValue(query('#progressionChromaticism'), controls.chromaticism);
 			setValue(query('#progressionCounterpoint'), controls.counterpoint);
 			setValue(query('#progressionHarmonicDensity'), controls.harmonicDensity);
 			setValue(query('#progressionHumanization'), controls.humanization);
@@ -21583,6 +22213,16 @@
 			setValue(query('#progressionVoicing'), controls.voicing);
 			setValue(query('#progressionVoices'), controls.voices);
 			updateProgressionExpressiveControls();
+		}
+
+		function normalizeProgressionControls(controls) {
+			if (progressionPreferences && typeof progressionPreferences.normalizeControls === 'function') {
+				return progressionPreferences.normalizeControls(controls, progressionState);
+			}
+
+			return progressionState && typeof progressionState.normalize === 'function' ?
+				progressionState.normalize(controls || {}) :
+				controls || {};
 		}
 
 		function updateProgressionExpressiveControls() {
@@ -22354,11 +22994,15 @@
 			articulation: state.articulation,
 			bars: state.bars,
 			bpm: state.bpm,
+			chromaticism: state.chromaticism,
 			counterpoint: state.counterpoint,
 			harmonicDensity: state.harmonicDensity,
+			humanization: state.humanization,
+			intensity: state.intensity,
 			meter: state.meter,
 			modalInterchange: state.modalInterchange,
 			style: state.style,
+			swing: state.swing,
 			tensions: state.tensions,
 			voicing: state.voicing,
 			voices: state.voices

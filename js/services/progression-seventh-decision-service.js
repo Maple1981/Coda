@@ -3,6 +3,7 @@
 	'use strict';
 
 	var voicingService = global.CodaProgressionVoicing;
+	var styleService = global.CodaProgressionStyle;
 
 	function shouldUseSeventh(context) {
 		var progressionState = context.progressionState;
@@ -39,6 +40,7 @@
 		if (seventhImprovesMovement(context)) {
 			probability += 0.22;
 		}
+		probability *= styleService.seventhProbabilityScale(progressionState);
 
 		return rng() < Math.min(0.72, probability);
 	}

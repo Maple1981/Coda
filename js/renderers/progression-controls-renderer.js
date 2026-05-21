@@ -7,7 +7,8 @@
 			renderTimePanel() +
 			renderWritingPanel() +
 			renderColorPanel() +
-			'</div>';
+			'</div>' +
+			renderStyleDialog();
 	}
 
 	function renderTimePanel() {
@@ -29,7 +30,7 @@
 		html += '<legend><span data-i18n="progression.writing"></span></legend>';
 		html += renderControl('progression.voices', '<input id="progressionVoices" type="number" value="4" min="1" max="6" step="1" />', '#progressionVoices', null, 'progression.help.voices');
 		html += renderControl('progression.voicing', '<select id="progressionVoicing"><option value="closed" selected="selected" data-i18n="progression.voicing.closed"></option><option value="open" data-i18n="progression.voicing.open"></option></select>', '#progressionVoicing', null, 'progression.help.voicing');
-		html += renderControl('progression.style', '<select id="progressionStyle"><option value="modern" selected="selected" data-i18n="progression.style.modern"></option><option value="classic" data-i18n="progression.style.classic"></option></select>', '#progressionStyle', null, 'progression.help.style');
+		html += renderControl('progression.style', renderStyleSelect(), '#progressionStyle', null, 'progression.help.style', renderStyleHelpButton());
 		html += renderControl('progression.articulation', renderArticulationSelect(), '#progressionArticulation', null, 'progression.help.articulation');
 		html += '<div class="progressionExpressiveControls" data-articulation-detail hidden>';
 		html += renderKnobControl('progression.intensity', '<input id="progressionIntensity" class="knobControl__input" type="range" value="80" min="1" max="127" step="1" />', '#progressionIntensity', 'progression.help.intensity', '');
@@ -54,6 +55,21 @@
 			'<option value="9/8">9/8</option>' +
 			'<option value="12/8">12/8</option>' +
 			'</select>';
+	}
+
+	function renderStyleSelect() {
+		return '<select id="progressionStyle">' +
+			'<option value="renaissance" data-i18n="progression.style.renaissance"></option>' +
+			'<option value="baroque" data-i18n="progression.style.baroque"></option>' +
+			'<option value="classic" data-i18n="progression.style.classic"></option>' +
+			'<option value="romantic" data-i18n="progression.style.romantic"></option>' +
+			'<option value="impressionist" data-i18n="progression.style.impressionist"></option>' +
+			'<option value="contemporary" selected="selected" data-i18n="progression.style.contemporary"></option>' +
+			'</select>';
+	}
+
+	function renderStyleHelpButton() {
+		return '<button id="progressionStyleHelp" class="workbenchHelpButton" type="button" aria-haspopup="dialog" aria-controls="progressionStyleDialog" data-i18n-title="progression.styleDialog.open"><span class="material-icons" aria-hidden="true">help_outline</span></button>';
 	}
 
 	function renderColorPanel() {
@@ -85,11 +101,46 @@
 			'</select>';
 	}
 
-	function renderControl(labelKey, controlHtml, targetSelector, fallbackLabel, helpKey) {
+	function renderControl(labelKey, controlHtml, targetSelector, fallbackLabel, helpKey, labelActionHtml) {
 		var labelHtml = labelKey ? '<span data-i18n="' + labelKey + '"></span>' : '<span>' + fallbackLabel + '</span>';
 		var helpAttribute = helpKey ? ' class="workbenchControl" data-help-i18n="' + helpKey + '" title=""' : '';
 
-		return '<label' + helpAttribute + '>' + labelHtml + controlHtml + renderRandomButton(targetSelector) + '</label>';
+		if (labelActionHtml) {
+			return '<div' + helpAttribute.replace('workbenchControl', 'workbenchControl workbenchControl--withAction') + '><span class="workbenchControlLabel"><label class="workbenchControlText" for="' + targetSelector.replace('#', '') + '">' + labelHtml + '</label>' + labelActionHtml + '</span>' + controlHtml + renderRandomButton(targetSelector) + '</div>';
+		}
+
+		return '<label' + helpAttribute + '><span class="workbenchControlLabel">' + labelHtml + (labelActionHtml || '') + '</span>' + controlHtml + renderRandomButton(targetSelector) + '</label>';
+	}
+
+	function renderStyleDialog() {
+		return '<div id="progressionStyleDialog" class="dialogoNovedades progressionStyleDialog" role="dialog" aria-modal="true" aria-labelledby="progressionStyleDialogTitle" hidden>' +
+			'<div class="dialogoNovedades__surface">' +
+			'<div class="dialogoNovedades__titlebar">' +
+			'<h2 class="dialogoNovedades__title" id="progressionStyleDialogTitle" data-i18n="progression.styleDialog.title"></h2>' +
+			'<button class="dialogoNovedades__close" id="progressionStyleDialogClose" type="button" data-i18n-title="progression.styleDialog.close"><span class="material-icons" aria-hidden="true">close</span></button>' +
+			'</div>' +
+			'<div class="dialogoNovedades__content">' +
+			'<p data-i18n="progression.styleDialog.intro"></p>' +
+			'<dl>' +
+			'<dt data-i18n="progression.styleDialog.general.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.general.body"></dd>' +
+			'<dt data-i18n="progression.styleDialog.renaissance.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.renaissance.body"></dd>' +
+			'<dt data-i18n="progression.styleDialog.baroque.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.baroque.body"></dd>' +
+			'<dt data-i18n="progression.styleDialog.classic.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.classic.body"></dd>' +
+			'<dt data-i18n="progression.styleDialog.romantic.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.romantic.body"></dd>' +
+			'<dt data-i18n="progression.styleDialog.impressionist.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.impressionist.body"></dd>' +
+			'<dt data-i18n="progression.styleDialog.contemporary.title"></dt>' +
+			'<dd data-i18n="progression.styleDialog.contemporary.body"></dd>' +
+			'</dl>' +
+			'<p data-i18n="progression.styleDialog.references"></p>' +
+			'</div>' +
+			'</div>' +
+			'</div>';
 	}
 
 	function renderKnobControl(labelKey, controlHtml, targetSelector, helpKey, unit) {
@@ -114,6 +165,8 @@
 		renderMeterSelect: renderMeterSelect,
 		renderKnobControl: renderKnobControl,
 		renderPanels: renderPanels,
+		renderStyleDialog: renderStyleDialog,
+		renderStyleSelect: renderStyleSelect,
 		renderArticulationSelect: renderArticulationSelect,
 		renderTimePanel: renderTimePanel,
 		renderWritingPanel: renderWritingPanel

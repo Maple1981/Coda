@@ -47,7 +47,7 @@
 	}
 
 	function fallbackPatternForStyle(progressionState) {
-		if (styleService.isModern(progressionState)) {
+		if (styleService.avoidsStrongDominantResolution(progressionState)) {
 			return {
 				cadence: 'half',
 				counterpoint: 70,

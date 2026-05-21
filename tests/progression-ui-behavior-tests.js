@@ -159,7 +159,7 @@ assert.deepEqual(initialState, {
 	intensity: 80,
 	meter: '4/4',
 	modalInterchange: 25,
-	style: 'modern',
+	style: 'contemporary',
 	swing: 0,
 	tensions: 35,
 	voicing: 'closed',
@@ -752,7 +752,7 @@ function createFakeDocument() {
 	addElement('progressionIntensity', '80');
 	addElement('progressionMeter', '4/4');
 	addElement('progressionModalInterchange', '25');
-	addElement('progressionStyle', 'modern');
+	addElement('progressionStyle', 'contemporary');
 	addElement('progressionSwing', '0');
 	addElement('progressionTensions', '35');
 	addElement('progressionVoicing', 'closed');

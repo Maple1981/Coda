@@ -2,6 +2,8 @@
 (function (global) {
 	'use strict';
 
+	var styleService = global.CodaProgressionStyle;
+
 	var additionalChordService = global.CodaProgressionAdditionalChord;
 	var chordPlanService = global.CodaProgressionChordPlan;
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
@@ -209,9 +211,10 @@
 	function writingDensityBoost(progressionState) {
 		var boost = 0;
 
-		if (progressionState && progressionState.style === 'classic') {
+		if (styleService.usesFunctionalCadence(progressionState)) {
 			boost += 0.05;
 		}
+		boost += styleService.harmonicDensityBias(progressionState);
 
 		boost += normalizedControl(progressionState && progressionState.counterpoint) * 0.08;
 		boost += normalizedControl(progressionState && progressionState.tensions) * 0.05;

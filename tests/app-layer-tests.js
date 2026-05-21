@@ -17,6 +17,16 @@ loader.runManifestRange('js/data/constants-data.js', 'js/application/progression
 const app = context.window.CodaApplication;
 const data = context.window.CodaData;
 const domain = context.window.CodaDomain;
+const styleService = context.window.CodaProgressionStyle;
+
+assert.equal(styleService.normalize('modern'), 'contemporary');
+assert.equal(styleService.normalize({ style: 'baroque' }), 'baroque');
+assert.equal(styleService.usesFunctionalMinorDominant({ style: 'romantic' }), true);
+assert.equal(styleService.avoidsStrongDominantResolution({ style: 'contemporary' }), true);
+assert.equal(styleService.requiresPreparedDissonance({ style: 'renaissance' }), true);
+assert.equal(styleService.prefersPartimentoBass({ style: 'baroque' }), true);
+assert.equal(styleService.minimizesDiminishedHarmony({ style: 'contemporary' }), true);
+assert.ok(styleService.seventhProbabilityScale({ style: 'baroque' }) > styleService.seventhProbabilityScale({ style: 'contemporary' }));
 
 function noteIndex(name) {
 	return data.notes.findIndex(function (note) {
@@ -139,13 +149,36 @@ const cMajorProgressionPlan = app.buildProgressionFromState({
 
 assert.equal(cMajorProgressionPlan.bars, 4);
 assert.equal(cMajorProgressionPlan.meter, '3/4');
-assert.equal(cMajorProgressionPlan.style, 'modern');
+assert.equal(cMajorProgressionPlan.style, 'contemporary');
 assert.equal(cMajorProgressionPlan.totalBeats, 12);
 assert.equal(cMajorProgressionPlan.totalSeconds, 6);
 assert.equal(cMajorProgressionPlan.voicing, 'closed');
 assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.degree; }), ['I', 'IV 6/4', 'V 6', 'I']);
 assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.chordName; }), ['C', 'F', 'G', 'C']);
 assert.deepEqual(cMajorProgressionPlan.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'SD', 'D', 'T']);
+const patternWeightService = context.window.CodaProgressionPatternWeight;
+const baroquePartimentoPattern = {
+	cadence: 'half',
+	counterpoint: 88,
+	degrees: [0, { forceInversionIndex: 1, index: 4 }, { forceInversionIndex: 1, index: 0 }, 4],
+	form: 'partimento-rule-octave',
+	styles: ['baroque'],
+	weight: 10
+};
+assert.ok(patternWeightService.adjustedPatternWeight(baroquePartimentoPattern, {
+	counterpoint: 90,
+	modalInterchange: 10,
+	style: 'baroque',
+	tensions: 50
+}, 'major') > 10);
+assert.equal(patternWeightService.adjustedPatternWeight(baroquePartimentoPattern, {
+	counterpoint: 90,
+	modalInterchange: 10,
+	style: 'contemporary',
+	tensions: 50
+}, 'major'), 0);
+assert.ok(patternWeightService.sensitiveDegreeFactor([0, 6, 4, 0], 'major', { style: 'contemporary' }) < 1);
+assert.equal(patternWeightService.sensitiveDegreeFactor([0, 6, 4, 0], 'major', { style: 'baroque' }), 1);
 const contrastingSectionProgression = app.generateContrastingProgressionSection({
 	data: data,
 	domain: domain,
@@ -897,7 +930,7 @@ const eMinorChromaticProgression = app.generateProgressionFromState({
 		counterpoint: 40,
 		meter: '4/4',
 		modalInterchange: 25,
-		style: 'modern',
+		style: 'contemporary',
 		tensions: 35,
 		voices: 4
 	},
@@ -1011,7 +1044,7 @@ const generatedHighColorProgression = app.generateProgressionFromState({
 assert.equal(generatedHighColorProgression.bars, 4);
 assert.equal(generatedHighColorProgression.generation.cadence, 'mixed-plagal');
 assert.equal(generatedHighColorProgression.generation.patternId, 'I-iv-I');
-assert.equal(generatedHighColorProgression.generation.style, 'modern');
+assert.equal(generatedHighColorProgression.generation.style, 'contemporary');
 assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.source; }), ['diatonic', 'interchange', 'interchange', 'diatonic']);
 assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.sourceScaleIndex || null; }), [null, 15, 15, null]);
 assert.deepEqual(generatedHighColorProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'Fm', 'Fm7', 'C']);
@@ -1060,7 +1093,7 @@ const suspensionWeightedProgression = app.generateProgressionFromState({
 		counterpoint: 40,
 		meter: '4/4',
 		modalInterchange: 20,
-		style: 'modern',
+		style: 'contemporary',
 		tensions: 35,
 		voices: 4
 	},
@@ -1087,7 +1120,7 @@ const suspensionWithDefaultRandom = app.generateProgressionFromState({
 		counterpoint: 40,
 		meter: '4/4',
 		modalInterchange: 20,
-		style: 'modern',
+		style: 'contemporary',
 		tensions: 35,
 		voices: 4
 	},
@@ -1158,7 +1191,7 @@ const modernCadenceProgression = app.generateProgressionFromState({
 		beatsPerBar: 4,
 		bpm: 120,
 		meter: '4/4',
-		style: 'modern'
+		style: 'contemporary'
 	},
 	report: cMajorReport,
 	rng: function () { return 0; },

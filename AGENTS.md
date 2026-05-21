@@ -25,7 +25,7 @@ Este proyecto es solo frontend. No debe introducirse backend, base de datos, aut
 
 Los datos musicales deben generarse en tiempo de ejecución según las reglas definidas en el código. El estado de la interfaz puede existir solo mientras dura la sesión del navegador, salvo que se acuerde explícitamente una mejora local y ligera.
 
-El repositorio de información teórica y reglas técnico-musicales está en `Docs/`. Esa carpeta contiene la base conceptual que debe consultarse para entender o ampliar áreas como compases, ritmo, escalas, acordes, inversiones, cromatismo, forma, instrumentación, orquestación, progresiones y otros grupos de conceptos. La versión convertida a Markdown vive en `Docs/teoria-md/`, con un archivo por hoja del libro original para facilitar la consulta y el mantenimiento.
+El repositorio de información teórica y reglas técnico-musicales está en `docs/theory/`. Esa carpeta contiene la base conceptual que debe consultarse para entender o ampliar áreas como compases, ritmo, escalas, acordes, inversiones, cromatismo, forma, instrumentación, orquestación, progresiones y otros grupos de conceptos. La versión convertida a Markdown vive directamente en `docs/theory/`, con un archivo por hoja del libro original para facilitar la consulta y el mantenimiento. Las síntesis por estilo viven en `docs/theory/styles/`.
 
 La base técnica actual usa:
 
@@ -52,7 +52,7 @@ La base técnica actual usa:
 
 ## Documentación técnica
 
-La documentación técnica vive en `docs/technical/` para no mezclarla con la base teórico-musical de `Docs/`.
+La documentación técnica vive en `docs/technical/` para no mezclarla con la base teórico-musical de `docs/theory/`.
 
 - `docs/technical/architecture.md`: capas, módulos relevantes, manifest de scripts y reglas de evolución.
 - `docs/technical/development-workflow.md`: flujo recomendado con Live Server, comandos de prueba y smoke tests.

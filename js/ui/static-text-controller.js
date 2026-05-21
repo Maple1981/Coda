@@ -149,8 +149,14 @@
 		setText(i18n, 'option[data-i18n="progression.articulation.arpeggio.random"]', 'progression.articulation.arpeggio.random');
 		setText(i18n, 'option[data-i18n="progression.voicing.closed"]', 'progression.voicing.closed');
 		setText(i18n, 'option[data-i18n="progression.voicing.open"]', 'progression.voicing.open');
-		setText(i18n, 'option[data-i18n="progression.style.modern"]', 'progression.style.modern');
+		setText(i18n, 'option[data-i18n="progression.style.renaissance"]', 'progression.style.renaissance');
+		setText(i18n, 'option[data-i18n="progression.style.baroque"]', 'progression.style.baroque');
 		setText(i18n, 'option[data-i18n="progression.style.classic"]', 'progression.style.classic');
+		setText(i18n, 'option[data-i18n="progression.style.romantic"]', 'progression.style.romantic');
+		setText(i18n, 'option[data-i18n="progression.style.impressionist"]', 'progression.style.impressionist');
+		setText(i18n, 'option[data-i18n="progression.style.contemporary"]', 'progression.style.contemporary');
+		setText(i18n, 'option[data-i18n="progression.style.modern"]', 'progression.style.contemporary');
+		applyProgressionStyleDialog(i18n);
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromContext', 'aria-label', 'circle.open');
 		setAttribute(i18n, '#workbenchContextKeyToggle', 'title', 'circle.open');
@@ -209,6 +215,28 @@
 			element.setAttribute('title', text);
 			element.setAttribute('aria-description', text);
 		});
+	}
+
+	function applyProgressionStyleDialog(i18n) {
+		setTitleAndLabel(i18n, '#progressionStyleHelp[data-i18n-title="progression.styleDialog.open"]', 'progression.styleDialog.open');
+		setTitleAndLabel(i18n, '#progressionStyleDialogClose[data-i18n-title="progression.styleDialog.close"]', 'progression.styleDialog.close');
+		setText(i18n, '#progressionStyleDialogTitle', 'progression.styleDialog.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.intro"]', 'progression.styleDialog.intro');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.general.title"]', 'progression.styleDialog.general.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.general.body"]', 'progression.styleDialog.general.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.renaissance.title"]', 'progression.styleDialog.renaissance.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.renaissance.body"]', 'progression.styleDialog.renaissance.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.baroque.title"]', 'progression.styleDialog.baroque.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.baroque.body"]', 'progression.styleDialog.baroque.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.classic.title"]', 'progression.styleDialog.classic.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.classic.body"]', 'progression.styleDialog.classic.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.romantic.title"]', 'progression.styleDialog.romantic.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.romantic.body"]', 'progression.styleDialog.romantic.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.impressionist.title"]', 'progression.styleDialog.impressionist.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.impressionist.body"]', 'progression.styleDialog.impressionist.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.contemporary.title"]', 'progression.styleDialog.contemporary.title');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.contemporary.body"]', 'progression.styleDialog.contemporary.body');
+		setText(i18n, '#progressionStyleDialog [data-i18n="progression.styleDialog.references"]', 'progression.styleDialog.references');
 	}
 
 	function ensureProgressionWorkbench() {

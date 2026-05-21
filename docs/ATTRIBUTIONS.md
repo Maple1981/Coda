@@ -4,7 +4,7 @@ Este archivo recoge recursos de terceros conservados en el repositorio o distrib
 
 ## Imagen de referencia del círculo de quintas
 
-Archivo local: `docs/Circle_of_fifths_deluxe_4-ES.png`
+Archivo local: `docs/theory/Circle_of_fifths_deluxe_4-ES.png`
 
 Título original: `Circle_of_fifths_deluxe_4-ES.png`
 

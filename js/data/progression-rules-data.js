@@ -1,5 +1,5 @@
 // Reglas iniciales para generar progresiones semialeatorias.
-// Derivadas de docs/teoria-md/12-progresiones.md, 13-cadencias.md,
+// Derivadas de docs/theory/12-progresiones.md, 13-cadencias.md,
 // 14-contrapunto.md y 20-forma.md.
 (function (global) {
 	'use strict';
@@ -94,6 +94,40 @@
 				modalColor: 18,
 				tensionAffinity: 55,
 				weight: 16
+			},
+			{
+				cadence: 'half',
+				counterpoint: 88,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					4
+				],
+				form: 'partimento-rule-octave',
+				id: 'baroque-rule-octave-half',
+				modes: ['major', 'minor'],
+				modalColor: 14,
+				styles: ['baroque'],
+				tensionAffinity: 52,
+				weight: 18
+			},
+			{
+				cadence: 'half',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 6 },
+					{ forceInversionIndex: 1, index: 5 },
+					4
+				],
+				form: 'partimento-suspension',
+				id: 'baroque-descending-76-half',
+				modes: ['major'],
+				modalColor: 18,
+				styles: ['baroque'],
+				tensionAffinity: 62,
+				weight: 14
 			},
 			{
 				cadence: 'half',
@@ -208,6 +242,35 @@
 			},
 			{
 				cadence: 'authentic',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					0
+				],
+				form: 'partimento-rule-octave',
+				id: 'baroque-rule-octave-authentic',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 58,
+				weight: 18
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 92,
+				degrees: [5, 1, 4, 0],
+				form: 'circle-fragment',
+				id: 'baroque-circle-fragment-authentic',
+				modes: ['major', 'minor'],
+				modalColor: 14,
+				styles: ['baroque'],
+				tensionAffinity: 68,
+				weight: 17
+			},
+			{
+				cadence: 'authentic',
 				counterpoint: 86,
 				degrees: [5, 1, 4, 0],
 				id: 'vi-ii-V-I',
@@ -318,6 +381,39 @@
 				weight: 9
 			},
 			{
+				cadence: 'half',
+				counterpoint: 88,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					3,
+					{ forceInversionIndex: 0, index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					{ forceInversionIndex: 1, index: 4 },
+					4
+				],
+				form: 'partimento-rule-octave',
+				id: 'baroque-rule-octave',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 55,
+				weight: 13
+			},
+			{
+				cadence: 'half',
+				counterpoint: 86,
+				degrees: [0, 4, 5, 2, 3, 0, 3, 4],
+				form: 'romanesca',
+				id: 'baroque-romanesca',
+				modes: ['major', 'minor'],
+				modalColor: 20,
+				styles: ['baroque'],
+				tensionAffinity: 58,
+				weight: 12
+			},
+			{
 				cadence: 'authentic',
 				counterpoint: 84,
 				degrees: [0, 5, 1, 4, 0, 3, 4, 0],
@@ -382,6 +478,18 @@
 				modalColor: 25,
 				tensionAffinity: 70,
 				weight: 11
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 90,
+				degrees: [0, 3, 6, 2, 5, 1, 4, 0],
+				form: 'circle-of-fifths',
+				id: 'circle-fifths-major',
+				modes: ['major'],
+				modalColor: 18,
+				styles: ['baroque', 'romantic'],
+				tensionAffinity: 72,
+				weight: 10
 			}
 		]
 	};

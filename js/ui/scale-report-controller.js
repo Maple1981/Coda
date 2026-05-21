@@ -95,6 +95,7 @@
 		bindProgressionGeneration();
 		bindCircleOfFifthsPopover();
 		bindWorkbenchInstrumentMenu();
+		bindProgressionStyleDialog();
 		bindHistoryControls();
 		updateCollapsiblePanelStates(i18n);
 		options.ui.scheduleDashboardWorkspaceHeight();
@@ -476,6 +477,62 @@
 					closeWorkbenchInstrumentMenu();
 				}
 			});
+		}
+
+		function bindProgressionStyleDialog() {
+			var openButton = query('#progressionStyleHelp');
+			var closeButton = query('#progressionStyleDialogClose');
+			var dialog = query('#progressionStyleDialog');
+
+			if (!openButton || !closeButton || !dialog || dialog.getAttribute('data-coda-style-dialog') === 'true') {
+				return;
+			}
+
+			dialog.setAttribute('data-coda-style-dialog', 'true');
+			on(openButton, 'click', function () {
+				openProgressionStyleDialog();
+			});
+			on(closeButton, 'click', function () {
+				closeProgressionStyleDialog();
+			});
+			on(dialog, 'mousedown', function (event) {
+				if (event.target === dialog) {
+					closeProgressionStyleDialog();
+				}
+			});
+			on(global.document, 'keydown', function (event) {
+				if (event.key === 'Escape' && isProgressionStyleDialogOpen()) {
+					closeProgressionStyleDialog();
+				}
+			});
+		}
+
+		function openProgressionStyleDialog() {
+			var dialog = query('#progressionStyleDialog');
+
+			if (!dialog) {
+				return;
+			}
+
+			dialog.removeAttribute('hidden');
+			dialog.classList.add('isOpen');
+		}
+
+		function closeProgressionStyleDialog() {
+			var dialog = query('#progressionStyleDialog');
+
+			if (!dialog) {
+				return;
+			}
+
+			dialog.setAttribute('hidden', 'hidden');
+			dialog.classList.remove('isOpen');
+		}
+
+		function isProgressionStyleDialogOpen() {
+			var dialog = query('#progressionStyleDialog');
+
+			return !!(dialog && dialog.classList.contains('isOpen'));
 		}
 
 		function bindHistoryControls() {
@@ -919,6 +976,8 @@
 		}
 
 		function restoreProgressionControls(controls) {
+			controls = normalizeProgressionControls(controls);
+
 			if (progressionPreferences && typeof progressionPreferences.writeControls === 'function') {
 				progressionPreferences.writeControls(global.document, controls);
 				updateProgressionExpressiveControls();
@@ -928,6 +987,7 @@
 			setValue(query('#progressionArticulation'), controls.articulation);
 			setValue(query('#progressionBars'), controls.bars);
 			setValue(query('#progressionBpm'), controls.bpm);
+			setValue(query('#progressionChromaticism'), controls.chromaticism);
 			setValue(query('#progressionCounterpoint'), controls.counterpoint);
 			setValue(query('#progressionHarmonicDensity'), controls.harmonicDensity);
 			setValue(query('#progressionHumanization'), controls.humanization);
@@ -940,6 +1000,16 @@
 			setValue(query('#progressionVoicing'), controls.voicing);
 			setValue(query('#progressionVoices'), controls.voices);
 			updateProgressionExpressiveControls();
+		}
+
+		function normalizeProgressionControls(controls) {
+			if (progressionPreferences && typeof progressionPreferences.normalizeControls === 'function') {
+				return progressionPreferences.normalizeControls(controls, progressionState);
+			}
+
+			return progressionState && typeof progressionState.normalize === 'function' ?
+				progressionState.normalize(controls || {}) :
+				controls || {};
 		}
 
 		function updateProgressionExpressiveControls() {
@@ -1711,11 +1781,15 @@
 			articulation: state.articulation,
 			bars: state.bars,
 			bpm: state.bpm,
+			chromaticism: state.chromaticism,
 			counterpoint: state.counterpoint,
 			harmonicDensity: state.harmonicDensity,
+			humanization: state.humanization,
+			intensity: state.intensity,
 			meter: state.meter,
 			modalInterchange: state.modalInterchange,
 			style: state.style,
+			swing: state.swing,
 			tensions: state.tensions,
 			voicing: state.voicing,
 			voices: state.voices

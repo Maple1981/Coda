@@ -38,7 +38,8 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/services/data-index-service.js`: creación de `CodaData.indexes` y de índices no enumerables en las colecciones principales.
 - `js/services/progression-object-service.js`: utilidades compartidas de copia superficial y clonación de colecciones de objetos usadas por el motor de progresiones.
 - `js/services/progression-modal-planner-service.js`: planificación específica para modos griegos. Prioriza centro modal, tónica recurrente, acordes cadenciales modales, movimiento de bajo por segunda o tercera y evitación de gestos funcionales dominantes.
-- `js/services/progression-classical-dissonance-service.js`: contrato de preparación, aparición y resolución de disonancias en estilo clásico. Filtra suspensiones, notas de paso y tensiones añadidas sin alterar el documento público de progresión.
+- `js/services/progression-style-service.js`: perfiles históricos de estilo, alias de compatibilidad, afinidades de patrones, sesgos de densidad, tratamiento de séptimas y reglas activas por capa, desde Renacimiento hasta Contemporáneo.
+- `js/services/progression-classical-dissonance-service.js`: contrato de preparación, aparición y resolución de disonancias para estilos que requieren disonancia preparada. Filtra suspensiones, notas de paso y tensiones añadidas sin alterar el documento público de progresión.
 - `js/services/progression-chromatic-cadence-service.js`: generación de cadencias cromáticas tonales con sexta napolitana y acordes de sexta aumentada, siempre como preparación de dominante.
 - `js/services/musical-context-service.js`: construcción del contexto musical actual a partir de la selección de pantalla.
 - `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma, notación, tema visual, volumen maestro, tónica, escala, formato, instrumento sonoro y controles del constructor de progresiones.

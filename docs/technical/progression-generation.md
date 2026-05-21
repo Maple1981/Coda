@@ -32,16 +32,33 @@ Cada sección generada guarda una copia del estado de escritura con el que naci�
 
 ## Estilo de escritura
 
-El control **Estilo** distingue dos enfoques iniciales:
+El control **Estilo** se organiza como una cadena histórica de perfiles: **Renacimiento**, **Barroco**, **Clásico**, **Romántico**, **Impresionista** y **Contemporáneo**. El valor antiguo `modern` queda como alias interno de **Contemporáneo** para no romper preferencias locales guardadas.
 
-- **Moderno**: evita cadencias auténticas finales como `V-I`, `V-i`, `viiº-I` o `viiº-i`. Prioriza semicadencias, cadencias plagales y cadencias rotas. Además, reduce la probabilidad de usar en exceso el segundo grado en tonalidades menores y el séptimo grado en tonalidades mayores, sin eliminarlos por completo.
-- **Clásico**: favorece cadencias auténticas al final de la progresión, usando el retorno dominante-tónica como cierre estructural.
+La capa común a todos los estilos es el **movimiento parsimonioso**: el generador intenta conservar notas comunes, mover voces con economía, evitar paralelismos duros, impedir rachas excesivas de una misma inversión y mantener el registro alrededor de una zona central útil. Esta capa funciona como estilo padre: no sustituye a los perfiles históricos, sino que los atraviesa.
 
-Esta distinción afecta a la selección de patrones completos y a los bloques de frase usados en progresiones largas. No cambia la escala ni los acordes disponibles; solo modifica la probabilidad y el tipo de cierre armónico elegido por el generador.
+Los perfiles actuales quedan compartimentados así:
 
-En tonalidades menores, el estilo **Clásico** trata el quinto grado como dominante tonal. Por tanto, cuando la escala principal es menor natural o menor melódica descendente, el `V` o `V7` se toma de una fuente con sensible, preferentemente la menor armónica sobre la misma tónica. Esto evita cierres modales `v-i` en contextos que deben sonar funcionales y permite que aparezcan dominantes mayores o dominantes séptima como `G`/`G7` en `C` menor.
+- **Renacimiento**: punto de partida para contrapunto vocal modal, con independencia de líneas, preparación de disonancias, menor densidad armónica y cadencias menos dependientes del dominante funcional. Reduce el uso de grados disminuidos y favorece cierres plagales o menos conclusivos.
+- **Barroco**: contrapunto instrumental armónico, con bajo direccional, secuencias, dominantes, disonancias preparadas y plantillas de partimento. Favorece patrones como regla de la octava, romanesca, círculo de quintas, bajos por grados e inversiones `6` cuando ayudan a dibujar una línea de bajo más activa.
+- **Clásico**: marco tónica-dominante. Favorece cadencias auténticas, 6/4 cadenciales y preparación-resolución de disonancias, incluyendo séptimas.
+- **Romántico**: marco funcional extendido. Hereda la lógica clásica, pero deja preparado un mayor peso para cromatismo, intercambio modal, dominantes, tensiones y disolución progresiva de la tonalidad estricta.
+- **Impresionista**: giro hacia color, modalidad y ambigüedad. Por ahora suaviza la atracción dominante y reserva espacio para planing, acordes paralelos y campos armónicos menos funcionales.
+- **Contemporáneo**: continuación del antiguo estilo moderno. Mantiene la conducción parsimoniosa, pero evita cadencias auténticas finales como `V-I`, `V-i`, `viidim-I` o `viidim-i`, priorizando semicadencias, cadencias plagales y cadencias rotas. En menor conserva preferentemente el `v` modal frente al `V` con sensible y minimiza, sin prohibir por completo, el uso de grados disminuidos o semidisminuidos.
 
-El estilo **Clásico** también activa una capa de tratamiento de disonancias documentada en `docs/technical/classical-dissonance.md`. Las suspensiones, notas de paso y tensiones añadidas deben responder al ciclo preparación-aparición-resolución: una disonancia debe estar justificada por el contexto anterior o por movimiento conjunto, sonar como tensión controlada y resolver por paso hacia una nota estructural.
+Esta distinción afecta a la selección de patrones completos, a los bloques de frase usados en progresiones largas y al tipo de cierre armónico elegido. No cambia la escala ni los acordes disponibles; modifica la probabilidad y la lectura funcional de los recursos.
+
+En tonalidades menores, los estilos **Barroco**, **Clásico** y **Romántico** tratan el quinto grado como dominante tonal. Por tanto, cuando la escala principal es menor natural o menor melódica descendente, el `V` o `V7` se toma de una fuente con sensible, preferentemente la menor armónica sobre la misma tónica. Esto evita cierres modales `v-i` en contextos que deben sonar funcionales y permite que aparezcan dominantes mayores o dominantes séptima como `G`/`G7` en `C` menor.
+
+Los perfiles de estilo ya no actúan sólo como interruptores de cadencia. También exponen afinidades internas que el generador usa al puntuar patrones y bloques de frase:
+
+- **Barroco** multiplica el peso de formas de partimento, círculo, regla de la octava y romanesca; además incrementa ligeramente la densidad armónica y la aparición de séptimas preparadas.
+- **Renacimiento**, **Impresionista** y **Contemporáneo** aplican un factor de reducción a grados sensibles disminuidos cuando el estilo busca menos atracción dominante.
+- **Clásico** favorece formas periódicas y cadencias funcionales claras.
+- **Romántico** conserva el marco funcional, pero tolera más densidad, séptimas y secuencias.
+
+Las plantillas de partimento pueden guardar metadatos por grado, por ejemplo inversiones forzadas. Así una fórmula de regla de la octava puede pedir `V 6` o `I 6` sin esperar a que el voicing lo decida por azar. Este mecanismo sigue usando el contrato normal de progresión: el grado se resuelve primero y la medida final sólo recibe el acorde, la inversión y las marcas habituales.
+
+Los estilos que requieren disonancia preparada activan la capa documentada en `docs/technical/classical-dissonance.md`. Las suspensiones, notas de paso y tensiones añadidas deben responder al ciclo preparación-aparición-resolución: una disonancia debe estar justificada por el contexto anterior o por movimiento conjunto, sonar como tensión controlada y resolver por paso hacia una nota estructural.
 
 ## Repetición directa de acordes
 
@@ -59,7 +76,7 @@ También existe una variante en la que el `I 6/4` queda precedido por un predomi
 
 El **6/4 auxiliar** se distingue del cadencial. En este uso, el bajo se mantiene como pedal y se superpone un acorde en segunda inversión que comparte ese mismo bajo, por ejemplo `Cm-Fm/C` o `Dº-G7/D`. El generador ya puede producir inversiones `6/4` por conducción parsimoniosa; solo se les asigna función dominante cuando forman parte explícita de la cadencia 6/4.
 
-El estilo **Clásico** y un valor alto de **Contrapunto** aumentan la probabilidad de que esta cadencia aparezca al final de la sección, pero no la fuerzan siempre. En estilo moderno queda como una posibilidad mucho más rara, subordinada a la preferencia general por semicadencias, cadencias plagales y cadencias rotas.
+Los estilos funcionales y un valor alto de **Contrapunto** aumentan la probabilidad de que esta cadencia aparezca al final de la sección, pero no la fuerzan siempre. En estilo **Contemporáneo** queda como una posibilidad mucho más rara, subordinada a la preferencia general por semicadencias, cadencias plagales y cadencias rotas.
 
 ## Cromatismo cadencial
 
@@ -71,7 +88,7 @@ Los **acordes de sexta aumentada** se modelan como sonoridades de área subdomin
 
 El **Sub Five** se modela como dominante sustituto con función `D`: un acorde mayor con séptima menor cuya fundamental queda un semitono por encima del acorde de destino, por ejemplo `D♭7` como sustituto de `G7` para resolver en `C`. Solo entra de forma esporádica con **Cromatismo** alto o muy alto. Puede resolver directamente en `I`, o aparecer como `SubV/V -> V -> I`; en semicadencias puede cerrar como `SubV/V -> V`. Algunas apariciones fuerzan inversión `4/2` cuando hay voces suficientes, para reflejar el uso habitual del acorde con la séptima en el bajo.
 
-Estas cadencias cromáticas tienen más peso con valores altos de **Cromatismo**, con estilo **Clásico** y con mayor **Contrapunto**, porque necesitan una conducción clara de las notas alteradas hacia su destino. No se aplican al inicio de la progresión ni al núcleo modal básico, donde podrían destruir la gravitación modal y convertir el resultado en una progresión funcional.
+Estas cadencias cromáticas tienen más peso con valores altos de **Cromatismo**, con estilos funcionales y con mayor **Contrapunto**, porque necesitan una conducción clara de las notas alteradas hacia su destino. No se aplican al inicio de la progresión ni al núcleo modal básico, donde podrían destruir la gravitación modal y convertir el resultado en una progresión funcional.
 
 ## Armonía modal básica
 
@@ -117,13 +134,13 @@ Cuando un compás contiene varios acordes, sus duraciones se ajustan a pulsos co
 
 La elección del número de acordes también se sesga según el tipo de compás: en compases binarios se favorecen `1`, `2` y `4` acordes, por lo que `3` aparece de forma mucho más esporádica; en compases ternarios se favorecen `1` y `3`, reduciendo la aparición de `2` y `4`. Los compases irregulares conservan una distribución más neutra.
 
-El control **Contrapunto** regula el movimiento parsimonioso de voces, su independencia melódica y la adhesión a reglas clásicas como la evitación de quintas y octavas paralelas. En valores altos, el generador elige una voz melódica para cargar con más movimiento independiente: normalmente la voz superior, aunque ocasionalmente puede ser el bajo o una voz interior. Esa voz conserva factores del acorde en los tiempos fuertes y puede insertar notas de paso en tiempos débiles cuando pertenecen a la escala de origen del acorde y enlazan por movimiento cercano hacia el siguiente voicing. En estilo **Clásico**, esas notas de paso deben rellenar un movimiento por grado conjunto en una sola dirección.
+El control **Contrapunto** regula el movimiento parsimonioso de voces, su independencia melódica y la adhesión a reglas clásicas como la evitación de quintas y octavas paralelas. En valores altos, el generador elige una voz melódica para cargar con más movimiento independiente: normalmente la voz superior, aunque ocasionalmente puede ser el bajo o una voz interior. Esa voz conserva factores del acorde en los tiempos fuertes y puede insertar notas de paso en tiempos débiles cuando pertenecen a la escala de origen del acorde y enlazan por movimiento cercano hacia el siguiente voicing. En estilos con disonancia preparada, esas notas de paso deben rellenar un movimiento por grado conjunto en una sola dirección.
 
 Además de evitar quintas y octavas paralelas, la selección de voicings penaliza el cuarto acorde consecutivo con la misma inversión. La regla impide que una progresión avance demasiado tiempo "en bloque" con la misma disposición, por ejemplo cuatro tríadas seguidas en `6/4`, aunque la conducción individual no produzca paralelismos perfectos.
 
 Las notas de paso no sustituyen al acorde: son eventos melódicos breves superpuestos a la duración del compás o segmento. Si el acorde procede de intercambio modal, las notas de paso se toman de la escala fuente del préstamo, no de la escala principal, para mantener coherencia con el color armónico elegido.
 
-El control **Tensiones** gobierna tanto la aparición de suspensiones como de tensiones añadidas. Las tensiones disponibles se calculan sobre los grados 9, 11 y 13 de la escala activa y se descartan cuando ya forman parte del acorde o quedan un semitono por encima de una nota estructural del acorde, porque esa relación produce clústers poco estables. En acordes sin séptima se cifran como `add9`, `add11` o `add13`; en cuatríadas se cifran como `9`, `11` o `13`, siguiendo la convención moderna de extensiones por encima de la séptima. En estilo **Clásico**, las tensiones añadidas dejan de ser color libre: se limitan a una sola nota en contextos dominantes, cadenciales o cromáticos, y deben poder resolver por paso a un factor del acorde siguiente.
+El control **Tensiones** gobierna tanto la aparición de suspensiones como de tensiones añadidas. Las tensiones disponibles se calculan sobre los grados 9, 11 y 13 de la escala activa y se descartan cuando ya forman parte del acorde o quedan un semitono por encima de una nota estructural del acorde, porque esa relación produce clústers poco estables. En acordes sin séptima se cifran como `add9`, `add11` o `add13`; en cuatríadas se cifran como `9`, `11` o `13`, siguiendo la convención moderna de extensiones por encima de la séptima. En estilos con disonancia preparada, las tensiones añadidas dejan de ser color libre: se limitan a una sola nota en contextos dominantes, cadenciales o cromáticos, y deben poder resolver por paso a un factor del acorde siguiente.
 
 En escritura de cuatro o más voces, una tríada completa dobla factores del acorde cuando no hay tensiones disponibles: primero la fundamental, después la tercera y finalmente la quinta. Si el fader de tensiones activa notas disponibles, esas notas ocupan voces antes que los doblajes. En cuatríadas no se dobla la séptima, y las tensiones tampoco se doblan.
 
@@ -158,7 +175,7 @@ El comportamiento audible del pedal depende del instrumento. En instrumentos sos
 
 Los acordes pueden suspender la tercera cuando la conducción de voces lo justifica. Las calidades menores, disminuidas y semidisminuidas tienden a `sus2`; las calidades mayores, dominantes y de séptima mayor tienden a `sus4`. El cifrado se muestra después de la inversión y antes de las tensiones añadidas, por ejemplo `G 6 sus4`, `Cm7 sus2` o `D7♭5 4/2 sus2`. Los grados reflejan la misma suspensión, por ejemplo `V 6 sus4` o `ii7♭5 4/2 sus2`.
 
-Las suspensiones tienen un peso estadístico moderado: aumentan cuando el nivel de contrapunto o tensiones es mayor, cuando la articulación favorece continuidad y, sobre todo, cuando el acorde suspendido reduce o mantiene el movimiento entre voces respecto al acorde sin suspender. Si ninguna voz previa puede enlazar hacia la nota suspendida por tono o semitono, la suspensión sigue siendo posible, pero queda penalizada. En estilo **Clásico**, la penalización se convierte en filtro: la nota suspendida debe estar preparada en el acorde anterior y resolver por tono o semitono hacia la tercera del acorde actual.
+Las suspensiones tienen un peso estadístico moderado: aumentan cuando el nivel de contrapunto o tensiones es mayor, cuando la articulación favorece continuidad y, sobre todo, cuando el acorde suspendido reduce o mantiene el movimiento entre voces respecto al acorde sin suspender. Si ninguna voz previa puede enlazar hacia la nota suspendida por tono o semitono, la suspensión sigue siendo posible, pero queda penalizada. En estilos con disonancia preparada, la penalización se convierte en filtro: la nota suspendida debe estar preparada en el acorde anterior y resolver por tono o semitono hacia la tercera del acorde actual.
 
 La puntuación de conducción penaliza quintas y octavas paralelas. La penalización es mayor cuando la paralela aparece entre las voces exteriores, especialmente bajo y soprano. Las paralelas interiores también restan calidad al voicing, aunque con menor peso.
 
@@ -168,7 +185,7 @@ Cada compás de la progresión puede dividirse en hasta cuatro acordes. El prime
 
 La decisión de cuántos acordes aparecen en un compás pertenece a `js/services/progression-harmonic-density-service.js`. Con **Densidad armónica** a `0`, el generador conserva siempre un solo acorde por compás. Al subir el fader, la probabilidad de dividir compases crece siguiendo una curva formal: menor al inicio de frase o sección, mayor en los compases que preparan finales de frase y especialmente en el penúltimo compás de sección. El último compás de la progresión no se divide para que el cierre ocupe todo el compás.
 
-La densidad también escucha la tensión armónica. Las dominantes, cadencias cromáticas, roles cadenciales y preparaciones que resuelven hacia tónica admiten algo más de actividad; las tónicas estables frenan la división. El estilo clásico, el contrapunto, las tensiones y el cromatismo añaden un pequeño empuje contextual, pero no sustituyen al valor principal del fader.
+La densidad también escucha la tensión armónica. Las dominantes, cadencias cromáticas, roles cadenciales y preparaciones que resuelven hacia tónica admiten algo más de actividad; las tónicas estables frenan la división. Los estilos funcionales, el contrapunto, las tensiones y el cromatismo añaden un pequeño empuje contextual, pero no sustituyen al valor principal del fader.
 
 La métrica sesga el número de acordes elegido antes de repartir duraciones: en compases binarios se favorecen `1`, `2` o `4` acordes y se hace más raro `3`; en compases ternarios se favorecen `1` o `3` y se penalizan `2` y `4`; en compases irregulares se prefiere evitar divisiones demasiado mecánicas y se aceptan agrupaciones de tres acordes con más naturalidad. Además, salvo en densidades extremas, el servicio evita acumular más de dos compases muy densos seguidos.
 

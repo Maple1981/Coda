@@ -3,6 +3,7 @@
 	'use strict';
 
 	var OCTAVE = 12;
+	var styleService = global.CodaProgressionStyle;
 
 	function shouldUseChromaticCadence(pattern, progressionState, rng) {
 		var probability = chromaticCadenceProbability(pattern, progressionState);
@@ -29,7 +30,7 @@
 		probability = (chromaticism - 25) / 105;
 		probability += counterpoint / 480;
 
-		if (progressionState && progressionState.style === 'classic') {
+		if (styleService.usesFunctionalCadence(progressionState)) {
 			probability += 0.1;
 		}
 
@@ -58,7 +59,7 @@
 
 	function subFiveCadenceChance(progressionState) {
 		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
-		var styleBonus = progressionState && progressionState.style === 'modern' ? 0.04 : 0;
+		var styleBonus = styleService.avoidsStrongDominantResolution(progressionState) ? 0.04 : 0;
 
 		if (chromaticism < 75) {
 			return 0;
@@ -382,7 +383,7 @@
 		var value = typeof rng === 'function' ? rng() : Math.random();
 		var probability = 0.18 + counterpoint / 360 + chromaticism / 500;
 
-		if (progressionState && progressionState.style === 'classic') {
+		if (styleService.usesFunctionalCadence(progressionState)) {
 			probability += 0.12;
 		}
 

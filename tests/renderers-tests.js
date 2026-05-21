@@ -526,7 +526,11 @@ assert.ok(progressionWorkbenchHtml.indexOf('class="progressionExpressiveControls
 assert.ok(progressionWorkbenchHtml.indexOf('class="workbenchControl workbenchControl--knob"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('class="knobControl__input"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="progressionStyle"') > -1);
-assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.style.modern"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.style.renaissance"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.style.baroque"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.style.contemporary"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="progressionStyleHelp"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="progressionStyleDialog"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="generateProgression"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.generate"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('auto_awesome') > -1);

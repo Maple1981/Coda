@@ -6,7 +6,9 @@
 	var styleService = global.CodaProgressionStyle;
 
 	function isClassic(progressionState) {
-		return styleService && styleService.isClassic ? styleService.isClassic(progressionState) : progressionState && progressionState.style === 'classic';
+		return styleService && styleService.requiresPreparedDissonance ?
+			styleService.requiresPreparedDissonance(progressionState) :
+			progressionState && progressionState.style === 'classic';
 	}
 
 	function allowsSuspension(context, baseNotes, suspensionNote) {

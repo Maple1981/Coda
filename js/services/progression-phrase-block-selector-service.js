@@ -5,6 +5,7 @@
 	var cadencePlanner = global.CodaProgressionCadencePlanner;
 	var patternWeight = global.CodaProgressionPatternWeight;
 	var patternSelector = global.CodaProgressionPatternSelector;
+	var styleService = global.CodaProgressionStyle;
 
 	function choose(options) {
 		var blocks = options.rules && options.rules.phraseBlocks ? options.rules.phraseBlocks : fallbackPhraseBlocks();
@@ -16,6 +17,10 @@
 			var weight;
 
 			if (!patternSelector.matchesMode(blocks[i], options.mode) || !cadencePlanner.matchesCadence(blocks[i], options.cadence)) {
+				continue;
+			}
+
+			if (!patternWeight.matchesStyle(blocks[i], options.progressionState)) {
 				continue;
 			}
 
@@ -63,6 +68,7 @@
 	function adjustedBlockWeight(block, progressionState, previousBlockId, mode) {
 		var weight = block.weight || 1;
 
+		weight *= styleService.patternAffinity(progressionState, block);
 		weight += patternWeight.affinityScore(progressionState.counterpoint, block.counterpoint);
 		weight += patternWeight.affinityScore(progressionState.modalInterchange, block.modalColor);
 		weight += patternWeight.affinityScore(progressionState.tensions, block.tensionAffinity);
@@ -82,13 +88,42 @@
 		var fitted = [];
 
 		for (var i = 0; i < bars; i++) {
-			fitted.push({
-				index: sourceDegrees[i % sourceDegrees.length],
+			var sourceDegree = sourceDegrees[i % sourceDegrees.length];
+			var degree = degreeFromSource(sourceDegree, {
 				source: borrowedIndexes.indexOf(i % sourceDegrees.length) > -1 ? 'parallel' : 'diatonic'
 			});
+
+			fitted.push(degree);
 		}
 
 		return fitted;
+	}
+
+	function degreeFromSource(sourceDegree, defaults) {
+		var result = {};
+		var key;
+
+		defaults = defaults || {};
+		if (sourceDegree && typeof sourceDegree === 'object') {
+			for (key in sourceDegree) {
+				if (Object.prototype.hasOwnProperty.call(sourceDegree, key)) {
+					result[key] = sourceDegree[key];
+				}
+			}
+			if (!result.source) {
+				result.source = defaults.source || 'diatonic';
+			}
+			return result;
+		}
+
+		for (key in defaults) {
+			if (Object.prototype.hasOwnProperty.call(defaults, key)) {
+				result[key] = defaults[key];
+			}
+		}
+		result.index = sourceDegree;
+
+		return result;
 	}
 
 	function fallbackPhraseBlocks() {
@@ -112,6 +147,7 @@
 
 	global.CodaProgressionPhraseBlockSelector = {
 		choose: choose,
+		degreeFromSource: degreeFromSource,
 		fallbackPhraseBlocks: fallbackPhraseBlocks,
 		fitBlockToBars: fitBlockToBars
 	};

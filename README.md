@@ -53,7 +53,7 @@ Main areas:
 - `js/renderers/`: HTML rendering without direct business logic.
 - `js/ui/`: DOM coordination and user interaction.
 - `docs/technical/`: architecture, workflow, security, soundfonts and progression-generation notes.
-- `Docs/` and `Docs/teoria-md/`: music-theory reference material used to guide future rules.
+- `docs/theory/`: music-theory reference material used to guide future rules, including style syntheses under `docs/theory/styles/`.
 
 When application scripts are added, removed or reordered, update `js/bootstrap/script-manifest.js` and regenerate the published bundle:
 
