@@ -30,6 +30,8 @@ Una sección contrastante puede conservar la tonalidad con apertura de función 
 
 Cada sección generada guarda una copia del estado de escritura con el que nació: compases, compás, tempo, voces, disposición, articulación, estilo, intercambio, cromatismo, tensiones, contrapunto y parámetros expresivos. Los clones copian los compases ya editados por el usuario; las variaciones sustituyen de forma ligera entre uno y tres acordes, según la duración y el azar, para producir una variación reconocible sin descartar la sección fuente.
 
+La evolución prevista de cambios de centro tonal está separada en `docs/technical/progression-modulation-planning.md`. Ese plan distingue entre tonicalizaciones internas, que no cambian el contexto de sección, y modulaciones estructurales, que sí deben crear o confirmar un nuevo contexto tonal para la sección resultante.
+
 ## Estilo de escritura
 
 El control **Estilo** se organiza como una cadena histórica de perfiles: **Renacimiento**, **Barroco**, **Clásico**, **Romántico**, **Impresionista** y **Contemporáneo**. El valor antiguo `modern` queda como alias interno de **Contemporáneo** para no romper preferencias locales guardadas.
