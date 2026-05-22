@@ -3,6 +3,7 @@
 	'use strict';
 
 	var cadencePlanner = global.CodaProgressionCadencePlanner;
+	var chromaticCadenceService = global.CodaProgressionChromaticCadence;
 	var modalPlanner = global.CodaProgressionModalPlanner;
 	var patternSelector = global.CodaProgressionPatternSelector;
 	var phraseBlockSelector = global.CodaProgressionPhraseBlockSelector;
@@ -54,6 +55,7 @@
 				rules: options.rules
 			});
 		degrees = applyClassicMinorDominants(degrees, options.report, progressionState, mode);
+		degrees = applyPartimentoChromaticDegrees(degrees, options.report);
 		degrees = applyModalInterchangeSources(degrees, options.report, progressionState, rng);
 		degrees = applyOpeningFunction(degrees, options.report, options.openingFunction, rng);
 		degrees = applySparseChordRepetition(degrees, progressionState, rng);
@@ -237,6 +239,46 @@
 		}
 
 		return result;
+	}
+
+	function applyPartimentoChromaticDegrees(degrees, report) {
+		var result = [];
+
+		if (!degrees || !degrees.length || !chromaticCadenceService) {
+			return degrees;
+		}
+
+		for (var i = 0; i < degrees.length; i++) {
+			var degree = extendObject(degrees[i], {});
+			var chromaticDegree = chromaticDegreeForMarker(degree, report);
+
+			result.push(chromaticDegree ? extendObject(degree, chromaticDegree) : degree);
+		}
+
+		return result;
+	}
+
+	function chromaticDegreeForMarker(degree, report) {
+		if (!degree || degree.chord || !degree.chromaticRole) {
+			return null;
+		}
+
+		if (degree.chromaticRole === 'neapolitan' && typeof chromaticCadenceService.neapolitanDegree === 'function') {
+			return chromaticCadenceService.neapolitanDegree(report);
+		}
+
+		if (
+			(degree.chromaticRole === 'diminishedSeventh' || degree.chromaticRole === 'commonToneDiminished') &&
+			typeof chromaticCadenceService.diminishedSeventhDegree === 'function'
+		) {
+			return chromaticCadenceService.diminishedSeventhDegree(report, {
+				commonTone: degree.chromaticRole === 'commonToneDiminished',
+				forceInversionIndex: degree.forceInversionIndex,
+				targetDegreeIndex: degree.targetDegreeIndex
+			});
+		}
+
+		return null;
 	}
 
 	function chooseInterchangeSource(report, degreeIndex, rng) {
@@ -429,7 +471,9 @@
 		applyClassicMinorDominants: applyClassicMinorDominants,
 		applyModalInterchangeSources: applyModalInterchangeSources,
 		applyOpeningFunction: applyOpeningFunction,
+		applyPartimentoChromaticDegrees: applyPartimentoChromaticDegrees,
 		applySparseChordRepetition: applySparseChordRepetition,
+		chromaticDegreeForMarker: chromaticDegreeForMarker,
 		chooseInterchangeSource: chooseInterchangeSource,
 		createPlan: createPlan,
 		degreeIndexesForFunction: degreeIndexesForFunction,

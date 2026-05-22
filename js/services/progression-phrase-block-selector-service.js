@@ -77,6 +77,8 @@
 		weight += patternWeight.sequentialBassScore(block.degrees, progressionState);
 		weight += patternWeight.figuredBassShapeScore(block.degrees, progressionState);
 		weight += patternWeight.fourPartHarmonyScore(block.degrees, progressionState);
+		weight += patternWeight.chromaticDiminishedScore(block.degrees, progressionState);
+		weight += patternWeight.partimentoSequenceShapeScore(block.degrees, progressionState);
 		weight *= patternWeight.sensitiveDegreeFactor(block.degrees, mode, progressionState);
 
 		if (block.id === previousBlockId) {

@@ -256,6 +256,74 @@
 				weight: 11
 			},
 			{
+				cadence: 'half',
+				counterpoint: 92,
+				degrees: [
+					0,
+					{ chromaticRole: 'diminishedSeventh', forceInversionIndex: 1, targetDegreeIndex: 4 },
+					1,
+					4
+				],
+				form: 'diminished-seventh-family',
+				id: 'baroque-diminished-seventh-half',
+				modes: ['major', 'minor'],
+				modalColor: 32,
+				styles: ['baroque'],
+				tensionAffinity: 70,
+				weight: 9
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 82,
+				degrees: [
+					0,
+					{ chromaticRole: 'commonToneDiminished', forceInversionIndex: 0, targetDegreeIndex: 0 },
+					4,
+					0
+				],
+				form: 'common-tone-diminished',
+				id: 'romantic-common-tone-diminished-authentic',
+				modes: ['major', 'minor'],
+				modalColor: 46,
+				styles: ['baroque', 'classic', 'romantic'],
+				tensionAffinity: 72,
+				weight: 7
+			},
+			{
+				cadence: 'half',
+				counterpoint: 94,
+				degrees: [
+					0,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					4
+				],
+				form: 'tied-bass-four-part',
+				id: 'baroque-tied-bass-four-part-half',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 64,
+				weight: 8
+			},
+			{
+				cadence: 'half',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 2, forceKind: 'seventh', index: 4 },
+					4
+				],
+				form: 'indugio',
+				id: 'baroque-indugio-half',
+				modes: ['major', 'minor'],
+				modalColor: 16,
+				styles: ['baroque'],
+				tensionAffinity: 76,
+				weight: 7
+			},
+			{
 				cadence: 'plagal',
 				counterpoint: 90,
 				degrees: [
@@ -899,6 +967,135 @@
 				styles: ['baroque'],
 				tensionAffinity: 52,
 				weight: 9
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 94,
+				degrees: [
+					0,
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 3 },
+					{ forceInversionIndex: 2, forceKind: 'seventh', index: 6 },
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 2 },
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 5 },
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 1 },
+					4,
+					0
+				],
+				form: 'circle-fifths-family',
+				id: 'baroque-circle-fifths-sevenths',
+				modes: ['major', 'minor'],
+				modalColor: 20,
+				styles: ['baroque'],
+				tensionAffinity: 76,
+				weight: 8
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 5 },
+					6,
+					{ forceInversionIndex: 1, index: 4 },
+					5,
+					{ forceInversionIndex: 1, index: 3 },
+					4,
+					0
+				],
+				form: 'third-down-second-up',
+				id: 'baroque-third-down-second-up',
+				modes: ['major', 'minor'],
+				modalColor: 18,
+				styles: ['baroque'],
+				tensionAffinity: 58,
+				weight: 7
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 96,
+				degrees: [
+					0,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 1 },
+					4,
+					0
+				],
+				form: 'tied-bass-four-part',
+				id: 'baroque-tied-bass-four-part-period',
+				modes: ['major', 'minor'],
+				modalColor: 14,
+				styles: ['baroque'],
+				tensionAffinity: 68,
+				weight: 7
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 86,
+				degrees: [0, 5, 3, 1, 6, 4, 4, 0],
+				form: 'descending-thirds',
+				id: 'baroque-descending-thirds',
+				modes: ['major', 'minor'],
+				modalColor: 22,
+				styles: ['baroque', 'classic', 'romantic'],
+				tensionAffinity: 54,
+				weight: 7
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 88,
+				degrees: [
+					0,
+					5,
+					3,
+					{ chromaticRole: 'neapolitan', forceInversionIndex: 1 },
+					6,
+					1,
+					4,
+					0
+				],
+				form: 'minor-neapolitan-continuation',
+				id: 'baroque-minor-neapolitan-continuation',
+				modes: ['minor'],
+				modalColor: 58,
+				styles: ['baroque', 'classic', 'romantic'],
+				tensionAffinity: 66,
+				weight: 6
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 84,
+				degrees: [0, 4, 0, 5, 2, 5, 4, 0],
+				form: 'modulating-folia',
+				id: 'baroque-modulating-folia',
+				modes: ['minor'],
+				modalColor: 54,
+				styles: ['baroque', 'romantic'],
+				tensionAffinity: 58,
+				weight: 6
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ chromaticRole: 'diminishedSeventh', forceInversionIndex: 0, targetDegreeIndex: 4 },
+					4,
+					{ chromaticRole: 'diminishedSeventh', forceInversionIndex: 2, targetDegreeIndex: 0 },
+					0,
+					1,
+					4,
+					0
+				],
+				form: 'diminished-seventh-family',
+				id: 'baroque-diminished-seventh-family',
+				modes: ['major', 'minor'],
+				modalColor: 42,
+				styles: ['baroque', 'romantic'],
+				tensionAffinity: 78,
+				weight: 6
 			},
 			{
 				cadence: 'authentic',

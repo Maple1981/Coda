@@ -665,6 +665,74 @@
 				weight: 11
 			},
 			{
+				cadence: 'half',
+				counterpoint: 92,
+				degrees: [
+					0,
+					{ chromaticRole: 'diminishedSeventh', forceInversionIndex: 1, targetDegreeIndex: 4 },
+					1,
+					4
+				],
+				form: 'diminished-seventh-family',
+				id: 'baroque-diminished-seventh-half',
+				modes: ['major', 'minor'],
+				modalColor: 32,
+				styles: ['baroque'],
+				tensionAffinity: 70,
+				weight: 9
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 82,
+				degrees: [
+					0,
+					{ chromaticRole: 'commonToneDiminished', forceInversionIndex: 0, targetDegreeIndex: 0 },
+					4,
+					0
+				],
+				form: 'common-tone-diminished',
+				id: 'romantic-common-tone-diminished-authentic',
+				modes: ['major', 'minor'],
+				modalColor: 46,
+				styles: ['baroque', 'classic', 'romantic'],
+				tensionAffinity: 72,
+				weight: 7
+			},
+			{
+				cadence: 'half',
+				counterpoint: 94,
+				degrees: [
+					0,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					4
+				],
+				form: 'tied-bass-four-part',
+				id: 'baroque-tied-bass-four-part-half',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 64,
+				weight: 8
+			},
+			{
+				cadence: 'half',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 2, forceKind: 'seventh', index: 4 },
+					4
+				],
+				form: 'indugio',
+				id: 'baroque-indugio-half',
+				modes: ['major', 'minor'],
+				modalColor: 16,
+				styles: ['baroque'],
+				tensionAffinity: 76,
+				weight: 7
+			},
+			{
 				cadence: 'plagal',
 				counterpoint: 90,
 				degrees: [
@@ -1308,6 +1376,135 @@
 				styles: ['baroque'],
 				tensionAffinity: 52,
 				weight: 9
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 94,
+				degrees: [
+					0,
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 3 },
+					{ forceInversionIndex: 2, forceKind: 'seventh', index: 6 },
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 2 },
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 5 },
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 1 },
+					4,
+					0
+				],
+				form: 'circle-fifths-family',
+				id: 'baroque-circle-fifths-sevenths',
+				modes: ['major', 'minor'],
+				modalColor: 20,
+				styles: ['baroque'],
+				tensionAffinity: 76,
+				weight: 8
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 5 },
+					6,
+					{ forceInversionIndex: 1, index: 4 },
+					5,
+					{ forceInversionIndex: 1, index: 3 },
+					4,
+					0
+				],
+				form: 'third-down-second-up',
+				id: 'baroque-third-down-second-up',
+				modes: ['major', 'minor'],
+				modalColor: 18,
+				styles: ['baroque'],
+				tensionAffinity: 58,
+				weight: 7
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 96,
+				degrees: [
+					0,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 1 },
+					4,
+					0
+				],
+				form: 'tied-bass-four-part',
+				id: 'baroque-tied-bass-four-part-period',
+				modes: ['major', 'minor'],
+				modalColor: 14,
+				styles: ['baroque'],
+				tensionAffinity: 68,
+				weight: 7
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 86,
+				degrees: [0, 5, 3, 1, 6, 4, 4, 0],
+				form: 'descending-thirds',
+				id: 'baroque-descending-thirds',
+				modes: ['major', 'minor'],
+				modalColor: 22,
+				styles: ['baroque', 'classic', 'romantic'],
+				tensionAffinity: 54,
+				weight: 7
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 88,
+				degrees: [
+					0,
+					5,
+					3,
+					{ chromaticRole: 'neapolitan', forceInversionIndex: 1 },
+					6,
+					1,
+					4,
+					0
+				],
+				form: 'minor-neapolitan-continuation',
+				id: 'baroque-minor-neapolitan-continuation',
+				modes: ['minor'],
+				modalColor: 58,
+				styles: ['baroque', 'classic', 'romantic'],
+				tensionAffinity: 66,
+				weight: 6
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 84,
+				degrees: [0, 4, 0, 5, 2, 5, 4, 0],
+				form: 'modulating-folia',
+				id: 'baroque-modulating-folia',
+				modes: ['minor'],
+				modalColor: 54,
+				styles: ['baroque', 'romantic'],
+				tensionAffinity: 58,
+				weight: 6
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ chromaticRole: 'diminishedSeventh', forceInversionIndex: 0, targetDegreeIndex: 4 },
+					4,
+					{ chromaticRole: 'diminishedSeventh', forceInversionIndex: 2, targetDegreeIndex: 0 },
+					0,
+					1,
+					4,
+					0
+				],
+				form: 'diminished-seventh-family',
+				id: 'baroque-diminished-seventh-family',
+				modes: ['major', 'minor'],
+				modalColor: 42,
+				styles: ['baroque', 'romantic'],
+				tensionAffinity: 78,
+				weight: 6
 			},
 			{
 				cadence: 'authentic',
@@ -2132,6 +2329,8 @@
 			'progression.chordMenu.triad': 'Tríada',
 			'progression.chromatic.neapolitan': 'Sexta napolitana',
 			'progression.chromatic.augmentedSixth': 'Sexta aumentada',
+			'progression.chromatic.diminishedSeventh': 'Séptima disminuida',
+			'progression.chromatic.commonToneDiminished': 'Disminuida de nota común',
 			'progression.chromatic.subFive': 'Sub Five',
 			'progression.chromaticism': 'Cromatismo',
 			'progression.counterpoint': 'Contrapunto',
@@ -2409,6 +2608,8 @@
 			'progression.chordMenu.triad': 'Triad',
 			'progression.chromatic.neapolitan': 'Neapolitan sixth',
 			'progression.chromatic.augmentedSixth': 'Augmented sixth',
+			'progression.chromatic.diminishedSeventh': 'Diminished seventh',
+			'progression.chromatic.commonToneDiminished': 'Common-tone diminished',
 			'progression.chromatic.subFive': 'Sub Five',
 			'progression.chromaticism': 'Chromaticism',
 			'progression.counterpoint': 'Counterpoint',
@@ -3473,15 +3674,22 @@
 			minimizesDiminishedHarmony: false,
 			patternAffinities: {
 				'circle-fragment': 1.3,
+				'circle-fifths-family': 1.5,
 				'circle-of-fifths': 1.55,
+				'common-tone-diminished': 1.16,
+				'descending-thirds': 1.34,
+				'diminished-seventh-family': 1.36,
 				'fenaroli': 1.32,
 				'folia': 1.34,
 				'galant-cadence': 1.3,
 				'galant-four-part-cadence': 1.34,
 				'galant-marpurg-cadence': 1.24,
+				'indugio': 1.26,
 				'leaping-romanesca': 1.42,
+				'minor-neapolitan-continuation': 1.18,
 				'monte-romanesca': 1.34,
 				'molldur-deceptive': 1.12,
+				'modulating-folia': 1.24,
 				'partimento-alto-cadence': 1.28,
 				'partimento-compound-cadence': 1.52,
 				'partimento-deceptive-cadence': 1.28,
@@ -3499,7 +3707,9 @@
 				'prinner': 1.24,
 				'quiescenza': 1.22,
 				'romanesca': 1.35,
-				'subdominant-dominant': 1.18
+				'subdominant-dominant': 1.18,
+				'third-down-second-up': 1.34,
+				'tied-bass-four-part': 1.36
 			},
 			prefersPartimentoBass: true,
 			prefersFourPartHarmony: true,
@@ -3517,11 +3727,17 @@
 			minimizesDiminishedHarmony: false,
 			patternAffinities: {
 				'fenaroli': 1.12,
+				'common-tone-diminished': 1.08,
+				'descending-thirds': 1.12,
+				'diminished-seventh-family': 1.12,
 				'galant-cadence': 1.38,
 				'galant-four-part-cadence': 1.34,
 				'galant-marpurg-cadence': 1.26,
+				'indugio': 1.08,
+				'minor-neapolitan-continuation': 1.08,
 				'monte-romanesca': 1.16,
 				'molldur-deceptive': 1.12,
+				'modulating-folia': 1.08,
 				'partimento-dominant-seventh-family': 1.18,
 				'period': 1.28,
 				'prinner': 1.32,
@@ -3545,8 +3761,13 @@
 			minimizesDiminishedHarmony: false,
 			patternAffinities: {
 				'circle-of-fifths': 1.18,
+				'common-tone-diminished': 1.2,
 				'deceptive-cadence': 1.2,
+				'descending-thirds': 1.18,
+				'diminished-seventh-family': 1.26,
+				'minor-neapolitan-continuation': 1.12,
 				'molldur-deceptive': 1.24,
+				'modulating-folia': 1.16,
 				'partimento-dominant-seventh-family': 1.12,
 				'minor-cadential': 1.22,
 				'sentence': 1.16
@@ -8474,7 +8695,7 @@
 ;
 
 /* Source: js/services/progression-chromatic-cadence-service.js */
-// Cadencias cromáticas: sexta napolitana y sextas aumentadas.
+// Cadencias cromáticas: sexta napolitana, sextas aumentadas y acordes disminuidos.
 (function (global) {
 	'use strict';
 
@@ -8665,6 +8886,46 @@
 			sourceLabelKey: 'progression.chromatic.neapolitan',
 			tonalFunctionOverride: 'SD'
 		};
+	}
+
+	function diminishedSeventhDegree(report, options) {
+		var targetDegreeIndex = numberOrDefault(options && options.targetDegreeIndex, 0);
+		var commonTone = !!(options && options.commonTone);
+		var targetPitch = targetPitchClass(report, targetDegreeIndex);
+		var rootIndex = commonTone ? targetPitch : normalizeIndex(targetPitch - 1);
+		var root = noteName(rootIndex, commonTone ? 'flat' : 'sharp');
+		var third = noteName(rootIndex + 3, 'flat');
+		var fifth = noteName(rootIndex + 6, 'flat');
+		var seventh = noteName(rootIndex + 9, 'flat');
+		var degreeName = commonTone ? 'CTdim7' : targetDegreeIndex === 4 ? 'viidim7/V' : 'viidim7';
+
+		return {
+			chord: {
+				displayName: root + 'dim7',
+				factorNotes: [root, third, fifth, seventh],
+				fundamental: root,
+				nombre: root + 'dim7',
+				quinta: fifth,
+				septima: seventh,
+				tercera: third
+			},
+			chromaticRole: commonTone ? 'commonToneDiminished' : 'diminishedSeventh',
+			degreeDisplayName: degreeName,
+			forceInversionIndex: diminishedSeventhInversionIndex(options),
+			forceKind: 'seventh',
+			index: commonTone ? targetDegreeIndex : targetDegreeIndex === 4 ? 4 : 6,
+			preventSuspension: true,
+			preventTensions: true,
+			source: 'chromatic',
+			sourceLabelKey: commonTone ? 'progression.chromatic.commonToneDiminished' : 'progression.chromatic.diminishedSeventh',
+			tonalFunctionOverride: commonTone ? 'T' : 'D'
+		};
+	}
+
+	function diminishedSeventhInversionIndex(options) {
+		var normalized = Number(options && options.forceInversionIndex);
+
+		return isFinite(normalized) && normalized >= 0 && normalized <= 3 ? normalized : 0;
 	}
 
 	function augmentedSixthDegree(report, rng) {
@@ -9009,6 +9270,8 @@
 		augmentedSixthVariant: augmentedSixthVariant,
 		chromaticCadenceProbability: chromaticCadenceProbability,
 		chooseChromaticCadenceType: chooseChromaticCadenceType,
+		diminishedSeventhDegree: diminishedSeventhDegree,
+		diminishedSeventhInversionIndex: diminishedSeventhInversionIndex,
 		forceAugmentedSixthEnding: forceAugmentedSixthEnding,
 		forceChromaticEnding: forceChromaticEnding,
 		forceNeapolitanEnding: forceNeapolitanEnding,
@@ -9308,6 +9571,8 @@
 		weight += sequentialBassScore(pattern.degrees, progressionState);
 		weight += figuredBassShapeScore(pattern.degrees, progressionState);
 		weight += fourPartHarmonyScore(pattern.degrees, progressionState);
+		weight += chromaticDiminishedScore(pattern.degrees, progressionState);
+		weight += partimentoSequenceShapeScore(pattern.degrees, progressionState);
 		weight *= sensitiveDegreeFactor(pattern.degrees, mode, progressionState);
 
 		if (isArpeggioArticulation(progressionState.articulation) && pattern.form === 'circle-of-fifths') {
@@ -9451,6 +9716,53 @@
 		return score;
 	}
 
+	function chromaticDiminishedScore(degrees, progressionState) {
+		var score = 0;
+		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
+		var voices = numberOrDefault(progressionState && progressionState.voices, 4);
+
+		if (styleService.minimizesDiminishedHarmony(progressionState) || chromaticism < 35 || !degrees || !degrees.length) {
+			return 0;
+		}
+
+		for (var i = 0; i < degrees.length; i++) {
+			if (degrees[i] && degrees[i].chromaticRole === 'diminishedSeventh') {
+				score += 2.4;
+			} else if (degrees[i] && degrees[i].chromaticRole === 'commonToneDiminished') {
+				score += 1.8;
+			}
+		}
+
+		if (styleService.prefersFourPartHarmony(progressionState) && voices >= 4) {
+			score *= 1.35;
+		}
+
+		return score * Math.min(1.4, 0.7 + chromaticism / 180);
+	}
+
+	function partimentoSequenceShapeScore(degrees, progressionState) {
+		var score = 0;
+
+		if (!styleService.prefersSequentialPatterns(progressionState) || !degrees || degrees.length < 3) {
+			return 0;
+		}
+
+		for (var i = 2; i < degrees.length; i++) {
+			var previous = signedCircularDegreeDistance(degreeIndex(degrees[i - 2]), degreeIndex(degrees[i - 1]));
+			var current = signedCircularDegreeDistance(degreeIndex(degrees[i - 1]), degreeIndex(degrees[i]));
+
+			if (previous === -2 && current === -2) {
+				score += 2.6;
+			} else if ((previous === -2 && current === 1) || (previous === 1 && current === -2)) {
+				score += 2.2;
+			} else if ((previous === -4 && current === 3) || (previous === 3 && current === -4)) {
+				score += 1.9;
+			}
+		}
+
+		return score;
+	}
+
 	function isDominantSeventhPosition(degree) {
 		return degree &&
 			typeof degree === 'object' &&
@@ -9500,6 +9812,19 @@
 		return Math.min(distance, 7 - distance);
 	}
 
+	function signedCircularDegreeDistance(first, second) {
+		var distance = ((Number(second) || 0) - (Number(first) || 0)) % 7;
+
+		if (distance > 3) {
+			distance -= 7;
+		}
+		if (distance < -3) {
+			distance += 7;
+		}
+
+		return distance;
+	}
+
 	function degreeIndex(degree) {
 		if (degree && typeof degree === 'object') {
 			return Number(degree.index) || 0;
@@ -9525,11 +9850,13 @@
 	global.CodaProgressionPatternWeight = {
 		adjustedPatternWeight: adjustedPatternWeight,
 		affinityScore: affinityScore,
+		chromaticDiminishedScore: chromaticDiminishedScore,
 		commonToneDegreeScore: commonToneDegreeScore,
 		degreeIndex: degreeIndex,
 		figuredBassShapeScore: figuredBassShapeScore,
 		fourPartHarmonyScore: fourPartHarmonyScore,
 		matchesStyle: matchesStyle,
+		partimentoSequenceShapeScore: partimentoSequenceShapeScore,
 		sensitiveDegreeFactor: sensitiveDegreeFactor,
 		sequentialBassScore: sequentialBassScore,
 		stepwiseBassScore: stepwiseBassScore
@@ -9712,6 +10039,8 @@
 		weight += patternWeight.sequentialBassScore(block.degrees, progressionState);
 		weight += patternWeight.figuredBassShapeScore(block.degrees, progressionState);
 		weight += patternWeight.fourPartHarmonyScore(block.degrees, progressionState);
+		weight += patternWeight.chromaticDiminishedScore(block.degrees, progressionState);
+		weight += patternWeight.partimentoSequenceShapeScore(block.degrees, progressionState);
 		weight *= patternWeight.sensitiveDegreeFactor(block.degrees, mode, progressionState);
 
 		if (block.id === previousBlockId) {
@@ -9992,6 +10321,7 @@
 	'use strict';
 
 	var cadencePlanner = global.CodaProgressionCadencePlanner;
+	var chromaticCadenceService = global.CodaProgressionChromaticCadence;
 	var modalPlanner = global.CodaProgressionModalPlanner;
 	var patternSelector = global.CodaProgressionPatternSelector;
 	var phraseBlockSelector = global.CodaProgressionPhraseBlockSelector;
@@ -10043,6 +10373,7 @@
 				rules: options.rules
 			});
 		degrees = applyClassicMinorDominants(degrees, options.report, progressionState, mode);
+		degrees = applyPartimentoChromaticDegrees(degrees, options.report);
 		degrees = applyModalInterchangeSources(degrees, options.report, progressionState, rng);
 		degrees = applyOpeningFunction(degrees, options.report, options.openingFunction, rng);
 		degrees = applySparseChordRepetition(degrees, progressionState, rng);
@@ -10226,6 +10557,46 @@
 		}
 
 		return result;
+	}
+
+	function applyPartimentoChromaticDegrees(degrees, report) {
+		var result = [];
+
+		if (!degrees || !degrees.length || !chromaticCadenceService) {
+			return degrees;
+		}
+
+		for (var i = 0; i < degrees.length; i++) {
+			var degree = extendObject(degrees[i], {});
+			var chromaticDegree = chromaticDegreeForMarker(degree, report);
+
+			result.push(chromaticDegree ? extendObject(degree, chromaticDegree) : degree);
+		}
+
+		return result;
+	}
+
+	function chromaticDegreeForMarker(degree, report) {
+		if (!degree || degree.chord || !degree.chromaticRole) {
+			return null;
+		}
+
+		if (degree.chromaticRole === 'neapolitan' && typeof chromaticCadenceService.neapolitanDegree === 'function') {
+			return chromaticCadenceService.neapolitanDegree(report);
+		}
+
+		if (
+			(degree.chromaticRole === 'diminishedSeventh' || degree.chromaticRole === 'commonToneDiminished') &&
+			typeof chromaticCadenceService.diminishedSeventhDegree === 'function'
+		) {
+			return chromaticCadenceService.diminishedSeventhDegree(report, {
+				commonTone: degree.chromaticRole === 'commonToneDiminished',
+				forceInversionIndex: degree.forceInversionIndex,
+				targetDegreeIndex: degree.targetDegreeIndex
+			});
+		}
+
+		return null;
 	}
 
 	function chooseInterchangeSource(report, degreeIndex, rng) {
@@ -10418,7 +10789,9 @@
 		applyClassicMinorDominants: applyClassicMinorDominants,
 		applyModalInterchangeSources: applyModalInterchangeSources,
 		applyOpeningFunction: applyOpeningFunction,
+		applyPartimentoChromaticDegrees: applyPartimentoChromaticDegrees,
 		applySparseChordRepetition: applySparseChordRepetition,
+		chromaticDegreeForMarker: chromaticDegreeForMarker,
 		chooseInterchangeSource: chooseInterchangeSource,
 		createPlan: createPlan,
 		degreeIndexesForFunction: degreeIndexesForFunction,

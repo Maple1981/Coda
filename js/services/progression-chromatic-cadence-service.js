@@ -1,4 +1,4 @@
-// Cadencias cromáticas: sexta napolitana y sextas aumentadas.
+// Cadencias cromáticas: sexta napolitana, sextas aumentadas y acordes disminuidos.
 (function (global) {
 	'use strict';
 
@@ -189,6 +189,46 @@
 			sourceLabelKey: 'progression.chromatic.neapolitan',
 			tonalFunctionOverride: 'SD'
 		};
+	}
+
+	function diminishedSeventhDegree(report, options) {
+		var targetDegreeIndex = numberOrDefault(options && options.targetDegreeIndex, 0);
+		var commonTone = !!(options && options.commonTone);
+		var targetPitch = targetPitchClass(report, targetDegreeIndex);
+		var rootIndex = commonTone ? targetPitch : normalizeIndex(targetPitch - 1);
+		var root = noteName(rootIndex, commonTone ? 'flat' : 'sharp');
+		var third = noteName(rootIndex + 3, 'flat');
+		var fifth = noteName(rootIndex + 6, 'flat');
+		var seventh = noteName(rootIndex + 9, 'flat');
+		var degreeName = commonTone ? 'CTdim7' : targetDegreeIndex === 4 ? 'viidim7/V' : 'viidim7';
+
+		return {
+			chord: {
+				displayName: root + 'dim7',
+				factorNotes: [root, third, fifth, seventh],
+				fundamental: root,
+				nombre: root + 'dim7',
+				quinta: fifth,
+				septima: seventh,
+				tercera: third
+			},
+			chromaticRole: commonTone ? 'commonToneDiminished' : 'diminishedSeventh',
+			degreeDisplayName: degreeName,
+			forceInversionIndex: diminishedSeventhInversionIndex(options),
+			forceKind: 'seventh',
+			index: commonTone ? targetDegreeIndex : targetDegreeIndex === 4 ? 4 : 6,
+			preventSuspension: true,
+			preventTensions: true,
+			source: 'chromatic',
+			sourceLabelKey: commonTone ? 'progression.chromatic.commonToneDiminished' : 'progression.chromatic.diminishedSeventh',
+			tonalFunctionOverride: commonTone ? 'T' : 'D'
+		};
+	}
+
+	function diminishedSeventhInversionIndex(options) {
+		var normalized = Number(options && options.forceInversionIndex);
+
+		return isFinite(normalized) && normalized >= 0 && normalized <= 3 ? normalized : 0;
 	}
 
 	function augmentedSixthDegree(report, rng) {
@@ -533,6 +573,8 @@
 		augmentedSixthVariant: augmentedSixthVariant,
 		chromaticCadenceProbability: chromaticCadenceProbability,
 		chooseChromaticCadenceType: chooseChromaticCadenceType,
+		diminishedSeventhDegree: diminishedSeventhDegree,
+		diminishedSeventhInversionIndex: diminishedSeventhInversionIndex,
 		forceAugmentedSixthEnding: forceAugmentedSixthEnding,
 		forceChromaticEnding: forceChromaticEnding,
 		forceNeapolitanEnding: forceNeapolitanEnding,

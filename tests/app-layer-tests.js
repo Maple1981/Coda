@@ -18,6 +18,7 @@ const app = context.window.CodaApplication;
 const data = context.window.CodaData;
 const domain = context.window.CodaDomain;
 const styleService = context.window.CodaProgressionStyle;
+const chromaticCadenceService = context.window.CodaProgressionChromaticCadence;
 
 assert.equal(styleService.normalize('modern'), 'contemporary');
 assert.equal(styleService.normalize({ style: 'baroque' }), 'baroque');
@@ -32,6 +33,8 @@ assert.ok(styleService.seventhProbabilityScale({ style: 'baroque' }) > styleServ
 assert.ok(styleService.patternAffinity({ style: 'baroque' }, { form: 'partimento-double-cadence' }) > 1);
 assert.ok(styleService.patternAffinity({ style: 'baroque' }, { form: 'partimento-phrygian-half' }) > 1);
 assert.ok(styleService.patternAffinity({ style: 'baroque' }, { form: 'partimento-four-part-rule-octave' }) > 1);
+assert.ok(styleService.patternAffinity({ style: 'baroque' }, { form: 'diminished-seventh-family' }) > 1);
+assert.ok(styleService.patternAffinity({ style: 'baroque' }, { form: 'tied-bass-four-part' }) > 1);
 assert.ok(styleService.patternAffinity({ style: 'classic' }, { form: 'prinner' }) > 1);
 assert.ok(styleService.patternAffinity({ style: 'classic' }, { form: 'galant-marpurg-cadence' }) > 1);
 assert.equal(styleService.patternAffinity({ style: 'contemporary' }, { form: 'prinner' }), 1);
@@ -72,6 +75,23 @@ assert.ok(cMajorReport.modalInterchangeSources.some(function (source) { return s
 assert.equal(cMajorReport.extendedHarmonyEnabled, true);
 assert.equal(cMajorReport.mode, 'M');
 assert.equal(cMajorReport.circleOfFifths.selectedKey, 'C');
+const cMajorDiminishedSeventh = chromaticCadenceService.diminishedSeventhDegree(cMajorReport, {
+	targetDegreeIndex: 0
+});
+assert.deepEqual(cMajorDiminishedSeventh.chord.factorNotes, ['B', 'D', 'F', 'Ab']);
+assert.equal(cMajorDiminishedSeventh.degreeDisplayName, 'viidim7');
+assert.equal(cMajorDiminishedSeventh.sourceLabelKey, 'progression.chromatic.diminishedSeventh');
+const cMajorDiminishedSeventhOfDominant = chromaticCadenceService.diminishedSeventhDegree(cMajorReport, {
+	targetDegreeIndex: 4
+});
+assert.deepEqual(cMajorDiminishedSeventhOfDominant.chord.factorNotes, ['F#', 'A', 'C', 'Eb']);
+assert.equal(cMajorDiminishedSeventhOfDominant.degreeDisplayName, 'viidim7/V');
+const cMajorCommonToneDiminished = chromaticCadenceService.diminishedSeventhDegree(cMajorReport, {
+	commonTone: true,
+	targetDegreeIndex: 0
+});
+assert.deepEqual(cMajorCommonToneDiminished.chord.factorNotes, ['C', 'Eb', 'Gb', 'A']);
+assert.equal(cMajorCommonToneDiminished.degreeDisplayName, 'CTdim7');
 
 const cMajorPentatonicReport = app.buildScaleReport({
 	data: data,
@@ -209,6 +229,19 @@ assert.equal(patternWeightService.fourPartHarmonyScore([
 	{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
 	0
 ], { style: 'baroque', voices: 3 }), 0);
+assert.ok(patternWeightService.chromaticDiminishedScore([
+	0,
+	{ chromaticRole: 'diminishedSeventh', targetDegreeIndex: 4 },
+	4,
+	0
+], { chromaticism: 80, style: 'baroque', voices: 4 }) > 0);
+assert.equal(patternWeightService.chromaticDiminishedScore([
+	0,
+	{ chromaticRole: 'diminishedSeventh', targetDegreeIndex: 4 },
+	4,
+	0
+], { chromaticism: 80, style: 'contemporary', voices: 4 }), 0);
+assert.ok(patternWeightService.partimentoSequenceShapeScore([0, 5, 6, 4, 5, 3], { style: 'baroque' }) > 0);
 assert.ok(data.progressionRules.phraseBlocks.some(function (block) {
 	return block.id === 'baroque-phrygian-half' && block.form === 'partimento-phrygian-half';
 }));
@@ -220,6 +253,15 @@ assert.ok(data.progressionRules.patterns.some(function (pattern) {
 }));
 assert.ok(data.progressionRules.phraseBlocks.some(function (block) {
 	return block.id === 'baroque-discant-cadence-half' && block.form === 'partimento-discant-cadence';
+}));
+assert.ok(data.progressionRules.phraseBlocks.some(function (block) {
+	return block.id === 'baroque-diminished-seventh-half' && block.form === 'diminished-seventh-family';
+}));
+assert.ok(data.progressionRules.patterns.some(function (pattern) {
+	return pattern.id === 'baroque-descending-thirds' && pattern.form === 'descending-thirds';
+}));
+assert.ok(data.progressionRules.patterns.some(function (pattern) {
+	return pattern.id === 'baroque-minor-neapolitan-continuation' && pattern.form === 'minor-neapolitan-continuation';
 }));
 const contrastingSectionProgression = app.generateContrastingProgressionSection({
 	data: data,
@@ -1001,6 +1043,51 @@ assert.ok(eMinorChromaticProgression.measures.some(function (measure) {
 assert.ok(eMinorChromaticProgression.measures.some(function (measure) {
 	return measure.sourceLabelKey === 'progression.chromatic.neapolitan';
 }));
+const forcedDiminishedSeventhRules = {
+	patterns: [
+		{
+			cadence: 'authentic',
+			counterpoint: 90,
+			degrees: [
+				0,
+				{ chromaticRole: 'diminishedSeventh', forceInversionIndex: 1, targetDegreeIndex: 4 },
+				4,
+				0
+			],
+			form: 'forced-diminished-seventh',
+			id: 'forced-diminished-seventh',
+			modes: ['major'],
+			modalColor: 35,
+			tensionAffinity: 70,
+			weight: 100
+		}
+	]
+};
+const cMajorDiminishedProgression = app.generateProgressionFromState({
+	data: data,
+	domain: domain,
+	progressionState: {
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		chromaticism: 80,
+		counterpoint: 50,
+		meter: '4/4',
+		modalInterchange: 10,
+		style: 'baroque',
+		tensions: 50,
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: function () { return 0.99; },
+	rules: forcedDiminishedSeventhRules
+});
+assert.equal(cMajorDiminishedProgression.measures[1].source, 'chromatic');
+assert.equal(cMajorDiminishedProgression.measures[1].chromaticRole, 'diminishedSeventh');
+assert.equal(cMajorDiminishedProgression.measures[1].sourceLabelKey, 'progression.chromatic.diminishedSeventh');
+assert.equal(cMajorDiminishedProgression.measures[1].degree, 'viidim7/V 6/5');
+assert.equal(cMajorDiminishedProgression.measures[1].displayName, 'F#dim7 6/5');
 const cMajorNeapolitanReplacement = app.replaceProgressionMeasureChord(cMajorProgressionPlan, 0, 0, {
 	chromaticRole: 'neapolitan',
 	inversionIndex: 0,

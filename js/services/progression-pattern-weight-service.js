@@ -33,6 +33,8 @@
 		weight += sequentialBassScore(pattern.degrees, progressionState);
 		weight += figuredBassShapeScore(pattern.degrees, progressionState);
 		weight += fourPartHarmonyScore(pattern.degrees, progressionState);
+		weight += chromaticDiminishedScore(pattern.degrees, progressionState);
+		weight += partimentoSequenceShapeScore(pattern.degrees, progressionState);
 		weight *= sensitiveDegreeFactor(pattern.degrees, mode, progressionState);
 
 		if (isArpeggioArticulation(progressionState.articulation) && pattern.form === 'circle-of-fifths') {
@@ -176,6 +178,53 @@
 		return score;
 	}
 
+	function chromaticDiminishedScore(degrees, progressionState) {
+		var score = 0;
+		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
+		var voices = numberOrDefault(progressionState && progressionState.voices, 4);
+
+		if (styleService.minimizesDiminishedHarmony(progressionState) || chromaticism < 35 || !degrees || !degrees.length) {
+			return 0;
+		}
+
+		for (var i = 0; i < degrees.length; i++) {
+			if (degrees[i] && degrees[i].chromaticRole === 'diminishedSeventh') {
+				score += 2.4;
+			} else if (degrees[i] && degrees[i].chromaticRole === 'commonToneDiminished') {
+				score += 1.8;
+			}
+		}
+
+		if (styleService.prefersFourPartHarmony(progressionState) && voices >= 4) {
+			score *= 1.35;
+		}
+
+		return score * Math.min(1.4, 0.7 + chromaticism / 180);
+	}
+
+	function partimentoSequenceShapeScore(degrees, progressionState) {
+		var score = 0;
+
+		if (!styleService.prefersSequentialPatterns(progressionState) || !degrees || degrees.length < 3) {
+			return 0;
+		}
+
+		for (var i = 2; i < degrees.length; i++) {
+			var previous = signedCircularDegreeDistance(degreeIndex(degrees[i - 2]), degreeIndex(degrees[i - 1]));
+			var current = signedCircularDegreeDistance(degreeIndex(degrees[i - 1]), degreeIndex(degrees[i]));
+
+			if (previous === -2 && current === -2) {
+				score += 2.6;
+			} else if ((previous === -2 && current === 1) || (previous === 1 && current === -2)) {
+				score += 2.2;
+			} else if ((previous === -4 && current === 3) || (previous === 3 && current === -4)) {
+				score += 1.9;
+			}
+		}
+
+		return score;
+	}
+
 	function isDominantSeventhPosition(degree) {
 		return degree &&
 			typeof degree === 'object' &&
@@ -225,6 +274,19 @@
 		return Math.min(distance, 7 - distance);
 	}
 
+	function signedCircularDegreeDistance(first, second) {
+		var distance = ((Number(second) || 0) - (Number(first) || 0)) % 7;
+
+		if (distance > 3) {
+			distance -= 7;
+		}
+		if (distance < -3) {
+			distance += 7;
+		}
+
+		return distance;
+	}
+
 	function degreeIndex(degree) {
 		if (degree && typeof degree === 'object') {
 			return Number(degree.index) || 0;
@@ -250,11 +312,13 @@
 	global.CodaProgressionPatternWeight = {
 		adjustedPatternWeight: adjustedPatternWeight,
 		affinityScore: affinityScore,
+		chromaticDiminishedScore: chromaticDiminishedScore,
 		commonToneDegreeScore: commonToneDegreeScore,
 		degreeIndex: degreeIndex,
 		figuredBassShapeScore: figuredBassShapeScore,
 		fourPartHarmonyScore: fourPartHarmonyScore,
 		matchesStyle: matchesStyle,
+		partimentoSequenceShapeScore: partimentoSequenceShapeScore,
 		sensitiveDegreeFactor: sensitiveDegreeFactor,
 		sequentialBassScore: sequentialBassScore,
 		stepwiseBassScore: stepwiseBassScore
