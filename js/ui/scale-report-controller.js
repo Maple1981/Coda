@@ -403,6 +403,14 @@
 				recordHistorySnapshot();
 			});
 
+			on(query('#constructorProgresiones'), 'change', function (event) {
+				if (!event.target || event.target.id !== 'progressionNextSectionType') {
+					return;
+				}
+
+				updateNextSectionModulationVisibility(event.target.value);
+			});
+
 			on(query('#constructorProgresiones'), 'click', function (event) {
 				var button = closest(event.target, '.progressionSectionDeleteButton') ||
 					closest(event.target, '.progressionSectionNavDeleteButton');
@@ -1140,6 +1148,7 @@
 
 		function generateProgressionNextSection(requestedSectionType) {
 			var sectionType = availableNextSectionType(requestedSectionType || valueOf(query('#progressionNextSectionType')), uiState.getProgression());
+			var modulationType = sectionType === 'contrast' ? (valueOf(query('#progressionNextSectionModulationType')) || 'auto') : 'none';
 
 			if (
 				options.application &&
@@ -1155,10 +1164,23 @@
 					progression: uiState.getProgression(),
 					progressionState: uiState.getProgressionState(),
 					report: uiState.getReport(),
+					modulationType: modulationType,
 					sectionType: sectionType,
 					selection: uiState.getSelection()
 				})));
 			}
+		}
+
+		function updateNextSectionModulationVisibility(sectionType) {
+			var modulationControl = query('#progressionNextSectionModulationType');
+			var isContrast = sectionType === 'contrast' || sectionType === 'C' || sectionType === 'c';
+
+			if (!modulationControl) {
+				return;
+			}
+
+			modulationControl.hidden = !isContrast;
+			modulationControl.setAttribute('aria-hidden', isContrast ? 'false' : 'true');
 		}
 
 		function removeProgressionSection(sectionId) {

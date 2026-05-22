@@ -549,6 +549,13 @@ assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSection"'
 assert.ok(progressionWorkbenchHtml.indexOf('value="aprimeClone"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('value="aprimeVariation"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSection.contrastB"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('id="progressionNextSectionModulationType"') > -1);
+const hiddenModulationSelectSnippet = progressionWorkbenchHtml.slice(progressionWorkbenchHtml.indexOf('id="progressionNextSectionModulationType"'), progressionWorkbenchHtml.indexOf('id="progressionNextSectionModulationType"') + 260);
+assert.ok(hiddenModulationSelectSnippet.indexOf('hidden aria-hidden="true"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSectionModulation.auto"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSectionModulation.none"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSectionModulation.pivot"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSectionModulation.secondaryDominant"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="generateProgressionNextSection"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('auto_awesome') > -1);
 assert.equal(progressionWorkbenchHtml.indexOf('id="generateProgressionSectionB"'), -1);
@@ -681,6 +688,20 @@ assert.ok(sectionBContextTimeline.indexOf('progressionSectionCircleButton') < se
 assert.ok(sectionBContextTimeline.indexOf('value="bprimeClone"') > -1);
 assert.ok(sectionBContextTimeline.indexOf('value="bprimeVariation"') > -1);
 assert.ok(sectionBContextTimeline.indexOf('progression.nextSection.contrastC') > -1);
+assert.ok(sectionBContextTimeline.indexOf('progression.nextSectionModulation.direct') > -1);
+const contrastOnlyTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
+	measures: [
+		{ bar: 1, chordName: 'C', sectionId: 'A' },
+		{ bar: 2, chordName: 'C', sectionId: 'A\'' }
+	],
+	sections: [
+		{ id: 'A', labelKey: 'progression.sectionA', length: 1, startIndex: 0 },
+		{ id: 'A\'', labelKey: 'progression.sectionAprime', length: 1, startIndex: 1 }
+	]
+});
+const contrastOnlyModulationIndex = contrastOnlyTimeline.indexOf('id="progressionNextSectionModulationType"');
+assert.ok(contrastOnlyModulationIndex > -1);
+assert.equal(contrastOnlyTimeline.indexOf('hidden aria-hidden="true"', contrastOnlyModulationIndex), -1);
 assert.equal(progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [
 		{ bar: 1, chordName: 'C' },

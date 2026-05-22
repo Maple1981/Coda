@@ -87,7 +87,7 @@
 			return degrees;
 		}
 
-		candidates = degreeIndexesForFunction(report, openingFunction);
+		candidates = degreeIndexesForOpeningFunction(report, openingFunction);
 		if (!candidates.length) {
 			return degrees;
 		}
@@ -191,6 +191,31 @@
 		}
 
 		return indexes;
+	}
+
+	function degreeIndexesForOpeningFunction(report, openingFunction) {
+		var parts = String(openingFunction || '').split('_OR_');
+		var indexes = [];
+
+		for (var i = 0; i < parts.length; i++) {
+			indexes = indexes.concat(degreeIndexesForFunction(report, parts[i]));
+		}
+
+		return uniqueIndexes(indexes);
+	}
+
+	function uniqueIndexes(indexes) {
+		var result = [];
+		var seen = {};
+
+		for (var i = 0; i < (indexes || []).length; i++) {
+			if (!seen[indexes[i]]) {
+				seen[indexes[i]] = true;
+				result.push(indexes[i]);
+			}
+		}
+
+		return result;
 	}
 
 	function applyModalInterchangeSources(degrees, report, progressionState, rng) {
@@ -477,6 +502,7 @@
 		chooseInterchangeSource: chooseInterchangeSource,
 		createPlan: createPlan,
 		degreeIndexesForFunction: degreeIndexesForFunction,
+		degreeIndexesForOpeningFunction: degreeIndexesForOpeningFunction,
 		effectiveEndingCadence: effectiveEndingCadence,
 		fitDegreesToBars: fitDegreesToBars,
 		degreeFromSource: degreeFromSource,

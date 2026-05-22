@@ -590,6 +590,10 @@
   font-weight: 600;
 }
 
+.progressionSectionModulationSelect {
+  min-width: 13em;
+}
+
 .progressionSectionGenerateButton {
   min-height: 2.35em;
   white-space: nowrap;

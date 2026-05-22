@@ -83,6 +83,10 @@
 	}
 
 	function expressiveVelocity(measure, chordIndex) {
+		if (isSustainArticulation(measure)) {
+			return 80;
+		}
+
 		var base = Math.max(1, Math.min(127, Number(measure.intensity) || 80));
 		var humanization = Math.max(0, Math.min(100, Number(measure.humanization) || 0));
 		var offset = humanization ? deterministicOffset(measure, chordIndex, 9) * Math.min(12, humanization / 8) : 0;
@@ -91,7 +95,15 @@
 	}
 
 	function expressiveDelay(measure, chordIndex) {
+		if (isSustainArticulation(measure)) {
+			return 0;
+		}
+
 		return humanizedDelay(measure, chordIndex) + swingDelay(measure);
+	}
+
+	function isSustainArticulation(measure) {
+		return !measure || !measure.articulation || measure.articulation === 'sustain';
 	}
 
 	function humanizedDelay(measure, chordIndex) {

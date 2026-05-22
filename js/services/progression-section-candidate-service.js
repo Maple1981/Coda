@@ -35,6 +35,15 @@
 		};
 	}
 
+	function sameKeyNoModulation(options) {
+		return {
+			id: 'same-no-modulation',
+			label: sectionDocument.contextLabelFromReport(options.report),
+			openingFunction: 'T_OR_SD',
+			report: options.report
+		};
+	}
+
 	function relativeKey(options) {
 		var isMajor = isMajorReport(options.report);
 		var tonicIndex = isMajor ? transposeIndex(options.report.tonicIndex, -3) : transposeIndex(options.report.tonicIndex, 3);
@@ -291,6 +300,7 @@
 		parallelKey: parallelKey,
 		relativeKey: relativeKey,
 		reportForSection: reportForSection,
+		sameKeyNoModulation: sameKeyNoModulation,
 		sameKeySubdominant: sameKeySubdominant,
 		transposeIndex: transposeIndex
 	};

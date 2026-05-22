@@ -386,8 +386,8 @@ const expressiveEvents = midiExport.createProgressionMidiEvents({
 const expressiveNoteOns = expressiveEvents.filter(function (event) {
 	return event.type === 'noteOn';
 });
-assert.equal(expressiveNoteOns[0].velocity, 70);
-assert.ok(expressiveNoteOns[3].tick > 240);
+assert.equal(expressiveNoteOns[0].velocity, 80);
+assert.equal(expressiveNoteOns[3].tick, 240);
 
 const editedMidiFile = app.buildProgressionMidiFile({
 	data: data,

@@ -465,6 +465,92 @@ assert.deepEqual(sectionCProgression.sections.map(function (section) { return se
 assert.equal(sectionCProgression.sections[3].labelKey, 'progression.sectionC');
 assert.notEqual(sectionCProgression.sections[3].contextLabel, sectionCProgression.sections[0].contextLabel);
 assert.equal(sectionCProgression.measures[12].sectionId, 'C');
+const secondaryDominantModulationProgression = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	modulationType: 'secondaryDominant',
+	progression: cMajorProgressionPlan,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 70,
+		meter: '3/4',
+		modalInterchange: 10,
+		style: 'baroque',
+		tensions: 40,
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0, 0.1, 0.1, 0.1]),
+	sectionType: 'contrast',
+	selection: { preferFlats: false }
+});
+assert.equal(secondaryDominantModulationProgression.sections[1].modulation.kind, 'secondaryDominant');
+assert.equal(secondaryDominantModulationProgression.sections[1].modulation.originSectionId, 'A');
+assert.equal(secondaryDominantModulationProgression.measures[3].modulationRole, 'secondary-dominant');
+assert.equal(secondaryDominantModulationProgression.measures[3].sourceLabelKey, 'progression.modulation.secondaryDominant');
+assert.equal(secondaryDominantModulationProgression.measures[3].tonalFunction, 'D');
+assert.equal(secondaryDominantModulationProgression.measures[3].degree, 'V/A');
+assert.equal(secondaryDominantModulationProgression.measures[4].sectionId, 'B');
+const pivotModulationProgression = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	modulationType: 'pivot',
+	progression: cMajorProgressionPlan,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 70,
+		meter: '3/4',
+		modalInterchange: 10,
+		style: 'baroque',
+		tensions: 40,
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0, 0.1, 0.1, 0.1]),
+	sectionType: 'contrast',
+	selection: { preferFlats: false }
+});
+assert.equal(pivotModulationProgression.sections[1].modulation.kind, 'pivot');
+assert.ok(pivotModulationProgression.sections[1].modulation.pivotDegree);
+assert.equal(pivotModulationProgression.measures[3].modulationRole, 'pivot');
+assert.equal(pivotModulationProgression.measures[4].modulationRole, 'pivot');
+assert.equal(pivotModulationProgression.measures[3].chordName, pivotModulationProgression.measures[4].chordName);
+const noModulationContrastProgression = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	modulationType: 'none',
+	progression: cMajorProgressionPlan,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 50,
+		meter: '3/4',
+		modalInterchange: 10,
+		style: 'classic',
+		tensions: 40,
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0.1, 0.1, 0.1, 0.1]),
+	sectionType: 'contrast',
+	selection: { preferFlats: false }
+});
+assert.equal(noModulationContrastProgression.sections[1].contrast, 'same-no-modulation');
+assert.equal(noModulationContrastProgression.sections[1].contextLabel, 'C Mayor');
+assert.equal(noModulationContrastProgression.sections[1].modulation, undefined);
+assert.notEqual(noModulationContrastProgression.measures[4].degreeIndex, 0);
+assert.ok(noModulationContrastProgression.measures[4].tonalFunction === 'T' || noModulationContrastProgression.measures[4].tonalFunction === 'SD');
 const sectionRemovedProgression = app.removeProgressionSection(sectionCProgression, 'A\'');
 assert.deepEqual(sectionRemovedProgression.sections.map(function (section) { return section.id; }), ['A', 'B', 'C']);
 assert.deepEqual(sectionRemovedProgression.sections.map(function (section) { return section.startIndex; }), [0, 4, 8]);
@@ -1457,15 +1543,55 @@ const dDorianModalProgression = app.generateProgressionFromState({
 		voices: 4
 	},
 	report: dDorianReport,
-	rng: sequenceRng([0.4, 0.99, 0.99, 0.99, 0.99])
+	rng: sequenceRng([0.4, 0.1, 0.99, 0.99, 0.99])
 });
 assert.equal(dDorianModalProgression.generation.cadence, 'modal');
 assert.equal(dDorianModalProgression.generation.patternId, 'dorian-modal-vamp');
-assert.deepEqual(dDorianModalProgression.measures.map(function (measure) { return measure.degree; }), ['i', 'ii', 'IV', 'i']);
-assert.deepEqual(dDorianModalProgression.measures.map(function (measure) { return measure.chordName; }), ['Dm', 'Em', 'G', 'Dm']);
-assert.deepEqual(dDorianModalProgression.measures.map(function (measure) { return measure.modalRole || ''; }), ['tonic', 'modal-color', 'modal-cadential', 'tonic']);
+assert.deepEqual(dDorianModalProgression.measures.map(function (measure) { return measure.degree; }), ['i', 'i', 'ii', 'i']);
+assert.deepEqual(dDorianModalProgression.measures.map(function (measure) { return measure.chordName; }), ['Dm', 'Dm', 'Em', 'Dm']);
+assert.deepEqual(dDorianModalProgression.measures.map(function (measure) { return measure.modalRole || ''; }), ['tonic', 'tonic', 'modal-cadential', 'tonic']);
 assert.ok(dDorianModalProgression.measures.every(function (measure) { return measure.chordName !== 'G7'; }));
+assert.ok(dDorianModalProgression.measures.every(function (measure) { return dDorianReport.scaleChords[measure.degreeIndex].tipo !== 'evitar'; }));
 assert.equal(dDorianModalProgression.generation.voiceLeading, 'modal-pedal-stepwise');
+
+[13, 14, 15, 16, 17, 18, 19].forEach(function (scaleIndex) {
+	var scale = data.scales[scaleIndex];
+	var modalReportForAvoidance = app.buildScaleReport({
+		data: data,
+		domain: domain,
+		preferFlats: false,
+		scaleIndex: scaleIndex,
+		scaleName: scale.nombre,
+		tonicIndex: noteIndex('C'),
+		tonicName: 'C'
+	});
+	var modalProgressionForAvoidance = app.generateProgressionFromState({
+		data: data,
+		progressionState: {
+			bars: 8,
+			beatsPerBar: 4,
+			bpm: 120,
+			counterpoint: 80,
+			meter: '4/4',
+			style: 'classic',
+			tensions: 70,
+			voices: 4
+		},
+		report: modalReportForAvoidance,
+		rng: sequenceRng([0.4, 0.2, 0.55, 0.75, 0.25, 0.8, 0.1, 0.6])
+	});
+	var tonicCount = modalProgressionForAvoidance.measures.filter(function (measure) {
+		return measure.degreeIndex === 0;
+	}).length;
+	var cadentialCount = modalProgressionForAvoidance.measures.filter(function (measure) {
+		return modalReportForAvoidance.scaleChords[measure.degreeIndex].tipo === 'cadencial';
+	}).length;
+
+	assert.ok(modalProgressionForAvoidance.measures.every(function (measure) {
+		return measure.degreeIndex === 0 || modalReportForAvoidance.scaleChords[measure.degreeIndex].tipo !== 'evitar';
+	}));
+	assert.ok(tonicCount >= cadentialCount);
+});
 
 const reorderedProgression = app.reorderProgressionMeasures(cMajorProgressionPlan, 1, 3);
 assert.deepEqual(reorderedProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'G', 'C', 'F']);

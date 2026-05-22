@@ -193,6 +193,11 @@
 		setText(i18n, 'option[data-i18n="progression.nextSection.bprimeVariation"]', 'progression.nextSection.bprimeVariation');
 		setText(i18n, 'option[data-i18n="progression.nextSection.contrastB"]', 'progression.nextSection.contrastB');
 		setText(i18n, 'option[data-i18n="progression.nextSection.contrastC"]', 'progression.nextSection.contrastC');
+		setText(i18n, 'option[data-i18n="progression.nextSectionModulation.auto"]', 'progression.nextSectionModulation.auto');
+		setText(i18n, 'option[data-i18n="progression.nextSectionModulation.direct"]', 'progression.nextSectionModulation.direct');
+		setText(i18n, 'option[data-i18n="progression.nextSectionModulation.none"]', 'progression.nextSectionModulation.none');
+		setText(i18n, 'option[data-i18n="progression.nextSectionModulation.pivot"]', 'progression.nextSectionModulation.pivot');
+		setText(i18n, 'option[data-i18n="progression.nextSectionModulation.secondaryDominant"]', 'progression.nextSectionModulation.secondaryDominant');
 		setTitleAndLabel(i18n, '.progressionSectionCircleButton[data-i18n-title="circle.open"]', 'circle.open');
 		setTitleAndLabel(i18n, '.progressionSectionDeleteButton[data-i18n-title="progression.deleteSection"]', 'progression.deleteSection');
 		setTitleAndLabel(i18n, '.progressionSectionNavDeleteButton[data-i18n-title="progression.deleteSection"]', 'progression.deleteSection');
@@ -200,6 +205,7 @@
 		setTitleAndLabel(i18n, '#generateProgressionNextSection[data-i18n-title="progression.generateNextSection"]', 'progression.generateNextSection');
 		setText(i18n, '#generateProgressionNextSection span[data-i18n="progression.generateNextSection"]', 'progression.generateNextSection');
 		setTitleAndLabel(i18n, '#progressionNextSectionType[data-i18n-title="progression.nextSectionType"]', 'progression.nextSectionType');
+		setTitleAndLabel(i18n, '#progressionNextSectionModulationType[data-i18n-title="progression.nextSectionModulationType"]', 'progression.nextSectionModulationType');
 		setTitleAndLabel(i18n, '.measureChordMenuButton[data-i18n-title="progression.changeMeasureChord"]', 'progression.changeMeasureChord');
 		setTitleAndLabel(i18n, '.measureChordQuickToggle[data-i18n-title="progression.quickEditChord"]', 'progression.quickEditChord');
 		setTitleAndLabel(i18n, '.measureDragHandle[data-i18n-title="progression.dragMeasure"]', 'progression.dragMeasure');

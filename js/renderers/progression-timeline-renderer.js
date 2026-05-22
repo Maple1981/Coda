@@ -91,12 +91,19 @@
 
 	function renderNextSectionHeader(sections) {
 		var options = nextSectionOptions(sections);
+		var modulationOptions = nextSectionModulationOptions();
+		var modulationVisible = options.length === 1 && options[0].value === 'contrast';
 		var html = '<div class="progressionSectionHeader progressionSectionHeader--next">';
 
 		html += '<h3 data-i18n="progression.nextSection"></h3>';
 		html += '<select id="progressionNextSectionType" class="progressionSectionTypeSelect" aria-label="" data-i18n-title="progression.nextSectionType">';
 		for (var i = 0; i < options.length; i++) {
 			html += '<option value="' + labels.escapeHtml(options[i].value) + '" data-i18n="' + labels.escapeHtml(options[i].labelKey) + '"></option>';
+		}
+		html += '</select>';
+		html += '<select id="progressionNextSectionModulationType" class="progressionSectionTypeSelect progressionSectionModulationSelect" aria-label="" data-i18n-title="progression.nextSectionModulationType"' + (modulationVisible ? '' : ' hidden aria-hidden="true"') + '>';
+		for (var j = 0; j < modulationOptions.length; j++) {
+			html += '<option value="' + labels.escapeHtml(modulationOptions[j].value) + '" data-i18n="' + labels.escapeHtml(modulationOptions[j].labelKey) + '"></option>';
 		}
 		html += '</select>';
 		html += '<button id="generateProgressionNextSection" type="button" class="transportButton transportButton--generate progressionSectionGenerateButton" title="" aria-label="" data-i18n-title="progression.generateNextSection"><span class="material-icons" aria-hidden="true">auto_awesome</span><span data-i18n="progression.generateNextSection"></span></button>';
@@ -156,6 +163,16 @@
 		return options;
 	}
 
+	function nextSectionModulationOptions() {
+		return [
+			{ labelKey: 'progression.nextSectionModulation.auto', value: 'auto' },
+			{ labelKey: 'progression.nextSectionModulation.none', value: 'none' },
+			{ labelKey: 'progression.nextSectionModulation.pivot', value: 'pivot' },
+			{ labelKey: 'progression.nextSectionModulation.secondaryDominant', value: 'secondaryDominant' },
+			{ labelKey: 'progression.nextSectionModulation.direct', value: 'direct' }
+		];
+	}
+
 	function sectionAnchorId(sectionId) {
 		return 'progression-section-' + String(sectionId || 'A').replace(/'/g, 'prime').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 	}
@@ -173,10 +190,20 @@
 		}
 
 		if (tonicName || scaleName) {
-			return [tonicName, scaleName].filter(Boolean).join(' ');
+			return [tonicName, scaleName].filter(Boolean).join(' ') + sectionModulationSuffix(section, options);
 		}
 
-		return section.contextLabel || '';
+		return (section.contextLabel || '') + sectionModulationSuffix(section, options);
+	}
+
+	function sectionModulationSuffix(section, options) {
+		var kind = section && section.modulation ? section.modulation.kind : '';
+
+		if (!kind || kind === 'none') {
+			return '';
+		}
+
+		return ' · ' + translate(options, 'progression.modulation.' + kind);
 	}
 
 	function hasRenderableMeasures(measures) {
@@ -425,6 +452,10 @@
 		var scaleName = scaleIndex != null && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t('data.scales.' + scaleIndex) : '';
 		var tonicName = chord.sourceTonicName || '';
 
+		if (chord.modulationSourceLabelKey) {
+			return options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(chord.modulationSourceLabelKey) : '';
+		}
+
 		if (chord.source === 'chromatic') {
 			return chord.sourceLabelKey && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(chord.sourceLabelKey) : '';
 		}
@@ -464,6 +495,7 @@
 		renderSectionHeader: renderSectionHeader,
 		renderSectionNavigator: renderSectionNavigator,
 		notesLabel: notesLabel,
+		nextSectionModulationOptions: nextSectionModulationOptions,
 		nextSectionOptions: nextSectionOptions,
 		sectionContextLabel: sectionContextLabel,
 		sourceLabel: sourceLabel,

@@ -643,7 +643,8 @@ const livePlayback = app.createProgressionPlayback({
 
 livePlayback.play(liveProgression);
 liveProgression.measures[1].intensity = 112;
-liveProgression.measures[1].humanization = 0;
+liveProgression.measures[1].humanization = 40;
+liveProgression.measures[1].swing = 60;
 liveTimers.filter(function (timer) {
 	return timer.milliseconds === 2000;
 }).forEach(function (timer) {
@@ -655,7 +656,7 @@ assert.deepEqual(liveChordCalls, [
 		options: {
 			delay: 0,
 			duration: 1.9,
-			velocity: 112
+			velocity: 80
 		}
 	}
 ]);

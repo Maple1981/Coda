@@ -511,6 +511,10 @@
 	}
 
 	function expressiveVelocity(measure, fallbackVelocity) {
+		if (isSustainArticulation(measure)) {
+			return 80;
+		}
+
 		var base = measure && measure.intensity != null ? Number(measure.intensity) : fallbackVelocity;
 		var humanization = Math.max(0, Math.min(100, Number(measure && measure.humanization) || 0));
 		var offset = humanization ? deterministicOffset(measure, 9) * Math.min(12, humanization / 8) : 0;
@@ -519,6 +523,10 @@
 	}
 
 	function expressiveDelayTicks(measure, options) {
+		if (isSustainArticulation(measure)) {
+			return 0;
+		}
+
 		var humanization = Math.max(0, Math.min(100, Number(measure && measure.humanization) || 0));
 		var swing = Math.max(0, Math.min(75, Number(measure && measure.swing) || 0));
 		var humanized = humanization ? deterministicOffset(measure, 17) * Math.min(options.ticksPerBeat * 0.08, humanization * 0.4) : 0;
@@ -638,6 +646,10 @@
 
 	function isArpeggioArticulation(articulation) {
 		return String(articulation || '').indexOf('arpeggio') === 0;
+	}
+
+	function isSustainArticulation(measure) {
+		return !measure || !measure.articulation || measure.articulation === 'sustain';
 	}
 
 	function arpeggioPattern(articulation) {
