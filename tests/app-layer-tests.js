@@ -25,11 +25,15 @@ assert.equal(styleService.usesFunctionalMinorDominant({ style: 'romantic' }), tr
 assert.equal(styleService.avoidsStrongDominantResolution({ style: 'contemporary' }), true);
 assert.equal(styleService.requiresPreparedDissonance({ style: 'renaissance' }), true);
 assert.equal(styleService.prefersPartimentoBass({ style: 'baroque' }), true);
+assert.equal(styleService.prefersFourPartHarmony({ style: 'baroque' }), true);
+assert.equal(styleService.prefersFourPartHarmony({ style: 'contemporary' }), false);
 assert.equal(styleService.minimizesDiminishedHarmony({ style: 'contemporary' }), true);
 assert.ok(styleService.seventhProbabilityScale({ style: 'baroque' }) > styleService.seventhProbabilityScale({ style: 'contemporary' }));
 assert.ok(styleService.patternAffinity({ style: 'baroque' }, { form: 'partimento-double-cadence' }) > 1);
 assert.ok(styleService.patternAffinity({ style: 'baroque' }, { form: 'partimento-phrygian-half' }) > 1);
+assert.ok(styleService.patternAffinity({ style: 'baroque' }, { form: 'partimento-four-part-rule-octave' }) > 1);
 assert.ok(styleService.patternAffinity({ style: 'classic' }, { form: 'prinner' }) > 1);
+assert.ok(styleService.patternAffinity({ style: 'classic' }, { form: 'galant-marpurg-cadence' }) > 1);
 assert.equal(styleService.patternAffinity({ style: 'contemporary' }, { form: 'prinner' }), 1);
 
 function noteIndex(name) {
@@ -195,11 +199,27 @@ assert.equal(patternWeightService.figuredBassShapeScore([
 	{ forceInversionIndex: 3, forceKind: 'seventh', index: 3 },
 	0
 ], { style: 'classic' }), 0);
+assert.ok(patternWeightService.fourPartHarmonyScore([
+	0,
+	{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
+	0
+], { style: 'baroque', voices: 4 }) > 0);
+assert.equal(patternWeightService.fourPartHarmonyScore([
+	0,
+	{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
+	0
+], { style: 'baroque', voices: 3 }), 0);
 assert.ok(data.progressionRules.phraseBlocks.some(function (block) {
 	return block.id === 'baroque-phrygian-half' && block.form === 'partimento-phrygian-half';
 }));
 assert.ok(data.progressionRules.patterns.some(function (pattern) {
 	return pattern.id === 'galant-prinner-period' && pattern.styles.indexOf('classic') > -1;
+}));
+assert.ok(data.progressionRules.patterns.some(function (pattern) {
+	return pattern.id === 'baroque-four-part-rule-octave-ascending' && pattern.form === 'partimento-four-part-rule-octave';
+}));
+assert.ok(data.progressionRules.phraseBlocks.some(function (block) {
+	return block.id === 'baroque-discant-cadence-half' && block.form === 'partimento-discant-cadence';
 }));
 const contrastingSectionProgression = app.generateContrastingProgressionSection({
 	data: data,

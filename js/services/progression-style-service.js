@@ -36,16 +36,24 @@
 				'fenaroli': 1.32,
 				'folia': 1.34,
 				'galant-cadence': 1.3,
+				'galant-four-part-cadence': 1.34,
+				'galant-marpurg-cadence': 1.24,
 				'leaping-romanesca': 1.42,
 				'monte-romanesca': 1.34,
+				'molldur-deceptive': 1.12,
+				'partimento-alto-cadence': 1.28,
 				'partimento-compound-cadence': 1.52,
 				'partimento-deceptive-cadence': 1.28,
+				'partimento-discant-cadence': 1.3,
+				'partimento-dominant-seventh-family': 1.42,
 				'partimento-double-cadence': 1.44,
 				'partimento-fauxbourdon': 1.35,
+				'partimento-four-part-rule-octave': 1.56,
 				'partimento-monte': 1.38,
 				'partimento-phrygian-half': 1.34,
 				'partimento-36': 1.45,
 				'partimento-suspension': 1.4,
+				'partimento-tenor-cadence': 1.24,
 				'partimento-rule-octave': 1.5,
 				'prinner': 1.24,
 				'quiescenza': 1.22,
@@ -53,6 +61,7 @@
 				'subdominant-dominant': 1.18
 			},
 			prefersPartimentoBass: true,
+			prefersFourPartHarmony: true,
 			prefersSequentialPatterns: true,
 			prefersStepwiseBass: true,
 			seventhProbabilityScale: 1.16,
@@ -68,7 +77,11 @@
 			patternAffinities: {
 				'fenaroli': 1.12,
 				'galant-cadence': 1.38,
+				'galant-four-part-cadence': 1.34,
+				'galant-marpurg-cadence': 1.26,
 				'monte-romanesca': 1.16,
+				'molldur-deceptive': 1.12,
+				'partimento-dominant-seventh-family': 1.18,
 				'period': 1.28,
 				'prinner': 1.32,
 				'quiescenza': 1.2,
@@ -76,6 +89,7 @@
 				'subdominant-dominant': 1.15
 			},
 			prefersPartimentoBass: false,
+			prefersFourPartHarmony: true,
 			prefersSequentialPatterns: false,
 			prefersStepwiseBass: false,
 			seventhProbabilityScale: 0.92,
@@ -91,10 +105,13 @@
 			patternAffinities: {
 				'circle-of-fifths': 1.18,
 				'deceptive-cadence': 1.2,
+				'molldur-deceptive': 1.24,
+				'partimento-dominant-seventh-family': 1.12,
 				'minor-cadential': 1.22,
 				'sentence': 1.16
 			},
 			prefersPartimentoBass: false,
+			prefersFourPartHarmony: true,
 			prefersSequentialPatterns: true,
 			prefersStepwiseBass: false,
 			seventhProbabilityScale: 1.22,
@@ -204,6 +221,10 @@
 		return profile(progressionState).prefersPartimentoBass === true;
 	}
 
+	function prefersFourPartHarmony(progressionState) {
+		return profile(progressionState).prefersFourPartHarmony === true;
+	}
+
 	function prefersSequentialPatterns(progressionState) {
 		return profile(progressionState).prefersSequentialPatterns === true;
 	}
@@ -227,6 +248,7 @@
 		minimizesDiminishedHarmony: minimizesDiminishedHarmony,
 		normalize: normalize,
 		patternAffinity: patternAffinity,
+		prefersFourPartHarmony: prefersFourPartHarmony,
 		prefersPartimentoBass: prefersPartimentoBass,
 		prefersSequentialPatterns: prefersSequentialPatterns,
 		prefersStepwiseBass: prefersStepwiseBass,

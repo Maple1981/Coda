@@ -32,6 +32,7 @@
 		weight += stepwiseBassScore(pattern.degrees, progressionState);
 		weight += sequentialBassScore(pattern.degrees, progressionState);
 		weight += figuredBassShapeScore(pattern.degrees, progressionState);
+		weight += fourPartHarmonyScore(pattern.degrees, progressionState);
 		weight *= sensitiveDegreeFactor(pattern.degrees, mode, progressionState);
 
 		if (isArpeggioArticulation(progressionState.articulation) && pattern.form === 'circle-of-fifths') {
@@ -152,6 +153,58 @@
 		return score;
 	}
 
+	function fourPartHarmonyScore(degrees, progressionState) {
+		var score = 0;
+
+		if (!styleService.prefersFourPartHarmony(progressionState) || numberOrDefault(progressionState.voices, 4) < 4 || !degrees || degrees.length < 2) {
+			return 0;
+		}
+
+		for (var i = 0; i < degrees.length; i++) {
+			if (isDominantSeventhPosition(degrees[i])) {
+				score += 2.6;
+				if (resolvesDominantFamilyToTonic(degrees[i], degrees[i + 1])) {
+					score += 2.2;
+				}
+			} else if (isStructuralSeventhShape(degrees[i])) {
+				score += 1.6;
+			} else if (isCadentialSixFourShape(degrees[i])) {
+				score += 1.8;
+			}
+		}
+
+		return score;
+	}
+
+	function isDominantSeventhPosition(degree) {
+		return degree &&
+			typeof degree === 'object' &&
+			degree.forceKind === 'seventh' &&
+			degreeIndex(degree) === 4 &&
+			Number(degree.forceInversionIndex) >= 0 &&
+			Number(degree.forceInversionIndex) <= 3;
+	}
+
+	function resolvesDominantFamilyToTonic(degree, nextDegree) {
+		return isDominantSeventhPosition(degree) && degreeIndex(nextDegree) === 0;
+	}
+
+	function isStructuralSeventhShape(degree) {
+		return degree &&
+			typeof degree === 'object' &&
+			degree.forceKind === 'seventh' &&
+			Number(degree.forceInversionIndex) >= 0 &&
+			Number(degree.forceInversionIndex) <= 3;
+	}
+
+	function isCadentialSixFourShape(degree) {
+		return degree &&
+			typeof degree === 'object' &&
+			degree.forceKind !== 'seventh' &&
+			degreeIndex(degree) === 0 &&
+			Number(degree.forceInversionIndex) === 2;
+	}
+
 	function isSixThreeShape(degree) {
 		return degree &&
 			typeof degree === 'object' &&
@@ -200,6 +253,7 @@
 		commonToneDegreeScore: commonToneDegreeScore,
 		degreeIndex: degreeIndex,
 		figuredBassShapeScore: figuredBassShapeScore,
+		fourPartHarmonyScore: fourPartHarmonyScore,
 		matchesStyle: matchesStyle,
 		sensitiveDegreeFactor: sensitiveDegreeFactor,
 		sequentialBassScore: sequentialBassScore,

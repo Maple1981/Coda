@@ -240,6 +240,74 @@
 			},
 			{
 				cadence: 'half',
+				counterpoint: 92,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
+					0,
+					4
+				],
+				form: 'partimento-discant-cadence',
+				id: 'baroque-discant-cadence-half',
+				modes: ['major', 'minor'],
+				modalColor: 14,
+				styles: ['baroque'],
+				tensionAffinity: 58,
+				weight: 11
+			},
+			{
+				cadence: 'plagal',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ forceInversionIndex: 2, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					0
+				],
+				form: 'partimento-tenor-cadence',
+				id: 'baroque-tenor-cadence-soft',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 52,
+				weight: 9
+			},
+			{
+				cadence: 'half',
+				counterpoint: 90,
+				degrees: [
+					4,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					4
+				],
+				form: 'partimento-alto-cadence',
+				id: 'baroque-alto-cadence-half',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 56,
+				weight: 9
+			},
+			{
+				cadence: 'deceptive',
+				counterpoint: 76,
+				degrees: [
+					0,
+					3,
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 4 },
+					{ index: 5, source: 'parallel' }
+				],
+				form: 'molldur-deceptive',
+				id: 'classic-molldur-deceptive',
+				modes: ['major'],
+				modalColor: 58,
+				styles: ['classic', 'romantic'],
+				tensionAffinity: 62,
+				weight: 8
+			},
+			{
+				cadence: 'half',
 				counterpoint: 82,
 				degrees: [0, 5, 1, 4],
 				id: 'I-vi-ii-V',
@@ -680,6 +748,133 @@
 				styles: ['baroque'],
 				tensionAffinity: 56,
 				weight: 9
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 92,
+				degrees: [
+					0,
+					{ forceInversionIndex: 2, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 1 },
+					4,
+					{ forceInversionIndex: 1, index: 5 },
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
+					0
+				],
+				form: 'partimento-four-part-rule-octave',
+				id: 'baroque-four-part-rule-octave-ascending',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 62,
+				weight: 10
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 92,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 5 },
+					4,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					{ forceInversionIndex: 2, forceKind: 'seventh', index: 4 },
+					0
+				],
+				form: 'partimento-four-part-rule-octave',
+				id: 'baroque-four-part-rule-octave-descending',
+				modes: ['major', 'minor'],
+				modalColor: 14,
+				styles: ['baroque'],
+				tensionAffinity: 64,
+				weight: 10
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 94,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
+					0,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					{ forceInversionIndex: 2, forceKind: 'seventh', index: 4 },
+					4,
+					0
+				],
+				form: 'partimento-discant-cadence',
+				id: 'baroque-discant-cadence-period',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 66,
+				weight: 9
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 84,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 3 },
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					4,
+					{ forceInversionIndex: 2, index: 0 },
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 4 },
+					4,
+					0
+				],
+				form: 'galant-four-part-cadence',
+				id: 'galant-four-part-cadence-period',
+				modes: ['major', 'minor'],
+				modalColor: 16,
+				styles: ['baroque', 'classic'],
+				tensionAffinity: 58,
+				weight: 10
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 82,
+				degrees: [
+					0,
+					3,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 2, index: 0 },
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 2, index: 0 },
+					4,
+					0
+				],
+				form: 'galant-marpurg-cadence',
+				id: 'galant-marpurg-cadence',
+				modes: ['major', 'minor'],
+				modalColor: 18,
+				styles: ['baroque', 'classic'],
+				tensionAffinity: 66,
+				weight: 8
+			},
+			{
+				borrowed: [3],
+				cadence: 'authentic',
+				counterpoint: 74,
+				degrees: [
+					0,
+					3,
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 4 },
+					5,
+					{ forceInversionIndex: 1, index: 5 },
+					1,
+					4,
+					0
+				],
+				form: 'molldur-deceptive',
+				id: 'romantic-molldur-deceptive-return',
+				modes: ['major'],
+				modalColor: 66,
+				styles: ['classic', 'romantic'],
+				tensionAffinity: 64,
+				weight: 7
 			},
 			{
 				cadence: 'authentic',

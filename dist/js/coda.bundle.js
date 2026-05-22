@@ -649,6 +649,74 @@
 			},
 			{
 				cadence: 'half',
+				counterpoint: 92,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
+					0,
+					4
+				],
+				form: 'partimento-discant-cadence',
+				id: 'baroque-discant-cadence-half',
+				modes: ['major', 'minor'],
+				modalColor: 14,
+				styles: ['baroque'],
+				tensionAffinity: 58,
+				weight: 11
+			},
+			{
+				cadence: 'plagal',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ forceInversionIndex: 2, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					0
+				],
+				form: 'partimento-tenor-cadence',
+				id: 'baroque-tenor-cadence-soft',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 52,
+				weight: 9
+			},
+			{
+				cadence: 'half',
+				counterpoint: 90,
+				degrees: [
+					4,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					4
+				],
+				form: 'partimento-alto-cadence',
+				id: 'baroque-alto-cadence-half',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 56,
+				weight: 9
+			},
+			{
+				cadence: 'deceptive',
+				counterpoint: 76,
+				degrees: [
+					0,
+					3,
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 4 },
+					{ index: 5, source: 'parallel' }
+				],
+				form: 'molldur-deceptive',
+				id: 'classic-molldur-deceptive',
+				modes: ['major'],
+				modalColor: 58,
+				styles: ['classic', 'romantic'],
+				tensionAffinity: 62,
+				weight: 8
+			},
+			{
+				cadence: 'half',
 				counterpoint: 82,
 				degrees: [0, 5, 1, 4],
 				id: 'I-vi-ii-V',
@@ -1089,6 +1157,133 @@
 				styles: ['baroque'],
 				tensionAffinity: 56,
 				weight: 9
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 92,
+				degrees: [
+					0,
+					{ forceInversionIndex: 2, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 1 },
+					4,
+					{ forceInversionIndex: 1, index: 5 },
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
+					0
+				],
+				form: 'partimento-four-part-rule-octave',
+				id: 'baroque-four-part-rule-octave-ascending',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 62,
+				weight: 10
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 92,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 5 },
+					4,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					{ forceInversionIndex: 2, forceKind: 'seventh', index: 4 },
+					0
+				],
+				form: 'partimento-four-part-rule-octave',
+				id: 'baroque-four-part-rule-octave-descending',
+				modes: ['major', 'minor'],
+				modalColor: 14,
+				styles: ['baroque'],
+				tensionAffinity: 64,
+				weight: 10
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 94,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
+					0,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 1, index: 0 },
+					{ forceInversionIndex: 2, forceKind: 'seventh', index: 4 },
+					4,
+					0
+				],
+				form: 'partimento-discant-cadence',
+				id: 'baroque-discant-cadence-period',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 66,
+				weight: 9
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 84,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 3 },
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					4,
+					{ forceInversionIndex: 2, index: 0 },
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 4 },
+					4,
+					0
+				],
+				form: 'galant-four-part-cadence',
+				id: 'galant-four-part-cadence-period',
+				modes: ['major', 'minor'],
+				modalColor: 16,
+				styles: ['baroque', 'classic'],
+				tensionAffinity: 58,
+				weight: 10
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 82,
+				degrees: [
+					0,
+					3,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 2, index: 0 },
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 2, index: 0 },
+					4,
+					0
+				],
+				form: 'galant-marpurg-cadence',
+				id: 'galant-marpurg-cadence',
+				modes: ['major', 'minor'],
+				modalColor: 18,
+				styles: ['baroque', 'classic'],
+				tensionAffinity: 66,
+				weight: 8
+			},
+			{
+				borrowed: [3],
+				cadence: 'authentic',
+				counterpoint: 74,
+				degrees: [
+					0,
+					3,
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 4 },
+					5,
+					{ forceInversionIndex: 1, index: 5 },
+					1,
+					4,
+					0
+				],
+				form: 'molldur-deceptive',
+				id: 'romantic-molldur-deceptive-return',
+				modes: ['major'],
+				modalColor: 66,
+				styles: ['classic', 'romantic'],
+				tensionAffinity: 64,
+				weight: 7
 			},
 			{
 				cadence: 'authentic',
@@ -3282,16 +3477,24 @@
 				'fenaroli': 1.32,
 				'folia': 1.34,
 				'galant-cadence': 1.3,
+				'galant-four-part-cadence': 1.34,
+				'galant-marpurg-cadence': 1.24,
 				'leaping-romanesca': 1.42,
 				'monte-romanesca': 1.34,
+				'molldur-deceptive': 1.12,
+				'partimento-alto-cadence': 1.28,
 				'partimento-compound-cadence': 1.52,
 				'partimento-deceptive-cadence': 1.28,
+				'partimento-discant-cadence': 1.3,
+				'partimento-dominant-seventh-family': 1.42,
 				'partimento-double-cadence': 1.44,
 				'partimento-fauxbourdon': 1.35,
+				'partimento-four-part-rule-octave': 1.56,
 				'partimento-monte': 1.38,
 				'partimento-phrygian-half': 1.34,
 				'partimento-36': 1.45,
 				'partimento-suspension': 1.4,
+				'partimento-tenor-cadence': 1.24,
 				'partimento-rule-octave': 1.5,
 				'prinner': 1.24,
 				'quiescenza': 1.22,
@@ -3299,6 +3502,7 @@
 				'subdominant-dominant': 1.18
 			},
 			prefersPartimentoBass: true,
+			prefersFourPartHarmony: true,
 			prefersSequentialPatterns: true,
 			prefersStepwiseBass: true,
 			seventhProbabilityScale: 1.16,
@@ -3314,7 +3518,11 @@
 			patternAffinities: {
 				'fenaroli': 1.12,
 				'galant-cadence': 1.38,
+				'galant-four-part-cadence': 1.34,
+				'galant-marpurg-cadence': 1.26,
 				'monte-romanesca': 1.16,
+				'molldur-deceptive': 1.12,
+				'partimento-dominant-seventh-family': 1.18,
 				'period': 1.28,
 				'prinner': 1.32,
 				'quiescenza': 1.2,
@@ -3322,6 +3530,7 @@
 				'subdominant-dominant': 1.15
 			},
 			prefersPartimentoBass: false,
+			prefersFourPartHarmony: true,
 			prefersSequentialPatterns: false,
 			prefersStepwiseBass: false,
 			seventhProbabilityScale: 0.92,
@@ -3337,10 +3546,13 @@
 			patternAffinities: {
 				'circle-of-fifths': 1.18,
 				'deceptive-cadence': 1.2,
+				'molldur-deceptive': 1.24,
+				'partimento-dominant-seventh-family': 1.12,
 				'minor-cadential': 1.22,
 				'sentence': 1.16
 			},
 			prefersPartimentoBass: false,
+			prefersFourPartHarmony: true,
 			prefersSequentialPatterns: true,
 			prefersStepwiseBass: false,
 			seventhProbabilityScale: 1.22,
@@ -3450,6 +3662,10 @@
 		return profile(progressionState).prefersPartimentoBass === true;
 	}
 
+	function prefersFourPartHarmony(progressionState) {
+		return profile(progressionState).prefersFourPartHarmony === true;
+	}
+
 	function prefersSequentialPatterns(progressionState) {
 		return profile(progressionState).prefersSequentialPatterns === true;
 	}
@@ -3473,6 +3689,7 @@
 		minimizesDiminishedHarmony: minimizesDiminishedHarmony,
 		normalize: normalize,
 		patternAffinity: patternAffinity,
+		prefersFourPartHarmony: prefersFourPartHarmony,
 		prefersPartimentoBass: prefersPartimentoBass,
 		prefersSequentialPatterns: prefersSequentialPatterns,
 		prefersStepwiseBass: prefersStepwiseBass,
@@ -7090,6 +7307,13 @@
 			probability += 0.12;
 		}
 
+		if (styleService.prefersFourPartHarmony(progressionState) && voices >= 4 && degreeIndex === 4) {
+			probability += 0.12;
+			if (nextResolvedDegree && nextResolvedDegree.degreeIndex === 0) {
+				probability += 0.08;
+			}
+		}
+
 		if (seventhImprovesMovement(context)) {
 			probability += 0.22;
 		}
@@ -9083,6 +9307,7 @@
 		weight += stepwiseBassScore(pattern.degrees, progressionState);
 		weight += sequentialBassScore(pattern.degrees, progressionState);
 		weight += figuredBassShapeScore(pattern.degrees, progressionState);
+		weight += fourPartHarmonyScore(pattern.degrees, progressionState);
 		weight *= sensitiveDegreeFactor(pattern.degrees, mode, progressionState);
 
 		if (isArpeggioArticulation(progressionState.articulation) && pattern.form === 'circle-of-fifths') {
@@ -9203,6 +9428,58 @@
 		return score;
 	}
 
+	function fourPartHarmonyScore(degrees, progressionState) {
+		var score = 0;
+
+		if (!styleService.prefersFourPartHarmony(progressionState) || numberOrDefault(progressionState.voices, 4) < 4 || !degrees || degrees.length < 2) {
+			return 0;
+		}
+
+		for (var i = 0; i < degrees.length; i++) {
+			if (isDominantSeventhPosition(degrees[i])) {
+				score += 2.6;
+				if (resolvesDominantFamilyToTonic(degrees[i], degrees[i + 1])) {
+					score += 2.2;
+				}
+			} else if (isStructuralSeventhShape(degrees[i])) {
+				score += 1.6;
+			} else if (isCadentialSixFourShape(degrees[i])) {
+				score += 1.8;
+			}
+		}
+
+		return score;
+	}
+
+	function isDominantSeventhPosition(degree) {
+		return degree &&
+			typeof degree === 'object' &&
+			degree.forceKind === 'seventh' &&
+			degreeIndex(degree) === 4 &&
+			Number(degree.forceInversionIndex) >= 0 &&
+			Number(degree.forceInversionIndex) <= 3;
+	}
+
+	function resolvesDominantFamilyToTonic(degree, nextDegree) {
+		return isDominantSeventhPosition(degree) && degreeIndex(nextDegree) === 0;
+	}
+
+	function isStructuralSeventhShape(degree) {
+		return degree &&
+			typeof degree === 'object' &&
+			degree.forceKind === 'seventh' &&
+			Number(degree.forceInversionIndex) >= 0 &&
+			Number(degree.forceInversionIndex) <= 3;
+	}
+
+	function isCadentialSixFourShape(degree) {
+		return degree &&
+			typeof degree === 'object' &&
+			degree.forceKind !== 'seventh' &&
+			degreeIndex(degree) === 0 &&
+			Number(degree.forceInversionIndex) === 2;
+	}
+
 	function isSixThreeShape(degree) {
 		return degree &&
 			typeof degree === 'object' &&
@@ -9251,6 +9528,7 @@
 		commonToneDegreeScore: commonToneDegreeScore,
 		degreeIndex: degreeIndex,
 		figuredBassShapeScore: figuredBassShapeScore,
+		fourPartHarmonyScore: fourPartHarmonyScore,
 		matchesStyle: matchesStyle,
 		sensitiveDegreeFactor: sensitiveDegreeFactor,
 		sequentialBassScore: sequentialBassScore,
@@ -9433,6 +9711,7 @@
 		weight += patternWeight.stepwiseBassScore(block.degrees, progressionState);
 		weight += patternWeight.sequentialBassScore(block.degrees, progressionState);
 		weight += patternWeight.figuredBassShapeScore(block.degrees, progressionState);
+		weight += patternWeight.fourPartHarmonyScore(block.degrees, progressionState);
 		weight *= patternWeight.sensitiveDegreeFactor(block.degrees, mode, progressionState);
 
 		if (block.id === previousBlockId) {

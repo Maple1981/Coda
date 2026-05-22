@@ -37,6 +37,13 @@
 			probability += 0.12;
 		}
 
+		if (styleService.prefersFourPartHarmony(progressionState) && voices >= 4 && degreeIndex === 4) {
+			probability += 0.12;
+			if (nextResolvedDegree && nextResolvedDegree.degreeIndex === 0) {
+				probability += 0.08;
+			}
+		}
+
 		if (seventhImprovesMovement(context)) {
 			probability += 0.22;
 		}
