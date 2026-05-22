@@ -14,6 +14,8 @@
 			minimizesDiminishedHarmony: true,
 			patternAffinities: {
 				'borrowed-plagal': 1.2,
+				'partimento-fauxbourdon': 1.24,
+				'partimento-suspension': 1.16,
 				'plagal-return': 1.3,
 				'tonic-substitution': 1.15
 			},
@@ -31,9 +33,22 @@
 			patternAffinities: {
 				'circle-fragment': 1.3,
 				'circle-of-fifths': 1.55,
+				'fenaroli': 1.32,
+				'folia': 1.34,
+				'galant-cadence': 1.3,
+				'leaping-romanesca': 1.42,
+				'monte-romanesca': 1.34,
+				'partimento-compound-cadence': 1.52,
+				'partimento-deceptive-cadence': 1.28,
+				'partimento-double-cadence': 1.44,
+				'partimento-fauxbourdon': 1.35,
+				'partimento-monte': 1.38,
+				'partimento-phrygian-half': 1.34,
 				'partimento-36': 1.45,
 				'partimento-suspension': 1.4,
 				'partimento-rule-octave': 1.5,
+				'prinner': 1.24,
+				'quiescenza': 1.22,
 				'romanesca': 1.35,
 				'subdominant-dominant': 1.18
 			},
@@ -51,7 +66,12 @@
 			harmonicDensityBias: 0.02,
 			minimizesDiminishedHarmony: false,
 			patternAffinities: {
+				'fenaroli': 1.12,
+				'galant-cadence': 1.38,
+				'monte-romanesca': 1.16,
 				'period': 1.28,
+				'prinner': 1.32,
+				'quiescenza': 1.2,
 				'sentence': 1.18,
 				'subdominant-dominant': 1.15
 			},

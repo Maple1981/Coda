@@ -27,6 +27,10 @@ assert.equal(styleService.requiresPreparedDissonance({ style: 'renaissance' }), 
 assert.equal(styleService.prefersPartimentoBass({ style: 'baroque' }), true);
 assert.equal(styleService.minimizesDiminishedHarmony({ style: 'contemporary' }), true);
 assert.ok(styleService.seventhProbabilityScale({ style: 'baroque' }) > styleService.seventhProbabilityScale({ style: 'contemporary' }));
+assert.ok(styleService.patternAffinity({ style: 'baroque' }, { form: 'partimento-double-cadence' }) > 1);
+assert.ok(styleService.patternAffinity({ style: 'baroque' }, { form: 'partimento-phrygian-half' }) > 1);
+assert.ok(styleService.patternAffinity({ style: 'classic' }, { form: 'prinner' }) > 1);
+assert.equal(styleService.patternAffinity({ style: 'contemporary' }, { form: 'prinner' }), 1);
 
 function noteIndex(name) {
 	return data.notes.findIndex(function (note) {
@@ -179,6 +183,24 @@ assert.equal(patternWeightService.adjustedPatternWeight(baroquePartimentoPattern
 }, 'major'), 0);
 assert.ok(patternWeightService.sensitiveDegreeFactor([0, 6, 4, 0], 'major', { style: 'contemporary' }) < 1);
 assert.equal(patternWeightService.sensitiveDegreeFactor([0, 6, 4, 0], 'major', { style: 'baroque' }), 1);
+assert.ok(patternWeightService.figuredBassShapeScore([
+	0,
+	{ forceInversionIndex: 1, index: 1 },
+	{ forceInversionIndex: 3, forceKind: 'seventh', index: 3 },
+	0
+], { style: 'baroque' }) > 0);
+assert.equal(patternWeightService.figuredBassShapeScore([
+	0,
+	{ forceInversionIndex: 1, index: 1 },
+	{ forceInversionIndex: 3, forceKind: 'seventh', index: 3 },
+	0
+], { style: 'classic' }), 0);
+assert.ok(data.progressionRules.phraseBlocks.some(function (block) {
+	return block.id === 'baroque-phrygian-half' && block.form === 'partimento-phrygian-half';
+}));
+assert.ok(data.progressionRules.patterns.some(function (pattern) {
+	return pattern.id === 'galant-prinner-period' && pattern.styles.indexOf('classic') > -1;
+}));
 const contrastingSectionProgression = app.generateContrastingProgressionSection({
 	data: data,
 	domain: domain,

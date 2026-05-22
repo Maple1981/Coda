@@ -73,6 +73,9 @@
 		weight += patternWeight.affinityScore(progressionState.modalInterchange, block.modalColor);
 		weight += patternWeight.affinityScore(progressionState.tensions, block.tensionAffinity);
 		weight += patternWeight.commonToneDegreeScore(block.degrees, progressionState);
+		weight += patternWeight.stepwiseBassScore(block.degrees, progressionState);
+		weight += patternWeight.sequentialBassScore(block.degrees, progressionState);
+		weight += patternWeight.figuredBassShapeScore(block.degrees, progressionState);
 		weight *= patternWeight.sensitiveDegreeFactor(block.degrees, mode, progressionState);
 
 		if (block.id === previousBlockId) {

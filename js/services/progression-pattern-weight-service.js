@@ -31,6 +31,7 @@
 		weight += commonToneDegreeScore(pattern.degrees, progressionState);
 		weight += stepwiseBassScore(pattern.degrees, progressionState);
 		weight += sequentialBassScore(pattern.degrees, progressionState);
+		weight += figuredBassShapeScore(pattern.degrees, progressionState);
 		weight *= sensitiveDegreeFactor(pattern.degrees, mode, progressionState);
 
 		if (isArpeggioArticulation(progressionState.articulation) && pattern.form === 'circle-of-fifths') {
@@ -124,10 +125,45 @@
 
 			if ((first === 3 && second === 1) || (first === 1 && second === 3) || (first === 4 && second === 3)) {
 				score += 2.8;
+			} else if ((first === 4 && second === 1) || (first === 1 && second === 4)) {
+				score += 2.2;
 			}
 		}
 
 		return score;
+	}
+
+	function figuredBassShapeScore(degrees, progressionState) {
+		var score = 0;
+
+		if (!styleService.prefersPartimentoBass(progressionState) || !degrees || degrees.length < 2) {
+			return 0;
+		}
+
+		for (var i = 0; i < degrees.length; i++) {
+			if (isSixThreeShape(degrees[i])) {
+				score += 1.6;
+			}
+			if (isFourTwoShape(degrees[i])) {
+				score += 2.4;
+			}
+		}
+
+		return score;
+	}
+
+	function isSixThreeShape(degree) {
+		return degree &&
+			typeof degree === 'object' &&
+			degree.forceKind !== 'seventh' &&
+			Number(degree.forceInversionIndex) === 1;
+	}
+
+	function isFourTwoShape(degree) {
+		return degree &&
+			typeof degree === 'object' &&
+			degree.forceKind === 'seventh' &&
+			Number(degree.forceInversionIndex) === 3;
 	}
 
 	function circularDegreeDistance(first, second) {
@@ -163,7 +199,10 @@
 		affinityScore: affinityScore,
 		commonToneDegreeScore: commonToneDegreeScore,
 		degreeIndex: degreeIndex,
+		figuredBassShapeScore: figuredBassShapeScore,
 		matchesStyle: matchesStyle,
-		sensitiveDegreeFactor: sensitiveDegreeFactor
+		sensitiveDegreeFactor: sensitiveDegreeFactor,
+		sequentialBassScore: sequentialBassScore,
+		stepwiseBassScore: stepwiseBassScore
 	};
 })(window);

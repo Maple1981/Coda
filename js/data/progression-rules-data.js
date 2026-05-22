@@ -130,6 +130,115 @@
 				weight: 14
 			},
 			{
+				cadence: 'plagal',
+				counterpoint: 92,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 1 },
+					{ forceInversionIndex: 1, index: 2 },
+					0
+				],
+				form: 'partimento-fauxbourdon',
+				id: 'renaissance-fauxbourdon-plagal',
+				modes: ['major', 'minor'],
+				modalColor: 18,
+				styles: ['renaissance', 'baroque'],
+				tensionAffinity: 42,
+				weight: 13
+			},
+			{
+				cadence: 'half',
+				counterpoint: 86,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 1 },
+					{ forceInversionIndex: 1, index: 2 },
+					4
+				],
+				form: 'partimento-rule-octave',
+				id: 'baroque-rule-octave-pentachord-half',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 50,
+				weight: 15
+			},
+			{
+				cadence: 'half',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 6 },
+					{ forceInversionIndex: 1, index: 5 },
+					4
+				],
+				form: 'partimento-phrygian-half',
+				id: 'baroque-phrygian-half',
+				modes: ['minor'],
+				modalColor: 46,
+				styles: ['baroque'],
+				tensionAffinity: 58,
+				weight: 13
+			},
+			{
+				cadence: 'deceptive',
+				counterpoint: 88,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 3 },
+					4,
+					5
+				],
+				form: 'partimento-deceptive-cadence',
+				id: 'baroque-deceptive-cadence',
+				modes: ['major', 'minor'],
+				modalColor: 16,
+				styles: ['baroque'],
+				tensionAffinity: 64,
+				weight: 11
+			},
+			{
+				cadence: 'plagal',
+				counterpoint: 82,
+				degrees: [0, 4, 5, 2],
+				form: 'leaping-romanesca',
+				id: 'baroque-leaping-romanesca',
+				modes: ['major', 'minor'],
+				modalColor: 22,
+				styles: ['baroque'],
+				tensionAffinity: 50,
+				weight: 12
+			},
+			{
+				cadence: 'plagal',
+				counterpoint: 78,
+				degrees: [3, 2, 1, 0],
+				form: 'prinner',
+				id: 'galant-prinner-answer',
+				modes: ['major', 'minor'],
+				modalColor: 18,
+				styles: ['baroque', 'classic'],
+				tensionAffinity: 42,
+				weight: 12
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 76,
+				degrees: [
+					0,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					0,
+					0
+				],
+				form: 'quiescenza',
+				id: 'galant-quiescenza-authentic',
+				modes: ['major', 'minor'],
+				modalColor: 28,
+				styles: ['baroque', 'classic'],
+				tensionAffinity: 68,
+				weight: 10
+			},
+			{
 				cadence: 'half',
 				counterpoint: 82,
 				degrees: [0, 5, 1, 4],
@@ -268,6 +377,57 @@
 				styles: ['baroque'],
 				tensionAffinity: 68,
 				weight: 17
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 94,
+				degrees: [
+					{ forceInversionIndex: 1, index: 2 },
+					{ forceInversionIndex: 1, index: 3 },
+					4,
+					0
+				],
+				form: 'partimento-compound-cadence',
+				id: 'baroque-compound-cadence-authentic',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 66,
+				weight: 14
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 96,
+				degrees: [
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 2, forceKind: 'triad', index: 0 },
+					4,
+					0
+				],
+				form: 'partimento-double-cadence',
+				id: 'baroque-double-cadence-authentic',
+				modes: ['major', 'minor'],
+				modalColor: 10,
+				styles: ['baroque'],
+				tensionAffinity: 70,
+				weight: 12
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 80,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 3 },
+					4,
+					0
+				],
+				form: 'galant-cadence',
+				id: 'galant-cadence-authentic',
+				modes: ['major', 'minor'],
+				modalColor: 14,
+				styles: ['baroque', 'classic'],
+				tensionAffinity: 48,
+				weight: 13
 			},
 			{
 				cadence: 'authentic',
@@ -412,6 +572,138 @@
 				styles: ['baroque'],
 				tensionAffinity: 58,
 				weight: 12
+			},
+			{
+				cadence: 'half',
+				counterpoint: 90,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 1 },
+					{ forceInversionIndex: 1, index: 2 },
+					{ forceInversionIndex: 1, index: 3 },
+					4,
+					{ forceInversionIndex: 1, index: 5 },
+					{ forceInversionIndex: 1, index: 6 },
+					4
+				],
+				form: 'partimento-fauxbourdon',
+				id: 'baroque-fauxbourdon-octave-half',
+				modes: ['major', 'minor'],
+				modalColor: 16,
+				styles: ['baroque'],
+				tensionAffinity: 52,
+				weight: 11
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 92,
+				degrees: [
+					4,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 3 },
+					{ forceInversionIndex: 1, index: 2 },
+					{ forceInversionIndex: 1, index: 1 },
+					0,
+					{ forceInversionIndex: 1, index: 3 },
+					4,
+					0
+				],
+				form: 'partimento-rule-octave',
+				id: 'baroque-rule-octave-descending-authentic',
+				modes: ['major', 'minor'],
+				modalColor: 12,
+				styles: ['baroque'],
+				tensionAffinity: 60,
+				weight: 12
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 96,
+				degrees: [
+					0,
+					{ forceInversionIndex: 1, index: 3 },
+					{ forceInversionIndex: 1, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 4 },
+					{ forceInversionIndex: 2, forceKind: 'triad', index: 0 },
+					{ forceInversionIndex: 0, forceKind: 'seventh', index: 4 },
+					4,
+					0
+				],
+				form: 'partimento-double-cadence',
+				id: 'baroque-dominant-prolongation-cadence',
+				modes: ['major', 'minor'],
+				modalColor: 10,
+				styles: ['baroque'],
+				tensionAffinity: 72,
+				weight: 10
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 84,
+				degrees: [0, 4, 3, 2, 1, 3, 4, 0],
+				form: 'prinner',
+				id: 'galant-prinner-period',
+				modes: ['major', 'minor'],
+				modalColor: 18,
+				styles: ['baroque', 'classic'],
+				tensionAffinity: 48,
+				weight: 12
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 80,
+				degrees: [
+					0,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					0,
+					{ forceInversionIndex: 3, forceKind: 'seventh', index: 4 },
+					0,
+					3,
+					4,
+					0
+				],
+				form: 'quiescenza',
+				id: 'galant-quiescenza-return',
+				modes: ['major', 'minor'],
+				modalColor: 30,
+				styles: ['baroque', 'classic'],
+				tensionAffinity: 70,
+				weight: 9
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 86,
+				degrees: [0, 4, 1, 5, 2, 3, 4, 0],
+				form: 'monte-romanesca',
+				id: 'baroque-monte-romanesca',
+				modes: ['major'],
+				modalColor: 18,
+				styles: ['baroque'],
+				tensionAffinity: 56,
+				weight: 9
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 88,
+				degrees: [0, 1, 0, 6, 0, 3, 4, 0],
+				form: 'fenaroli',
+				id: 'galant-fenaroli-pedal',
+				modes: ['major', 'minor'],
+				modalColor: 18,
+				styles: ['baroque', 'classic'],
+				tensionAffinity: 46,
+				weight: 9
+			},
+			{
+				cadence: 'authentic',
+				counterpoint: 80,
+				degrees: [0, 4, 0, 6, 2, 6, 4, 0],
+				form: 'folia',
+				id: 'baroque-folia-minor',
+				modes: ['minor'],
+				modalColor: 48,
+				styles: ['baroque'],
+				tensionAffinity: 52,
+				weight: 9
 			},
 			{
 				cadence: 'authentic',
