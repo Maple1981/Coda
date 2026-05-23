@@ -78,7 +78,7 @@
 			var parallelChord = options.parallelScaleChords[i];
 
 			rows.degrees += '<td>';
-			rows.degrees += formatDegreeForChord(options.scaleNotes[i].grado, chord.nombre);
+			rows.degrees += formatDegreeForChord(degreeNameForIndex(i), chord.nombre);
 			rows.degrees += '</td>';
 
 			rows.triads += '<td class="celdaAcorde" id="' + chord.fundamental + '-' + chord.tercera + '-' + chord.quinta + '">';
@@ -157,9 +157,15 @@
 	}
 
 	function chordRoot(chordName) {
-		var match = /^([A-G](#|b|\u266f|\u266d)?)/.exec(String(chordName || ''));
+		var match = /^([A-G](##|bb|#|b|\u266f|\u266d|\uD834\uDD2A|\uD834\uDD2B)?)/.exec(String(chordName || ''));
 
 		return match ? match[1] : '';
+	}
+
+	function degreeNameForIndex(index) {
+		var degrees = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+
+		return degrees[index] || '';
 	}
 
 	function formatDegreeForChord(degree, chordName) {
@@ -187,7 +193,7 @@
 
 	function chordQualitySuffix(chordName) {
 		return String(chordName || '')
-			.replace(/^[A-G](#|b|♭)?/, '')
+			.replace(/^[A-G](##|bb|#|b|\u266f|\u266d|\uD834\uDD2A|\uD834\uDD2B)?/, '')
 			.replace(/b5/g, '♭5');
 	}
 
@@ -236,6 +242,7 @@
 		buildRows: buildRows,
 		chordRoot: chordRoot,
 		chordsTitleKey: chordsTitleKey,
+		degreeNameForIndex: degreeNameForIndex,
 		formatDegreeForChord: formatDegreeForChord,
 		render: render,
 		suspendedName: suspendedName

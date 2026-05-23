@@ -20,7 +20,7 @@
 
 		var progressionMeasures = progression && progression.measures ? progression.measures : null;
 		var measures = hasRenderableMeasures(progressionMeasures) ? progressionMeasures : fallbackMeasures();
-		var sections = timelineSections(progression, measures);
+		var sections = timelineSections(progression, measures, options);
 		var html = renderSectionNavigator(sections, options);
 		var renderOptions = optionsWithSections(options, sections);
 
@@ -44,21 +44,58 @@
 			'</div>';
 	}
 
-	function timelineSections(progression, measures) {
+	function timelineSections(progression, measures, options) {
 		var sections = progression && progression.sections ? progression.sections : null;
 
 		if (sections && sections.length) {
-			return sections;
+			return sectionsWithPrimaryContext(sections, options);
 		}
 
-		return [
+		return sectionsWithPrimaryContext([
 			{
 				id: 'A',
 				labelKey: 'progression.sectionA',
 				length: measures.length,
 				startIndex: 0
 			}
-		];
+		], options);
+	}
+
+	function sectionsWithPrimaryContext(sections, options) {
+		var result = [];
+		var primaryContext = primarySectionContext(options);
+
+		for (var i = 0; i < (sections || []).length; i++) {
+			result.push(sectionWithPrimaryContext(sections[i], primaryContext));
+		}
+
+		return result;
+	}
+
+	function sectionWithPrimaryContext(section, primaryContext) {
+		var result = extendObject(section, {});
+
+		if (result.id !== 'A' || !primaryContext || result.contextTonicName || result.contextScaleName || result.contextLabel) {
+			return result;
+		}
+
+		return extendObject(result, primaryContext);
+	}
+
+	function primarySectionContext(options) {
+		var report = options && options.report ? options.report : null;
+
+		if (!report || (!report.tonicName && !report.scaleName)) {
+			return null;
+		}
+
+		return {
+			circleOfFifths: report.circleOfFifths || null,
+			contextLabel: report.tonicName && report.scaleName ? report.tonicName + ' ' + report.scaleName : '',
+			contextScaleIndex: report.scaleIndex,
+			contextScaleName: report.scaleName || '',
+			contextTonicName: report.tonicName || ''
+		};
 	}
 
 	function hasSection(sections, id) {
@@ -457,6 +494,10 @@
 				return '';
 			}
 
+			if (chord.modulationKind === 'pivot' || chord.modulationSourceLabelKey === 'progression.modulation.pivot') {
+				return pivotSourceLabel(chord, options);
+			}
+
 			return options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(chord.modulationSourceLabelKey) : '';
 		}
 
@@ -477,6 +518,41 @@
 		}
 
 		return tonicName ? tonicName + ' ' + scaleName : scaleName;
+	}
+
+	function pivotSourceLabel(chord, options) {
+		var baseLabel = capitalizeFirst(translate(options, chord.modulationSourceLabelKey || 'progression.modulation.pivot'));
+		var targetDegree = chord.pivotTargetDegree || '';
+		var targetContext = modulationTargetContextLabel(chord, options);
+		var inLabel = translate(options, 'progression.modulation.inKey');
+
+		if (targetDegree && targetContext) {
+			return baseLabel + ': ' + targetDegree + ' ' + inLabel + ' ' + targetContext;
+		}
+
+		return baseLabel;
+	}
+
+	function modulationTargetContextLabel(chord, options) {
+		var tonicName = chord.pivotTargetTonicName || chord.targetTonicName || '';
+		var scaleName = chord.pivotTargetScaleName || '';
+		var scaleIndex = chord.pivotTargetScaleIndex != null ? chord.pivotTargetScaleIndex : chord.targetScaleIndex;
+
+		if (scaleIndex != null && options.i18n && typeof options.i18n.t === 'function') {
+			scaleName = options.i18n.t('data.scales.' + scaleIndex);
+		}
+
+		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
+			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
+		}
+
+		return [tonicName, scaleName].filter(Boolean).join(' ');
+	}
+
+	function capitalizeFirst(value) {
+		value = String(value || '');
+
+		return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
 	}
 
 	function isValidModulationSource(chord, options) {
@@ -555,6 +631,25 @@
 		}
 
 		result.sections = sections || [];
+
+		return result;
+	}
+
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target || {}) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values || {}) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
 
 		return result;
 	}

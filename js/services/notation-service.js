@@ -89,11 +89,11 @@
 		}
 
 		if (accidental === '##' || accidental === '\uD834\uDD2A') {
-			return '\uD834\uDD2A';
+			return '\u266F\u266F';
 		}
 
 		if (accidental === 'bb' || accidental === '\uD834\uDD2B') {
-			return '\uD834\uDD2B';
+			return '\u266D\u266D';
 		}
 
 		return accidental || '';

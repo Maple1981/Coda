@@ -2406,7 +2406,8 @@
 			'progression.nextSectionModulation.secondaryDominant': 'Dominante secundaria',
 			'progression.modulation.auto': 'modulación automática',
 			'progression.modulation.direct': 'modulación directa',
-			'progression.modulation.pivot': 'acorde pivote',
+			'progression.modulation.inKey': 'en',
+			'progression.modulation.pivot': 'Acorde pivote',
 			'progression.modulation.secondaryDominant': 'dominante secundaria',
 			'progression.sectionA': 'Sección A',
 			'progression.sectionAprime': 'Sección A′',
@@ -2694,7 +2695,8 @@
 			'progression.nextSectionModulation.secondaryDominant': 'Secondary dominant',
 			'progression.modulation.auto': 'automatic modulation',
 			'progression.modulation.direct': 'direct modulation',
-			'progression.modulation.pivot': 'pivot chord',
+			'progression.modulation.inKey': 'in',
+			'progression.modulation.pivot': 'Pivot chord',
 			'progression.modulation.secondaryDominant': 'secondary dominant',
 			'progression.sectionA': 'Section A',
 			'progression.sectionAprime': 'Section A′',
@@ -2981,11 +2983,11 @@
 		}
 
 		if (accidental === '##' || accidental === '\uD834\uDD2A') {
-			return '\uD834\uDD2A';
+			return '\u266F\u266F';
 		}
 
 		if (accidental === 'bb' || accidental === '\uD834\uDD2B') {
-			return '\uD834\uDD2B';
+			return '\u266D\u266D';
 		}
 
 		return accidental || '';
@@ -8413,7 +8415,6 @@
 		var sections = progression && progression.sections ? progression.sections : [];
 		var firstSection = sections.length ? sections[0] : null;
 		var targetBars = Math.max(1, Number(state.bars) || measures.length);
-		var generated;
 
 		if (sections.length > 1 && firstSection && Number(firstSection.length) === targetBars) {
 			return measures;
@@ -8423,16 +8424,28 @@
 			return measures.slice(0, targetBars);
 		}
 
-		if (measures.length < targetBars && typeof (options && options.generateProgressionFromState) === 'function' && options.report) {
-			generated = options.generateProgressionFromState({
-				data: options.data,
-				progressionState: state,
-				report: options.report
-			});
-			measures = measures.concat(((generated && generated.measures) || []).slice(measures.length, targetBars));
+		if (measures.length < targetBars) {
+			return extendMeasuresByRepetition(measures, targetBars);
 		}
 
 		return measures;
+	}
+
+	function extendMeasuresByRepetition(measures, targetBars) {
+		var result = cloneJson(measures || []);
+		var sourceLength = result.length;
+		var sourceIndex;
+
+		if (!sourceLength) {
+			return result;
+		}
+
+		while (result.length < targetBars) {
+			sourceIndex = (result.length - sourceLength) % sourceLength;
+			result.push(cloneJson(result[sourceIndex]));
+		}
+
+		return result;
 	}
 
 	function progressionWithState(progression, state) {
@@ -8496,6 +8509,7 @@
 	global.CodaProgressionDocumentTransform = {
 		adjustedMeasuresForState: adjustedMeasuresForState,
 		applyState: applyState,
+		extendMeasuresByRepetition: extendMeasuresByRepetition,
 		normalizeMeasureDurations: normalizeMeasureDurations,
 		progressionWithState: progressionWithState
 	};
@@ -11745,6 +11759,7 @@
 	var sectionCandidates = global.CodaProgressionSectionCandidates;
 	var sectionDocument = global.CodaProgressionSectionDocument;
 	var sectionVariation = global.CodaProgressionSectionVariation;
+	var formattingService = global.CodaProgressionFormatting;
 
 	function generate(options, dependencies) {
 		var progression = options.progression || {};
@@ -12090,21 +12105,15 @@
 			metadata.pivotDegree = pivot.originDegree + ' -> ' + pivot.targetDegree;
 			return {
 				metadata: metadata,
-				nextMeasure: transitionMeasureForDegree(pivot.targetIndex, targetReport, context, {
-					degree: pivot.originDegree + ' / ' + pivot.targetDegree,
-					modulationKind: kind,
-					modulationRole: 'pivot',
-					modulationSourceLabelKey: 'progression.modulation.pivot',
-					pivotOriginDegree: pivot.originDegree,
-					pivotTargetDegree: pivot.targetDegree
-				}),
 				previousMeasure: transitionMeasureForDegree(pivot.originIndex, originReport, context, {
-					degree: pivot.originDegree + ' / ' + pivot.targetDegree,
 					modulationKind: kind,
 					modulationRole: 'pivot',
 					modulationSourceLabelKey: 'progression.modulation.pivot',
 					pivotOriginDegree: pivot.originDegree,
-					pivotTargetDegree: pivot.targetDegree
+					pivotTargetDegree: pivot.targetDegree,
+					pivotTargetScaleIndex: targetReport ? targetReport.scaleIndex : null,
+					pivotTargetScaleName: targetReport ? targetReport.scaleName : '',
+					pivotTargetTonicName: targetReport ? targetReport.tonicName : ''
 				})
 			};
 		}
@@ -12233,9 +12242,9 @@
 				if (score > bestScore) {
 					bestScore = score;
 					best = {
-						originDegree: degreeName(originReport, i),
+						originDegree: degreeName(originReport, i, originChords[i]),
 						originIndex: i,
-						targetDegree: degreeName(targetReport, j),
+						targetDegree: degreeName(targetReport, j, targetChords[j]),
 						targetIndex: j
 					};
 				}
@@ -12324,8 +12333,14 @@
 		return pitch[String(noteName || '').replace(/[0-9]/g, '')];
 	}
 
-	function degreeName(report, index) {
-		return report && report.scaleNotes && report.scaleNotes[index] ? report.scaleNotes[index].grado : '';
+	function degreeName(report, index, chord) {
+		var rawDegree = report && report.scaleNotes && report.scaleNotes[index] ? report.scaleNotes[index].grado : '';
+
+		if (formattingService && typeof formattingService.formatTriadDegreeForChord === 'function') {
+			return formattingService.formatTriadDegreeForChord(rawDegree, chord ? chord.nombre : '');
+		}
+
+		return rawDegree;
 	}
 
 	function targetTonicLabel(report) {
@@ -17301,7 +17316,7 @@
 
 	function findScaleNoteStateByName(options) {
 		for (var key in options.scaleNotes) {
-			if (options.scaleNotes[key].nombre === options.noteName && !options.isDegreeSuppressed(key)) {
+			if ((options.scaleNotes[key].nombre === options.noteName || samePitchClass(options.scaleNotes[key].nombre, options.noteName)) && !options.isDegreeSuppressed(key)) {
 				return {
 					belongsToScale: true,
 					modalType: options.scaleNotes[key].tipo || ''
@@ -17320,8 +17335,10 @@
 			var scaleNote = options.scaleNotes[key];
 			var matchesName = scaleNote.nombre === options.note.nombre;
 			var matchesEnharmonic = options.includeEnharmonic && options.note.enarmonica != null && scaleNote.nombre === options.note.enarmonica;
+			var matchesPitchClass = samePitchClass(scaleNote.nombre, options.note.nombre) ||
+				(options.includeEnharmonic && options.note.enarmonica != null && samePitchClass(scaleNote.nombre, options.note.enarmonica));
 
-			if ((matchesName || matchesEnharmonic) && !options.isDegreeSuppressed(key)) {
+			if ((matchesName || matchesEnharmonic || matchesPitchClass) && !options.isDegreeSuppressed(key)) {
 				return {
 					belongsToScale: true,
 					modalType: scaleNote.tipo || ''
@@ -17333,6 +17350,51 @@
 			belongsToScale: false,
 			modalType: ''
 		};
+	}
+
+	function samePitchClass(firstNoteName, secondNoteName) {
+		var firstPitchClass = notePitchClass(firstNoteName);
+		var secondPitchClass = notePitchClass(secondNoteName);
+
+		return firstPitchClass != null && secondPitchClass != null && firstPitchClass === secondPitchClass;
+	}
+
+	function notePitchClass(noteName) {
+		var match = /^([A-G])((?:##|bb|#|b|\u266f|\u266d|\uD834\uDD2A|\uD834\uDD2B)*)/.exec(String(noteName || ''));
+
+		if (!match) {
+			return null;
+		}
+
+		var basePitchClasses = {
+			C: 0,
+			D: 2,
+			E: 4,
+			F: 5,
+			G: 7,
+			A: 9,
+			B: 11
+		};
+		var accidental = String(match[2] || '')
+			.replace(/\u266f/g, '#')
+			.replace(/\u266d/g, 'b')
+			.replace(/\uD834\uDD2A/g, '##')
+			.replace(/\uD834\uDD2B/g, 'bb');
+		var offset = 0;
+
+		for (var i = 0; i < accidental.length; i++) {
+			if (accidental[i] === '#') {
+				offset += 1;
+			} else if (accidental[i] === 'b') {
+				offset -= 1;
+			}
+		}
+
+		return normalizePitchClass(basePitchClasses[match[1]] + offset);
+	}
+
+	function normalizePitchClass(value) {
+		return ((value % 12) + 12) % 12;
 	}
 
 	function findNoteIndex(notes, noteName) {
@@ -17392,6 +17454,7 @@
 		findNoteIndex: findNoteIndex,
 		findScaleNoteStateByName: findScaleNoteStateByName,
 		findScaleNoteStateForPitch: findScaleNoteStateForPitch,
+		notePitchClass: notePitchClass,
 		noteNameForFormat: noteNameForFormat,
 		resolveNearestMidiForNoteName: resolveNearestMidiForNoteName,
 		resolveTuningMidiNotes: resolveTuningMidiNotes
@@ -17985,9 +18048,7 @@
 	}
 
 	function transformProgressionFromState(progression, options) {
-		return documentTransform.applyState(progression, extendObject(options || {}, {
-			generateProgressionFromState: generateProgressionFromState
-		}));
+		return documentTransform.applyState(progression, options || {});
 	}
 
 	function buildProgressionChordMenu(options) {
@@ -18008,25 +18069,6 @@
 
 	function normalizeProgressionState(progressionState) {
 		return stateNormalizer.normalize(progressionState);
-	}
-
-	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target || {}) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values || {}) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
 	}
 
 	global.CodaApplication = global.CodaApplication || {};
@@ -18508,7 +18550,7 @@
 			var parallelChord = options.parallelScaleChords[i];
 
 			rows.degrees += '<td>';
-			rows.degrees += formatDegreeForChord(options.scaleNotes[i].grado, chord.nombre);
+			rows.degrees += formatDegreeForChord(degreeNameForIndex(i), chord.nombre);
 			rows.degrees += '</td>';
 
 			rows.triads += '<td class="celdaAcorde" id="' + chord.fundamental + '-' + chord.tercera + '-' + chord.quinta + '">';
@@ -18587,9 +18629,15 @@
 	}
 
 	function chordRoot(chordName) {
-		var match = /^([A-G](#|b|\u266f|\u266d)?)/.exec(String(chordName || ''));
+		var match = /^([A-G](##|bb|#|b|\u266f|\u266d|\uD834\uDD2A|\uD834\uDD2B)?)/.exec(String(chordName || ''));
 
 		return match ? match[1] : '';
+	}
+
+	function degreeNameForIndex(index) {
+		var degrees = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+
+		return degrees[index] || '';
 	}
 
 	function formatDegreeForChord(degree, chordName) {
@@ -18617,7 +18665,7 @@
 
 	function chordQualitySuffix(chordName) {
 		return String(chordName || '')
-			.replace(/^[A-G](#|b|♭)?/, '')
+			.replace(/^[A-G](##|bb|#|b|\u266f|\u266d|\uD834\uDD2A|\uD834\uDD2B)?/, '')
 			.replace(/b5/g, '♭5');
 	}
 
@@ -18666,6 +18714,7 @@
 		buildRows: buildRows,
 		chordRoot: chordRoot,
 		chordsTitleKey: chordsTitleKey,
+		degreeNameForIndex: degreeNameForIndex,
 		formatDegreeForChord: formatDegreeForChord,
 		render: render,
 		suspendedName: suspendedName
@@ -19487,7 +19536,7 @@
 
 		var progressionMeasures = progression && progression.measures ? progression.measures : null;
 		var measures = hasRenderableMeasures(progressionMeasures) ? progressionMeasures : fallbackMeasures();
-		var sections = timelineSections(progression, measures);
+		var sections = timelineSections(progression, measures, options);
 		var html = renderSectionNavigator(sections, options);
 		var renderOptions = optionsWithSections(options, sections);
 
@@ -19511,21 +19560,58 @@
 			'</div>';
 	}
 
-	function timelineSections(progression, measures) {
+	function timelineSections(progression, measures, options) {
 		var sections = progression && progression.sections ? progression.sections : null;
 
 		if (sections && sections.length) {
-			return sections;
+			return sectionsWithPrimaryContext(sections, options);
 		}
 
-		return [
+		return sectionsWithPrimaryContext([
 			{
 				id: 'A',
 				labelKey: 'progression.sectionA',
 				length: measures.length,
 				startIndex: 0
 			}
-		];
+		], options);
+	}
+
+	function sectionsWithPrimaryContext(sections, options) {
+		var result = [];
+		var primaryContext = primarySectionContext(options);
+
+		for (var i = 0; i < (sections || []).length; i++) {
+			result.push(sectionWithPrimaryContext(sections[i], primaryContext));
+		}
+
+		return result;
+	}
+
+	function sectionWithPrimaryContext(section, primaryContext) {
+		var result = extendObject(section, {});
+
+		if (result.id !== 'A' || !primaryContext || result.contextTonicName || result.contextScaleName || result.contextLabel) {
+			return result;
+		}
+
+		return extendObject(result, primaryContext);
+	}
+
+	function primarySectionContext(options) {
+		var report = options && options.report ? options.report : null;
+
+		if (!report || (!report.tonicName && !report.scaleName)) {
+			return null;
+		}
+
+		return {
+			circleOfFifths: report.circleOfFifths || null,
+			contextLabel: report.tonicName && report.scaleName ? report.tonicName + ' ' + report.scaleName : '',
+			contextScaleIndex: report.scaleIndex,
+			contextScaleName: report.scaleName || '',
+			contextTonicName: report.tonicName || ''
+		};
 	}
 
 	function hasSection(sections, id) {
@@ -19924,6 +20010,10 @@
 				return '';
 			}
 
+			if (chord.modulationKind === 'pivot' || chord.modulationSourceLabelKey === 'progression.modulation.pivot') {
+				return pivotSourceLabel(chord, options);
+			}
+
 			return options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(chord.modulationSourceLabelKey) : '';
 		}
 
@@ -19944,6 +20034,41 @@
 		}
 
 		return tonicName ? tonicName + ' ' + scaleName : scaleName;
+	}
+
+	function pivotSourceLabel(chord, options) {
+		var baseLabel = capitalizeFirst(translate(options, chord.modulationSourceLabelKey || 'progression.modulation.pivot'));
+		var targetDegree = chord.pivotTargetDegree || '';
+		var targetContext = modulationTargetContextLabel(chord, options);
+		var inLabel = translate(options, 'progression.modulation.inKey');
+
+		if (targetDegree && targetContext) {
+			return baseLabel + ': ' + targetDegree + ' ' + inLabel + ' ' + targetContext;
+		}
+
+		return baseLabel;
+	}
+
+	function modulationTargetContextLabel(chord, options) {
+		var tonicName = chord.pivotTargetTonicName || chord.targetTonicName || '';
+		var scaleName = chord.pivotTargetScaleName || '';
+		var scaleIndex = chord.pivotTargetScaleIndex != null ? chord.pivotTargetScaleIndex : chord.targetScaleIndex;
+
+		if (scaleIndex != null && options.i18n && typeof options.i18n.t === 'function') {
+			scaleName = options.i18n.t('data.scales.' + scaleIndex);
+		}
+
+		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
+			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
+		}
+
+		return [tonicName, scaleName].filter(Boolean).join(' ');
+	}
+
+	function capitalizeFirst(value) {
+		value = String(value || '');
+
+		return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
 	}
 
 	function isValidModulationSource(chord, options) {
@@ -20022,6 +20147,25 @@
 		}
 
 		result.sections = sections || [];
+
+		return result;
+	}
+
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		for (key in target || {}) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values || {}) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
 
 		return result;
 	}
@@ -22575,6 +22719,7 @@
 			i18n: options.i18n,
 			notation: options.notation,
 			notationStyle: options.notationStyle,
+			report: options.report,
 			showCircleOfFifths: !!(options.report && options.report.circleOfFifths)
 		});
 	}
@@ -24610,13 +24755,34 @@
 	function highlightChord() {
 		return function (element) {
 			var noteNames = element.id.split('-');
+			var noteElements = global.document ? global.document.querySelectorAll('td.celdaNota span[data-note-name]') : [];
 
 			for (var i = 0; i < noteNames.length; i++) {
-				forEachElement('td.celdaNota span[data-note-name="' + noteNames[i] + '"]', function (note) {
-					note.classList.add('resaltada');
-				});
+				highlightInstrumentPitch(noteElements, noteNames[i]);
 			}
 		};
+	}
+
+	function highlightInstrumentPitch(noteElements, noteName) {
+		for (var i = 0; i < noteElements.length; i++) {
+			if (matchesNoteOrPitchClass(noteElements[i].getAttribute('data-note-name'), noteName)) {
+				noteElements[i].classList.add('resaltada');
+			}
+		}
+	}
+
+	function matchesNoteOrPitchClass(renderedNoteName, targetNoteName) {
+		var instrumentDomain = global.CodaInstrumentDomain;
+
+		if (renderedNoteName === targetNoteName) {
+			return true;
+		}
+
+		return !!(
+			instrumentDomain &&
+			typeof instrumentDomain.notePitchClass === 'function' &&
+			instrumentDomain.notePitchClass(renderedNoteName) === instrumentDomain.notePitchClass(targetNoteName)
+		);
 	}
 
 	function clearChordHighlight() {

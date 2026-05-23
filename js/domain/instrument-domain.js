@@ -128,7 +128,7 @@
 
 	function findScaleNoteStateByName(options) {
 		for (var key in options.scaleNotes) {
-			if (options.scaleNotes[key].nombre === options.noteName && !options.isDegreeSuppressed(key)) {
+			if ((options.scaleNotes[key].nombre === options.noteName || samePitchClass(options.scaleNotes[key].nombre, options.noteName)) && !options.isDegreeSuppressed(key)) {
 				return {
 					belongsToScale: true,
 					modalType: options.scaleNotes[key].tipo || ''
@@ -147,8 +147,10 @@
 			var scaleNote = options.scaleNotes[key];
 			var matchesName = scaleNote.nombre === options.note.nombre;
 			var matchesEnharmonic = options.includeEnharmonic && options.note.enarmonica != null && scaleNote.nombre === options.note.enarmonica;
+			var matchesPitchClass = samePitchClass(scaleNote.nombre, options.note.nombre) ||
+				(options.includeEnharmonic && options.note.enarmonica != null && samePitchClass(scaleNote.nombre, options.note.enarmonica));
 
-			if ((matchesName || matchesEnharmonic) && !options.isDegreeSuppressed(key)) {
+			if ((matchesName || matchesEnharmonic || matchesPitchClass) && !options.isDegreeSuppressed(key)) {
 				return {
 					belongsToScale: true,
 					modalType: scaleNote.tipo || ''
@@ -160,6 +162,51 @@
 			belongsToScale: false,
 			modalType: ''
 		};
+	}
+
+	function samePitchClass(firstNoteName, secondNoteName) {
+		var firstPitchClass = notePitchClass(firstNoteName);
+		var secondPitchClass = notePitchClass(secondNoteName);
+
+		return firstPitchClass != null && secondPitchClass != null && firstPitchClass === secondPitchClass;
+	}
+
+	function notePitchClass(noteName) {
+		var match = /^([A-G])((?:##|bb|#|b|\u266f|\u266d|\uD834\uDD2A|\uD834\uDD2B)*)/.exec(String(noteName || ''));
+
+		if (!match) {
+			return null;
+		}
+
+		var basePitchClasses = {
+			C: 0,
+			D: 2,
+			E: 4,
+			F: 5,
+			G: 7,
+			A: 9,
+			B: 11
+		};
+		var accidental = String(match[2] || '')
+			.replace(/\u266f/g, '#')
+			.replace(/\u266d/g, 'b')
+			.replace(/\uD834\uDD2A/g, '##')
+			.replace(/\uD834\uDD2B/g, 'bb');
+		var offset = 0;
+
+		for (var i = 0; i < accidental.length; i++) {
+			if (accidental[i] === '#') {
+				offset += 1;
+			} else if (accidental[i] === 'b') {
+				offset -= 1;
+			}
+		}
+
+		return normalizePitchClass(basePitchClasses[match[1]] + offset);
+	}
+
+	function normalizePitchClass(value) {
+		return ((value % 12) + 12) % 12;
 	}
 
 	function findNoteIndex(notes, noteName) {
@@ -219,6 +266,7 @@
 		findNoteIndex: findNoteIndex,
 		findScaleNoteStateByName: findScaleNoteStateByName,
 		findScaleNoteStateForPitch: findScaleNoteStateForPitch,
+		notePitchClass: notePitchClass,
 		noteNameForFormat: noteNameForFormat,
 		resolveNearestMidiForNoteName: resolveNearestMidiForNoteName,
 		resolveTuningMidiNotes: resolveTuningMidiNotes

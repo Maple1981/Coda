@@ -1600,13 +1600,34 @@
 	function highlightChord() {
 		return function (element) {
 			var noteNames = element.id.split('-');
+			var noteElements = global.document ? global.document.querySelectorAll('td.celdaNota span[data-note-name]') : [];
 
 			for (var i = 0; i < noteNames.length; i++) {
-				forEachElement('td.celdaNota span[data-note-name="' + noteNames[i] + '"]', function (note) {
-					note.classList.add('resaltada');
-				});
+				highlightInstrumentPitch(noteElements, noteNames[i]);
 			}
 		};
+	}
+
+	function highlightInstrumentPitch(noteElements, noteName) {
+		for (var i = 0; i < noteElements.length; i++) {
+			if (matchesNoteOrPitchClass(noteElements[i].getAttribute('data-note-name'), noteName)) {
+				noteElements[i].classList.add('resaltada');
+			}
+		}
+	}
+
+	function matchesNoteOrPitchClass(renderedNoteName, targetNoteName) {
+		var instrumentDomain = global.CodaInstrumentDomain;
+
+		if (renderedNoteName === targetNoteName) {
+			return true;
+		}
+
+		return !!(
+			instrumentDomain &&
+			typeof instrumentDomain.notePitchClass === 'function' &&
+			instrumentDomain.notePitchClass(renderedNoteName) === instrumentDomain.notePitchClass(targetNoteName)
+		);
 	}
 
 	function clearChordHighlight() {

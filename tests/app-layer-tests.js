@@ -17,6 +17,7 @@ loader.runManifestRange('js/data/constants-data.js', 'js/application/progression
 const app = context.window.CodaApplication;
 const data = context.window.CodaData;
 const domain = context.window.CodaDomain;
+const instrumentDomain = context.window.CodaInstrumentDomain;
 const styleService = context.window.CodaProgressionStyle;
 const chromaticCadenceService = context.window.CodaProgressionChromaticCadence;
 
@@ -158,6 +159,44 @@ const gbMajorReport = app.buildScaleReport({
 assert.equal(gbMajorReport.circleOfFifths.selectedKey, 'Gb');
 assert.equal(gbMajorReport.circleOfFifths.orderedKeys[6].nombre, 'Gb');
 assert.equal(gbMajorReport.circleOfFifths.orderedKeys[6].enarmonica, 'Ebm');
+
+const gbMinorReport = app.buildScaleReport({
+	data: data,
+	domain: domain,
+	preferFlats: true,
+	scaleIndex: 2,
+	scaleName: 'Menor natural',
+	tonicIndex: noteIndex('Gb'),
+	tonicName: 'Gb'
+});
+
+assert.deepEqual(gbMinorReport.scaleNotes.map(function (note) { return note.nombre; }), ['Gb', 'Ab', 'Bbb', 'Cb', 'Db', 'Ebb', 'Fb']);
+assert.equal(instrumentDomain.notePitchClass('Cb'), instrumentDomain.notePitchClass('B'));
+assert.equal(instrumentDomain.notePitchClass('Fb'), instrumentDomain.notePitchClass('E'));
+assert.equal(instrumentDomain.notePitchClass('Bbb'), instrumentDomain.notePitchClass('A'));
+assert.equal(instrumentDomain.notePitchClass('Ebb'), instrumentDomain.notePitchClass('D'));
+
+const gbMinorPianoKeyboard = instrumentDomain.buildPianoKeyboard({
+	isDegreeSuppressed: function () { return false; },
+	notes: data.notes,
+	octaveCount: 1,
+	preferFlats: true,
+	scaleNotes: gbMinorReport.scaleNotes
+});
+
+function keyboardNote(keys, name) {
+	return keys.find(function (key) {
+		return key.nombre === name;
+	});
+}
+
+assert.equal(keyboardNote(gbMinorPianoKeyboard.blackKeys, 'Gb').perteneceEscala, true);
+assert.equal(keyboardNote(gbMinorPianoKeyboard.blackKeys, 'Ab').perteneceEscala, true);
+assert.equal(keyboardNote(gbMinorPianoKeyboard.blackKeys, 'Db').perteneceEscala, true);
+assert.equal(keyboardNote(gbMinorPianoKeyboard.whiteKeys, 'A').perteneceEscala, true);
+assert.equal(keyboardNote(gbMinorPianoKeyboard.whiteKeys, 'B').perteneceEscala, true);
+assert.equal(keyboardNote(gbMinorPianoKeyboard.whiteKeys, 'D').perteneceEscala, true);
+assert.equal(keyboardNote(gbMinorPianoKeyboard.whiteKeys, 'E').perteneceEscala, true);
 
 const cMajorProgression = app.buildProgressionFromDegrees({
 	degrees: ['I', 'IV', 'V', 'I'],
@@ -531,12 +570,11 @@ const pivotModulationProgression = app.generateProgressionSection({
 assert.equal(pivotModulationProgression.sections[1].modulation.kind, 'pivot');
 assert.ok(pivotModulationProgression.sections[1].modulation.pivotDegree);
 assert.equal(pivotModulationProgression.measures[3].modulationRole, 'pivot');
-assert.equal(pivotModulationProgression.measures[4].modulationRole, 'pivot');
-assert.equal(pivotModulationProgression.measures[3].chordName, pivotModulationProgression.measures[4].chordName);
 assert.equal(pivotModulationProgression.measures[3].modulationSourceLabelKey, 'progression.modulation.pivot');
-assert.equal(pivotModulationProgression.measures[4].modulationSourceLabelKey, 'progression.modulation.pivot');
-assert.equal(pivotModulationProgression.measures[3].degree, pivotModulationProgression.measures[3].pivotOriginDegree + ' / ' + pivotModulationProgression.measures[3].pivotTargetDegree);
-assert.equal(pivotModulationProgression.measures[4].degree, pivotModulationProgression.measures[4].pivotOriginDegree + ' / ' + pivotModulationProgression.measures[4].pivotTargetDegree);
+assert.equal(pivotModulationProgression.measures[3].degree.indexOf('/'), -1);
+assert.equal(pivotModulationProgression.measures[3].pivotTargetTonicName, pivotModulationProgression.sections[1].contextTonicName);
+assert.equal(pivotModulationProgression.measures[4].modulationRole, undefined);
+assert.equal(pivotModulationProgression.measures[4].modulationSourceLabelKey, undefined);
 const pivotCompatibleProgression = app.generateProgressionSection({
 	data: data,
 	domain: domain,
@@ -563,7 +601,7 @@ const pivotCompatibleProgression = app.generateProgressionSection({
 assert.equal(pivotCompatibleProgression.sections[1].modulation.kind, 'pivot');
 assert.notEqual(pivotCompatibleProgression.sections[1].contrast, 'parallel');
 assert.equal(pivotCompatibleProgression.measures[3].modulationRole, 'pivot');
-assert.equal(pivotCompatibleProgression.measures[4].modulationRole, 'pivot');
+assert.equal(pivotCompatibleProgression.measures[4].modulationRole, undefined);
 const bMajorProgressionPlan = app.buildProgressionFromState({
 	domain: domain,
 	progressionState: {
@@ -608,10 +646,16 @@ assert.equal(bMajorPivotModulationProgression.sections[1].modulation.kind, 'pivo
 assert.notEqual(bMajorPivotModulationProgression.sections[1].contextLabel, 'B Mayor');
 assert.notEqual(bMajorPivotModulationProgression.sections[1].contextTonicName, 'B');
 assert.equal(bMajorPivotModulationProgression.measures[3].modulationRole, 'pivot');
-assert.equal(bMajorPivotModulationProgression.measures[4].modulationRole, 'pivot');
-assert.equal(bMajorPivotModulationProgression.measures[3].chordName, bMajorPivotModulationProgression.measures[4].chordName);
 assert.equal(bMajorPivotModulationProgression.measures[3].modulationSourceLabelKey, 'progression.modulation.pivot');
-assert.equal(bMajorPivotModulationProgression.measures[4].modulationSourceLabelKey, 'progression.modulation.pivot');
+assert.equal(bMajorPivotModulationProgression.measures[3].degree.indexOf('/'), -1);
+assert.equal(bMajorPivotModulationProgression.measures[4].modulationRole, undefined);
+assert.equal(bMajorPivotModulationProgression.measures[4].modulationSourceLabelKey, undefined);
+assert.ok(bMajorPivotModulationProgression.measures.slice(4, 8).some(function (measure) {
+	return measure.degreeIndex === 0;
+}));
+assert.ok(bMajorPivotModulationProgression.measures.slice(4, 8).some(function (measure) {
+	return measure.degreeIndex === 4;
+}));
 const noModulationContrastProgression = app.generateProgressionSection({
 	data: data,
 	domain: domain,
@@ -924,6 +968,52 @@ assert.equal(transformedSplitProgression.measures[0].chords.length, 2);
 assert.deepEqual(transformedSplitProgression.measures[0].chords.map(function (chord) { return chord.chordName; }), splitProgression.measures[0].chords.map(function (chord) { return chord.chordName; }));
 assert.equal(transformedSplitProgression.measures[0].chords[0].articulation, 'staccato');
 assert.equal(transformedSplitProgression.measures[0].chords[0].voices, 5);
+let transformGeneratorCalled = false;
+const extendedTransformedProgression = context.window.CodaProgressionDocumentTransform.applyState(cMajorProgressionPlan, {
+	data: data,
+	generateProgressionFromState: function () {
+		transformGeneratorCalled = true;
+		return app.generateProgressionFromState({
+			data: data,
+			progressionState: {
+				bars: 8,
+				beatsPerBar: 4,
+				bpm: 120,
+				meter: '4/4'
+			},
+			report: cMajorReport
+		});
+	},
+	progressionState: {
+		articulation: 'sustain',
+		bars: 8,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 30,
+		harmonicDensity: 0,
+		humanization: 0,
+		intensity: 80,
+		meter: '4/4',
+		modalInterchange: 10,
+		style: 'contemporary',
+		swing: 0,
+		tensions: 40,
+		voicing: 'closed',
+		voices: 3
+	},
+	report: cMajorReport
+});
+assert.equal(transformGeneratorCalled, false);
+assert.equal(extendedTransformedProgression.measures.length, 8);
+assert.deepEqual(
+	extendedTransformedProgression.measures.slice(0, 4).map(function (measure) { return measure.chordName; }),
+	cMajorProgressionPlan.measures.map(function (measure) { return measure.chordName; })
+);
+assert.deepEqual(
+	extendedTransformedProgression.measures.slice(4, 8).map(function (measure) { return measure.chordName; }),
+	cMajorProgressionPlan.measures.map(function (measure) { return measure.chordName; })
+);
 
 const suspendedMeasureProgression = JSON.parse(JSON.stringify(cMajorProgressionPlan));
 suspendedMeasureProgression.measures[0].degree = 'I sus4';

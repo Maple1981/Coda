@@ -145,6 +145,26 @@ assert.equal(document.scaleDegreeNoteButtons[0].classList.contains('isPlayingSca
 runPendingTimers();
 assert.deepEqual(playedScaleMidiNotes, ['60', 60, 62, 64]);
 assert.equal(document.scaleDegreeNoteButtons[2].classList.contains('isPlayingScaleNote'), false);
+const originalQuerySelectorAll = document.querySelectorAll;
+const bbbChordInstrumentNotes = ['A', 'B', 'D', 'E', 'Gb'].map(function (noteName) {
+	const element = createFakeElement('instrument-' + noteName);
+	element.setAttribute('data-note-name', noteName);
+	return element;
+});
+document.querySelectorAll = function (selector) {
+	if (selector === 'td.celdaNota span[data-note-name]') {
+		return bbbChordInstrumentNotes;
+	}
+
+	return originalQuerySelectorAll(selector);
+};
+controller.highlightChord()({ id: 'Bbb-Cb-Ebb-Fb' });
+assert.equal(bbbChordInstrumentNotes[0].classList.contains('resaltada'), true);
+assert.equal(bbbChordInstrumentNotes[1].classList.contains('resaltada'), true);
+assert.equal(bbbChordInstrumentNotes[2].classList.contains('resaltada'), true);
+assert.equal(bbbChordInstrumentNotes[3].classList.contains('resaltada'), true);
+assert.equal(bbbChordInstrumentNotes[4].classList.contains('resaltada'), false);
+document.querySelectorAll = originalQuerySelectorAll;
 assert.equal(playbackInstruments[playbackInstruments.length - 1], 'acoustic_grand_piano');
 assert.deepEqual(initialState, {
 	articulation: 'sustain',
@@ -453,6 +473,24 @@ const randomGeneratedDegrees = randomGeneratedProgression.measures.map(function 
 	return measure.degree;
 });
 assert.equal(randomGeneratedProgression.userEdited, true);
+const originalBuildProgressionFromState = options.application.buildProgressionFromState;
+let buildProgressionFromStateCalls = 0;
+options.application.buildProgressionFromState = function (buildOptions) {
+	buildProgressionFromStateCalls += 1;
+	return originalBuildProgressionFromState(buildOptions);
+};
+document.getElementById('progressionMeter').value = '3/4';
+document.querySelector('.progressionControls').dispatchEvent({
+	target: document.getElementById('progressionMeter'),
+	type: 'change'
+});
+options.application.buildProgressionFromState = originalBuildProgressionFromState;
+assert.equal(buildProgressionFromStateCalls, 0);
+assert.equal(initialized.uiState.getProgressionState().meter, '3/4');
+assert.equal(initialized.uiState.getProgression().userEdited, true);
+assert.deepEqual(initialized.uiState.getProgression().measures.map(function (measure) {
+	return measure.degree;
+}), randomGeneratedDegrees);
 document.getElementById('progressionIntensity').value = '102';
 document.querySelector('.progressionControls').dispatchEvent({
 	target: document.getElementById('progressionIntensity'),

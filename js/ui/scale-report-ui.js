@@ -118,6 +118,7 @@
 			i18n: options.i18n,
 			notation: options.notation,
 			notationStyle: options.notationStyle,
+			report: options.report,
 			showCircleOfFifths: !!(options.report && options.report.circleOfFifths)
 		});
 	}

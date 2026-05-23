@@ -145,9 +145,7 @@
 	}
 
 	function transformProgressionFromState(progression, options) {
-		return documentTransform.applyState(progression, extendObject(options || {}, {
-			generateProgressionFromState: generateProgressionFromState
-		}));
+		return documentTransform.applyState(progression, options || {});
 	}
 
 	function buildProgressionChordMenu(options) {
@@ -168,25 +166,6 @@
 
 	function normalizeProgressionState(progressionState) {
 		return stateNormalizer.normalize(progressionState);
-	}
-
-	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target || {}) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values || {}) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
 	}
 
 	global.CodaApplication = global.CodaApplication || {};

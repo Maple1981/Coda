@@ -133,6 +133,22 @@ const cMinorNaturalChords = domain.buildScaleChords({
 	octaveSemitones: data.constants.octaveSemitones
 });
 
+const gbMinorNatural = domain.buildScale({
+	tonicIndex: noteIndex('Gb'),
+	scaleDefinition: byName(data.scales, 'Menor natural'),
+	notes: data.notes,
+	intervals: data.intervals,
+	octaveSemitones: data.constants.octaveSemitones,
+	preferFlats: true
+});
+
+const gbMinorNaturalChords = domain.buildScaleChords({
+	scaleNotes: gbMinorNatural,
+	scaleDefinition: byName(data.scales, 'Menor natural'),
+	chordDefinitions: data.chords,
+	octaveSemitones: data.constants.octaveSemitones
+});
+
 const cAcoustic = domain.buildScale({
 	tonicIndex: noteIndex('C'),
 	scaleDefinition: byName(data.scales, 'Acústica'),
@@ -174,6 +190,20 @@ assert.ok(scaleSummaryHtml.indexOf('data-note-name="C"') > -1);
 assert.ok(scaleSummaryHtml.indexOf('data-midi-note="60"') > -1);
 assert.ok(scaleSummaryHtml.indexOf('data-midi-note="72"') > -1);
 assert.equal((scaleSummaryHtml.match(/class="scaleDegreeNoteButton"/g) || []).length, 8);
+
+const gbMinorSummaryHtml = scaleSummaryRenderer.render({
+	circleOfFifths: data.circleOfFifths,
+	isDegreeSuppressed: function () { return false; },
+	notation: notation,
+	notationStyle: 'anglosaxon',
+	scaleDefinition: byName(data.scales, 'Menor natural'),
+	scaleName: 'Menor natural',
+	scaleNotes: gbMinorNatural,
+	selectedScaleIndex: 2,
+	tonicName: 'Gb'
+});
+assert.ok(gbMinorSummaryHtml.indexOf('B♭♭<sup>IIIm</sup>') > -1);
+assert.equal(gbMinorSummaryHtml.indexOf('B\uD834\uDD2B'), -1);
 
 const pentatonicSummaryHtml = scaleSummaryRenderer.render({
 	circleOfFifths: data.circleOfFifths,
@@ -373,6 +403,23 @@ assert.ok(bMajorScaleChordsHtml.indexOf('F#sus2') > -1);
 assert.ok(bMajorScaleChordsHtml.indexOf('F#sus4') > -1);
 assert.equal(scaleChordsRenderer.suspendedName('F#7', 'sus4'), 'F#sus4');
 assert.equal(scaleChordsRenderer.suspendedName('B♭7', 'sus2'), 'B♭sus2');
+
+const gbMinorScaleChordsHtml = scaleChordsRenderer.render({
+	notation: notation,
+	notationStyle: 'anglosaxon',
+	mode: 'm',
+	parallelScaleChords: [],
+	scaleChords: gbMinorNaturalChords,
+	scaleDefinition: byName(data.scales, 'Menor natural'),
+	scaleNotes: gbMinorNatural
+});
+assert.ok(gbMinorScaleChordsHtml.indexOf('<td>IIImaj7</td>') > -1);
+assert.equal(gbMinorScaleChordsHtml.indexOf('IIIbmaj7'), -1);
+assert.ok(gbMinorScaleChordsHtml.indexOf('B♭♭maj7') > -1);
+assert.equal(gbMinorScaleChordsHtml.indexOf('\uD834\uDD2B'), -1);
+assert.equal(scaleChordsRenderer.formatDegreeForChord('III', 'Bbbmaj7'), 'IIImaj7');
+assert.equal(scaleChordsRenderer.chordRoot('Bbbmaj7'), 'Bbb');
+assert.equal(scaleChordsRenderer.suspendedName('Bbbmaj7', 'sus4'), 'Bbbsus4');
 
 const acousticScaleChordsHtml = scaleChordsRenderer.render({
 	mode: '',
@@ -643,6 +690,20 @@ const renderedFullTimeline = progressionWorkbenchRenderer.renderTimeline({
 assert.ok(renderedFullTimeline.indexOf('progressionSectionNavigator') > -1);
 assert.ok(renderedFullTimeline.indexOf('href="#progression-section-a"') > -1);
 assert.ok(renderedFullTimeline.indexOf('href="#progression-section-b"') > -1);
+const sectionAContextTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
+	measures: [
+		{ bar: 1, chordName: 'Cm', degree: 'i' },
+		{ bar: 2, chordName: 'Gm', degree: 'v' }
+	]
+}, {
+	i18n: englishI18n,
+	report: {
+		scaleIndex: 2,
+		scaleName: 'Menor natural',
+		tonicName: 'C'
+	}
+});
+assert.ok(sectionAContextTimeline.indexOf('<span class="progressionSectionContext">C Natural minor</span>') > -1);
 const neapolitanQuickHtml = context.window.CodaRenderers.progressionTimeline.renderMeasureChord({
 	chromaticRole: 'neapolitan',
 	degreeIndex: 1,
@@ -751,7 +812,7 @@ const stalePivotLabelTimeline = progressionWorkbenchRenderer.renderTimelineMeasu
 }, {
 	i18n: englishI18n
 });
-assert.equal(stalePivotLabelTimeline.indexOf('<span class="measureSource">pivot chord</span>'), -1);
+assert.equal(stalePivotLabelTimeline.indexOf('<span class="measureSource">Pivot chord</span>'), -1);
 const validPivotLabelTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [
 		{
@@ -762,16 +823,16 @@ const validPivotLabelTimeline = progressionWorkbenchRenderer.renderTimelineMeasu
 			modulationKind: 'pivot',
 			modulationRole: 'pivot',
 			modulationSourceLabelKey: 'progression.modulation.pivot',
+			pivotTargetDegree: 'ii',
+			pivotTargetScaleIndex: 0,
+			pivotTargetTonicName: 'G',
 			sectionId: 'A'
 		},
 		{
 			bar: 2,
-			chordName: 'Am',
-			degree: 'ii',
-			displayName: 'Am',
-			modulationKind: 'pivot',
-			modulationRole: 'pivot',
-			modulationSourceLabelKey: 'progression.modulation.pivot',
+			chordName: 'G',
+			degree: 'I',
+			displayName: 'G',
 			sectionId: 'B'
 		}
 	],
@@ -795,29 +856,29 @@ const validPivotLabelTimeline = progressionWorkbenchRenderer.renderTimelineMeasu
 }, {
 	i18n: englishI18n
 });
-assert.ok(validPivotLabelTimeline.indexOf('<span class="measureSource">pivot chord</span>') > -1);
-assert.equal(validPivotLabelTimeline.match(/<span class="measureSource">pivot chord<\/span>/g).length, 2);
+assert.ok(validPivotLabelTimeline.indexOf('<span class="measureSource">Pivot chord: ii in G Major</span>') > -1);
+assert.equal((validPivotLabelTimeline.match(/<span class="measureSource">Pivot chord/g) || []).length, 1);
 const separatedPivotLabelTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [
 		{
 			bar: 1,
 			chordName: 'Am',
-			degree: 'vi / ii',
+			degree: 'vi',
 			displayName: 'Am',
 			modulationKind: 'pivot',
 			modulationRole: 'pivot',
 			modulationSourceLabelKey: 'progression.modulation.pivot',
+			pivotTargetDegree: 'ii',
+			pivotTargetScaleIndex: 0,
+			pivotTargetTonicName: 'G',
 			sectionId: 'A'
 		},
 		{ bar: 2, chordName: 'C', degree: 'I', displayName: 'C', sectionId: 'A\'' },
 		{
 			bar: 3,
-			chordName: 'Am',
-			degree: 'vi / ii',
-			displayName: 'Am',
-			modulationKind: 'pivot',
-			modulationRole: 'pivot',
-			modulationSourceLabelKey: 'progression.modulation.pivot',
+			chordName: 'G',
+			degree: 'I',
+			displayName: 'G',
 			sectionId: 'B'
 		}
 	],
@@ -840,8 +901,9 @@ const separatedPivotLabelTimeline = progressionWorkbenchRenderer.renderTimelineM
 }, {
 	i18n: englishI18n
 });
-assert.equal(separatedPivotLabelTimeline.match(/<span class="measureSource">pivot chord<\/span>/g).length, 2);
-assert.ok(separatedPivotLabelTimeline.indexOf('<em class="measureDegree">vi / ii</em>') > -1);
+assert.equal((separatedPivotLabelTimeline.match(/<span class="measureSource">Pivot chord/g) || []).length, 1);
+assert.ok(separatedPivotLabelTimeline.indexOf('<em class="measureDegree">vi</em>') > -1);
+assert.equal(separatedPivotLabelTimeline.indexOf('<em class="measureDegree">vi / ii</em>'), -1);
 const bMajorReportForPivotTimeline = app.buildScaleReport({
 	data: data,
 	domain: domain,
@@ -895,7 +957,8 @@ const generatedPivotTimelineHtml = progressionWorkbenchRenderer.renderTimelineMe
 	i18n: englishI18n
 });
 assert.notEqual(generatedPivotTimelineProgression.sections[1].contextLabel, 'B Mayor');
-assert.equal((generatedPivotTimelineHtml.match(/<span class="measureSource">pivot chord<\/span>/g) || []).length, 2);
+assert.equal((generatedPivotTimelineHtml.match(/<span class="measureSource">Pivot chord/g) || []).length, 1);
+assert.equal(generatedPivotTimelineHtml.indexOf(' / '), -1);
 const complexSectionTimeline = progressionWorkbenchRenderer.renderTimeline({
 	measures: [
 		{

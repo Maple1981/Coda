@@ -1517,8 +1517,9 @@ assert.equal(englishI18n.dataLabel('scales', 0, 'Mayor'), 'Major');
 assert.equal(englishI18n.dataLabel('tunings', 0, 'Estándar E'), 'Standard E');
 assert.equal(global.CodaNotation.formatChordName('F#m7', 'latin'), 'Fa♯m7');
 assert.equal(global.CodaNotation.formatNoteSequence('D-F#-A-C', 'latin'), 'Re-Fa♯-La-Do');
-assert.equal(global.CodaNotation.formatNoteName('A𝄪', 'latin'), 'La𝄪');
-assert.equal(global.CodaNotation.formatNoteName('C𝄪', 'anglosaxon'), 'C𝄪');
+assert.equal(global.CodaNotation.formatNoteName('A\uD834\uDD2A', 'latin'), 'La♯♯');
+assert.equal(global.CodaNotation.formatNoteName('C\uD834\uDD2A', 'anglosaxon'), 'C♯♯');
+assert.equal(global.CodaNotation.formatNoteName('Bbb', 'anglosaxon'), 'B♭♭');
 
 global.CodaData.midiInstruments.forEach(function (instrument, index) {
 	assert.ok(global.CodaTranslations.es['data.midiInstruments.' + index] != null);

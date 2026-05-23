@@ -32,3 +32,11 @@ El resumen visual añade la tónica superior de cierre para completar la escala 
 ## Relación con armaduras
 
 La preferencia de armadura sigue decidiendo la forma de la tónica cuando hay enarmonías disponibles, pero ya no puede producir grados con letras duplicadas en escalas tonales o modales de siete notas. Si la armadura sugiere una zona de bemoles, la escala seguirá usando bemoles allí donde corresponda; si sugiere sostenidos, se usarán sostenidos, dobles sostenidos o alteraciones equivalentes cuando sean necesarios para preservar la letra del grado.
+
+## Relación con instrumentos
+
+La ortografía teórica y la posición física no son lo mismo. Una escala como `Gb` menor natural puede necesitar notas como `Bbb`, `Cb`, `Ebb` o `Fb` para conservar una letra distinta por grado, pero esas notas deben iluminar las teclas o trastes que suenan igual en temperamento igual: `Bbb` como `A`, `Cb` como `B`, `Ebb` como `D` y `Fb` como `E`.
+
+Por tanto, las tablas pueden mantener la escritura musical correcta, mientras que las vistas de piano, guitarra y cualquier instrumento equivalente deben decidir la pertenencia a la escala por clase de altura cromática, no solo por coincidencia literal del nombre.
+
+Para evitar problemas de fuente y lectura, la interfaz no usa los glifos musicales especiales de doble sostenido o doble bemol en texto visible. Cuando una ortografía requiere una doble alteración, se muestra como dos signos corrientes (`♯♯` o `♭♭`), aunque el identificador musical interno conserve la forma compacta (`##` o `bb`).

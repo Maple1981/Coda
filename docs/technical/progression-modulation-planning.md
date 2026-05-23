@@ -24,8 +24,9 @@ La app ya contiene piezas útiles:
 - El control **Siguiente sección** permite elegir sin modulación, modulación directa, acorde pivote o dominante secundaria al crear secciones contrastantes.
 - Las secciones contrastantes guardan `section.modulation` cuando el cambio de contexto necesita una lectura explícita.
 - La dominante secundaria de llegada puede ocupar el último compás de la sección anterior.
-- El acorde pivote puede ocupar tanto el último compás de la sección anterior como el primero de la sección nueva, con doble lectura de grados (`vi / ii`, por ejemplo). Conceptualmente no pertenece en exclusiva a una sección: funciona como bisagra o zona de transición entre el contexto de salida y el de llegada.
+- El acorde pivote ocupa normalmente el tramo final de la sección anterior. Su grado visible sigue perteneciendo a esa sección, mientras que la etiqueta del compás indica la reinterpretación en la tonalidad de llegada, por ejemplo `Acorde pivote: iii en F mayor`. Conceptualmente no pertenece en exclusiva a una sección: funciona como bisagra o zona de transición entre el contexto de salida y el de llegada.
 - La modulación por acorde pivote exige un destino tonal distinto del origen. No debe degradarse a una sección contrastante en la misma tonalidad: esa situación corresponde a **Sin modulación**. El candidato sólo es válido si contiene al menos un acorde común que pueda analizarse funcionalmente en ambos contextos.
+- La nueva sección no debe repetir por obligación el acorde pivote como primer acorde. Puede hacerlo ocasionalmente si el plan musical lo produce, pero lo normal es que empiece con material del nuevo contexto y confirme la tonalidad mediante grados estructurales como `I` y `V`.
 - La opción sin modulación conserva el contexto tonal de la sección previa, pero fuerza contraste armónico iniciando la nueva sección fuera de la tónica cuando hay acordes disponibles de función tónica secundaria o subdominante.
 
 Lo que falta no es sólo añadir acordes, sino completar una capa de planificación tonal que decida cuándo un acorde cromático es color local y cuándo forma parte de un cambio de centro. La primera implementación cubre modulaciones estructurales entre secciones; las tonicalizaciones internas siguen siendo la parte pendiente más importante.
@@ -399,7 +400,7 @@ Tareas:
 - calcular acordes pivote;
 - excluir la tonalidad de salida como destino válido;
 - aceptar sólo candidatos con acorde común real entre origen y destino;
-- generar transición al final de la sección previa o al inicio de la sección nueva;
+- generar transición al final de la sección previa sin forzar la repetición del pivote al inicio de la sección nueva;
 - registrar metadatos de modulación en la sección;
 - mostrar relación tonal en depuración o inspector futuro.
 

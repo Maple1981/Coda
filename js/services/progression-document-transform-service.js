@@ -41,7 +41,6 @@
 		var sections = progression && progression.sections ? progression.sections : [];
 		var firstSection = sections.length ? sections[0] : null;
 		var targetBars = Math.max(1, Number(state.bars) || measures.length);
-		var generated;
 
 		if (sections.length > 1 && firstSection && Number(firstSection.length) === targetBars) {
 			return measures;
@@ -51,16 +50,28 @@
 			return measures.slice(0, targetBars);
 		}
 
-		if (measures.length < targetBars && typeof (options && options.generateProgressionFromState) === 'function' && options.report) {
-			generated = options.generateProgressionFromState({
-				data: options.data,
-				progressionState: state,
-				report: options.report
-			});
-			measures = measures.concat(((generated && generated.measures) || []).slice(measures.length, targetBars));
+		if (measures.length < targetBars) {
+			return extendMeasuresByRepetition(measures, targetBars);
 		}
 
 		return measures;
+	}
+
+	function extendMeasuresByRepetition(measures, targetBars) {
+		var result = cloneJson(measures || []);
+		var sourceLength = result.length;
+		var sourceIndex;
+
+		if (!sourceLength) {
+			return result;
+		}
+
+		while (result.length < targetBars) {
+			sourceIndex = (result.length - sourceLength) % sourceLength;
+			result.push(cloneJson(result[sourceIndex]));
+		}
+
+		return result;
 	}
 
 	function progressionWithState(progression, state) {
@@ -124,6 +135,7 @@
 	global.CodaProgressionDocumentTransform = {
 		adjustedMeasuresForState: adjustedMeasuresForState,
 		applyState: applyState,
+		extendMeasuresByRepetition: extendMeasuresByRepetition,
 		normalizeMeasureDurations: normalizeMeasureDurations,
 		progressionWithState: progressionWithState
 	};

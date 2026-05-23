@@ -5,6 +5,7 @@
 	var sectionCandidates = global.CodaProgressionSectionCandidates;
 	var sectionDocument = global.CodaProgressionSectionDocument;
 	var sectionVariation = global.CodaProgressionSectionVariation;
+	var formattingService = global.CodaProgressionFormatting;
 
 	function generate(options, dependencies) {
 		var progression = options.progression || {};
@@ -350,21 +351,15 @@
 			metadata.pivotDegree = pivot.originDegree + ' -> ' + pivot.targetDegree;
 			return {
 				metadata: metadata,
-				nextMeasure: transitionMeasureForDegree(pivot.targetIndex, targetReport, context, {
-					degree: pivot.originDegree + ' / ' + pivot.targetDegree,
-					modulationKind: kind,
-					modulationRole: 'pivot',
-					modulationSourceLabelKey: 'progression.modulation.pivot',
-					pivotOriginDegree: pivot.originDegree,
-					pivotTargetDegree: pivot.targetDegree
-				}),
 				previousMeasure: transitionMeasureForDegree(pivot.originIndex, originReport, context, {
-					degree: pivot.originDegree + ' / ' + pivot.targetDegree,
 					modulationKind: kind,
 					modulationRole: 'pivot',
 					modulationSourceLabelKey: 'progression.modulation.pivot',
 					pivotOriginDegree: pivot.originDegree,
-					pivotTargetDegree: pivot.targetDegree
+					pivotTargetDegree: pivot.targetDegree,
+					pivotTargetScaleIndex: targetReport ? targetReport.scaleIndex : null,
+					pivotTargetScaleName: targetReport ? targetReport.scaleName : '',
+					pivotTargetTonicName: targetReport ? targetReport.tonicName : ''
 				})
 			};
 		}
@@ -493,9 +488,9 @@
 				if (score > bestScore) {
 					bestScore = score;
 					best = {
-						originDegree: degreeName(originReport, i),
+						originDegree: degreeName(originReport, i, originChords[i]),
 						originIndex: i,
-						targetDegree: degreeName(targetReport, j),
+						targetDegree: degreeName(targetReport, j, targetChords[j]),
 						targetIndex: j
 					};
 				}
@@ -584,8 +579,14 @@
 		return pitch[String(noteName || '').replace(/[0-9]/g, '')];
 	}
 
-	function degreeName(report, index) {
-		return report && report.scaleNotes && report.scaleNotes[index] ? report.scaleNotes[index].grado : '';
+	function degreeName(report, index, chord) {
+		var rawDegree = report && report.scaleNotes && report.scaleNotes[index] ? report.scaleNotes[index].grado : '';
+
+		if (formattingService && typeof formattingService.formatTriadDegreeForChord === 'function') {
+			return formattingService.formatTriadDegreeForChord(rawDegree, chord ? chord.nombre : '');
+		}
+
+		return rawDegree;
 	}
 
 	function targetTonicLabel(report) {
