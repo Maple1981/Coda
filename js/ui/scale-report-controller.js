@@ -391,15 +391,17 @@
 
 			on(query('#constructorProgresiones'), 'click', function (event) {
 				var sectionType;
+				var modulationType;
 
 				if (!closest(event.target, '#generateProgressionNextSection')) {
 					return;
 				}
 
 				sectionType = valueOf(query('#progressionNextSectionType'));
+				modulationType = sectionType === 'contrast' ? (valueOf(query('#progressionNextSectionModulationType')) || 'none') : 'none';
 				cancelProgressionStateUpdate();
 				updateProgressionStateFromControls();
-				generateProgressionNextSection(sectionType);
+				generateProgressionNextSection(sectionType, modulationType);
 				recordHistorySnapshot();
 			});
 
@@ -1146,9 +1148,9 @@
 			}
 		}
 
-		function generateProgressionNextSection(requestedSectionType) {
+		function generateProgressionNextSection(requestedSectionType, requestedModulationType) {
 			var sectionType = availableNextSectionType(requestedSectionType || valueOf(query('#progressionNextSectionType')), uiState.getProgression());
-			var modulationType = sectionType === 'contrast' ? (valueOf(query('#progressionNextSectionModulationType')) || 'auto') : 'none';
+			var modulationType = sectionType === 'contrast' ? (requestedModulationType || valueOf(query('#progressionNextSectionModulationType')) || 'none') : 'none';
 
 			if (
 				options.application &&

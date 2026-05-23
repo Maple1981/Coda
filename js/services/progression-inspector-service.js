@@ -93,7 +93,7 @@
 			return;
 		}
 
-		panel.innerHTML = renderer.render(inspectorSelection, renderOptions(options));
+		panel.innerHTML = renderer.render(inspectorSelection, renderOptions(options, progression));
 	}
 
 	function selectionData(progression, selected) {
@@ -112,14 +112,15 @@
 		};
 	}
 
-	function renderOptions(options) {
+	function renderOptions(options, progression) {
 		var transportOptions = options.transportOptions || {};
 		var uiState = transportOptions.uiState;
 
 		return {
 			i18n: transportOptions.i18n,
 			notation: transportOptions.notation,
-			notationStyle: uiState && uiState.getNotationStyle ? uiState.getNotationStyle() : 'anglosaxon'
+			notationStyle: uiState && uiState.getNotationStyle ? uiState.getNotationStyle() : 'anglosaxon',
+			sections: progression && progression.sections ? progression.sections : []
 		};
 	}
 

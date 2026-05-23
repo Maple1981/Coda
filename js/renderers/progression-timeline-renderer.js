@@ -22,11 +22,12 @@
 		var measures = hasRenderableMeasures(progressionMeasures) ? progressionMeasures : fallbackMeasures();
 		var sections = timelineSections(progression, measures);
 		var html = renderSectionNavigator(sections, options);
+		var renderOptions = optionsWithSections(options, sections);
 
 		for (var i = 0; i < sections.length; i++) {
-			html += renderSectionHeader(sections[i], options);
+			html += renderSectionHeader(sections[i], renderOptions);
 			for (var j = sections[i].startIndex; j < sections[i].startIndex + sections[i].length && j < measures.length; j++) {
-				html += renderMeasure(measures[j], j, options);
+				html += renderMeasure(measures[j], j, renderOptions);
 			}
 		}
 
@@ -165,7 +166,6 @@
 
 	function nextSectionModulationOptions() {
 		return [
-			{ labelKey: 'progression.nextSectionModulation.auto', value: 'auto' },
 			{ labelKey: 'progression.nextSectionModulation.none', value: 'none' },
 			{ labelKey: 'progression.nextSectionModulation.pivot', value: 'pivot' },
 			{ labelKey: 'progression.nextSectionModulation.secondaryDominant', value: 'secondaryDominant' },
@@ -453,10 +453,18 @@
 		var tonicName = chord.sourceTonicName || '';
 
 		if (chord.modulationSourceLabelKey) {
+			if (!isValidModulationSource(chord, options)) {
+				return '';
+			}
+
 			return options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(chord.modulationSourceLabelKey) : '';
 		}
 
 		if (chord.source === 'chromatic') {
+			if (isTransitionLabelKey(chord.sourceLabelKey) && !isValidModulationSource(chord, options)) {
+				return '';
+			}
+
 			return chord.sourceLabelKey && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(chord.sourceLabelKey) : '';
 		}
 
@@ -469,6 +477,86 @@
 		}
 
 		return tonicName ? tonicName + ' ' + scaleName : scaleName;
+	}
+
+	function isValidModulationSource(chord, options) {
+		var sections = options && options.sections ? options.sections : [];
+		var section = sectionForId(sections, chord.sectionId);
+		var kind = chord.modulationKind || modulationKindFromLabel(chord.modulationSourceLabelKey || chord.sourceLabelKey);
+		var relatedSection;
+
+		if (!section || !kind) {
+			return false;
+		}
+
+		if (section.contrast && section.modulation && section.modulation.kind === kind && section.modulation.targetSectionId === section.id) {
+			return true;
+		}
+
+		relatedSection = sectionWithModulationFrom(sections, section.id, kind);
+		if (relatedSection) {
+			return true;
+		}
+
+		return false;
+	}
+
+	function isTransitionLabelKey(labelKey) {
+		return labelKey === 'progression.modulation.pivot' ||
+			labelKey === 'progression.modulation.secondaryDominant';
+	}
+
+	function modulationKindFromLabel(labelKey) {
+		if (labelKey === 'progression.modulation.pivot') {
+			return 'pivot';
+		}
+
+		if (labelKey === 'progression.modulation.secondaryDominant') {
+			return 'secondaryDominant';
+		}
+
+		return '';
+	}
+
+	function sectionForId(sections, sectionId) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (sections[i].id === sectionId) {
+				return sections[i];
+			}
+		}
+
+		return null;
+	}
+
+	function sectionWithModulationFrom(sections, sectionId, kind) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (
+				sections[i].contrast &&
+				sections[i].modulation &&
+				sections[i].modulation.kind === kind &&
+				sections[i].modulation.originSectionId === sectionId &&
+				sections[i].modulation.targetSectionId === sections[i].id
+			) {
+				return sections[i];
+			}
+		}
+
+		return null;
+	}
+
+	function optionsWithSections(options, sections) {
+		var result = {};
+		var key;
+
+		for (key in options || {}) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		result.sections = sections || [];
+
+		return result;
 	}
 
 	function translate(options, key) {

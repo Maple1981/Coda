@@ -193,7 +193,6 @@
 		setText(i18n, 'option[data-i18n="progression.nextSection.bprimeVariation"]', 'progression.nextSection.bprimeVariation');
 		setText(i18n, 'option[data-i18n="progression.nextSection.contrastB"]', 'progression.nextSection.contrastB');
 		setText(i18n, 'option[data-i18n="progression.nextSection.contrastC"]', 'progression.nextSection.contrastC');
-		setText(i18n, 'option[data-i18n="progression.nextSectionModulation.auto"]', 'progression.nextSectionModulation.auto');
 		setText(i18n, 'option[data-i18n="progression.nextSectionModulation.direct"]', 'progression.nextSectionModulation.direct');
 		setText(i18n, 'option[data-i18n="progression.nextSectionModulation.none"]', 'progression.nextSectionModulation.none');
 		setText(i18n, 'option[data-i18n="progression.nextSectionModulation.pivot"]', 'progression.nextSectionModulation.pivot');

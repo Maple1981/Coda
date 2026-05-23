@@ -65,6 +65,16 @@ const cMajorReport = app.buildScaleReport({
 	tonicName: 'C'
 });
 
+const bMajorReport = app.buildScaleReport({
+	data: data,
+	domain: domain,
+	preferFlats: false,
+	scaleIndex: 0,
+	scaleName: 'Mayor',
+	tonicIndex: noteIndex('B'),
+	tonicName: 'B'
+});
+
 assert.equal(cMajorReport.scaleDefinition.nombre, 'Mayor');
 assert.deepEqual(cMajorReport.scaleNotes.map(function (note) { return note.nombre; }), ['C', 'D', 'E', 'F', 'G', 'A', 'B']);
 assert.deepEqual(cMajorReport.scaleNotes.map(function (note) { return note.midiNote; }), [60, 62, 64, 65, 67, 69, 71]);
@@ -523,6 +533,85 @@ assert.ok(pivotModulationProgression.sections[1].modulation.pivotDegree);
 assert.equal(pivotModulationProgression.measures[3].modulationRole, 'pivot');
 assert.equal(pivotModulationProgression.measures[4].modulationRole, 'pivot');
 assert.equal(pivotModulationProgression.measures[3].chordName, pivotModulationProgression.measures[4].chordName);
+assert.equal(pivotModulationProgression.measures[3].modulationSourceLabelKey, 'progression.modulation.pivot');
+assert.equal(pivotModulationProgression.measures[4].modulationSourceLabelKey, 'progression.modulation.pivot');
+assert.equal(pivotModulationProgression.measures[3].degree, pivotModulationProgression.measures[3].pivotOriginDegree + ' / ' + pivotModulationProgression.measures[3].pivotTargetDegree);
+assert.equal(pivotModulationProgression.measures[4].degree, pivotModulationProgression.measures[4].pivotOriginDegree + ' / ' + pivotModulationProgression.measures[4].pivotTargetDegree);
+const pivotCompatibleProgression = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	modulationType: 'pivot',
+	progression: cMajorProgressionPlan,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 70,
+		meter: '3/4',
+		modalInterchange: 10,
+		style: 'baroque',
+		tensions: 40,
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0.32, 0.1, 0.1, 0.1]),
+	sectionType: 'contrast',
+	selection: { preferFlats: false }
+});
+assert.equal(pivotCompatibleProgression.sections[1].modulation.kind, 'pivot');
+assert.notEqual(pivotCompatibleProgression.sections[1].contrast, 'parallel');
+assert.equal(pivotCompatibleProgression.measures[3].modulationRole, 'pivot');
+assert.equal(pivotCompatibleProgression.measures[4].modulationRole, 'pivot');
+const bMajorProgressionPlan = app.buildProgressionFromState({
+	domain: domain,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 70,
+		meter: '3/4',
+		modalInterchange: 10,
+		style: 'baroque',
+		tensions: 40,
+		voices: 4
+	},
+	report: bMajorReport
+});
+const bMajorPivotModulationProgression = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	modulationType: 'pivot',
+	progression: bMajorProgressionPlan,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 70,
+		meter: '3/4',
+		modalInterchange: 10,
+		style: 'baroque',
+		tensions: 40,
+		voices: 4
+	},
+	report: bMajorReport,
+	rng: sequenceRng([0.99, 0.1, 0.1, 0.1]),
+	sectionType: 'contrast',
+	selection: { preferFlats: false }
+});
+assert.equal(bMajorPivotModulationProgression.sections[1].modulation.kind, 'pivot');
+assert.notEqual(bMajorPivotModulationProgression.sections[1].contextLabel, 'B Mayor');
+assert.notEqual(bMajorPivotModulationProgression.sections[1].contextTonicName, 'B');
+assert.equal(bMajorPivotModulationProgression.measures[3].modulationRole, 'pivot');
+assert.equal(bMajorPivotModulationProgression.measures[4].modulationRole, 'pivot');
+assert.equal(bMajorPivotModulationProgression.measures[3].chordName, bMajorPivotModulationProgression.measures[4].chordName);
+assert.equal(bMajorPivotModulationProgression.measures[3].modulationSourceLabelKey, 'progression.modulation.pivot');
+assert.equal(bMajorPivotModulationProgression.measures[4].modulationSourceLabelKey, 'progression.modulation.pivot');
 const noModulationContrastProgression = app.generateProgressionSection({
 	data: data,
 	domain: domain,

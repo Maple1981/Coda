@@ -21,10 +21,11 @@ La app ya contiene piezas útiles:
 - `progression-chromatic-cadence-service.js` construye napolitana, sextas aumentadas, Sub Five y séptimas disminuidas cromáticas.
 - `progression-rules-data.js` contiene patrones de partimento y secuencias.
 - El documento de progresión ya admite sección, fuente cromática, función tonal e información contextual.
-- El control **Siguiente sección** permite elegir modulación automática, sin modulación, directa, por acorde pivote o por dominante secundaria al crear secciones contrastantes.
+- El control **Siguiente sección** permite elegir sin modulación, modulación directa, acorde pivote o dominante secundaria al crear secciones contrastantes.
 - Las secciones contrastantes guardan `section.modulation` cuando el cambio de contexto necesita una lectura explícita.
 - La dominante secundaria de llegada puede ocupar el último compás de la sección anterior.
-- El acorde pivote puede ocupar tanto el último compás de la sección anterior como el primero de la sección nueva, con doble lectura de grados.
+- El acorde pivote puede ocupar tanto el último compás de la sección anterior como el primero de la sección nueva, con doble lectura de grados (`vi / ii`, por ejemplo). Conceptualmente no pertenece en exclusiva a una sección: funciona como bisagra o zona de transición entre el contexto de salida y el de llegada.
+- La modulación por acorde pivote exige un destino tonal distinto del origen. No debe degradarse a una sección contrastante en la misma tonalidad: esa situación corresponde a **Sin modulación**. El candidato sólo es válido si contiene al menos un acorde común que pueda analizarse funcionalmente en ambos contextos.
 - La opción sin modulación conserva el contexto tonal de la sección previa, pero fuerza contraste armónico iniciando la nueva sección fuera de la tónica cuando hay acordes disponibles de función tónica secundaria o subdominante.
 
 Lo que falta no es sólo añadir acordes, sino completar una capa de planificación tonal que decida cuándo un acorde cromático es color local y cuándo forma parte de un cambio de centro. La primera implementación cubre modulaciones estructurales entre secciones; las tonicalizaciones internas siguen siendo la parte pendiente más importante.
@@ -396,6 +397,8 @@ Objetivo: que una sección `B` o `C` pueda llegar a una tonalidad nueva mediante
 Tareas:
 
 - calcular acordes pivote;
+- excluir la tonalidad de salida como destino válido;
+- aceptar sólo candidatos con acorde común real entre origen y destino;
 - generar transición al final de la sección previa o al inicio de la sección nueva;
 - registrar metadatos de modulación en la sección;
 - mostrar relación tonal en depuración o inspector futuro.

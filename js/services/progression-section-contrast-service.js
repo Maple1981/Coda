@@ -5,7 +5,6 @@
 	var sectionCandidates = global.CodaProgressionSectionCandidates;
 	var sectionDocument = global.CodaProgressionSectionDocument;
 	var sectionVariation = global.CodaProgressionSectionVariation;
-	var styleService = global.CodaProgressionStyle;
 
 	function generate(options, dependencies) {
 		var progression = options.progression || {};
@@ -218,11 +217,80 @@
 			return sectionCandidates.sameKeyNoModulation(options);
 		}
 
+		if (options && options.modulationType === 'pivot') {
+			return pivotCompatibleCandidate(options, rng, progression, originReport);
+		}
+
 		if (progression) {
 			return sectionCandidates.chooseContrastCandidateExcluding(options, rng, sectionCandidates.existingSectionContexts(progression, originReport || options.report));
 		}
 
 		return sectionCandidates.chooseContrastCandidate(options, rng);
+	}
+
+	function pivotCompatibleCandidate(options, rng, progression, originReport) {
+		var candidates = sectionCandidates.contrastCandidates(options);
+		var excludedContexts = progression ? sectionCandidates.existingSectionContexts(progression, originReport || options.report) : [];
+		var origin = originReport || options.report;
+		var filtered = pivotCandidates(candidates, origin, excludedContexts);
+
+		if (!filtered.length && excludedContexts.length) {
+			filtered = pivotCandidates(candidates, origin, []);
+		}
+
+		if (!filtered.length) {
+			return firstDifferentCandidate(candidates, origin, excludedContexts) ||
+				firstDifferentCandidate(candidates, origin, []) ||
+				sectionCandidates.sameKeyNoModulation(options);
+		}
+
+		return filtered[Math.floor(rng() * filtered.length) % filtered.length] || filtered[0];
+	}
+
+	function pivotCandidates(candidates, originReport, excludedContexts) {
+		var filtered = [];
+
+		for (var i = 0; i < (candidates || []).length; i++) {
+			if (isExcludedCandidate(candidates[i], excludedContexts) || !isModulatingCandidate(candidates[i], originReport)) {
+				continue;
+			}
+
+			if (commonPivotChord(originReport, candidates[i].report)) {
+				filtered.push(candidates[i]);
+			}
+		}
+
+		return filtered;
+	}
+
+	function firstDifferentCandidate(candidates, originReport, excludedContexts) {
+		for (var i = 0; i < (candidates || []).length; i++) {
+			if (!isExcludedCandidate(candidates[i], excludedContexts) && isModulatingCandidate(candidates[i], originReport)) {
+				return candidates[i];
+			}
+		}
+
+		return null;
+	}
+
+	function isModulatingCandidate(candidate, originReport) {
+		return !!(candidate && candidate.report && !sameReportContext(originReport, candidate.report));
+	}
+
+	function isExcludedCandidate(candidate, excludedContexts) {
+		var label = candidate && candidate.label ? candidate.label : '';
+
+		if (!label) {
+			return false;
+		}
+
+		for (var i = 0; i < (excludedContexts || []).length; i++) {
+			if (excludedContexts[i] === label) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	function appendContrastSection(progression, sectionMeasures, metadata, dependencies, modulation) {
@@ -246,7 +314,7 @@
 		var originReport = context.originReport;
 		var targetReport = context.targetReport;
 		var pivot = commonPivotChord(originReport, targetReport);
-		var kind = requestedKind === 'auto' ? automaticModulationKind(context, pivot) : requestedKind;
+		var kind = requestedKind;
 		var metadata;
 
 		if (!kind || kind === 'none' || sameReportContext(originReport, targetReport)) {
@@ -283,14 +351,20 @@
 			return {
 				metadata: metadata,
 				nextMeasure: transitionMeasureForDegree(pivot.targetIndex, targetReport, context, {
+					degree: pivot.originDegree + ' / ' + pivot.targetDegree,
 					modulationKind: kind,
 					modulationRole: 'pivot',
-					modulationSourceLabelKey: 'progression.modulation.pivot'
+					modulationSourceLabelKey: 'progression.modulation.pivot',
+					pivotOriginDegree: pivot.originDegree,
+					pivotTargetDegree: pivot.targetDegree
 				}),
 				previousMeasure: transitionMeasureForDegree(pivot.originIndex, originReport, context, {
+					degree: pivot.originDegree + ' / ' + pivot.targetDegree,
 					modulationKind: kind,
 					modulationRole: 'pivot',
-					modulationSourceLabelKey: 'progression.modulation.pivot'
+					modulationSourceLabelKey: 'progression.modulation.pivot',
+					pivotOriginDegree: pivot.originDegree,
+					pivotTargetDegree: pivot.targetDegree
 				})
 			};
 		}
@@ -307,24 +381,8 @@
 		};
 	}
 
-	function automaticModulationKind(context, pivot) {
-		if (!context || sameReportContext(context.originReport, context.targetReport)) {
-			return 'direct';
-		}
-
-		if (pivot) {
-			return 'pivot';
-		}
-
-		if (styleService && typeof styleService.usesFunctionalCadence === 'function' && styleService.usesFunctionalCadence(context.progressionState)) {
-			return 'secondaryDominant';
-		}
-
-		return 'direct';
-	}
-
 	function normalizedModulationKind(value) {
-		if (value === 'auto' || value === 'none' || value === 'pivot' || value === 'secondaryDominant' || value === 'direct') {
+		if (value === 'none' || value === 'pivot' || value === 'secondaryDominant' || value === 'direct') {
 			return value;
 		}
 

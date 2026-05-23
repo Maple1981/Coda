@@ -16,6 +16,7 @@ loader.runManifestRange('js/data/constants-data.js', 'js/renderers/progression-c
 
 const data = context.window.CodaData;
 const domain = context.window.CodaDomain;
+const app = context.window.CodaApplication;
 const circleOfFifthsRenderer = context.window.CodaRenderers.circleOfFifths;
 const changelogRenderer = context.window.CodaRenderers.changelog;
 const extendedHarmonyRenderer = context.window.CodaRenderers.extendedHarmony;
@@ -42,6 +43,16 @@ function noteIndex(name) {
 	return data.notes.findIndex(function (note) {
 		return note.nombre === name || note.enarmonica === name;
 	});
+}
+
+function sequenceRng(values) {
+	let index = 0;
+
+	return function () {
+		const value = values[Math.min(index, values.length - 1)];
+		index += 1;
+		return value;
+	};
 }
 
 function createRendererDocument() {
@@ -552,8 +563,9 @@ assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSection.c
 assert.ok(progressionWorkbenchHtml.indexOf('id="progressionNextSectionModulationType"') > -1);
 const hiddenModulationSelectSnippet = progressionWorkbenchHtml.slice(progressionWorkbenchHtml.indexOf('id="progressionNextSectionModulationType"'), progressionWorkbenchHtml.indexOf('id="progressionNextSectionModulationType"') + 260);
 assert.ok(hiddenModulationSelectSnippet.indexOf('hidden aria-hidden="true"') > -1);
-assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSectionModulation.auto"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSectionModulation.none"') > -1);
+assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSectionModulation.none"') < progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSectionModulation.pivot"'));
+assert.equal(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSectionModulation.auto"'), -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSectionModulation.pivot"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('data-i18n="progression.nextSectionModulation.secondaryDominant"') > -1);
 assert.ok(progressionWorkbenchHtml.indexOf('id="generateProgressionNextSection"') > -1);
@@ -720,6 +732,170 @@ assert.equal(progressionWorkbenchRenderer.renderTimelineMeasures({
 		}
 	]
 }, { showCircleOfFifths: false }).indexOf('progressionSectionCircleButton'), -1);
+const stalePivotLabelTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
+	measures: [
+		{
+			bar: 1,
+			chordName: 'Am',
+			degree: 'vi',
+			displayName: 'Am',
+			modulationKind: 'pivot',
+			modulationRole: 'pivot',
+			modulationSourceLabelKey: 'progression.modulation.pivot',
+			sectionId: 'A'
+		}
+	],
+	sections: [
+		{ id: 'A', labelKey: 'progression.sectionA', length: 1, startIndex: 0 }
+	]
+}, {
+	i18n: englishI18n
+});
+assert.equal(stalePivotLabelTimeline.indexOf('<span class="measureSource">pivot chord</span>'), -1);
+const validPivotLabelTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
+	measures: [
+		{
+			bar: 1,
+			chordName: 'Am',
+			degree: 'vi',
+			displayName: 'Am',
+			modulationKind: 'pivot',
+			modulationRole: 'pivot',
+			modulationSourceLabelKey: 'progression.modulation.pivot',
+			sectionId: 'A'
+		},
+		{
+			bar: 2,
+			chordName: 'Am',
+			degree: 'ii',
+			displayName: 'Am',
+			modulationKind: 'pivot',
+			modulationRole: 'pivot',
+			modulationSourceLabelKey: 'progression.modulation.pivot',
+			sectionId: 'B'
+		}
+	],
+	sections: [
+		{ id: 'A', labelKey: 'progression.sectionA', length: 1, startIndex: 0 },
+		{
+			contrast: 'relative',
+			contextScaleIndex: 0,
+			contextTonicName: 'G',
+			id: 'B',
+			labelKey: 'progression.sectionB',
+			length: 1,
+			modulation: {
+				kind: 'pivot',
+				originSectionId: 'A',
+				targetSectionId: 'B'
+			},
+			startIndex: 1
+		}
+	]
+}, {
+	i18n: englishI18n
+});
+assert.ok(validPivotLabelTimeline.indexOf('<span class="measureSource">pivot chord</span>') > -1);
+assert.equal(validPivotLabelTimeline.match(/<span class="measureSource">pivot chord<\/span>/g).length, 2);
+const separatedPivotLabelTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
+	measures: [
+		{
+			bar: 1,
+			chordName: 'Am',
+			degree: 'vi / ii',
+			displayName: 'Am',
+			modulationKind: 'pivot',
+			modulationRole: 'pivot',
+			modulationSourceLabelKey: 'progression.modulation.pivot',
+			sectionId: 'A'
+		},
+		{ bar: 2, chordName: 'C', degree: 'I', displayName: 'C', sectionId: 'A\'' },
+		{
+			bar: 3,
+			chordName: 'Am',
+			degree: 'vi / ii',
+			displayName: 'Am',
+			modulationKind: 'pivot',
+			modulationRole: 'pivot',
+			modulationSourceLabelKey: 'progression.modulation.pivot',
+			sectionId: 'B'
+		}
+	],
+	sections: [
+		{ id: 'A', labelKey: 'progression.sectionA', length: 1, startIndex: 0 },
+		{ id: 'A\'', labelKey: 'progression.sectionAprime', length: 1, startIndex: 1 },
+		{
+			contrast: 'relative',
+			id: 'B',
+			labelKey: 'progression.sectionB',
+			length: 1,
+			modulation: {
+				kind: 'pivot',
+				originSectionId: 'A',
+				targetSectionId: 'B'
+			},
+			startIndex: 2
+		}
+	]
+}, {
+	i18n: englishI18n
+});
+assert.equal(separatedPivotLabelTimeline.match(/<span class="measureSource">pivot chord<\/span>/g).length, 2);
+assert.ok(separatedPivotLabelTimeline.indexOf('<em class="measureDegree">vi / ii</em>') > -1);
+const bMajorReportForPivotTimeline = app.buildScaleReport({
+	data: data,
+	domain: domain,
+	preferFlats: false,
+	scaleIndex: 0,
+	scaleName: 'Mayor',
+	tonicIndex: noteIndex('B'),
+	tonicName: 'B'
+});
+const bMajorProgressionForPivotTimeline = app.buildProgressionFromState({
+	domain: domain,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 70,
+		meter: '3/4',
+		modalInterchange: 10,
+		style: 'baroque',
+		tensions: 40,
+		voices: 4
+	},
+	report: bMajorReportForPivotTimeline
+});
+const generatedPivotTimelineProgression = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	modulationType: 'pivot',
+	progression: bMajorProgressionForPivotTimeline,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 70,
+		meter: '3/4',
+		modalInterchange: 10,
+		style: 'baroque',
+		tensions: 40,
+		voices: 4
+	},
+	report: bMajorReportForPivotTimeline,
+	rng: sequenceRng([0.99, 0.1, 0.1, 0.1]),
+	sectionType: 'contrast',
+	selection: { preferFlats: false }
+});
+const generatedPivotTimelineHtml = progressionWorkbenchRenderer.renderTimelineMeasures(generatedPivotTimelineProgression, {
+	i18n: englishI18n
+});
+assert.notEqual(generatedPivotTimelineProgression.sections[1].contextLabel, 'B Mayor');
+assert.equal((generatedPivotTimelineHtml.match(/<span class="measureSource">pivot chord<\/span>/g) || []).length, 2);
 const complexSectionTimeline = progressionWorkbenchRenderer.renderTimeline({
 	measures: [
 		{

@@ -479,6 +479,25 @@ assert.ok(changedMeasureCount(
 	aprimeUiProgression.measures.slice(aprimeUiSection.startIndex, aprimeUiSection.startIndex + aprimeUiSection.length)
 ) >= 1);
 
+const originalGenerateProgressionSection = options.application.generateProgressionSection;
+let capturedNextSectionModulation = null;
+options.application.generateProgressionSection = function (sectionOptions) {
+	capturedNextSectionModulation = sectionOptions.modulationType;
+	return originalGenerateProgressionSection(sectionOptions);
+};
+document.getElementById('progressionNextSectionType').value = 'contrast';
+document.getElementById('progressionNextSectionModulationType').value = 'pivot';
+document.resetNextSectionModulationOnRender = true;
+document.getElementById('constructorProgresiones').dispatchEvent({
+	target: document.getElementById('generateProgressionNextSection'),
+	type: 'click'
+});
+document.resetNextSectionModulationOnRender = false;
+options.application.generateProgressionSection = originalGenerateProgressionSection;
+assert.equal(capturedNextSectionModulation, 'pivot');
+assert.equal(initialized.uiState.getProgression().sections.slice(-1)[0].modulation.kind, 'pivot');
+assert.notEqual(initialized.uiState.getProgression().sections.slice(-1)[0].contextLabel, initialized.uiState.getProgression().sections[0].contextLabel);
+
 const liveProgression = initialized.uiState.getProgression();
 const liveProgressionRendersBefore = rendered.progression;
 const liveWorkspaceCountBefore = savedWorkspaces.length;
@@ -620,6 +639,9 @@ function createFakeUi(fakeDocument, renderedCounter) {
 		},
 		renderProgression: function () {
 			renderedCounter.progression += 1;
+			if (fakeDocument.resetNextSectionModulationOnRender && fakeDocument.getElementById('progressionNextSectionModulationType')) {
+				fakeDocument.getElementById('progressionNextSectionModulationType').value = 'none';
+			}
 		},
 		renderScaleReport: function (renderOptions) {
 			renderedCounter.scaleReport += 1;
@@ -723,6 +745,7 @@ function createFakeDocument() {
 	addElement('generateProgressionSectionB');
 	addElement('generateProgressionNextSection');
 	addElement('progressionNextSectionType', 'aprimeClone');
+	addElement('progressionNextSectionModulationType', 'none');
 	addElement('progressionControls');
 	addElement('workbenchContext');
 	addElement('workbenchContextKeyToggle');
