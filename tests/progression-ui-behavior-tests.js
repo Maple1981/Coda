@@ -493,6 +493,10 @@ assert.deepEqual(sectionCircleProgressionAfter.sections.map(function (section) {
 assert.equal(sectionCircleProgressionAfter.measures.length, sectionCircleLengthBefore);
 assert.equal(sectionBAfterCircle.contextTonicName, 'F');
 assert.equal(sectionBAfterCircle.contextScaleIndex, 0);
+assert.ok(sectionCircleProgressionAfter.measures[sectionBAfterCircle.startIndex].startSeconds > sectionCircleProgressionAfter.measures[0].startSeconds);
+for (let i = 1; i < sectionCircleProgressionAfter.measures.length; i++) {
+	assert.ok(sectionCircleProgressionAfter.measures[i].startSeconds >= sectionCircleProgressionAfter.measures[i - 1].startSeconds);
+}
 assert.equal(document.getElementById('tonica').value, '0');
 assert.equal(document.getElementById('escala').value, '0');
 assert.deepEqual(sectionCircleProgressionAfter.measures

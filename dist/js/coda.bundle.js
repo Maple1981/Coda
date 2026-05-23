@@ -24088,7 +24088,7 @@
 				sectionState: sectionState,
 				targetReport: targetReport
 			})), {
-				playbackHeadIndex: section.startIndex || 0
+				playbackHeadIndex: 0
 			});
 
 			return true;
@@ -24174,9 +24174,7 @@
 
 			clearModulationForTargetSection(next, options.sectionId);
 			for (var j = 0; j < generatedMeasures.length; j++) {
-				generatedMeasures[j].bar = startIndex + j + 1;
-				generatedMeasures[j].sectionId = section.id;
-				generatedMeasures[j].sectionLabelKey = section.labelKey;
+				normalizeGeneratedSectionMeasure(generatedMeasures[j], (next.measures || [])[startIndex + j], section, startIndex, j);
 			}
 
 			next.measures = (next.measures || []).slice(0, startIndex)
@@ -24192,6 +24190,56 @@
 			delete section.modulation;
 
 			return next;
+		}
+
+		function normalizeGeneratedSectionMeasure(measure, referenceMeasure, section, startIndex, sectionMeasureIndex) {
+			var localStartBeat = Number(measure.startBeat) || 0;
+			var localStartSeconds = Number(measure.startSeconds) || 0;
+
+			measure.bar = referenceMeasure && referenceMeasure.bar != null ? referenceMeasure.bar : startIndex + sectionMeasureIndex + 1;
+			measure.startBeat = referenceMeasure && referenceMeasure.startBeat != null ? referenceMeasure.startBeat : localStartBeat;
+			measure.startSeconds = referenceMeasure && referenceMeasure.startSeconds != null ? referenceMeasure.startSeconds : localStartSeconds;
+			copyTimingField(measure, referenceMeasure, 'beatUnit');
+			copyTimingField(measure, referenceMeasure, 'beatsPerBar');
+			copyTimingField(measure, referenceMeasure, 'bpm');
+			copyTimingField(measure, referenceMeasure, 'durationBeats');
+			copyTimingField(measure, referenceMeasure, 'durationSeconds');
+			copyTimingField(measure, referenceMeasure, 'secondsPerBeat');
+			measure.sectionId = section.id;
+			measure.sectionLabelKey = section.labelKey;
+			normalizeGeneratedMeasureChords(measure, referenceMeasure, localStartBeat, localStartSeconds);
+		}
+
+		function normalizeGeneratedMeasureChords(measure, referenceMeasure, localStartBeat, localStartSeconds) {
+			var chords = measure.chords || [];
+			var referenceChords = referenceMeasure && referenceMeasure.chords ? referenceMeasure.chords : [];
+
+			for (var i = 0; i < chords.length; i++) {
+				normalizeGeneratedMeasureChord(chords[i], referenceChords[i], measure, localStartBeat, localStartSeconds);
+			}
+		}
+
+		function normalizeGeneratedMeasureChord(chord, referenceChord, parentMeasure, localStartBeat, localStartSeconds) {
+			var localBeatOffset = (Number(chord.startBeat) || 0) - localStartBeat;
+			var localSecondOffset = (Number(chord.startSeconds) || 0) - localStartSeconds;
+
+			chord.bar = parentMeasure.bar;
+			chord.startBeat = referenceChord && referenceChord.startBeat != null ? referenceChord.startBeat : parentMeasure.startBeat + localBeatOffset;
+			chord.startSeconds = referenceChord && referenceChord.startSeconds != null ? referenceChord.startSeconds : parentMeasure.startSeconds + localSecondOffset;
+			copyTimingField(chord, referenceChord || parentMeasure, 'beatUnit');
+			copyTimingField(chord, referenceChord || parentMeasure, 'beatsPerBar');
+			copyTimingField(chord, referenceChord || parentMeasure, 'bpm');
+			copyTimingField(chord, referenceChord || parentMeasure, 'durationBeats');
+			copyTimingField(chord, referenceChord || parentMeasure, 'durationSeconds');
+			copyTimingField(chord, referenceChord || parentMeasure, 'secondsPerBeat');
+			chord.sectionId = parentMeasure.sectionId;
+			chord.sectionLabelKey = parentMeasure.sectionLabelKey;
+		}
+
+		function copyTimingField(target, source, field) {
+			if (source && source[field] != null) {
+				target[field] = source[field];
+			}
 		}
 
 		function clearModulationForTargetSection(progression, sectionId) {
