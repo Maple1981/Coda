@@ -464,6 +464,41 @@ assert.ok(initialized.uiState.getProgression().sections.some(function (section) 
 }));
 assert.equal(savedWorkspaces[savedWorkspaces.length - 1].progression.measures.length, sectionProgressionLength);
 
+const sectionCircleProgressionBefore = initialized.uiState.getProgression();
+const sectionCircleIdsBefore = sectionCircleProgressionBefore.sections.map(function (section) {
+	return section.id;
+});
+const sectionCircleLengthBefore = sectionCircleProgressionBefore.measures.length;
+const sectionAChordNamesBefore = sectionCircleProgressionBefore.measures
+	.slice(0, sectionCircleProgressionBefore.sections[0].length)
+	.map(function (measure) { return measure.chordName; });
+const sectionCircleLink = createFakeElement('sectionCircleF');
+sectionCircleLink.id = 'F_';
+sectionCircleLink.setAttribute('data-section-circle-target', 'B');
+sectionCircleLink.closest = function (selector) {
+	return selector === '.revamp' ? sectionCircleLink : null;
+};
+document.dispatchDocumentEvent({
+	preventDefault: function () {},
+	target: sectionCircleLink,
+	type: 'click'
+});
+const sectionCircleProgressionAfter = initialized.uiState.getProgression();
+const sectionBAfterCircle = sectionCircleProgressionAfter.sections.find(function (section) {
+	return section.id === 'B';
+});
+assert.deepEqual(sectionCircleProgressionAfter.sections.map(function (section) {
+	return section.id;
+}), sectionCircleIdsBefore);
+assert.equal(sectionCircleProgressionAfter.measures.length, sectionCircleLengthBefore);
+assert.equal(sectionBAfterCircle.contextTonicName, 'F');
+assert.equal(sectionBAfterCircle.contextScaleIndex, 0);
+assert.equal(document.getElementById('tonica').value, '0');
+assert.equal(document.getElementById('escala').value, '0');
+assert.deepEqual(sectionCircleProgressionAfter.measures
+	.slice(0, sectionCircleProgressionAfter.sections[0].length)
+	.map(function (measure) { return measure.chordName; }), sectionAChordNamesBefore);
+
 document.getElementById('generateProgression').dispatchEvent({
 	target: document.getElementById('generateProgression'),
 	type: 'click'

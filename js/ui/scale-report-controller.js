@@ -22,6 +22,7 @@
 			language: i18n && i18n.getLanguage ? i18n.getLanguage() : 'en'
 		});
 		var circleOfFifthsAnchorId = '';
+		var circleOfFifthsSectionId = '';
 		var circleOfFifthsDragged = false;
 		var history = {
 			index: -1,
@@ -207,6 +208,15 @@
 			var link = closest(event.target, '.revamp');
 
 			if (!link) {
+				return;
+			}
+
+			if (applyCircleLinkToSection(link)) {
+				if (event.preventDefault) {
+					event.preventDefault();
+				}
+				closeCircleOfFifthsPopover();
+				recordHistorySnapshot();
 				return;
 			}
 
@@ -704,7 +714,8 @@
 				return;
 			}
 
-			renderCircleOfFifths(circle);
+			circleOfFifthsSectionId = trigger && trigger.getAttribute ? (trigger.getAttribute('data-section-circle') || '') : '';
+			renderCircleOfFifths(circle, circleOfFifthsSectionId);
 			popover.hidden = false;
 
 			if (shouldResetPosition) {
@@ -726,7 +737,7 @@
 			return sectionId ? 'section-' + sectionId : '';
 		}
 
-		function renderCircleOfFifths(circle) {
+		function renderCircleOfFifths(circle, sectionId) {
 			var container = query('#circuloQuintas');
 
 			if (!container || !circle || !options.renderers || !options.renderers.circleOfFifths) {
@@ -737,6 +748,7 @@
 				notation: notation,
 				notationStyle: uiState.getNotationStyle(),
 				orderedKeys: circle.orderedKeys,
+				sectionId: sectionId || '',
 				selectedKey: circle.selectedKey
 			});
 		}
@@ -765,6 +777,206 @@
 			return null;
 		}
 
+		function applyCircleLinkToSection(link) {
+			var sectionId = link && link.getAttribute ? link.getAttribute('data-section-circle-target') : '';
+
+			if (!sectionId) {
+				sectionId = circleOfFifthsSectionId;
+			}
+
+			if (!sectionId) {
+				return false;
+			}
+
+			return retargetProgressionSection(sectionId, link.id);
+		}
+
+		function retargetProgressionSection(sectionId, targetId) {
+			var progression = uiState.getProgression();
+			var section = progressionSection(sectionId);
+			var targetReport = scaleReportForCircleTarget(targetId);
+			var sectionState;
+			var generated;
+
+			if (!progression || !section || !targetReport || !options.application || typeof options.application.generateProgressionFromState !== 'function') {
+				return false;
+			}
+
+			sectionState = cloneJson(section.state || uiState.getProgressionState() || {});
+			sectionState.bars = section.length || sectionState.bars || 8;
+			generated = options.application.generateProgressionFromState({
+				data: options.data,
+				domain: options.domain,
+				progressionState: sectionState,
+				report: targetReport
+			});
+
+			setProgression(markProgressionAsUserEdited(replaceProgressionSectionContext({
+				generatedMeasures: generated && generated.measures ? generated.measures : [],
+				progression: progression,
+				sectionId: sectionId,
+				sectionState: sectionState,
+				targetReport: targetReport
+			})), {
+				playbackHeadIndex: section.startIndex || 0
+			});
+
+			return true;
+		}
+
+		function scaleReportForCircleTarget(targetId) {
+			var target = circleTargetFromId(targetId);
+			var noteIndex;
+
+			if (!target || !options.application || typeof options.application.buildScaleReport !== 'function') {
+				return null;
+			}
+
+			noteIndex = keyNavigation && typeof keyNavigation.findNoteValue === 'function' ?
+				keyNavigation.findNoteValue(options.data.notes, target.tonicName) :
+				findNoteValue(options.data.notes, target.tonicName);
+
+			if (noteIndex < 0) {
+				return null;
+			}
+
+			return options.application.buildScaleReport({
+				data: options.data,
+				domain: options.domain,
+				preferFlats: target.preferFlats,
+				scaleIndex: target.scaleIndex,
+				scaleName: options.data.scales[target.scaleIndex].nombre,
+				tonicIndex: noteIndex,
+				tonicName: target.tonicName
+			});
+		}
+
+		function circleTargetFromId(targetId) {
+			var parts = String(targetId || '').split('_');
+			var tonicName = parts[0];
+
+			if (!tonicName) {
+				return null;
+			}
+
+			return {
+				preferFlats: tonicName.indexOf('b') > -1,
+				scaleIndex: parts[1] && parts[1].indexOf('m') > -1 ? 2 : 0,
+				tonicName: tonicName
+			};
+		}
+
+		function findNoteValue(notes, noteName) {
+			for (var i = 0; i < (notes || []).length; i++) {
+				if (notes[i].nombre === noteName || notes[i].enarmonica === noteName) {
+					return i;
+				}
+			}
+
+			return -1;
+		}
+
+		function replaceProgressionSectionContext(options) {
+			var next = cloneJson(options.progression);
+			var sections = next && next.sections ? next.sections : [];
+			var section = null;
+			var generatedMeasures = cloneJson(options.generatedMeasures || []);
+			var length;
+			var startIndex;
+
+			for (var i = 0; i < sections.length; i++) {
+				if (sections[i].id === options.sectionId) {
+					section = sections[i];
+					break;
+				}
+			}
+
+			if (!section) {
+				return next;
+			}
+
+			length = section.length || generatedMeasures.length;
+			startIndex = section.startIndex || 0;
+			generatedMeasures = generatedMeasures.slice(0, length);
+			while (generatedMeasures.length < length && generatedMeasures.length) {
+				generatedMeasures.push(cloneJson(generatedMeasures[generatedMeasures.length - 1]));
+			}
+
+			clearModulationForTargetSection(next, options.sectionId);
+			for (var j = 0; j < generatedMeasures.length; j++) {
+				generatedMeasures[j].bar = startIndex + j + 1;
+				generatedMeasures[j].sectionId = section.id;
+				generatedMeasures[j].sectionLabelKey = section.labelKey;
+			}
+
+			next.measures = (next.measures || []).slice(0, startIndex)
+				.concat(generatedMeasures)
+				.concat((next.measures || []).slice(startIndex + length));
+			section.circleOfFifths = options.targetReport.circleOfFifths || null;
+			section.contextLabel = options.targetReport.tonicName + ' ' + options.targetReport.scaleName;
+			section.contextScaleIndex = options.targetReport.scaleIndex;
+			section.contextScaleName = options.targetReport.scaleName;
+			section.contextTonicName = options.targetReport.tonicName;
+			section.length = generatedMeasures.length;
+			section.state = cloneJson(options.sectionState || {});
+			delete section.modulation;
+
+			return next;
+		}
+
+		function clearModulationForTargetSection(progression, sectionId) {
+			var sections = progression && progression.sections ? progression.sections : [];
+			var originIds = {};
+
+			for (var i = 0; i < sections.length; i++) {
+				if (sections[i].modulation && sections[i].modulation.targetSectionId === sectionId) {
+					originIds[sections[i].modulation.originSectionId] = true;
+					delete sections[i].modulation;
+				}
+			}
+
+			for (var j = 0; j < sections.length; j++) {
+				if (originIds[sections[j].id] || sections[j].id === sectionId) {
+					clearModulationFieldsForSection(progression.measures || [], sections[j]);
+				}
+			}
+		}
+
+		function clearModulationFieldsForSection(measures, section) {
+			var start = section.startIndex || 0;
+			var end = start + (section.length || 0);
+
+			for (var i = start; i < end && i < measures.length; i++) {
+				clearModulationFields(measures[i]);
+			}
+		}
+
+		function clearModulationFields(measure) {
+			var fields = [
+				'modulationKind',
+				'modulationRole',
+				'modulationSourceLabelKey',
+				'pivotOriginDegree',
+				'pivotTargetDegree',
+				'pivotTargetScaleIndex',
+				'pivotTargetScaleName',
+				'pivotTargetTonicName',
+				'sourceLabelKey',
+				'targetScaleIndex',
+				'targetTonicName'
+			];
+
+			for (var i = 0; i < fields.length; i++) {
+				delete measure[fields[i]];
+			}
+
+			if (measure.chords && measure.chords.length) {
+				for (var j = 0; j < measure.chords.length; j++) {
+					clearModulationFields(measure.chords[j]);
+				}
+			}
+		}
+
 		function closeCircleOfFifthsPopover() {
 			var popover = query('#circleOfFifthsPopover');
 
@@ -772,6 +984,7 @@
 				popover.hidden = true;
 			}
 
+			circleOfFifthsSectionId = '';
 			setCircleToggleExpanded(false);
 		}
 

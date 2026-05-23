@@ -990,6 +990,30 @@ assert.deepEqual(global.CodaProgressionChromaticCadence.augmentedSixthNotes(8, {
 }, 'G#'), ['E', 'G♯', 'G♯', 'C𝄪']);
 assert.equal(global.CodaProgressionVoicing.noteIndex('A𝄪'), 11);
 assert.equal(global.CodaProgressionVoicing.noteIndex('C𝄪'), 2);
+assert.ok(global.CodaProgressionChromaticCadence.chromaticCadenceProbability({
+	cadence: 'authentic'
+}, {
+	chromaticism: 100,
+	counterpoint: 80,
+	style: 'renaissance'
+}) < 0.1);
+assert.ok(global.CodaProgressionChromaticCadence.chromaticResourceStyleWeight('italian6', {
+	style: 'renaissance'
+}) < global.CodaProgressionChromaticCadence.chromaticResourceStyleWeight('italian6', {
+	style: 'baroque'
+}));
+assert.equal(global.CodaProgressionChromaticCadence.chromaticResourceStyleWeight('swiss65', {
+	style: 'baroque'
+}), 0);
+assert.equal(global.CodaProgressionChromaticCadence.augmentedSixthVariant(sequenceRng([0.99]), {
+	style: 'baroque'
+}).id, 'german65');
+assert.equal(global.CodaProgressionChromaticCadence.augmentedSixthVariant(sequenceRng([0.97]), {
+	style: 'classic'
+}).id, 'swiss65');
+assert.equal(global.CodaProgressionChromaticCadence.augmentedSixthVariant(sequenceRng([0.88]), {
+	style: 'romantic'
+}).id, 'german65');
 assert.equal(global.CodaProgressionCadencePlanner.finalCadenceForPattern({
 	cadence: 'authentic'
 }, {

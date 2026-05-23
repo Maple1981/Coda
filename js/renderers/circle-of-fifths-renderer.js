@@ -43,11 +43,12 @@
 		var isActual = isSelectedKey(key, selectedKey);
 		var circleClass = isActual ? ' actual' : '';
 		var actualClass = isActual ? ' class="actual"' : '';
+		var sectionAttribute = options && options.sectionId ? ' data-section-circle-target="' + escapeHtml(options.sectionId) + '"' : '';
 		var html = '';
 
 		html += '<div class="circulo numero' + index + circleClass + '" style="top: ' + position.top + 'px; left: ' + position.left + 'px;">';
-		html += '<p' + actualClass + '><span id="' + key.nombre + '_" class="revamp estiloEnlace">' + formatKey(options, key.nombre) + '</span></p>';
-		html += '<p' + actualClass + '><span id="' + key.enarmonica.replace('m', '') + '_m" class="revamp estiloEnlace">' + formatKey(options, key.enarmonica) + '</span></p>';
+		html += '<p' + actualClass + '><span id="' + key.nombre + '_" class="revamp estiloEnlace"' + sectionAttribute + '>' + formatKey(options, key.nombre) + '</span></p>';
+		html += '<p' + actualClass + '><span id="' + key.enarmonica.replace('m', '') + '_m" class="revamp estiloEnlace"' + sectionAttribute + '>' + formatKey(options, key.enarmonica) + '</span></p>';
 		html += '</div>';
 
 		return html;
@@ -76,6 +77,14 @@
 		}
 
 		return keyName;
+	}
+
+	function escapeHtml(value) {
+		return String(value == null ? '' : value)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;');
 	}
 
 	global.CodaRenderers = global.CodaRenderers || {};

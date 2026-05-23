@@ -257,6 +257,13 @@ assert.ok(circleHtml.indexOf('class="circulo numero0 actual" style="top: 0px; le
 assert.ok(circleHtml.indexOf('<p class="actual"><span id="C_" class="revamp estiloEnlace">C</span></p>') > -1);
 assert.ok(circleHtml.indexOf('<span id="A_m" class="revamp estiloEnlace">Am</span>') > -1);
 
+const sectionCircleHtml = circleOfFifthsRenderer.render({
+	orderedKeys: data.circleOfFifths.slice(0, 12),
+	sectionId: 'B',
+	selectedKey: 'F'
+});
+assert.ok(sectionCircleHtml.indexOf('data-section-circle-target="B"') > -1);
+
 const fSharpCircleHtml = circleOfFifthsRenderer.render({
 	orderedKeys: domain.buildCircleOfFifthsView({
 		circleOfFifths: data.circleOfFifths,

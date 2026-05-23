@@ -21,9 +21,10 @@
 	function chromaticCadenceProbability(pattern, progressionState) {
 		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
 		var counterpoint = numberOrDefault(progressionState && progressionState.counterpoint, 0);
+		var stylePresence = chromaticCadenceStylePresence(progressionState);
 		var probability;
 
-		if (chromaticism < 25) {
+		if (chromaticism < 25 || stylePresence <= 0) {
 			return 0;
 		}
 
@@ -38,19 +39,23 @@
 			probability *= pattern.cadence === 'plagal' ? 0.62 : 0.72;
 		}
 
+		probability *= stylePresence;
+
 		return Math.min(chromaticism >= 95 ? 0.86 : 0.62, Math.max(0, probability));
 	}
 
 	function chooseChromaticCadenceType(progressionState, rng) {
-		var chromaticism = numberOrDefault(progressionState && progressionState.chromaticism, 0);
 		var value = typeof rng === 'function' ? rng() : Math.random();
 		var subFiveChance = subFiveCadenceChance(progressionState);
+		var neapolitanWeight = chromaticResourceStyleWeight('neapolitan', progressionState);
+		var augmentedWeight = augmentedSixthFamilyStyleWeight(progressionState);
+		var totalWeight = neapolitanWeight + augmentedWeight;
 
 		if (subFiveChance > 0 && value >= 1 - subFiveChance) {
 			return 'subFive';
 		}
 
-		if (value < (chromaticism >= 75 ? 0.42 : 0.58)) {
+		if (totalWeight <= 0 || value < neapolitanWeight / totalWeight) {
 			return 'neapolitan';
 		}
 
@@ -152,7 +157,7 @@
 			return;
 		}
 
-		degrees[start] = augmentedSixthDegree(options.report, options.rng);
+		degrees[start] = augmentedSixthDegree(options.report, options.rng, options.progressionState);
 		if (degrees.length - start === 4) {
 			degrees[start + 1] = cadentialSixFourDegree();
 			degrees[start + 2] = dominantDegree(options);
@@ -231,10 +236,10 @@
 		return isFinite(normalized) && normalized >= 0 && normalized <= 3 ? normalized : 0;
 	}
 
-	function augmentedSixthDegree(report, rng) {
+	function augmentedSixthDegree(report, rng, progressionState) {
 		var tonicIndex = tonicIndexFromReport(report);
 		var tonicName = tonicNameFromReport(report, tonicIndex);
-		var variant = augmentedSixthVariant(rng);
+		var variant = augmentedSixthVariant(rng, progressionState);
 		var notes = augmentedSixthNotes(tonicIndex, variant, tonicName);
 		var chordName = notes[0] + ' ' + variant.label;
 
@@ -261,22 +266,120 @@
 		};
 	}
 
-	function augmentedSixthVariant(rng) {
+	function augmentedSixthVariant(rng, progressionState) {
 		var value = typeof rng === 'function' ? rng() : Math.random();
+		var variants = [
+			{ id: 'italian6', label: 'It+6' },
+			{ id: 'french43', label: 'Fr+6' },
+			{ id: 'german65', label: 'Ger+6' },
+			{ id: 'swiss65', label: 'Sw+6' }
+		];
+		var totalWeight = 0;
+		var running = 0;
+		var i;
 
-		if (value < 0.25) {
-			return { id: 'italian6', label: 'It+6' };
+		if (!hasExplicitStyle(progressionState)) {
+			if (value < 0.25) {
+				return variants[0];
+			}
+			if (value < 0.5) {
+				return variants[1];
+			}
+			if (value < 0.75) {
+				return variants[2];
+			}
+			return variants[3];
 		}
 
-		if (value < 0.5) {
-			return { id: 'french43', label: 'Fr+6' };
+		for (i = 0; i < variants.length; i++) {
+			totalWeight += chromaticResourceStyleWeight(variants[i].id, progressionState);
 		}
 
-		if (value < 0.75) {
-			return { id: 'german65', label: 'Ger+6' };
+		if (totalWeight <= 0) {
+			return variants[0];
 		}
 
-		return { id: 'swiss65', label: 'Sw+6' };
+		for (i = 0; i < variants.length; i++) {
+			running += chromaticResourceStyleWeight(variants[i].id, progressionState) / totalWeight;
+			if (value < running) {
+				return variants[i];
+			}
+		}
+
+		return variants[variants.length - 1];
+	}
+
+	function chromaticCadenceStylePresence(progressionState) {
+		if (!hasExplicitStyle(progressionState)) {
+			return 1;
+		}
+
+		return Math.max(
+			chromaticResourceStyleWeight('neapolitan', progressionState),
+			augmentedSixthFamilyStyleWeight(progressionState)
+		);
+	}
+
+	function augmentedSixthFamilyStyleWeight(progressionState) {
+		var weights = [
+			chromaticResourceStyleWeight('italian6', progressionState),
+			chromaticResourceStyleWeight('french43', progressionState),
+			chromaticResourceStyleWeight('german65', progressionState),
+			chromaticResourceStyleWeight('swiss65', progressionState)
+		];
+		var total = 0;
+
+		for (var i = 0; i < weights.length; i++) {
+			total += weights[i];
+		}
+
+		return total / weights.length;
+	}
+
+	function chromaticResourceStyleWeight(resource, progressionState) {
+		var style = hasExplicitStyle(progressionState) && styleService && typeof styleService.normalize === 'function' ?
+			styleService.normalize(progressionState) :
+			'';
+		var weights = {
+			renaissance: {
+				neapolitan: 0.08,
+				italian6: 0.02,
+				french43: 0,
+				german65: 0,
+				swiss65: 0
+			},
+			baroque: {
+				neapolitan: 1.05,
+				italian6: 0.72,
+				french43: 0.22,
+				german65: 0.28,
+				swiss65: 0
+			},
+			classic: {
+				neapolitan: 1,
+				italian6: 0.95,
+				french43: 0.88,
+				german65: 0.95,
+				swiss65: 0.18
+			},
+			romantic: {
+				neapolitan: 1.22,
+				italian6: 1.02,
+				french43: 1.12,
+				german65: 1.28,
+				swiss65: 0.28
+			}
+		};
+
+		if (!style || !weights[style]) {
+			return 1;
+		}
+
+		return weights[style][resource] != null ? weights[style][resource] : 1;
+	}
+
+	function hasExplicitStyle(progressionState) {
+		return !!(progressionState && progressionState.style);
 	}
 
 	function augmentedSixthNotes(tonicIndex, variant, tonicName) {
@@ -569,9 +672,12 @@
 
 	global.CodaProgressionChromaticCadence = {
 		augmentedSixthDegree: augmentedSixthDegree,
+		augmentedSixthFamilyStyleWeight: augmentedSixthFamilyStyleWeight,
 		augmentedSixthNotes: augmentedSixthNotes,
 		augmentedSixthVariant: augmentedSixthVariant,
 		chromaticCadenceProbability: chromaticCadenceProbability,
+		chromaticCadenceStylePresence: chromaticCadenceStylePresence,
+		chromaticResourceStyleWeight: chromaticResourceStyleWeight,
 		chooseChromaticCadenceType: chooseChromaticCadenceType,
 		diminishedSeventhDegree: diminishedSeventhDegree,
 		diminishedSeventhInversionIndex: diminishedSeventhInversionIndex,
