@@ -4,6 +4,7 @@
 
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
 	var revoiceService = global.CodaProgressionRevoice;
+	var timingService = global.CodaProgressionTiming;
 
 	function applyState(progression, options) {
 		var state = options && options.progressionState ? options.progressionState : {};
@@ -76,7 +77,7 @@
 
 	function progressionWithState(progression, state) {
 		var next = cloneJson(progression) || {};
-		var secondsPerBeat = 60 / (Number(state.bpm) || 120);
+		var secondsPerBeat = timingService.secondsPerBeat(null, state);
 
 		next.articulation = state.articulation;
 		next.beatUnit = state.beatUnit;

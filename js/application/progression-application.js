@@ -12,7 +12,7 @@
 	var midiFileService = global.CodaProgressionMidiFile;
 	var progressionBuilder = global.CodaProgressionBuilder;
 	var progressionRevoice = global.CodaProgressionRevoice;
-	var sectionContrastService = global.CodaProgressionSectionContrast;
+	var sectionOperations = global.CodaProgressionSectionOperations;
 
 	function buildProgressionFromDegrees(options) {
 		return progressionBuilder.fromDegrees(options);
@@ -34,7 +34,7 @@
 			type: editCommands.types.generateSectionB
 		}, {
 			generateSectionB: function (commandOptions) {
-				return sectionContrastService.generate(commandOptions, {
+				return sectionOperations.generateContrastingSection(commandOptions, {
 					buildScaleReport: global.CodaApplication.buildScaleReport,
 					generateProgressionFromState: generateProgressionFromState,
 					rebuildProgressionTimeline: rebuildProgressionTimeline
@@ -52,13 +52,21 @@
 			type: editCommands.types.generateSection
 		}, {
 			generateSection: function (commandOptions) {
-				return sectionContrastService.generateSection(commandOptions, {
+				return sectionOperations.generateSection(commandOptions, {
 					buildScaleReport: global.CodaApplication.buildScaleReport,
 					generateProgressionFromState: generateProgressionFromState,
 					rebuildProgressionTimeline: rebuildProgressionTimeline
 				});
 			},
 			progression: options.progression
+		});
+	}
+
+	function retargetProgressionSection(options) {
+		options = options || {};
+
+		return sectionOperations.retargetSection(options, {
+			generateProgressionFromState: generateProgressionFromState
 		});
 	}
 
@@ -183,6 +191,7 @@
 	global.CodaApplication.removeProgressionMeasureChord = removeProgressionMeasureChord;
 	global.CodaApplication.removeProgressionSection = removeProgressionSection;
 	global.CodaApplication.replaceProgressionMeasureChord = replaceProgressionMeasureChord;
+	global.CodaApplication.retargetProgressionSection = retargetProgressionSection;
 	global.CodaApplication.reorderProgressionMeasureChords = reorderProgressionMeasureChords;
 	global.CodaApplication.reorderProgressionMeasures = reorderProgressionMeasures;
 	global.CodaApplication.transformProgressionFromState = transformProgressionFromState;

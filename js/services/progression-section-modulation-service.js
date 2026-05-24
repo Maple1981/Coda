@@ -4,6 +4,7 @@
 	var formattingService = global.CodaProgressionFormatting;
 	var objectService = global.CodaProgressionObjects;
 	var sectionDocument = global.CodaProgressionSectionDocument;
+	var timingService = global.CodaProgressionTiming;
 
 	function prepare(context) {
 		var requestedKind = normalizedKind(context.options.modulationType);
@@ -136,7 +137,6 @@
 	}
 
 	function replaceMeasureHarmony(original, replacement) {
-		var timing = {};
 		var result = objectService.extendObject(original, replacement);
 		var timingKeys = [
 			'articulation',
@@ -154,13 +154,7 @@
 			'startSeconds'
 		];
 
-		for (var i = 0; i < timingKeys.length; i++) {
-			if (original && Object.prototype.hasOwnProperty.call(original, timingKeys[i])) {
-				timing[timingKeys[i]] = original[timingKeys[i]];
-			}
-		}
-
-		result = objectService.extendObject(result, timing);
+		timingService.copyTimingFields(result, original, timingKeys);
 		delete result.chords;
 
 		return result;

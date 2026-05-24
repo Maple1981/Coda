@@ -17,6 +17,7 @@ loader.runManifestRange('js/data/constants-data.js', 'js/application/progression
 const app = context.window.CodaApplication;
 const data = context.window.CodaData;
 const domain = context.window.CodaDomain;
+const sectionModulation = context.window.CodaProgressionSectionModulation;
 
 function noteIndex(name) {
 	return data.notes.findIndex(function (note) {
@@ -32,6 +33,15 @@ const cMajorReport = app.buildScaleReport({
 	scaleName: 'Mayor',
 	tonicIndex: noteIndex('C'),
 	tonicName: 'C'
+});
+const bMajorReport = app.buildScaleReport({
+	data: data,
+	domain: domain,
+	preferFlats: false,
+	scaleIndex: 0,
+	scaleName: 'Mayor',
+	tonicIndex: noteIndex('B'),
+	tonicName: 'B'
 });
 
 for (let invariantSeed = 1; invariantSeed <= 40; invariantSeed++) {
@@ -72,6 +82,9 @@ for (let invariantSeed = 1; invariantSeed <= 40; invariantSeed++) {
 	assertSplitDurationsRespectPulse(invariantProgression, invariantSeed);
 	assertRegisterStaysCentered(invariantSegments, invariantSeed);
 }
+
+assertModulationInvariants(cMajorReport, 51);
+assertModulationInvariants(bMajorReport, 77);
 
 console.log('Progression invariant tests passed');
 
@@ -182,4 +195,119 @@ function assertRegisterStaysCentered(segments, seed) {
 	}, 0) / Math.max(1, centroids.length);
 
 	assert.ok(average >= 44 && average <= 72, 'seed ' + seed + ' register drifts too far: ' + average);
+}
+
+function assertModulationInvariants(originReport, seed) {
+	var state = {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		chromaticism: 35,
+		counterpoint: 70,
+		harmonicDensity: 0,
+		humanization: 0,
+		intensity: 80,
+		meter: '3/4',
+		modalInterchange: 10,
+		style: 'baroque',
+		swing: 0,
+		tensions: 35,
+		voicing: 'closed',
+		voices: 4
+	};
+	var base = app.buildProgressionFromState({
+		domain: domain,
+		progressionState: state,
+		report: originReport
+	});
+	var pivot = app.generateProgressionSection({
+		data: data,
+		domain: domain,
+		modulationType: 'pivot',
+		progression: base,
+		progressionState: state,
+		report: originReport,
+		rng: lcg(seed),
+		sectionType: 'contrast',
+		selection: { preferFlats: false }
+	});
+	var secondaryDominant = app.generateProgressionSection({
+		data: data,
+		domain: domain,
+		modulationType: 'secondaryDominant',
+		progression: base,
+		progressionState: state,
+		report: originReport,
+		rng: lcg(seed + 1),
+		sectionType: 'contrast',
+		selection: { preferFlats: false }
+	});
+	var noModulation = app.generateProgressionSection({
+		data: data,
+		domain: domain,
+		modulationType: 'none',
+		progression: base,
+		progressionState: state,
+		report: originReport,
+		rng: lcg(seed + 2),
+		sectionType: 'contrast',
+		selection: { preferFlats: false }
+	});
+
+	assertPivotHasCommonChord(pivot, originReport, seed);
+	assertTargetSectionConfirmsTonicAndDominant(pivot, seed);
+	assertSecondaryDominantTargetsDestination(secondaryDominant, seed);
+	assert.equal(noModulation.sections[1].contextTonicName, originReport.tonicName, 'seed ' + seed + ' no modulation changed tonic');
+	assert.equal(noModulation.sections[1].contextScaleIndex, originReport.scaleIndex, 'seed ' + seed + ' no modulation changed scale');
+	assert.equal(noModulation.sections[1].modulation, undefined, 'seed ' + seed + ' no modulation created metadata');
+	assert.notEqual(noModulation.measures[noModulation.sections[1].startIndex].degreeIndex, 0, 'seed ' + seed + ' no modulation starts on tonic');
+}
+
+function assertPivotHasCommonChord(progression, originReport, seed) {
+	var targetSection = progression.sections[1];
+	var targetReport = reportForSection(targetSection);
+	var pivot = sectionModulation.commonPivotChord(originReport, targetReport);
+	var pivotMeasure = progression.measures[targetSection.startIndex - 1];
+
+	assert.equal(targetSection.modulation.kind, 'pivot', 'seed ' + seed + ' did not create pivot metadata');
+	assert.ok(pivot, 'seed ' + seed + ' pivot target has no common chord');
+	assert.equal(pivotMeasure.modulationRole, 'pivot', 'seed ' + seed + ' missing pivot measure');
+	assert.equal(pivotMeasure.pivotTargetDegree, pivot.targetDegree, 'seed ' + seed + ' pivot target degree mismatch');
+	assert.notEqual(targetSection.contextLabel, originReport.tonicName + ' ' + originReport.scaleName, 'seed ' + seed + ' pivot did not modulate');
+}
+
+function assertTargetSectionConfirmsTonicAndDominant(progression, seed) {
+	var targetSection = progression.sections[1];
+	var targetMeasures = progression.measures.slice(targetSection.startIndex, targetSection.startIndex + targetSection.length);
+
+	assert.ok(targetMeasures.some(function (measure) {
+		return Number(measure.degreeIndex) === 0;
+	}), 'seed ' + seed + ' target section lacks tonic confirmation');
+	assert.ok(targetMeasures.some(function (measure) {
+		return Number(measure.degreeIndex) === 4;
+	}), 'seed ' + seed + ' target section lacks dominant confirmation');
+}
+
+function assertSecondaryDominantTargetsDestination(progression, seed) {
+	var targetSection = progression.sections[1];
+	var transitionMeasure = progression.measures[targetSection.startIndex - 1];
+
+	assert.equal(targetSection.modulation.kind, 'secondaryDominant', 'seed ' + seed + ' did not create secondary dominant metadata');
+	assert.equal(transitionMeasure.modulationRole, 'secondary-dominant', 'seed ' + seed + ' missing secondary dominant transition');
+	assert.equal(transitionMeasure.sourceLabelKey, 'progression.modulation.secondaryDominant', 'seed ' + seed + ' wrong secondary dominant label');
+	assert.equal(transitionMeasure.degree, 'V/' + targetSection.contextTonicName, 'seed ' + seed + ' secondary dominant target mismatch');
+}
+
+function reportForSection(section) {
+	return app.buildScaleReport({
+		data: data,
+		domain: domain,
+		preferFlats: String(section.contextTonicName || '').indexOf('b') > -1,
+		scaleIndex: section.contextScaleIndex,
+		scaleName: data.scales[section.contextScaleIndex].nombre,
+		tonicIndex: noteIndex(section.contextTonicName),
+		tonicName: section.contextTonicName
+	});
 }

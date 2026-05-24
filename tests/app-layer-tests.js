@@ -1981,6 +1981,88 @@ const classicDominantTension = context.window.CodaProgressionTensions.addToNotes
 assert.equal(classicDominantTension.notes.length, 4);
 assert.ok(classicDominantTension.label.length > 0);
 
+const composerFlowBase = app.generateProgressionFromState({
+	data: data,
+	domain: domain,
+	progressionState: {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 112,
+		counterpoint: 70,
+		harmonicDensity: 30,
+		meter: '4/4',
+		modalInterchange: 10,
+		style: 'baroque',
+		tensions: 40,
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0.2, 0.1, 0.1, 0.1])
+});
+const composerFlowB = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	modulationType: 'pivot',
+	progression: composerFlowBase,
+	progressionState: composerFlowBase.state || {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 112,
+		counterpoint: 70,
+		harmonicDensity: 30,
+		meter: '4/4',
+		modalInterchange: 10,
+		style: 'baroque',
+		tensions: 40,
+		voices: 4
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0.1, 0.1, 0.1, 0.1]),
+	sectionType: 'contrast',
+	selection: { preferFlats: false }
+});
+const composerFlowRetargeted = app.retargetProgressionSection({
+	data: data,
+	domain: domain,
+	progression: composerFlowB,
+	sectionId: 'B',
+	targetReport: fMajorReport
+});
+const composerFlowC = app.generateProgressionSection({
+	data: data,
+	domain: domain,
+	modulationType: 'direct',
+	progression: composerFlowRetargeted,
+	progressionState: composerFlowRetargeted.sections[1].state,
+	report: fMajorReport,
+	rng: sequenceRng([0.6, 0.1, 0.1, 0.1]),
+	sectionType: 'contrast',
+	selection: { preferFlats: true }
+});
+const composerSchedule = context.window.CodaProgressionPlaybackSchedule.buildProgressionPlaybackSchedule(composerFlowC, {
+	instrument: 0,
+	startIndex: 0,
+	voices: 4
+});
+const composerMidi = app.buildProgressionMidiFile({
+	data: data,
+	midiInstrument: 'acoustic_grand_piano',
+	progression: composerFlowC,
+	progressionState: composerFlowC.sections[1].state
+});
+assert.deepEqual(composerFlowC.sections.map(function (section) { return section.id; }), ['A', 'B', 'C']);
+assert.equal(composerFlowC.sections[1].contextLabel, 'F Mayor');
+assert.equal(composerFlowC.sections[1].modulation, undefined);
+assert.ok(composerFlowC.measures.every(function (measure, index, measures) {
+	return index === 0 || Number(measure.startSeconds) >= Number(measures[index - 1].startSeconds);
+}));
+assert.ok(composerSchedule.length >= composerFlowC.measures.length);
+assert.ok(composerMidi && composerMidi.bytes && composerMidi.bytes.length > 32);
+
 console.log('Application layer tests passed');
 
 function sequenceRng(values) {

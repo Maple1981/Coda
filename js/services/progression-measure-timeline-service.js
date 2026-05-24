@@ -4,24 +4,18 @@
 
 	var measureCloneService = global.CodaProgressionMeasureClone;
 	var measureSegmentService = global.CodaProgressionMeasureSegments;
+	var timingService = global.CodaProgressionTiming;
 
 	function rebuildTimeline(progression, measures, options) {
-		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
-		var beatsPerBar = Number(progression.beatsPerBar) || 4;
+		var secondsPerBeat = timingService.secondsPerBeat(progression);
+		var beatsPerBar = timingService.beatsPerBar(progression);
 		var rebuiltMeasures = [];
 
 		for (var i = 0; i < measures.length; i++) {
-			var startBeat = i * beatsPerBar;
-			var durationBeats = Number(measures[i].durationBeats) || beatsPerBar;
 			var measure = cloneMeasure(measures[i]);
+			var timing = timingService.measureTiming(i, measure, progression);
 
-			measure.bar = i + 1;
-			measure.startBeat = startBeat;
-			measure.endBeat = startBeat + durationBeats;
-			measure.durationBeats = durationBeats;
-			measure.durationSeconds = durationBeats * secondsPerBeat;
-			measure.startSeconds = startBeat * secondsPerBeat;
-			measure.endSeconds = measure.endBeat * secondsPerBeat;
+			timingService.applyTiming(measure, timing);
 			if (measure.chords && measure.chords.length) {
 				measure.chords = retimeMeasureChords(measure, secondsPerBeat, options);
 			}

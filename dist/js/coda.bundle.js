@@ -5867,6 +5867,117 @@
 
 ;
 
+/* Source: js/services/progression-timing-service.js */
+// Shared timing helpers for progression documents, measures and inner chords.
+(function (global) {
+	'use strict';
+
+	function secondsPerBeat(progression, state) {
+		var explicit = Number(progression && progression.secondsPerBeat);
+		var bpm = Number(state && state.bpm) || Number(progression && progression.bpm) || 120;
+
+		return explicit || 60 / bpm;
+	}
+
+	function beatsPerBar(progression, state) {
+		return Number(state && state.beatsPerBar) || Number(progression && progression.beatsPerBar) || 4;
+	}
+
+	function beatUnit(progression, state) {
+		return Number(state && state.beatUnit) || Number(progression && progression.beatUnit) || 4;
+	}
+
+	function measureTiming(index, measure, progression, state) {
+		var barBeats = beatsPerBar(progression, state);
+		var beatSeconds = secondsPerBeat(progression, state);
+		var startBeat = index * barBeats;
+		var durationBeats = Number(measure && measure.durationBeats) || barBeats;
+
+		return {
+			bar: index + 1,
+			beatUnit: beatUnit(progression, state),
+			beatsPerBar: barBeats,
+			durationBeats: durationBeats,
+			durationSeconds: durationBeats * beatSeconds,
+			endBeat: startBeat + durationBeats,
+			endSeconds: (startBeat + durationBeats) * beatSeconds,
+			secondsPerBeat: beatSeconds,
+			startBeat: startBeat,
+			startSeconds: startBeat * beatSeconds
+		};
+	}
+
+	function applyTiming(target, timing) {
+		target.bar = timing.bar;
+		target.beatUnit = timing.beatUnit;
+		target.beatsPerBar = timing.beatsPerBar;
+		target.durationBeats = timing.durationBeats;
+		target.durationSeconds = timing.durationSeconds;
+		target.endBeat = timing.endBeat;
+		target.endSeconds = timing.endSeconds;
+		target.secondsPerBeat = timing.secondsPerBeat;
+		target.startBeat = timing.startBeat;
+		target.startSeconds = timing.startSeconds;
+
+		return target;
+	}
+
+	function copyTimingFields(target, source, fields) {
+		fields = fields || timingFieldNames();
+
+		for (var i = 0; i < fields.length; i++) {
+			copyTimingField(target, source, fields[i]);
+		}
+
+		return target;
+	}
+
+	function copyTimingField(target, source, field) {
+		if (source && source[field] != null) {
+			target[field] = source[field];
+		}
+	}
+
+	function timingFieldNames() {
+		return [
+			'bar',
+			'beatUnit',
+			'beatsPerBar',
+			'bpm',
+			'durationBeats',
+			'durationSeconds',
+			'endBeat',
+			'endSeconds',
+			'secondsPerBeat',
+			'startBeat',
+			'startSeconds'
+		];
+	}
+
+	function isNondecreasingStartSeconds(measures) {
+		for (var i = 1; i < (measures || []).length; i++) {
+			if (Number(measures[i].startSeconds) < Number(measures[i - 1].startSeconds)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	global.CodaProgressionTiming = {
+		applyTiming: applyTiming,
+		beatsPerBar: beatsPerBar,
+		beatUnit: beatUnit,
+		copyTimingFields: copyTimingFields,
+		isNondecreasingStartSeconds: isNondecreasingStartSeconds,
+		measureTiming: measureTiming,
+		secondsPerBeat: secondsPerBeat,
+		timingFieldNames: timingFieldNames
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-measure-timeline-service.js */
 // Measure timeline rebuild utilities for progression editing.
 (function (global) {
@@ -5874,24 +5985,18 @@
 
 	var measureCloneService = global.CodaProgressionMeasureClone;
 	var measureSegmentService = global.CodaProgressionMeasureSegments;
+	var timingService = global.CodaProgressionTiming;
 
 	function rebuildTimeline(progression, measures, options) {
-		var secondsPerBeat = Number(progression.secondsPerBeat) || 60 / (Number(progression.bpm) || 120);
-		var beatsPerBar = Number(progression.beatsPerBar) || 4;
+		var secondsPerBeat = timingService.secondsPerBeat(progression);
+		var beatsPerBar = timingService.beatsPerBar(progression);
 		var rebuiltMeasures = [];
 
 		for (var i = 0; i < measures.length; i++) {
-			var startBeat = i * beatsPerBar;
-			var durationBeats = Number(measures[i].durationBeats) || beatsPerBar;
 			var measure = cloneMeasure(measures[i]);
+			var timing = timingService.measureTiming(i, measure, progression);
 
-			measure.bar = i + 1;
-			measure.startBeat = startBeat;
-			measure.endBeat = startBeat + durationBeats;
-			measure.durationBeats = durationBeats;
-			measure.durationSeconds = durationBeats * secondsPerBeat;
-			measure.startSeconds = startBeat * secondsPerBeat;
-			measure.endSeconds = measure.endBeat * secondsPerBeat;
+			timingService.applyTiming(measure, timing);
 			if (measure.chords && measure.chords.length) {
 				measure.chords = retimeMeasureChords(measure, secondsPerBeat, options);
 			}
@@ -6066,6 +6171,159 @@
 		isDiminishedSeventhQuality: chordQuality.isDiminishedSeventhQuality,
 		isMinorQuality: chordQuality.isMinorQuality,
 		triadName: chordQuality.triadName
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-analysis-label-service.js */
+// Derives visible analysis labels from the final progression document.
+(function (global) {
+	'use strict';
+
+	function sourceLabel(chord, options) {
+		var scaleIndex = chord && chord.sourceScaleIndex;
+		var scaleName = scaleIndex != null ? translate(options, 'data.scales.' + scaleIndex) : '';
+		var tonicName = chord && chord.sourceTonicName ? chord.sourceTonicName : '';
+
+		if (!chord) {
+			return '';
+		}
+
+		if (chord.modulationSourceLabelKey) {
+			if (!isValidModulationSource(chord, options)) {
+				return '';
+			}
+
+			if (chord.modulationKind === 'pivot' || chord.modulationSourceLabelKey === 'progression.modulation.pivot') {
+				return pivotSourceLabel(chord, options);
+			}
+
+			return translate(options, chord.modulationSourceLabelKey);
+		}
+
+		if (chord.source === 'chromatic') {
+			if (isTransitionLabelKey(chord.sourceLabelKey) && !isValidModulationSource(chord, options)) {
+				return '';
+			}
+
+			return chord.sourceLabelKey ? translate(options, chord.sourceLabelKey) : '';
+		}
+
+		if (chord.source !== 'interchange' || !scaleName) {
+			return '';
+		}
+
+		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
+			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
+		}
+
+		return tonicName ? tonicName + ' ' + scaleName : scaleName;
+	}
+
+	function pivotSourceLabel(chord, options) {
+		var baseLabel = capitalizeFirst(translate(options, chord.modulationSourceLabelKey || 'progression.modulation.pivot'));
+		var targetDegree = chord.pivotTargetDegree || '';
+		var targetContext = modulationTargetContextLabel(chord, options);
+		var inLabel = translate(options, 'progression.modulation.inKey');
+
+		if (targetDegree && targetContext) {
+			return baseLabel + ': ' + targetDegree + ' ' + inLabel + ' ' + targetContext;
+		}
+
+		return baseLabel;
+	}
+
+	function modulationTargetContextLabel(chord, options) {
+		var tonicName = chord.pivotTargetTonicName || chord.targetTonicName || '';
+		var scaleName = chord.pivotTargetScaleName || '';
+		var scaleIndex = chord.pivotTargetScaleIndex != null ? chord.pivotTargetScaleIndex : chord.targetScaleIndex;
+
+		if (scaleIndex != null) {
+			scaleName = translate(options, 'data.scales.' + scaleIndex);
+		}
+
+		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
+			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
+		}
+
+		return [tonicName, scaleName].filter(Boolean).join(' ');
+	}
+
+	function isValidModulationSource(chord, options) {
+		var sections = options && options.sections ? options.sections : [];
+		var section = sectionForId(sections, chord.sectionId);
+		var kind = chord.modulationKind || modulationKindFromLabel(chord.modulationSourceLabelKey || chord.sourceLabelKey);
+
+		if (!section || !kind) {
+			return false;
+		}
+
+		if (section.contrast && section.modulation && section.modulation.kind === kind && section.modulation.targetSectionId === section.id) {
+			return true;
+		}
+
+		return !!sectionWithModulationFrom(sections, section.id, kind);
+	}
+
+	function isTransitionLabelKey(labelKey) {
+		return labelKey === 'progression.modulation.pivot' ||
+			labelKey === 'progression.modulation.secondaryDominant';
+	}
+
+	function modulationKindFromLabel(labelKey) {
+		if (labelKey === 'progression.modulation.pivot') {
+			return 'pivot';
+		}
+
+		if (labelKey === 'progression.modulation.secondaryDominant') {
+			return 'secondaryDominant';
+		}
+
+		return '';
+	}
+
+	function sectionForId(sections, sectionId) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (sections[i].id === sectionId) {
+				return sections[i];
+			}
+		}
+
+		return null;
+	}
+
+	function sectionWithModulationFrom(sections, sectionId, kind) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (
+				sections[i].contrast &&
+				sections[i].modulation &&
+				sections[i].modulation.kind === kind &&
+				sections[i].modulation.originSectionId === sectionId &&
+				sections[i].modulation.targetSectionId === sections[i].id
+			) {
+				return sections[i];
+			}
+		}
+
+		return null;
+	}
+
+	function translate(options, key) {
+		return options && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(key) : key;
+	}
+
+	function capitalizeFirst(value) {
+		value = String(value || '');
+
+		return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+	}
+
+	global.CodaProgressionAnalysisLabels = {
+		isValidModulationSource: isValidModulationSource,
+		modulationTargetContextLabel: modulationTargetContextLabel,
+		pivotSourceLabel: pivotSourceLabel,
+		sourceLabel: sourceLabel
 	};
 })(window);
 
@@ -8376,6 +8634,7 @@
 
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
 	var revoiceService = global.CodaProgressionRevoice;
+	var timingService = global.CodaProgressionTiming;
 
 	function applyState(progression, options) {
 		var state = options && options.progressionState ? options.progressionState : {};
@@ -8448,7 +8707,7 @@
 
 	function progressionWithState(progression, state) {
 		var next = cloneJson(progression) || {};
-		var secondsPerBeat = 60 / (Number(state.bpm) || 120);
+		var secondsPerBeat = timingService.secondsPerBeat(null, state);
 
 		next.articulation = state.articulation;
 		next.beatUnit = state.beatUnit;
@@ -11446,6 +11705,8 @@
 (function (global) {
 	'use strict';
 
+	var timingService = global.CodaProgressionTiming;
+
 	function replaceContext(options) {
 		options = options || {};
 		var next = cloneJson(options.progression);
@@ -11510,7 +11771,7 @@
 		measure.bar = referenceMeasure && referenceMeasure.bar != null ? referenceMeasure.bar : startIndex + sectionMeasureIndex + 1;
 		measure.startBeat = referenceMeasure && referenceMeasure.startBeat != null ? referenceMeasure.startBeat : localStartBeat;
 		measure.startSeconds = referenceMeasure && referenceMeasure.startSeconds != null ? referenceMeasure.startSeconds : localStartSeconds;
-		copyTimingFields(measure, referenceMeasure);
+		timingService.copyTimingFields(measure, referenceMeasure, sectionTimingFields());
 		measure.sectionId = section.id;
 		measure.sectionLabelKey = section.labelKey;
 		normalizeGeneratedMeasureChords(measure, referenceMeasure, localStartBeat, localStartSeconds);
@@ -11532,13 +11793,13 @@
 		chord.bar = parentMeasure.bar;
 		chord.startBeat = referenceChord && referenceChord.startBeat != null ? referenceChord.startBeat : parentMeasure.startBeat + localBeatOffset;
 		chord.startSeconds = referenceChord && referenceChord.startSeconds != null ? referenceChord.startSeconds : parentMeasure.startSeconds + localSecondOffset;
-		copyTimingFields(chord, referenceChord || parentMeasure);
+		timingService.copyTimingFields(chord, referenceChord || parentMeasure, sectionTimingFields());
 		chord.sectionId = parentMeasure.sectionId;
 		chord.sectionLabelKey = parentMeasure.sectionLabelKey;
 	}
 
-	function copyTimingFields(target, source) {
-		var fields = [
+	function sectionTimingFields() {
+		return [
 			'beatUnit',
 			'beatsPerBar',
 			'bpm',
@@ -11546,16 +11807,6 @@
 			'durationSeconds',
 			'secondsPerBeat'
 		];
-
-		for (var i = 0; i < fields.length; i++) {
-			copyTimingField(target, source, fields[i]);
-		}
-	}
-
-	function copyTimingField(target, source, field) {
-		if (source && source[field] != null) {
-			target[field] = source[field];
-		}
 	}
 
 	function clearModulationForTargetSection(progression, sectionId) {
@@ -12042,6 +12293,7 @@
 	var formattingService = global.CodaProgressionFormatting;
 	var objectService = global.CodaProgressionObjects;
 	var sectionDocument = global.CodaProgressionSectionDocument;
+	var timingService = global.CodaProgressionTiming;
 
 	function prepare(context) {
 		var requestedKind = normalizedKind(context.options.modulationType);
@@ -12174,7 +12426,6 @@
 	}
 
 	function replaceMeasureHarmony(original, replacement) {
-		var timing = {};
 		var result = objectService.extendObject(original, replacement);
 		var timingKeys = [
 			'articulation',
@@ -12192,13 +12443,7 @@
 			'startSeconds'
 		];
 
-		for (var i = 0; i < timingKeys.length; i++) {
-			if (original && Object.prototype.hasOwnProperty.call(original, timingKeys[i])) {
-				timing[timingKeys[i]] = original[timingKeys[i]];
-			}
-		}
-
-		result = objectService.extendObject(result, timing);
+		timingService.copyTimingFields(result, original, timingKeys);
 		delete result.chords;
 
 		return result;
@@ -12743,6 +12988,65 @@
 		sameKeySubdominant: sectionCandidates.sameKeySubdominant,
 		sameKeyNoModulation: sectionCandidates.sameKeyNoModulation,
 		transposeIndex: sectionCandidates.transposeIndex
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-section-operations-service.js */
+// Facade for high-level progression section operations.
+(function (global) {
+	'use strict';
+
+	var sectionContrast = global.CodaProgressionSectionContrast;
+	var sectionDocument = global.CodaProgressionSectionDocument;
+	var sectionRetarget = global.CodaProgressionSectionRetarget;
+
+	function generateContrastingSection(options, dependencies) {
+		return sectionContrast.generate(options || {}, dependencies || {});
+	}
+
+	function generateSection(options, dependencies) {
+		return sectionContrast.generateSection(options || {}, dependencies || {});
+	}
+
+	function retargetSection(options, dependencies) {
+		var progression = options && options.progression ? options.progression : null;
+		var section = sectionDocument.findSection(progression, options && options.sectionId);
+		var sectionState;
+		var generated;
+
+		if (!progression || !section || !options.targetReport || !dependencies || typeof dependencies.generateProgressionFromState !== 'function') {
+			return progression;
+		}
+
+		sectionState = cloneJson(options.sectionState || section.state || options.progressionState || {});
+		sectionState.bars = section.length || sectionState.bars || 8;
+		generated = dependencies.generateProgressionFromState({
+			data: options.data,
+			domain: options.domain,
+			progressionState: sectionState,
+			report: options.targetReport,
+			rng: options.rng
+		});
+
+		return sectionRetarget.replaceContext({
+			generatedMeasures: generated && generated.measures ? generated.measures : [],
+			progression: progression,
+			sectionId: options.sectionId,
+			sectionState: sectionState,
+			targetReport: options.targetReport
+		});
+	}
+
+	function cloneJson(value) {
+		return value == null ? null : JSON.parse(JSON.stringify(value));
+	}
+
+	global.CodaProgressionSectionOperations = {
+		generateContrastingSection: generateContrastingSection,
+		generateSection: generateSection,
+		retargetSection: retargetSection
 	};
 })(window);
 
@@ -18222,7 +18526,7 @@
 	var midiFileService = global.CodaProgressionMidiFile;
 	var progressionBuilder = global.CodaProgressionBuilder;
 	var progressionRevoice = global.CodaProgressionRevoice;
-	var sectionContrastService = global.CodaProgressionSectionContrast;
+	var sectionOperations = global.CodaProgressionSectionOperations;
 
 	function buildProgressionFromDegrees(options) {
 		return progressionBuilder.fromDegrees(options);
@@ -18244,7 +18548,7 @@
 			type: editCommands.types.generateSectionB
 		}, {
 			generateSectionB: function (commandOptions) {
-				return sectionContrastService.generate(commandOptions, {
+				return sectionOperations.generateContrastingSection(commandOptions, {
 					buildScaleReport: global.CodaApplication.buildScaleReport,
 					generateProgressionFromState: generateProgressionFromState,
 					rebuildProgressionTimeline: rebuildProgressionTimeline
@@ -18262,13 +18566,21 @@
 			type: editCommands.types.generateSection
 		}, {
 			generateSection: function (commandOptions) {
-				return sectionContrastService.generateSection(commandOptions, {
+				return sectionOperations.generateSection(commandOptions, {
 					buildScaleReport: global.CodaApplication.buildScaleReport,
 					generateProgressionFromState: generateProgressionFromState,
 					rebuildProgressionTimeline: rebuildProgressionTimeline
 				});
 			},
 			progression: options.progression
+		});
+	}
+
+	function retargetProgressionSection(options) {
+		options = options || {};
+
+		return sectionOperations.retargetSection(options, {
+			generateProgressionFromState: generateProgressionFromState
 		});
 	}
 
@@ -18393,6 +18705,7 @@
 	global.CodaApplication.removeProgressionMeasureChord = removeProgressionMeasureChord;
 	global.CodaApplication.removeProgressionSection = removeProgressionSection;
 	global.CodaApplication.replaceProgressionMeasureChord = replaceProgressionMeasureChord;
+	global.CodaApplication.retargetProgressionSection = retargetProgressionSection;
 	global.CodaApplication.reorderProgressionMeasureChords = reorderProgressionMeasureChords;
 	global.CodaApplication.reorderProgressionMeasures = reorderProgressionMeasures;
 	global.CodaApplication.transformProgressionFromState = transformProgressionFromState;
@@ -19835,6 +20148,7 @@
 	'use strict';
 
 	var labels = global.CodaRenderers.progressionLabels;
+	var analysisLabels = global.CodaProgressionAnalysisLabels;
 
 	function renderTimeline(progression, options) {
 		var html = '<div class="progressionTimeline" aria-label="">';
@@ -20317,139 +20631,9 @@
 	}
 
 	function sourceLabel(chord, options) {
-		var scaleIndex = chord.sourceScaleIndex;
-		var scaleName = scaleIndex != null && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t('data.scales.' + scaleIndex) : '';
-		var tonicName = chord.sourceTonicName || '';
-
-		if (chord.modulationSourceLabelKey) {
-			if (!isValidModulationSource(chord, options)) {
-				return '';
-			}
-
-			if (chord.modulationKind === 'pivot' || chord.modulationSourceLabelKey === 'progression.modulation.pivot') {
-				return pivotSourceLabel(chord, options);
-			}
-
-			return options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(chord.modulationSourceLabelKey) : '';
-		}
-
-		if (chord.source === 'chromatic') {
-			if (isTransitionLabelKey(chord.sourceLabelKey) && !isValidModulationSource(chord, options)) {
-				return '';
-			}
-
-			return chord.sourceLabelKey && options.i18n && typeof options.i18n.t === 'function' ? options.i18n.t(chord.sourceLabelKey) : '';
-		}
-
-		if (chord.source !== 'interchange' || !scaleName) {
-			return '';
-		}
-
-		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
-			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
-		}
-
-		return tonicName ? tonicName + ' ' + scaleName : scaleName;
-	}
-
-	function pivotSourceLabel(chord, options) {
-		var baseLabel = capitalizeFirst(translate(options, chord.modulationSourceLabelKey || 'progression.modulation.pivot'));
-		var targetDegree = chord.pivotTargetDegree || '';
-		var targetContext = modulationTargetContextLabel(chord, options);
-		var inLabel = translate(options, 'progression.modulation.inKey');
-
-		if (targetDegree && targetContext) {
-			return baseLabel + ': ' + targetDegree + ' ' + inLabel + ' ' + targetContext;
-		}
-
-		return baseLabel;
-	}
-
-	function modulationTargetContextLabel(chord, options) {
-		var tonicName = chord.pivotTargetTonicName || chord.targetTonicName || '';
-		var scaleName = chord.pivotTargetScaleName || '';
-		var scaleIndex = chord.pivotTargetScaleIndex != null ? chord.pivotTargetScaleIndex : chord.targetScaleIndex;
-
-		if (scaleIndex != null && options.i18n && typeof options.i18n.t === 'function') {
-			scaleName = options.i18n.t('data.scales.' + scaleIndex);
-		}
-
-		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
-			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
-		}
-
-		return [tonicName, scaleName].filter(Boolean).join(' ');
-	}
-
-	function capitalizeFirst(value) {
-		value = String(value || '');
-
-		return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
-	}
-
-	function isValidModulationSource(chord, options) {
-		var sections = options && options.sections ? options.sections : [];
-		var section = sectionForId(sections, chord.sectionId);
-		var kind = chord.modulationKind || modulationKindFromLabel(chord.modulationSourceLabelKey || chord.sourceLabelKey);
-		var relatedSection;
-
-		if (!section || !kind) {
-			return false;
-		}
-
-		if (section.contrast && section.modulation && section.modulation.kind === kind && section.modulation.targetSectionId === section.id) {
-			return true;
-		}
-
-		relatedSection = sectionWithModulationFrom(sections, section.id, kind);
-		if (relatedSection) {
-			return true;
-		}
-
-		return false;
-	}
-
-	function isTransitionLabelKey(labelKey) {
-		return labelKey === 'progression.modulation.pivot' ||
-			labelKey === 'progression.modulation.secondaryDominant';
-	}
-
-	function modulationKindFromLabel(labelKey) {
-		if (labelKey === 'progression.modulation.pivot') {
-			return 'pivot';
-		}
-
-		if (labelKey === 'progression.modulation.secondaryDominant') {
-			return 'secondaryDominant';
-		}
-
-		return '';
-	}
-
-	function sectionForId(sections, sectionId) {
-		for (var i = 0; i < (sections || []).length; i++) {
-			if (sections[i].id === sectionId) {
-				return sections[i];
-			}
-		}
-
-		return null;
-	}
-
-	function sectionWithModulationFrom(sections, sectionId, kind) {
-		for (var i = 0; i < (sections || []).length; i++) {
-			if (
-				sections[i].contrast &&
-				sections[i].modulation &&
-				sections[i].modulation.kind === kind &&
-				sections[i].modulation.originSectionId === sectionId &&
-				sections[i].modulation.targetSectionId === sections[i].id
-			) {
-				return sections[i];
-			}
-		}
-
-		return null;
+		return analysisLabels && typeof analysisLabels.sourceLabel === 'function' ?
+			analysisLabels.sourceLabel(chord, options || {}) :
+			'';
 	}
 
 	function optionsWithSections(options, sections) {
@@ -23485,7 +23669,6 @@
 		var progressionTransport = options.progressionTransport || global.CodaProgressionTransport;
 		var progressionTransportController = null;
 		var progressionDocument = options.progressionDocument || global.CodaProgressionDocument;
-		var progressionSectionRetarget = options.progressionSectionRetarget || global.CodaProgressionSectionRetarget;
 		var progressionState = options.progressionState || global.CodaProgressionState;
 		var progressionWorkspaceStorage = options.progressionWorkspaceStorage || global.CodaProgressionWorkspaceStorage;
 		var staticText = options.staticText || global.CodaStaticText;
@@ -24268,23 +24451,17 @@
 			var section = progressionSection(sectionId);
 			var targetReport = scaleReportForCircleTarget(targetId);
 			var sectionState;
-			var generated;
 
-			if (!progression || !section || !targetReport || !progressionSectionRetarget || !options.application || typeof options.application.generateProgressionFromState !== 'function') {
+			if (!progression || !section || !targetReport || !options.application || typeof options.application.retargetProgressionSection !== 'function') {
 				return false;
 			}
 
 			sectionState = cloneJson(section.state || uiState.getProgressionState() || {});
 			sectionState.bars = section.length || sectionState.bars || 8;
-			generated = options.application.generateProgressionFromState({
+
+			setProgression(markProgressionAsUserEdited(options.application.retargetProgressionSection({
 				data: options.data,
 				domain: options.domain,
-				progressionState: sectionState,
-				report: targetReport
-			});
-
-			setProgression(markProgressionAsUserEdited(progressionSectionRetarget.replaceContext({
-				generatedMeasures: generated && generated.measures ? generated.measures : [],
 				progression: progression,
 				sectionId: sectionId,
 				sectionState: sectionState,

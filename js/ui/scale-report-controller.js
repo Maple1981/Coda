@@ -14,7 +14,6 @@
 		var progressionTransport = options.progressionTransport || global.CodaProgressionTransport;
 		var progressionTransportController = null;
 		var progressionDocument = options.progressionDocument || global.CodaProgressionDocument;
-		var progressionSectionRetarget = options.progressionSectionRetarget || global.CodaProgressionSectionRetarget;
 		var progressionState = options.progressionState || global.CodaProgressionState;
 		var progressionWorkspaceStorage = options.progressionWorkspaceStorage || global.CodaProgressionWorkspaceStorage;
 		var staticText = options.staticText || global.CodaStaticText;
@@ -797,23 +796,17 @@
 			var section = progressionSection(sectionId);
 			var targetReport = scaleReportForCircleTarget(targetId);
 			var sectionState;
-			var generated;
 
-			if (!progression || !section || !targetReport || !progressionSectionRetarget || !options.application || typeof options.application.generateProgressionFromState !== 'function') {
+			if (!progression || !section || !targetReport || !options.application || typeof options.application.retargetProgressionSection !== 'function') {
 				return false;
 			}
 
 			sectionState = cloneJson(section.state || uiState.getProgressionState() || {});
 			sectionState.bars = section.length || sectionState.bars || 8;
-			generated = options.application.generateProgressionFromState({
+
+			setProgression(markProgressionAsUserEdited(options.application.retargetProgressionSection({
 				data: options.data,
 				domain: options.domain,
-				progressionState: sectionState,
-				report: targetReport
-			});
-
-			setProgression(markProgressionAsUserEdited(progressionSectionRetarget.replaceContext({
-				generatedMeasures: generated && generated.measures ? generated.measures : [],
 				progression: progression,
 				sectionId: sectionId,
 				sectionState: sectionState,

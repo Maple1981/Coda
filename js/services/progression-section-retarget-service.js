@@ -1,6 +1,8 @@
 (function (global) {
 	'use strict';
 
+	var timingService = global.CodaProgressionTiming;
+
 	function replaceContext(options) {
 		options = options || {};
 		var next = cloneJson(options.progression);
@@ -65,7 +67,7 @@
 		measure.bar = referenceMeasure && referenceMeasure.bar != null ? referenceMeasure.bar : startIndex + sectionMeasureIndex + 1;
 		measure.startBeat = referenceMeasure && referenceMeasure.startBeat != null ? referenceMeasure.startBeat : localStartBeat;
 		measure.startSeconds = referenceMeasure && referenceMeasure.startSeconds != null ? referenceMeasure.startSeconds : localStartSeconds;
-		copyTimingFields(measure, referenceMeasure);
+		timingService.copyTimingFields(measure, referenceMeasure, sectionTimingFields());
 		measure.sectionId = section.id;
 		measure.sectionLabelKey = section.labelKey;
 		normalizeGeneratedMeasureChords(measure, referenceMeasure, localStartBeat, localStartSeconds);
@@ -87,13 +89,13 @@
 		chord.bar = parentMeasure.bar;
 		chord.startBeat = referenceChord && referenceChord.startBeat != null ? referenceChord.startBeat : parentMeasure.startBeat + localBeatOffset;
 		chord.startSeconds = referenceChord && referenceChord.startSeconds != null ? referenceChord.startSeconds : parentMeasure.startSeconds + localSecondOffset;
-		copyTimingFields(chord, referenceChord || parentMeasure);
+		timingService.copyTimingFields(chord, referenceChord || parentMeasure, sectionTimingFields());
 		chord.sectionId = parentMeasure.sectionId;
 		chord.sectionLabelKey = parentMeasure.sectionLabelKey;
 	}
 
-	function copyTimingFields(target, source) {
-		var fields = [
+	function sectionTimingFields() {
+		return [
 			'beatUnit',
 			'beatsPerBar',
 			'bpm',
@@ -101,16 +103,6 @@
 			'durationSeconds',
 			'secondsPerBeat'
 		];
-
-		for (var i = 0; i < fields.length; i++) {
-			copyTimingField(target, source, fields[i]);
-		}
-	}
-
-	function copyTimingField(target, source, field) {
-		if (source && source[field] != null) {
-			target[field] = source[field];
-		}
 	}
 
 	function clearModulationForTargetSection(progression, sectionId) {
