@@ -40,6 +40,10 @@ Write-Host "Ejecutando invariantes multi-semilla de progresiones..."
 node tests\progression-invariants-tests.js
 Assert-LastCommand "node tests\progression-invariants-tests.js"
 
+Write-Host "Ejecutando smoke test de flujo de secciones..."
+node tests\progression-section-flow-smoke-tests.js
+Assert-LastCommand "node tests\progression-section-flow-smoke-tests.js"
+
 Write-Host "Ejecutando pruebas de renderizado..."
 node tests\renderers-tests.js
 Assert-LastCommand "node tests\renderers-tests.js"

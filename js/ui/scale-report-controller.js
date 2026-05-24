@@ -8,6 +8,8 @@
 		var i18n = options.i18n;
 		var keyNavigation = options.keyNavigation || global.CodaKeyNavigation;
 		var circleTargetService = options.circleTargetService || global.CodaCircleOfFifthsTargets;
+		var circlePopover = options.circlePopover || global.CodaCircleOfFifthsPopover;
+		var circlePopoverController = null;
 		var musicalContextService = options.musicalContext || global.CodaMusicalContext.create({
 			data: options.data
 		});
@@ -25,9 +27,6 @@
 			initialNotation: notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon',
 			language: i18n && i18n.getLanguage ? i18n.getLanguage() : 'en'
 		});
-		var circleOfFifthsAnchorId = '';
-		var circleOfFifthsSectionId = '';
-		var circleOfFifthsDragged = false;
 		var history = {
 			index: -1,
 			items: [],
@@ -215,12 +214,7 @@
 				return;
 			}
 
-			if (applyCircleLinkToSection(link)) {
-				if (event.preventDefault) {
-					event.preventDefault();
-				}
-				closeCircleOfFifthsPopover();
-				recordHistorySnapshot();
+			if (link.getAttribute && link.getAttribute('data-section-circle-target')) {
 				return;
 			}
 
@@ -254,7 +248,7 @@
 
 			if (musicalContext.isScaleSeparator) {
 				uiState.clearReport();
-				updateCircleOfFifthsAccess(null);
+				updateCircleAccess(null);
 				return;
 			}
 
@@ -285,7 +279,7 @@
 				selection: selection
 			});
 			updateCollapsiblePanelStates(i18n);
-			updateCircleOfFifthsAccess(report);
+			updateCircleAccess(report);
 
 			renderInstrument(true);
 
@@ -415,34 +409,28 @@
 		}
 
 		function bindCircleOfFifthsPopover() {
-			bindCircleOfFifthsDrag();
-
-			on(global.document, 'click', function (event) {
-				var trigger = closest(event.target, '#toggleCircleOfFifths') ||
-					closest(event.target, '#toggleCircleOfFifthsFromContext') ||
-					closest(event.target, '#toggleCircleOfFifthsFromForm') ||
-					closest(event.target, '#workbenchContextKeyToggle') ||
-					closest(event.target, '.progressionSectionCircleButton');
-
-				if (trigger) {
-					toggleCircleOfFifthsPopover(trigger);
-					return;
-				}
-
-				if (closest(event.target, '#closeCircleOfFifths')) {
-					closeCircleOfFifthsPopover();
-					return;
-				}
-
-				if (isCircleOfFifthsPopoverOpen() && !closest(event.target, '.circlePopover__surface')) {
-					closeCircleOfFifthsPopover();
-				}
-			});
-
-			on(global.document, 'keydown', function (event) {
-				if (event.key === 'Escape') {
-					closeCircleOfFifthsPopover();
-				}
+			circlePopoverController = circlePopover.initialize({
+				onGlobalTarget: function (targetId) {
+					keyNavigation.navigateToLinkedKey(options.data.notes, targetId, notation, uiState.getNotationStyle(), fillSelectHashTable);
+					keyNavigation.applyRecommendedNotation(options, fillSelectHashTable);
+					saveFormPreferences(preferences);
+					renderReport();
+					recordHistorySnapshot();
+				},
+				onSectionTarget: function (sectionId, targetId) {
+					return retargetProgressionSection(sectionId, targetId);
+				},
+				onTargetApplied: recordHistorySnapshot,
+				notation: notation,
+				notationStyle: function () {
+					return uiState.getNotationStyle();
+				},
+				renderers: options.renderers,
+				report: function () {
+					return uiState.getReport();
+				},
+				root: global.document,
+				sectionForId: progressionSection
 			});
 		}
 
@@ -551,196 +539,6 @@
 			});
 		}
 
-		function bindCircleOfFifthsDrag() {
-			var popover = query('#circleOfFifthsPopover');
-			var titlebar = query('.circlePopover__titlebar');
-			var dragState = null;
-
-			if (!popover || !titlebar || titlebar.getAttribute('data-coda-draggable') === 'true') {
-				return;
-			}
-
-			titlebar.setAttribute('data-coda-draggable', 'true');
-
-			titlebar.addEventListener('mousedown', function (event) {
-				var bounds;
-
-				if (closest(event.target, 'button')) {
-					return;
-				}
-
-				bounds = popover.getBoundingClientRect();
-				dragState = {
-					offsetX: event.clientX - bounds.left,
-					offsetY: event.clientY - bounds.top
-				};
-				popover.classList.add('isDragging');
-				event.preventDefault();
-			});
-
-			global.document.addEventListener('mousemove', function (event) {
-				if (!dragState) {
-					return;
-				}
-
-				moveCircleOfFifthsPopover(popover, {
-					x: event.clientX - dragState.offsetX,
-					y: event.clientY - dragState.offsetY
-				});
-				circleOfFifthsDragged = true;
-			});
-
-			global.document.addEventListener('mouseup', function () {
-				if (!dragState) {
-					return;
-				}
-
-				dragState = null;
-				popover.classList.remove('isDragging');
-			});
-		}
-
-		function moveCircleOfFifthsPopover(popover, position) {
-			var width = popover.offsetWidth;
-			var height = popover.offsetHeight;
-			var maxLeft = Math.max(0, global.innerWidth - width);
-			var maxTop = Math.max(0, global.innerHeight - height);
-			var left = Math.max(0, Math.min(maxLeft, position.x));
-			var top = Math.max(0, Math.min(maxTop, position.y));
-
-			popover.style.left = left + 'px';
-			popover.style.top = top + 'px';
-			popover.style.right = 'auto';
-		}
-
-		function positionCircleOfFifthsPopoverNearTrigger(popover, trigger) {
-			var triggerBounds;
-			var margin = 10;
-			var width;
-			var height;
-			var maxLeft;
-			var maxTop;
-			var left;
-			var top;
-
-			if (!popover || !trigger || typeof trigger.getBoundingClientRect !== 'function') {
-				return;
-			}
-
-			triggerBounds = trigger.getBoundingClientRect();
-			width = popover.offsetWidth || 300;
-			height = popover.offsetHeight || 260;
-			maxLeft = Math.max(margin, global.innerWidth - width - margin);
-			maxTop = Math.max(margin, global.innerHeight - height - margin);
-			left = Math.min(maxLeft, Math.max(margin, triggerBounds.left));
-			top = triggerBounds.bottom + margin;
-
-			if (top + height > global.innerHeight - margin) {
-				top = triggerBounds.top - height - margin;
-			}
-
-			top = Math.min(maxTop, Math.max(margin, top));
-			popover.style.left = left + 'px';
-			popover.style.top = top + 'px';
-			popover.style.right = 'auto';
-		}
-
-		function updateCircleOfFifthsAccess(report) {
-			var available = !!(report && report.circleOfFifths);
-
-			updateCircleToggleButton(query('#toggleCircleOfFifths'), available);
-			updateCircleToggleButton(query('#toggleCircleOfFifthsFromContext'), available);
-			updateCircleToggleButton(query('#toggleCircleOfFifthsFromForm'), available);
-
-			if (!available) {
-				closeCircleOfFifthsPopover();
-			}
-		}
-
-		function updateCircleToggleButton(button, available) {
-			if (!button) {
-				return;
-			}
-
-			button.hidden = !available;
-			button.setAttribute('aria-hidden', available ? 'false' : 'true');
-
-			if (!available) {
-				button.setAttribute('aria-expanded', 'false');
-			}
-		}
-
-		function toggleCircleOfFifthsPopover(trigger) {
-			var triggerId = getCircleOfFifthsTriggerId(trigger);
-
-			if (isCircleOfFifthsPopoverOpen() && triggerId === circleOfFifthsAnchorId) {
-				closeCircleOfFifthsPopover();
-				return;
-			}
-
-			openCircleOfFifthsPopover(trigger);
-		}
-
-		function openCircleOfFifthsPopover(trigger) {
-			var popover = query('#circleOfFifthsPopover');
-			var circle = circleOfFifthsForTrigger(trigger);
-			var triggerId = getCircleOfFifthsTriggerId(trigger);
-			var shouldResetPosition = !!trigger && (triggerId !== circleOfFifthsAnchorId || !circleOfFifthsDragged);
-
-			if (!popover || !circle) {
-				return;
-			}
-
-			circleOfFifthsSectionId = trigger && trigger.getAttribute ? (trigger.getAttribute('data-section-circle') || '') : '';
-			renderCircleOfFifths(circle, circleOfFifthsSectionId);
-			popover.hidden = false;
-
-			if (shouldResetPosition) {
-				positionCircleOfFifthsPopoverNearTrigger(popover, trigger);
-				circleOfFifthsDragged = false;
-			}
-
-			circleOfFifthsAnchorId = triggerId;
-			setCircleToggleExpanded(true);
-		}
-
-		function getCircleOfFifthsTriggerId(trigger) {
-			var sectionId = trigger && trigger.getAttribute ? trigger.getAttribute('data-section-circle') : '';
-
-			if (trigger && trigger.id) {
-				return trigger.id;
-			}
-
-			return sectionId ? 'section-' + sectionId : '';
-		}
-
-		function renderCircleOfFifths(circle, sectionId) {
-			var container = query('#circuloQuintas');
-
-			if (!container || !circle || !options.renderers || !options.renderers.circleOfFifths) {
-				return;
-			}
-
-			container.innerHTML = options.renderers.circleOfFifths.render({
-				notation: notation,
-				notationStyle: uiState.getNotationStyle(),
-				orderedKeys: circle.orderedKeys,
-				sectionId: sectionId || '',
-				selectedKey: circle.selectedKey
-			});
-		}
-
-		function circleOfFifthsForTrigger(trigger) {
-			var sectionId = trigger && trigger.getAttribute ? trigger.getAttribute('data-section-circle') : '';
-			var section = sectionId ? progressionSection(sectionId) : null;
-
-			if (section && section.circleOfFifths) {
-				return section.circleOfFifths;
-			}
-
-			return uiState.getReport() ? uiState.getReport().circleOfFifths : null;
-		}
-
 		function progressionSection(sectionId) {
 			var progression = uiState.getProgression();
 			var sections = progression && progression.sections ? progression.sections : [];
@@ -752,20 +550,6 @@
 			}
 
 			return null;
-		}
-
-		function applyCircleLinkToSection(link) {
-			var sectionId = link && link.getAttribute ? link.getAttribute('data-section-circle-target') : '';
-
-			if (!sectionId) {
-				sectionId = circleOfFifthsSectionId;
-			}
-
-			if (!sectionId) {
-				return false;
-			}
-
-			return retargetProgressionSection(sectionId, link.id);
 		}
 
 		function retargetProgressionSection(sectionId, targetId) {
@@ -805,39 +589,10 @@
 			});
 		}
 
-		function closeCircleOfFifthsPopover() {
-			var popover = query('#circleOfFifthsPopover');
-
-			if (popover) {
-				popover.hidden = true;
+		function updateCircleAccess(report) {
+			if (circlePopoverController && typeof circlePopoverController.updateAccess === 'function') {
+				circlePopoverController.updateAccess(report);
 			}
-
-			circleOfFifthsSectionId = '';
-			setCircleToggleExpanded(false);
-		}
-
-		function isCircleOfFifthsPopoverOpen() {
-			var popover = query('#circleOfFifthsPopover');
-
-			return !!(popover && !popover.hidden);
-		}
-
-		function setCircleToggleExpanded(expanded) {
-			updateCircleToggleExpanded(query('#toggleCircleOfFifths'), expanded);
-			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromContext'), expanded);
-			updateCircleToggleExpanded(query('#toggleCircleOfFifthsFromForm'), expanded);
-			updateCircleToggleExpanded(query('#workbenchContextKeyToggle'), expanded);
-			forEachElement('.progressionSectionCircleButton', function (button) {
-				updateCircleToggleExpanded(button, expanded);
-			});
-		}
-
-		function updateCircleToggleExpanded(button, expanded) {
-			if (!button) {
-				return;
-			}
-
-			button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
 		}
 
 		function toggleWorkbenchInstrumentMenu() {

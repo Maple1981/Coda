@@ -50,6 +50,7 @@ const playedScaleMidiNotes = [];
 const savedPreferences = {};
 const savedWorkspaces = [];
 let playbackPlaying = false;
+const playbackHeadUpdates = [];
 let transportStops = 0;
 const options = {
 	application: context.window.CodaApplication,
@@ -96,7 +97,9 @@ const options = {
 					return playbackPlaying;
 				},
 				refreshInspector: function () {},
-				setPlaybackHead: function () {},
+				setPlaybackHead: function (index) {
+					playbackHeadUpdates.push(index);
+				},
 				stop: function () {
 					transportStops += 1;
 					playbackPlaying = false;
@@ -465,6 +468,7 @@ assert.ok(initialized.uiState.getProgression().sections.some(function (section) 
 assert.equal(savedWorkspaces[savedWorkspaces.length - 1].progression.measures.length, sectionProgressionLength);
 
 const sectionCircleProgressionBefore = initialized.uiState.getProgression();
+const sectionCircleHeadUpdatesBefore = playbackHeadUpdates.length;
 const sectionCircleIdsBefore = sectionCircleProgressionBefore.sections.map(function (section) {
 	return section.id;
 });
@@ -493,6 +497,8 @@ assert.deepEqual(sectionCircleProgressionAfter.sections.map(function (section) {
 assert.equal(sectionCircleProgressionAfter.measures.length, sectionCircleLengthBefore);
 assert.equal(sectionBAfterCircle.contextTonicName, 'F');
 assert.equal(sectionBAfterCircle.contextScaleIndex, 0);
+assert.equal(playbackHeadUpdates[playbackHeadUpdates.length - 1], 0);
+assert.ok(playbackHeadUpdates.length > sectionCircleHeadUpdatesBefore);
 assert.ok(sectionCircleProgressionAfter.measures[sectionBAfterCircle.startIndex].startSeconds > sectionCircleProgressionAfter.measures[0].startSeconds);
 for (let i = 1; i < sectionCircleProgressionAfter.measures.length; i++) {
 	assert.ok(sectionCircleProgressionAfter.measures[i].startSeconds >= sectionCircleProgressionAfter.measures[i - 1].startSeconds);

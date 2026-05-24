@@ -5,29 +5,48 @@
 	var harmonicAnalysis = global.CodaProgressionHarmonicAnalysis;
 
 	function sourceLabel(chord, options) {
+		var descriptor = sourceLabelDescriptor(chord, options || {});
+
+		return descriptor.visible ? descriptor.text : '';
+	}
+
+	function sourceLabelDescriptor(chord, options) {
 		var source = harmonicAnalysis.sourceForChord(chord, options || {});
 
 		if (!source) {
-			return '';
+			return emptyDescriptor();
 		}
 
 		if (source.type === 'modulation') {
 			if (source.kind === 'pivot' || source.labelKey === 'progression.modulation.pivot') {
-				return pivotSourceLabel(source, options);
+				return descriptor('modulation', pivotSourceLabel(source, options), source);
 			}
 
-			return translate(options, source.labelKey);
+			return descriptor('modulation', translate(options, source.labelKey), source);
 		}
 
 		if (source.type === 'chromatic') {
-			return source.labelKey ? translate(options, source.labelKey) : '';
+			return descriptor('chromatic', source.labelKey ? translate(options, source.labelKey) : '', source);
 		}
 
 		if (source.type === 'interchange') {
-			return interchangeSourceLabel(source, options);
+			return descriptor('interchange', interchangeSourceLabel(source, options), source);
 		}
 
-		return '';
+		return emptyDescriptor();
+	}
+
+	function descriptor(type, text, source) {
+		return {
+			source: source || null,
+			text: text || '',
+			type: type || '',
+			visible: !!text
+		};
+	}
+
+	function emptyDescriptor() {
+		return descriptor('', '', null);
 	}
 
 	function pivotSourceLabel(source, options) {
@@ -88,6 +107,7 @@
 	global.CodaProgressionAnalysisLabels = {
 		modulationTargetContextLabel: modulationTargetContextLabel,
 		pivotSourceLabel: pivotSourceLabel,
+		sourceLabelDescriptor: sourceLabelDescriptor,
 		sourceLabel: sourceLabel
 	};
 })(window);

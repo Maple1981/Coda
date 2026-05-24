@@ -14,6 +14,7 @@ vm.createContext(context);
 const loader = createScriptLoader(root, context);
 loader.runManifestRange('js/data/constants-data.js', 'js/application/progression-application.js');
 loader.runScript('js/ui/progression-generation-events-controller.js');
+loader.runScript('js/ui/circle-of-fifths-popover-controller.js');
 
 const global = context.window;
 
@@ -143,6 +144,24 @@ assert.equal(global.CodaProgressionHarmonicAnalysis.sourceForChord({
 	source: 'chromatic',
 	sourceLabelKey: 'progression.chromatic.neapolitan'
 }, { sections: sections }).type, 'chromatic');
+const pivotLabelDescriptor = global.CodaProgressionAnalysisLabels.sourceLabelDescriptor(progression.measures[3], {
+	i18n: {
+		t: function (key) {
+			return {
+				'data.scales.0': 'Major',
+				'progression.modulation.inKey': 'in',
+				'progression.modulation.pivot': 'pivot chord'
+			}[key] || key;
+		}
+	},
+	notation: global.CodaNotation,
+	notationStyle: 'anglosaxon',
+	sections: sections
+});
+assert.equal(pivotLabelDescriptor.type, 'modulation');
+assert.equal(pivotLabelDescriptor.visible, true);
+assert.equal(pivotLabelDescriptor.text, 'Pivot chord: iii in F Major');
+assert.equal(global.CodaProgressionAnalysisLabels.sourceLabelDescriptor({ source: 'diatonic' }, { sections: sections }).visible, false);
 
 const fakeRoot = {
 	querySelector: function (selector) {
@@ -151,5 +170,75 @@ const fakeRoot = {
 };
 assert.equal(global.CodaProgressionGenerationEvents.modulationTypeForSection(fakeRoot, 'contrast'), 'pivot');
 assert.equal(global.CodaProgressionGenerationEvents.modulationTypeForSection(fakeRoot, 'variation'), 'none');
+assert.equal(global.CodaCircleOfFifthsPopover.triggerIdFor({ id: 'toggleCircleOfFifths' }), 'toggleCircleOfFifths');
+assert.equal(global.CodaCircleOfFifthsPopover.triggerIdFor({
+	getAttribute: function (name) {
+		return name === 'data-section-circle' ? 'B' : '';
+	}
+}), 'section-B');
+
+const fakeCircleRoot = createFakeCircleRoot();
+const appliedTargets = [];
+const circleController = global.CodaCircleOfFifthsPopover.initialize({
+	onSectionTarget: function (sectionId, targetId) {
+		appliedTargets.push(sectionId + ':' + targetId);
+		return true;
+	},
+	onTargetApplied: function () {
+		appliedTargets.push('applied');
+	},
+	root: fakeCircleRoot
+});
+fakeCircleRoot.dispatch('click', {
+	target: fakeCircleRoot.sectionLink,
+	type: 'click'
+});
+assert.deepEqual(appliedTargets, ['B:F_', 'applied']);
+circleController.updateAccess(null);
+assert.equal(fakeCircleRoot.popover.hidden, true);
 
 console.log('Service unit tests passed');
+
+function createFakeCircleRoot() {
+	const listeners = {};
+	const root = {
+		addEventListener: function (eventName, handler) {
+			listeners[eventName] = listeners[eventName] || [];
+			listeners[eventName].push(handler);
+		},
+		dispatch: function (eventName, event) {
+			(listeners[eventName] || []).forEach(function (handler) {
+				handler(event);
+			});
+		},
+		querySelector: function (selector) {
+			if (selector === '#circleOfFifthsPopover') {
+				return root.popover;
+			}
+			if (selector === '.circlePopover__titlebar') {
+				return null;
+			}
+			return null;
+		},
+		querySelectorAll: function () {
+			return [];
+		}
+	};
+
+	root.popover = {
+		hidden: false,
+		setAttribute: function () {},
+		style: {}
+	};
+	root.sectionLink = {
+		closest: function (selector) {
+			return selector === '.revamp' ? root.sectionLink : null;
+		},
+		getAttribute: function (name) {
+			return name === 'data-section-circle-target' ? 'B' : '';
+		},
+		id: 'F_'
+	};
+
+	return root;
+}
