@@ -2,6 +2,7 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
 	var workspaceVersion = 1;
 	var progressionDocument = global.CodaProgressionDocument;
 
@@ -92,7 +93,7 @@
 	}
 
 	function cloneJson(value) {
-		return value == null ? null : JSON.parse(JSON.stringify(value));
+		return objectService.cloneJson(value);
 	}
 
 	global.CodaProgressionWorkspace = {

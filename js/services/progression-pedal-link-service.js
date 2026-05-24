@@ -2,6 +2,7 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
 	var voicingService = global.CodaProgressionVoicing;
 
 	function createBetween(currentMeasure, nextMeasure, progressionState) {
@@ -86,22 +87,7 @@
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	function numberOrDefault(value, fallback) {

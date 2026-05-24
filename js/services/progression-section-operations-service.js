@@ -4,6 +4,7 @@
 
 	var sectionContrast = global.CodaProgressionSectionContrast;
 	var sectionDocument = global.CodaProgressionSectionDocument;
+	var objectService = global.CodaProgressionObjects;
 	var sectionRetarget = global.CodaProgressionSectionRetarget;
 
 	function generateContrastingSection(options, dependencies) {
@@ -44,7 +45,7 @@
 	}
 
 	function cloneJson(value) {
-		return value == null ? null : JSON.parse(JSON.stringify(value));
+		return objectService.cloneJson(value);
 	}
 
 	global.CodaProgressionSectionOperations = {

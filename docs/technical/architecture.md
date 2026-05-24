@@ -36,12 +36,14 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/i18n/i18n-service.js`: servicio de traducción, idioma actual y etiquetas de catálogos.
 - `js/services/notation-service.js`: formato visible de notas en notación anglosajona o latina sin alterar identificadores internos.
 - `js/services/data-index-service.js`: creación de `CodaData.indexes` y de índices no enumerables en las colecciones principales.
+- `js/services/circle-of-fifths-target-service.js`: resolución de ids del círculo de quintas a informes de escala, para que los controladores de UI no dupliquen parseo de tonalidad y modo.
 - `js/services/progression-object-service.js`: utilidades compartidas de copia superficial y clonación de colecciones de objetos usadas por el motor de progresiones.
 - `js/services/progression-modal-planner-service.js`: planificación específica para modos griegos. Prioriza centro modal, tónica recurrente, acordes cadenciales modales, movimiento de bajo por segunda o tercera y evitación de gestos funcionales dominantes.
 - `js/services/progression-style-service.js`: perfiles históricos de estilo, alias de compatibilidad, afinidades de patrones, sesgos de densidad, tratamiento de séptimas y reglas activas por capa, desde Renacimiento hasta Contemporáneo.
 - `js/services/progression-classical-dissonance-service.js`: contrato de preparación, aparición y resolución de disonancias para estilos que requieren disonancia preparada. Filtra suspensiones, notas de paso y tensiones añadidas sin alterar el documento público de progresión.
 - `js/services/progression-chromatic-cadence-service.js`: generación de cadencias cromáticas tonales con sexta napolitana y acordes de sexta aumentada, siempre como preparación de dominante.
 - `js/services/progression-timing-service.js`: contrato temporal común para compases y segmentos: pulsos por compás, segundos por pulso, copia de campos temporales y validación de orden temporal.
+- `js/services/progression-harmonic-analysis-service.js`: contrato formal de análisis armónico derivado del documento final: transiciones de sección, fuentes de acordes y metadatos analíticos normalizados.
 - `js/services/progression-analysis-label-service.js`: derivación de etiquetas analíticas visibles a partir del documento final de progresión, incluyendo pivotes, dominantes secundarias, cromatismo e intercambio modal.
 - `js/services/musical-context-service.js`: construcción del contexto musical actual a partir de la selección de pantalla.
 - `js/services/preferences-service.js`: preferencias ligeras en cookie, actualmente idioma, notación, tema visual, volumen maestro, tónica, escala, formato, instrumento sonoro y controles del constructor de progresiones.
@@ -114,8 +116,9 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - El transporte de progresiones debe componerse mediante servicios pequeños: botones, clicks de compases, eventos de documento, drag and drop, acciones, playback y menú contextual. `js/ui/progression-transport-controller.js` debe limitarse a inicializar y cablear esas piezas.
 - La reproducción de progresiones debe mantener separadas la agenda musical, la normalización de eventos, las estrategias MIDI/arpegio y el runner de una ejecución. El caso de uso `createProgressionPlayback` no debe acumular nuevas reglas de secuenciación internas.
 - La selección de tónica, escala, formato e instrumento sonoro debe transformarse en un contexto musical explícito mediante `CodaMusicalContext` antes de alimentar casos de uso de aplicación. El instrumento sonoro se conserva como identificador General MIDI y la vista gráfica se resuelve mediante `viewInstrument`.
+- Los clicks del círculo de quintas deben resolverse mediante `CodaCircleOfFifthsTargets`; la UI no debe parsear manualmente ids como `F_` o `A_m`.
 - Las búsquedas repetidas en catálogos deben usar `CodaData.indexes` o los índices no enumerables generados por `js/services/data-index-service.js`; conservar siempre fallback lineal si una función acepta colecciones externas.
-- Las utilidades genéricas de copia y extensión de objetos dentro del motor de progresiones deben pasar por `CodaProgressionObjects`, no repetirse en cada servicio.
+- Las utilidades genéricas de copia, clonación profunda y extensión de objetos dentro del motor de progresiones deben pasar por `CodaProgressionObjects`, no repetirse en cada servicio.
 - Los textos visibles nuevos deben pasar por `js/i18n/` cuando formen parte de la interfaz.
 - `js/i18n/` no debe escribir en el DOM. La aplicación de textos al HTML debe hacerse desde `js/ui/static-text-controller.js` o módulos UI equivalentes.
 - El contenido largo de interfaz debe vivir en `js/content/` como datos estructurados y renderizarse desde `js/renderers/`, evitando duplicarlo como HTML estático en `index.html`.

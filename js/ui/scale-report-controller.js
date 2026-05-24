@@ -2,9 +2,12 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
+
 	function initialize(options) {
 		var i18n = options.i18n;
 		var keyNavigation = options.keyNavigation || global.CodaKeyNavigation;
+		var circleTargetService = options.circleTargetService || global.CodaCircleOfFifthsTargets;
 		var musicalContextService = options.musicalContext || global.CodaMusicalContext.create({
 			data: options.data
 		});
@@ -819,55 +822,13 @@
 		}
 
 		function scaleReportForCircleTarget(targetId) {
-			var target = circleTargetFromId(targetId);
-			var noteIndex;
-
-			if (!target || !options.application || typeof options.application.buildScaleReport !== 'function') {
-				return null;
-			}
-
-			noteIndex = keyNavigation && typeof keyNavigation.findNoteValue === 'function' ?
-				keyNavigation.findNoteValue(options.data.notes, target.tonicName) :
-				findNoteValue(options.data.notes, target.tonicName);
-
-			if (noteIndex < 0) {
-				return null;
-			}
-
-			return options.application.buildScaleReport({
+			return circleTargetService.reportForTarget({
+				application: options.application,
 				data: options.data,
 				domain: options.domain,
-				preferFlats: target.preferFlats,
-				scaleIndex: target.scaleIndex,
-				scaleName: options.data.scales[target.scaleIndex].nombre,
-				tonicIndex: noteIndex,
-				tonicName: target.tonicName
+				keyNavigation: keyNavigation,
+				targetId: targetId
 			});
-		}
-
-		function circleTargetFromId(targetId) {
-			var parts = String(targetId || '').split('_');
-			var tonicName = parts[0];
-
-			if (!tonicName) {
-				return null;
-			}
-
-			return {
-				preferFlats: tonicName.indexOf('b') > -1,
-				scaleIndex: parts[1] && parts[1].indexOf('m') > -1 ? 2 : 0,
-				tonicName: tonicName
-			};
-		}
-
-		function findNoteValue(notes, noteName) {
-			for (var i = 0; i < (notes || []).length; i++) {
-				if (notes[i].nombre === noteName || notes[i].enarmonica === noteName) {
-					return i;
-				}
-			}
-
-			return -1;
 		}
 
 		function closeCircleOfFifthsPopover() {
@@ -2098,7 +2059,7 @@
 	}
 
 	function cloneJson(value) {
-		return value == null ? null : JSON.parse(JSON.stringify(value));
+		return objectService.cloneJson(value);
 	}
 
 	function closest(target, selector) {

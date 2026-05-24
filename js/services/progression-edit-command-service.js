@@ -4,6 +4,7 @@
 
 	var documentService = global.CodaProgressionDocument;
 	var editingService = global.CodaProgressionEditing;
+	var objectService = global.CodaProgressionObjects;
 
 	var commandTypes = {
 		addMeasureChord: 'addMeasureChord',
@@ -68,7 +69,7 @@
 			return progression;
 		}
 
-		next = JSON.parse(JSON.stringify(progression));
+		next = objectService.cloneJson(progression);
 		next.userEdited = true;
 		return next;
 	}

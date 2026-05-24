@@ -1,6 +1,7 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
 	var timingService = global.CodaProgressionTiming;
 
 	function replaceContext(options) {
@@ -159,7 +160,7 @@
 	}
 
 	function cloneJson(value) {
-		return value == null ? null : JSON.parse(JSON.stringify(value));
+		return objectService.cloneJson(value);
 	}
 
 	global.CodaProgressionSectionRetarget = {

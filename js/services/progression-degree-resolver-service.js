@@ -2,6 +2,8 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
+
 	function fromDegreeNames(options) {
 		var resolvedDegrees = options.domain.resolveProgressionDegrees({
 			degrees: options.degrees,
@@ -98,22 +100,7 @@
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	global.CodaProgressionDegreeResolver = {

@@ -550,3 +550,7 @@ Regla general:
 La primera implementación debería limitarse a tonicalizaciones internas. Es la base necesaria para todo lo demás y aprovecha código ya existente de cromatismo, séptima disminuida, patrones de partimento y resolución de grados.
 
 Después conviene abordar la modulación por pivote entre secciones, porque encaja con el modelo actual de secciones contrastantes y reduce el riesgo de cambios bruscos. La modulación directa y las cadenas largas deberían llegar más tarde, cuando existan metadatos suficientes para explicar el cambio tonal y probarlo de forma aislada.
+
+## Pendiente de interfaz
+
+Queda pendiente un panel discreto de transición entre secciones. Debe mostrar una lectura sintética de las relaciones `A -> B` o `B -> C`, por ejemplo `Acorde pivote: Am = vi en C / ii en G`, a partir del contrato de `CodaProgressionHarmonicAnalysis`. Ese panel no debe crear reglas musicales nuevas ni duplicar cálculos del generador: sólo explicará la transición ya existente en el documento final.

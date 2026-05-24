@@ -3,6 +3,7 @@
 	'use strict';
 
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
+	var objectService = global.CodaProgressionObjects;
 	var revoiceService = global.CodaProgressionRevoice;
 	var timingService = global.CodaProgressionTiming;
 
@@ -130,7 +131,7 @@
 	}
 
 	function cloneJson(value) {
-		return value == null ? null : JSON.parse(JSON.stringify(value));
+		return objectService.cloneJson(value);
 	}
 
 	global.CodaProgressionDocumentTransform = {

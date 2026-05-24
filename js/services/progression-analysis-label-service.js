@@ -2,50 +2,38 @@
 (function (global) {
 	'use strict';
 
+	var harmonicAnalysis = global.CodaProgressionHarmonicAnalysis;
+
 	function sourceLabel(chord, options) {
-		var scaleIndex = chord && chord.sourceScaleIndex;
-		var scaleName = scaleIndex != null ? translate(options, 'data.scales.' + scaleIndex) : '';
-		var tonicName = chord && chord.sourceTonicName ? chord.sourceTonicName : '';
+		var source = harmonicAnalysis.sourceForChord(chord, options || {});
 
-		if (!chord) {
+		if (!source) {
 			return '';
 		}
 
-		if (chord.modulationSourceLabelKey) {
-			if (!isValidModulationSource(chord, options)) {
-				return '';
+		if (source.type === 'modulation') {
+			if (source.kind === 'pivot' || source.labelKey === 'progression.modulation.pivot') {
+				return pivotSourceLabel(source, options);
 			}
 
-			if (chord.modulationKind === 'pivot' || chord.modulationSourceLabelKey === 'progression.modulation.pivot') {
-				return pivotSourceLabel(chord, options);
-			}
-
-			return translate(options, chord.modulationSourceLabelKey);
+			return translate(options, source.labelKey);
 		}
 
-		if (chord.source === 'chromatic') {
-			if (isTransitionLabelKey(chord.sourceLabelKey) && !isValidModulationSource(chord, options)) {
-				return '';
-			}
-
-			return chord.sourceLabelKey ? translate(options, chord.sourceLabelKey) : '';
+		if (source.type === 'chromatic') {
+			return source.labelKey ? translate(options, source.labelKey) : '';
 		}
 
-		if (chord.source !== 'interchange' || !scaleName) {
-			return '';
+		if (source.type === 'interchange') {
+			return interchangeSourceLabel(source, options);
 		}
 
-		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
-			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
-		}
-
-		return tonicName ? tonicName + ' ' + scaleName : scaleName;
+		return '';
 	}
 
-	function pivotSourceLabel(chord, options) {
-		var baseLabel = capitalizeFirst(translate(options, chord.modulationSourceLabelKey || 'progression.modulation.pivot'));
-		var targetDegree = chord.pivotTargetDegree || '';
-		var targetContext = modulationTargetContextLabel(chord, options);
+	function pivotSourceLabel(source, options) {
+		var baseLabel = capitalizeFirst(translate(options, source.labelKey || 'progression.modulation.pivot'));
+		var targetDegree = source.targetDegree || '';
+		var targetContext = modulationTargetContextLabel(source, options);
 		var inLabel = translate(options, 'progression.modulation.inKey');
 
 		if (targetDegree && targetContext) {
@@ -55,10 +43,11 @@
 		return baseLabel;
 	}
 
-	function modulationTargetContextLabel(chord, options) {
-		var tonicName = chord.pivotTargetTonicName || chord.targetTonicName || '';
-		var scaleName = chord.pivotTargetScaleName || '';
-		var scaleIndex = chord.pivotTargetScaleIndex != null ? chord.pivotTargetScaleIndex : chord.targetScaleIndex;
+	function modulationTargetContextLabel(source, options) {
+		var targetContext = source.targetContext || {};
+		var tonicName = targetContext.tonicName || '';
+		var scaleName = targetContext.scaleName || '';
+		var scaleIndex = targetContext.scaleIndex;
 
 		if (scaleIndex != null) {
 			scaleName = translate(options, 'data.scales.' + scaleIndex);
@@ -71,63 +60,19 @@
 		return [tonicName, scaleName].filter(Boolean).join(' ');
 	}
 
-	function isValidModulationSource(chord, options) {
-		var sections = options && options.sections ? options.sections : [];
-		var section = sectionForId(sections, chord.sectionId);
-		var kind = chord.modulationKind || modulationKindFromLabel(chord.modulationSourceLabelKey || chord.sourceLabelKey);
+	function interchangeSourceLabel(source, options) {
+		var scaleName = source.scaleIndex != null ? translate(options, 'data.scales.' + source.scaleIndex) : '';
+		var tonicName = source.tonicName || '';
 
-		if (!section || !kind) {
-			return false;
+		if (!scaleName) {
+			return '';
 		}
 
-		if (section.contrast && section.modulation && section.modulation.kind === kind && section.modulation.targetSectionId === section.id) {
-			return true;
+		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
+			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
 		}
 
-		return !!sectionWithModulationFrom(sections, section.id, kind);
-	}
-
-	function isTransitionLabelKey(labelKey) {
-		return labelKey === 'progression.modulation.pivot' ||
-			labelKey === 'progression.modulation.secondaryDominant';
-	}
-
-	function modulationKindFromLabel(labelKey) {
-		if (labelKey === 'progression.modulation.pivot') {
-			return 'pivot';
-		}
-
-		if (labelKey === 'progression.modulation.secondaryDominant') {
-			return 'secondaryDominant';
-		}
-
-		return '';
-	}
-
-	function sectionForId(sections, sectionId) {
-		for (var i = 0; i < (sections || []).length; i++) {
-			if (sections[i].id === sectionId) {
-				return sections[i];
-			}
-		}
-
-		return null;
-	}
-
-	function sectionWithModulationFrom(sections, sectionId, kind) {
-		for (var i = 0; i < (sections || []).length; i++) {
-			if (
-				sections[i].contrast &&
-				sections[i].modulation &&
-				sections[i].modulation.kind === kind &&
-				sections[i].modulation.originSectionId === sectionId &&
-				sections[i].modulation.targetSectionId === sections[i].id
-			) {
-				return sections[i];
-			}
-		}
-
-		return null;
+		return tonicName ? tonicName + ' ' + scaleName : scaleName;
 	}
 
 	function translate(options, key) {
@@ -141,7 +86,6 @@
 	}
 
 	global.CodaProgressionAnalysisLabels = {
-		isValidModulationSource: isValidModulationSource,
 		modulationTargetContextLabel: modulationTargetContextLabel,
 		pivotSourceLabel: pivotSourceLabel,
 		sourceLabel: sourceLabel

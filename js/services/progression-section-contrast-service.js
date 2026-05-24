@@ -5,6 +5,7 @@
 	var sectionCandidates = global.CodaProgressionSectionCandidates;
 	var sectionDocument = global.CodaProgressionSectionDocument;
 	var sectionModulation = global.CodaProgressionSectionModulation;
+	var objectService = global.CodaProgressionObjects;
 	var sectionVariation = global.CodaProgressionSectionVariation;
 
 	function generate(options, dependencies) {
@@ -345,34 +346,11 @@
 	}
 
 	function cloneObject(value) {
-		var result = {};
-
-		for (var key in value || {}) {
-			if (Object.prototype.hasOwnProperty.call(value, key)) {
-				result[key] = value[key];
-			}
-		}
-
-		return result;
+		return objectService.cloneObject(value);
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target || {}) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values || {}) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	global.CodaProgressionSectionContrast = {

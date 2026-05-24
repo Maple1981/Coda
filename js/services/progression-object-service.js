@@ -34,7 +34,17 @@
 		return result;
 	}
 
+	function cloneObject(value) {
+		return extendObject({}, value || {});
+	}
+
+	function cloneJson(value) {
+		return value == null ? null : JSON.parse(JSON.stringify(value));
+	}
+
 	global.CodaProgressionObjects = {
+		cloneJson: cloneJson,
+		cloneObject: cloneObject,
 		cloneObjects: cloneObjects,
 		extendObject: extendObject
 	};

@@ -2,6 +2,8 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
+
 	var profiles = {
 		13: {
 			cadentialDegrees: [4],
@@ -309,15 +311,7 @@
 	}
 
 	function cloneObject(value) {
-		var result = {};
-
-		for (var key in value || {}) {
-			if (Object.prototype.hasOwnProperty.call(value, key)) {
-				result[key] = value[key];
-			}
-		}
-
-		return result;
+		return objectService.cloneObject(value);
 	}
 
 	global.CodaProgressionModalPlanner = {

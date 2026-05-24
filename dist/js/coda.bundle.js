@@ -2889,6 +2889,73 @@
 
 ;
 
+/* Source: js/services/circle-of-fifths-target-service.js */
+// Resolves circle-of-fifths DOM target ids into scale reports.
+(function (global) {
+	'use strict';
+
+	function reportForTarget(options) {
+		var target = targetFromId(options && options.targetId);
+		var noteIndex;
+
+		if (!target || !options || !options.application || typeof options.application.buildScaleReport !== 'function') {
+			return null;
+		}
+
+		noteIndex = findNoteValue(options.data ? options.data.notes : [], target.tonicName, options.keyNavigation);
+		if (noteIndex < 0) {
+			return null;
+		}
+
+		return options.application.buildScaleReport({
+			data: options.data,
+			domain: options.domain,
+			preferFlats: target.preferFlats,
+			scaleIndex: target.scaleIndex,
+			scaleName: options.data.scales[target.scaleIndex].nombre,
+			tonicIndex: noteIndex,
+			tonicName: target.tonicName
+		});
+	}
+
+	function targetFromId(targetId) {
+		var parts = String(targetId || '').split('_');
+		var tonicName = parts[0];
+
+		if (!tonicName) {
+			return null;
+		}
+
+		return {
+			preferFlats: tonicName.indexOf('b') > -1,
+			scaleIndex: parts[1] && parts[1].indexOf('m') > -1 ? 2 : 0,
+			tonicName: tonicName
+		};
+	}
+
+	function findNoteValue(notes, noteName, keyNavigation) {
+		if (keyNavigation && typeof keyNavigation.findNoteValue === 'function') {
+			return keyNavigation.findNoteValue(notes, noteName);
+		}
+
+		for (var i = 0; i < (notes || []).length; i++) {
+			if (notes[i].nombre === noteName || notes[i].enarmonica === noteName) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	global.CodaCircleOfFifthsTargets = {
+		findNoteValue: findNoteValue,
+		reportForTarget: reportForTarget,
+		targetFromId: targetFromId
+	};
+})(window);
+
+;
+
 /* Source: js/services/notation-service.js */
 // Note-name presentation helpers. Internal musical identifiers remain in
 // Anglo-Saxon notation; this service only formats visible labels.
@@ -3325,12 +3392,68 @@
 
 ;
 
+/* Source: js/services/progression-object-service.js */
+// Shared object helpers for progression services.
+(function (global) {
+	'use strict';
+
+	function extendObject(target, values) {
+		var result = {};
+		var key;
+
+		target = target || {};
+		values = values || {};
+
+		for (key in target) {
+			if (Object.prototype.hasOwnProperty.call(target, key)) {
+				result[key] = target[key];
+			}
+		}
+
+		for (key in values) {
+			if (Object.prototype.hasOwnProperty.call(values, key)) {
+				result[key] = values[key];
+			}
+		}
+
+		return result;
+	}
+
+	function cloneObjects(items) {
+		var result = [];
+
+		for (var i = 0; i < (items || []).length; i++) {
+			result.push(extendObject({}, items[i]));
+		}
+
+		return result;
+	}
+
+	function cloneObject(value) {
+		return extendObject({}, value || {});
+	}
+
+	function cloneJson(value) {
+		return value == null ? null : JSON.parse(JSON.stringify(value));
+	}
+
+	global.CodaProgressionObjects = {
+		cloneJson: cloneJson,
+		cloneObject: cloneObject,
+		cloneObjects: cloneObjects,
+		extendObject: extendObject
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-document-service.js */
 // Canonical helpers for editable progression documents.
 (function (global) {
 	'use strict';
 
 	var documentVersion = 1;
+	var objectService = global.CodaProgressionObjects;
 
 	function normalize(progression, options) {
 		var next;
@@ -3413,26 +3536,11 @@
 	}
 
 	function cloneJson(value) {
-		return value == null ? null : JSON.parse(JSON.stringify(value));
+		return objectService.cloneJson(value);
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target || {}) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values || {}) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	function normalizeNonNegative(value) {
@@ -3458,6 +3566,7 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
 	var workspaceVersion = 1;
 	var progressionDocument = global.CodaProgressionDocument;
 
@@ -3548,7 +3657,7 @@
 	}
 
 	function cloneJson(value) {
-		return value == null ? null : JSON.parse(JSON.stringify(value));
+		return objectService.cloneJson(value);
 	}
 
 	global.CodaProgressionWorkspace = {
@@ -4001,6 +4110,8 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
+
 	function fromDegreeNames(options) {
 		var resolvedDegrees = options.domain.resolveProgressionDegrees({
 			degrees: options.degrees,
@@ -4097,22 +4208,7 @@
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	global.CodaProgressionDegreeResolver = {
@@ -4443,51 +4539,6 @@
 		resolvesByStepToAny: resolvesByStepToAny,
 		resolvesByStepToChordThird: resolvesByStepToChordThird,
 		stepDistance: stepDistance
-	};
-})(window);
-
-;
-
-/* Source: js/services/progression-object-service.js */
-// Shared object helpers for progression services.
-(function (global) {
-	'use strict';
-
-	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		target = target || {};
-		values = values || {};
-
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
-	}
-
-	function cloneObjects(items) {
-		var result = [];
-
-		for (var i = 0; i < (items || []).length; i++) {
-			result.push(extendObject({}, items[i]));
-		}
-
-		return result;
-	}
-
-	global.CodaProgressionObjects = {
-		cloneObjects: cloneObjects,
-		extendObject: extendObject
 	};
 })(window);
 
@@ -5329,6 +5380,7 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
 	var voicingService = global.CodaProgressionVoicing;
 
 	function createBetween(currentMeasure, nextMeasure, progressionState) {
@@ -5413,22 +5465,7 @@
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	function numberOrDefault(value, fallback) {
@@ -6176,94 +6213,143 @@
 
 ;
 
-/* Source: js/services/progression-analysis-label-service.js */
-// Derives visible analysis labels from the final progression document.
+/* Source: js/services/progression-harmonic-analysis-service.js */
+// Formal harmonic analysis contract derived from a progression document.
 (function (global) {
 	'use strict';
 
-	function sourceLabel(chord, options) {
-		var scaleIndex = chord && chord.sourceScaleIndex;
-		var scaleName = scaleIndex != null ? translate(options, 'data.scales.' + scaleIndex) : '';
-		var tonicName = chord && chord.sourceTonicName ? chord.sourceTonicName : '';
+	function analyze(progression) {
+		var sections = progression && progression.sections ? progression.sections : [];
+		var measures = progression && progression.measures ? progression.measures : [];
+
+		return {
+			measures: measureAnalyses(measures, sections),
+			transitions: transitionAnalyses(sections),
+			version: 1
+		};
+	}
+
+	function sourceForChord(chord, options) {
+		var modulation;
 
 		if (!chord) {
-			return '';
+			return null;
 		}
 
-		if (chord.modulationSourceLabelKey) {
-			if (!isValidModulationSource(chord, options)) {
-				return '';
-			}
-
-			if (chord.modulationKind === 'pivot' || chord.modulationSourceLabelKey === 'progression.modulation.pivot') {
-				return pivotSourceLabel(chord, options);
-			}
-
-			return translate(options, chord.modulationSourceLabelKey);
+		modulation = modulationForChord(chord, options);
+		if (modulation) {
+			return {
+				kind: modulation.kind,
+				labelKey: chord.modulationSourceLabelKey || chord.sourceLabelKey,
+				targetContext: modulation.targetContext,
+				targetDegree: chord.pivotTargetDegree || '',
+				type: 'modulation'
+			};
 		}
 
 		if (chord.source === 'chromatic') {
-			if (isTransitionLabelKey(chord.sourceLabelKey) && !isValidModulationSource(chord, options)) {
-				return '';
+			if (isTransitionLabelKey(chord.sourceLabelKey)) {
+				return null;
 			}
 
-			return chord.sourceLabelKey ? translate(options, chord.sourceLabelKey) : '';
+			return {
+				labelKey: chord.sourceLabelKey || '',
+				role: chord.chromaticRole || '',
+				type: 'chromatic'
+			};
 		}
 
-		if (chord.source !== 'interchange' || !scaleName) {
-			return '';
+		if (chord.source === 'interchange') {
+			return {
+				scaleIndex: chord.sourceScaleIndex,
+				tonicName: chord.sourceTonicName || '',
+				type: 'interchange'
+			};
 		}
 
-		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
-			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
-		}
-
-		return tonicName ? tonicName + ' ' + scaleName : scaleName;
+		return null;
 	}
 
-	function pivotSourceLabel(chord, options) {
-		var baseLabel = capitalizeFirst(translate(options, chord.modulationSourceLabelKey || 'progression.modulation.pivot'));
-		var targetDegree = chord.pivotTargetDegree || '';
-		var targetContext = modulationTargetContextLabel(chord, options);
-		var inLabel = translate(options, 'progression.modulation.inKey');
-
-		if (targetDegree && targetContext) {
-			return baseLabel + ': ' + targetDegree + ' ' + inLabel + ' ' + targetContext;
-		}
-
-		return baseLabel;
-	}
-
-	function modulationTargetContextLabel(chord, options) {
-		var tonicName = chord.pivotTargetTonicName || chord.targetTonicName || '';
-		var scaleName = chord.pivotTargetScaleName || '';
-		var scaleIndex = chord.pivotTargetScaleIndex != null ? chord.pivotTargetScaleIndex : chord.targetScaleIndex;
-
-		if (scaleIndex != null) {
-			scaleName = translate(options, 'data.scales.' + scaleIndex);
-		}
-
-		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
-			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
-		}
-
-		return [tonicName, scaleName].filter(Boolean).join(' ');
-	}
-
-	function isValidModulationSource(chord, options) {
+	function modulationForChord(chord, options) {
 		var sections = options && options.sections ? options.sections : [];
 		var section = sectionForId(sections, chord.sectionId);
 		var kind = chord.modulationKind || modulationKindFromLabel(chord.modulationSourceLabelKey || chord.sourceLabelKey);
+		var transition;
 
 		if (!section || !kind) {
-			return false;
+			return null;
 		}
 
 		if (section.contrast && section.modulation && section.modulation.kind === kind && section.modulation.targetSectionId === section.id) {
-			return true;
+			return transitionFromSection(section);
 		}
 
-		return !!sectionWithModulationFrom(sections, section.id, kind);
+		transition = transitionFromOriginSection(sections, section.id, kind);
+		return transition || null;
+	}
+
+	function transitionAnalyses(sections) {
+		var transitions = [];
+
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (sections[i].contrast && sections[i].modulation && sections[i].modulation.targetSectionId === sections[i].id) {
+				transitions.push(transitionFromSection(sections[i]));
+			}
+		}
+
+		return transitions;
+	}
+
+	function measureAnalyses(measures, sections) {
+		var result = [];
+
+		for (var i = 0; i < (measures || []).length; i++) {
+			result.push({
+				bar: measures[i].bar || i + 1,
+				index: i,
+				sectionId: measures[i].sectionId || '',
+				source: sourceForChord(measures[i], { sections: sections })
+			});
+		}
+
+		return result;
+	}
+
+	function transitionFromSection(section) {
+		var modulation = section.modulation || {};
+
+		return {
+			kind: modulation.kind || '',
+			originSectionId: modulation.originSectionId || '',
+			pivotDegree: modulation.pivotDegree || '',
+			targetContext: {
+				label: modulation.targetContextLabel || section.contextLabel || '',
+				scaleIndex: modulation.targetScaleIndex != null ? modulation.targetScaleIndex : section.contextScaleIndex,
+				scaleName: section.contextScaleName || '',
+				tonicName: modulation.targetTonicName || section.contextTonicName || ''
+			},
+			targetSectionId: modulation.targetSectionId || section.id
+		};
+	}
+
+	function transitionFromOriginSection(sections, sectionId, kind) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (
+				sections[i].contrast &&
+				sections[i].modulation &&
+				sections[i].modulation.kind === kind &&
+				sections[i].modulation.originSectionId === sectionId &&
+				sections[i].modulation.targetSectionId === sections[i].id
+			) {
+				return transitionFromSection(sections[i]);
+			}
+		}
+
+		return null;
+	}
+
+	function isValidModulationSource(chord, options) {
+		return !!modulationForChord(chord, options);
 	}
 
 	function isTransitionLabelKey(labelKey) {
@@ -6293,20 +6379,94 @@
 		return null;
 	}
 
-	function sectionWithModulationFrom(sections, sectionId, kind) {
-		for (var i = 0; i < (sections || []).length; i++) {
-			if (
-				sections[i].contrast &&
-				sections[i].modulation &&
-				sections[i].modulation.kind === kind &&
-				sections[i].modulation.originSectionId === sectionId &&
-				sections[i].modulation.targetSectionId === sections[i].id
-			) {
-				return sections[i];
-			}
+	global.CodaProgressionHarmonicAnalysis = {
+		analyze: analyze,
+		isTransitionLabelKey: isTransitionLabelKey,
+		isValidModulationSource: isValidModulationSource,
+		modulationForChord: modulationForChord,
+		modulationKindFromLabel: modulationKindFromLabel,
+		sourceForChord: sourceForChord
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-analysis-label-service.js */
+// Derives visible analysis labels from the final progression document.
+(function (global) {
+	'use strict';
+
+	var harmonicAnalysis = global.CodaProgressionHarmonicAnalysis;
+
+	function sourceLabel(chord, options) {
+		var source = harmonicAnalysis.sourceForChord(chord, options || {});
+
+		if (!source) {
+			return '';
 		}
 
-		return null;
+		if (source.type === 'modulation') {
+			if (source.kind === 'pivot' || source.labelKey === 'progression.modulation.pivot') {
+				return pivotSourceLabel(source, options);
+			}
+
+			return translate(options, source.labelKey);
+		}
+
+		if (source.type === 'chromatic') {
+			return source.labelKey ? translate(options, source.labelKey) : '';
+		}
+
+		if (source.type === 'interchange') {
+			return interchangeSourceLabel(source, options);
+		}
+
+		return '';
+	}
+
+	function pivotSourceLabel(source, options) {
+		var baseLabel = capitalizeFirst(translate(options, source.labelKey || 'progression.modulation.pivot'));
+		var targetDegree = source.targetDegree || '';
+		var targetContext = modulationTargetContextLabel(source, options);
+		var inLabel = translate(options, 'progression.modulation.inKey');
+
+		if (targetDegree && targetContext) {
+			return baseLabel + ': ' + targetDegree + ' ' + inLabel + ' ' + targetContext;
+		}
+
+		return baseLabel;
+	}
+
+	function modulationTargetContextLabel(source, options) {
+		var targetContext = source.targetContext || {};
+		var tonicName = targetContext.tonicName || '';
+		var scaleName = targetContext.scaleName || '';
+		var scaleIndex = targetContext.scaleIndex;
+
+		if (scaleIndex != null) {
+			scaleName = translate(options, 'data.scales.' + scaleIndex);
+		}
+
+		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
+			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
+		}
+
+		return [tonicName, scaleName].filter(Boolean).join(' ');
+	}
+
+	function interchangeSourceLabel(source, options) {
+		var scaleName = source.scaleIndex != null ? translate(options, 'data.scales.' + source.scaleIndex) : '';
+		var tonicName = source.tonicName || '';
+
+		if (!scaleName) {
+			return '';
+		}
+
+		if (tonicName && options.notation && typeof options.notation.formatNoteName === 'function') {
+			tonicName = options.notation.formatNoteName(tonicName, options.notationStyle);
+		}
+
+		return tonicName ? tonicName + ' ' + scaleName : scaleName;
 	}
 
 	function translate(options, key) {
@@ -6320,7 +6480,6 @@
 	}
 
 	global.CodaProgressionAnalysisLabels = {
-		isValidModulationSource: isValidModulationSource,
 		modulationTargetContextLabel: modulationTargetContextLabel,
 		pivotSourceLabel: pivotSourceLabel,
 		sourceLabel: sourceLabel
@@ -8401,6 +8560,7 @@
 	var chordPlanService = global.CodaProgressionChordPlan;
 	var measureContext = global.CodaProgressionMeasureContext;
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
+	var objectService = global.CodaProgressionObjects;
 	var segmentBuilder = global.CodaProgressionSegmentBuilder;
 	var voiceLeadingService = global.CodaProgressionVoiceLeading;
 
@@ -8593,22 +8753,7 @@
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	function numberOrDefault(value, fallback) {
@@ -8633,6 +8778,7 @@
 	'use strict';
 
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
+	var objectService = global.CodaProgressionObjects;
 	var revoiceService = global.CodaProgressionRevoice;
 	var timingService = global.CodaProgressionTiming;
 
@@ -8760,7 +8906,7 @@
 	}
 
 	function cloneJson(value) {
-		return value == null ? null : JSON.parse(JSON.stringify(value));
+		return objectService.cloneJson(value);
 	}
 
 	global.CodaProgressionDocumentTransform = {
@@ -10523,6 +10669,8 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
+
 	var profiles = {
 		13: {
 			cadentialDegrees: [4],
@@ -10830,15 +10978,7 @@
 	}
 
 	function cloneObject(value) {
-		var result = {};
-
-		for (var key in value || {}) {
-			if (Object.prototype.hasOwnProperty.call(value, key)) {
-				result[key] = value[key];
-			}
-		}
-
-		return result;
+		return objectService.cloneObject(value);
 	}
 
 	global.CodaProgressionModalPlanner = {
@@ -10865,6 +11005,7 @@
 	var modalPlanner = global.CodaProgressionModalPlanner;
 	var patternSelector = global.CodaProgressionPatternSelector;
 	var phraseBlockSelector = global.CodaProgressionPhraseBlockSelector;
+	var objectService = global.CodaProgressionObjects;
 	var styleService = global.CodaProgressionStyle;
 
 	function createPlan(options) {
@@ -11321,23 +11462,7 @@
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		target = target || {};
-		for (key in target) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	function degreeFromSource(sourceDegree, defaults) {
@@ -11506,6 +11631,7 @@
 	'use strict';
 
 	var cloneService = global.CodaProgressionMeasureClone;
+	var objectService = global.CodaProgressionObjects;
 
 	function measuresForSectionA(progression, progressionState) {
 		return measuresForSection(progression, 'A', progressionState);
@@ -11653,34 +11779,11 @@
 	}
 
 	function cloneObject(value) {
-		var result = {};
-
-		for (var key in value || {}) {
-			if (Object.prototype.hasOwnProperty.call(value, key)) {
-				result[key] = value[key];
-			}
-		}
-
-		return result;
+		return objectService.cloneObject(value);
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target || {}) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values || {}) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	global.CodaProgressionSectionDocument = {
@@ -11705,6 +11808,7 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
 	var timingService = global.CodaProgressionTiming;
 
 	function replaceContext(options) {
@@ -11863,7 +11967,7 @@
 	}
 
 	function cloneJson(value) {
-		return value == null ? null : JSON.parse(JSON.stringify(value));
+		return objectService.cloneJson(value);
 	}
 
 	global.CodaProgressionSectionRetarget = {
@@ -12600,6 +12704,7 @@
 	var sectionCandidates = global.CodaProgressionSectionCandidates;
 	var sectionDocument = global.CodaProgressionSectionDocument;
 	var sectionModulation = global.CodaProgressionSectionModulation;
+	var objectService = global.CodaProgressionObjects;
 	var sectionVariation = global.CodaProgressionSectionVariation;
 
 	function generate(options, dependencies) {
@@ -12940,34 +13045,11 @@
 	}
 
 	function cloneObject(value) {
-		var result = {};
-
-		for (var key in value || {}) {
-			if (Object.prototype.hasOwnProperty.call(value, key)) {
-				result[key] = value[key];
-			}
-		}
-
-		return result;
+		return objectService.cloneObject(value);
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target || {}) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values || {}) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	global.CodaProgressionSectionContrast = {
@@ -13000,6 +13082,7 @@
 
 	var sectionContrast = global.CodaProgressionSectionContrast;
 	var sectionDocument = global.CodaProgressionSectionDocument;
+	var objectService = global.CodaProgressionObjects;
 	var sectionRetarget = global.CodaProgressionSectionRetarget;
 
 	function generateContrastingSection(options, dependencies) {
@@ -13040,7 +13123,7 @@
 	}
 
 	function cloneJson(value) {
-		return value == null ? null : JSON.parse(JSON.stringify(value));
+		return objectService.cloneJson(value);
 	}
 
 	global.CodaProgressionSectionOperations = {
@@ -13059,6 +13142,7 @@
 
 	var documentService = global.CodaProgressionDocument;
 	var editingService = global.CodaProgressionEditing;
+	var objectService = global.CodaProgressionObjects;
 
 	var commandTypes = {
 		addMeasureChord: 'addMeasureChord',
@@ -13123,7 +13207,7 @@
 			return progression;
 		}
 
-		next = JSON.parse(JSON.stringify(progression));
+		next = objectService.cloneJson(progression);
 		next.userEdited = true;
 		return next;
 	}
@@ -20149,6 +20233,7 @@
 
 	var labels = global.CodaRenderers.progressionLabels;
 	var analysisLabels = global.CodaProgressionAnalysisLabels;
+	var objectService = global.CodaProgressionObjects;
 
 	function renderTimeline(progression, options) {
 		var html = '<div class="progressionTimeline" aria-label="">';
@@ -20652,22 +20737,7 @@
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target || {}) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values || {}) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	function translate(options, key) {
@@ -23657,9 +23727,12 @@
 (function (global) {
 	'use strict';
 
+	var objectService = global.CodaProgressionObjects;
+
 	function initialize(options) {
 		var i18n = options.i18n;
 		var keyNavigation = options.keyNavigation || global.CodaKeyNavigation;
+		var circleTargetService = options.circleTargetService || global.CodaCircleOfFifthsTargets;
 		var musicalContextService = options.musicalContext || global.CodaMusicalContext.create({
 			data: options.data
 		});
@@ -24474,55 +24547,13 @@
 		}
 
 		function scaleReportForCircleTarget(targetId) {
-			var target = circleTargetFromId(targetId);
-			var noteIndex;
-
-			if (!target || !options.application || typeof options.application.buildScaleReport !== 'function') {
-				return null;
-			}
-
-			noteIndex = keyNavigation && typeof keyNavigation.findNoteValue === 'function' ?
-				keyNavigation.findNoteValue(options.data.notes, target.tonicName) :
-				findNoteValue(options.data.notes, target.tonicName);
-
-			if (noteIndex < 0) {
-				return null;
-			}
-
-			return options.application.buildScaleReport({
+			return circleTargetService.reportForTarget({
+				application: options.application,
 				data: options.data,
 				domain: options.domain,
-				preferFlats: target.preferFlats,
-				scaleIndex: target.scaleIndex,
-				scaleName: options.data.scales[target.scaleIndex].nombre,
-				tonicIndex: noteIndex,
-				tonicName: target.tonicName
+				keyNavigation: keyNavigation,
+				targetId: targetId
 			});
-		}
-
-		function circleTargetFromId(targetId) {
-			var parts = String(targetId || '').split('_');
-			var tonicName = parts[0];
-
-			if (!tonicName) {
-				return null;
-			}
-
-			return {
-				preferFlats: tonicName.indexOf('b') > -1,
-				scaleIndex: parts[1] && parts[1].indexOf('m') > -1 ? 2 : 0,
-				tonicName: tonicName
-			};
-		}
-
-		function findNoteValue(notes, noteName) {
-			for (var i = 0; i < (notes || []).length; i++) {
-				if (notes[i].nombre === noteName || notes[i].enarmonica === noteName) {
-					return i;
-				}
-			}
-
-			return -1;
 		}
 
 		function closeCircleOfFifthsPopover() {
@@ -25753,7 +25784,7 @@
 	}
 
 	function cloneJson(value) {
-		return value == null ? null : JSON.parse(JSON.stringify(value));
+		return objectService.cloneJson(value);
 	}
 
 	function closest(target, selector) {

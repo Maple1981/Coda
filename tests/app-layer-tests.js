@@ -585,6 +585,13 @@ assert.equal(pivotModulationProgression.measures[3].degree.indexOf('/'), -1);
 assert.equal(pivotModulationProgression.measures[3].pivotTargetTonicName, pivotModulationProgression.sections[1].contextTonicName);
 assert.equal(pivotModulationProgression.measures[4].modulationRole, undefined);
 assert.equal(pivotModulationProgression.measures[4].modulationSourceLabelKey, undefined);
+const pivotAnalysis = context.window.CodaProgressionHarmonicAnalysis.analyze(pivotModulationProgression);
+assert.equal(pivotAnalysis.version, 1);
+assert.equal(pivotAnalysis.transitions[0].kind, 'pivot');
+assert.equal(pivotAnalysis.transitions[0].originSectionId, 'A');
+assert.equal(pivotAnalysis.transitions[0].targetSectionId, 'B');
+assert.equal(pivotAnalysis.measures[3].source.type, 'modulation');
+assert.equal(pivotAnalysis.measures[3].source.kind, 'pivot');
 const retargetedBMeasures = app.generateProgressionFromState({
 	data: data,
 	domain: domain,

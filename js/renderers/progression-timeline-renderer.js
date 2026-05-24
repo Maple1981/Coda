@@ -4,6 +4,7 @@
 
 	var labels = global.CodaRenderers.progressionLabels;
 	var analysisLabels = global.CodaProgressionAnalysisLabels;
+	var objectService = global.CodaProgressionObjects;
 
 	function renderTimeline(progression, options) {
 		var html = '<div class="progressionTimeline" aria-label="">';
@@ -507,22 +508,7 @@
 	}
 
 	function extendObject(target, values) {
-		var result = {};
-		var key;
-
-		for (key in target || {}) {
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				result[key] = target[key];
-			}
-		}
-
-		for (key in values || {}) {
-			if (Object.prototype.hasOwnProperty.call(values, key)) {
-				result[key] = values[key];
-			}
-		}
-
-		return result;
+		return objectService.extendObject(target, values);
 	}
 
 	function translate(options, key) {
