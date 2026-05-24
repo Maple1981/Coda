@@ -94,6 +94,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/ui/random-select-controller.js`: patrón reutilizable para botones de azar asociados a selectores. Cambia el valor del `select` objetivo y dispara su evento `change` para reutilizar la lógica existente.
 - `js/ui/key-navigation-controller.js`: navegación desde el círculo de quintas y recomendación de formato bemol/sostenido.
 - `js/ui/circle-of-fifths-popover-controller.js`: apertura, cierre, arrastre y enrutado del popup del círculo de quintas para targets globales y targets de sección.
+- `js/ui/workbench-instrument-menu-controller.js`: apertura, cierre, render y selección del menú de instrumento del workbench.
 - `js/ui/changelog-dialog-controller.js`: apertura, cierre y configuración del diálogo de novedades.
 - `js/ui/scale-report-ui.js`: lectura/montaje de UI.
 - `js/ui/scale-report-controller.js`: inicialización de selects, eventos principales y delegación en aplicación/UI.
@@ -119,6 +120,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - El transporte de progresiones debe componerse mediante servicios pequeños: botones, clicks de compases, eventos de documento, drag and drop, acciones, playback y menú contextual. `js/ui/progression-transport-controller.js` debe limitarse a inicializar y cablear esas piezas.
 - Los eventos que crean progresiones, añaden secciones, eliminan secciones o eligen el tipo de sección siguiente deben pasar por `CodaProgressionGenerationEvents`. El controlador principal puede orquestar el caso de uso musical, pero no debe volver a acumular selectores ni delegación DOM de esos botones.
 - El popup del círculo de quintas debe pasar por `CodaCircleOfFifthsPopover`. La UI principal sólo decide qué hacer con un target global o con un target de sección; apertura, cierre, arrastre, render del círculo y atributos `aria-expanded` pertenecen al controlador del popup.
+- El menú de instrumento del workbench debe pasar por `CodaWorkbenchInstrumentMenu`. La UI principal sólo aplica el instrumento elegido y conserva selección, playback y preferencias.
 - La reproducción de progresiones debe mantener separadas la agenda musical, la normalización de eventos, las estrategias MIDI/arpegio y el runner de una ejecución. El caso de uso `createProgressionPlayback` no debe acumular nuevas reglas de secuenciación internas.
 - La selección de tónica, escala, formato e instrumento sonoro debe transformarse en un contexto musical explícito mediante `CodaMusicalContext` antes de alimentar casos de uso de aplicación. El instrumento sonoro se conserva como identificador General MIDI y la vista gráfica se resuelve mediante `viewInstrument`.
 - Los clicks del círculo de quintas deben resolverse mediante `CodaCircleOfFifthsTargets`; la UI no debe parsear manualmente ids como `F_` o `A_m`.

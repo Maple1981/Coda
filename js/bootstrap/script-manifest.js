@@ -166,6 +166,7 @@
 			'js/ui/progression-transport-controller.js',
 			'js/ui/progression-generation-events-controller.js',
 			'js/ui/circle-of-fifths-popover-controller.js',
+			'js/ui/workbench-instrument-menu-controller.js',
 			'js/ui/scale-report-ui.js',
 			'js/ui/scale-report-controller.js',
 			'js/services/playback-service.js',

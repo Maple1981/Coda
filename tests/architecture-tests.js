@@ -194,6 +194,7 @@ assert.ok(global.CodaRandomSelect.randomizeAllAssociatedControls);
 assert.ok(global.CodaProgressionTransport.initialize);
 assert.ok(global.CodaProgressionGenerationEvents.initialize);
 assert.ok(global.CodaCircleOfFifthsPopover.initialize);
+assert.ok(global.CodaWorkbenchInstrumentMenu.initialize);
 assert.ok(global.CodaKeyNavigation.applyRecommendedNotation);
 assert.ok(global.CodaChangelogDialog.initialize);
 assert.ok(global.CodaUi.renderScaleReport);
@@ -236,6 +237,7 @@ assert.ok(manifestScripts.indexOf('js/ui/dashboard-resizer-controller.js') > -1)
 assert.ok(manifestScripts.indexOf('js/ui/progression-transport-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/progression-generation-events-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/ui/circle-of-fifths-popover-controller.js') > -1);
+assert.ok(manifestScripts.indexOf('js/ui/workbench-instrument-menu-controller.js') > -1);
 assert.ok(manifestScripts.indexOf('js/domain/progression-domain.js') > -1);
 assert.ok(manifestScripts.indexOf('js/application/progression-application.js') > -1);
 assert.ok(manifestScripts.indexOf('js/application/progression-playback-application.js') > -1);

@@ -44,6 +44,10 @@ Write-Host "Ejecutando smoke test de flujo de secciones..."
 node tests\progression-section-flow-smoke-tests.js
 Assert-LastCommand "node tests\progression-section-flow-smoke-tests.js"
 
+Write-Host "Ejecutando pruebas UI de controles e instrumentos..."
+node tests\progression-ui-controls-instruments-tests.js
+Assert-LastCommand "node tests\progression-ui-controls-instruments-tests.js"
+
 Write-Host "Ejecutando pruebas de renderizado..."
 node tests\renderers-tests.js
 Assert-LastCommand "node tests\renderers-tests.js"
@@ -64,7 +68,7 @@ Write-Host "Ejecutando pruebas del transporte de progresiones..."
 node tests\progression-transport-tests.js
 Assert-LastCommand "node tests\progression-transport-tests.js"
 
-Write-Host "Ejecutando pruebas de comportamiento UI de progresiones..."
+Write-Host "Ejecutando pruebas integrales UI de estado, secciones y expresión..."
 node tests\progression-ui-behavior-tests.js
 Assert-LastCommand "node tests\progression-ui-behavior-tests.js"
 

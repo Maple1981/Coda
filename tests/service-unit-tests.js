@@ -15,6 +15,7 @@ const loader = createScriptLoader(root, context);
 loader.runManifestRange('js/data/constants-data.js', 'js/application/progression-application.js');
 loader.runScript('js/ui/progression-generation-events-controller.js');
 loader.runScript('js/ui/circle-of-fifths-popover-controller.js');
+loader.runScript('js/ui/workbench-instrument-menu-controller.js');
 
 const global = context.window;
 
@@ -180,6 +181,13 @@ assert.equal(global.CodaCircleOfFifthsPopover.triggerIdFor({
 const fakeCircleRoot = createFakeCircleRoot();
 const appliedTargets = [];
 const circleController = global.CodaCircleOfFifthsPopover.initialize({
+	notationStyle: function () {
+		return 'anglosaxon';
+	},
+	onGlobalTarget: function (targetId) {
+		appliedTargets.push('global:' + targetId);
+		return true;
+	},
 	onSectionTarget: function (sectionId, targetId) {
 		appliedTargets.push(sectionId + ':' + targetId);
 		return true;
@@ -187,20 +195,103 @@ const circleController = global.CodaCircleOfFifthsPopover.initialize({
 	onTargetApplied: function () {
 		appliedTargets.push('applied');
 	},
-	root: fakeCircleRoot
+	renderers: {
+		circleOfFifths: {
+			render: function (options) {
+				return options.sectionId + ':' + options.selectedKey + ':' + options.orderedKeys.length;
+			}
+		}
+	},
+	report: function () {
+		return {
+			circleOfFifths: {
+				orderedKeys: ['C_', 'G_'],
+				selectedKey: 'C_'
+			}
+		};
+	},
+	root: fakeCircleRoot,
+	sectionForId: function (sectionId) {
+		return sectionId === 'B' ? {
+			circleOfFifths: {
+				orderedKeys: ['F_', 'C_'],
+				selectedKey: 'F_'
+			}
+		} : null;
+	}
 });
+fakeCircleRoot.dispatch('click', {
+	target: fakeCircleRoot.globalTrigger,
+	type: 'click'
+});
+assert.equal(circleController.isOpen(), true);
+assert.equal(fakeCircleRoot.popover.hidden, false);
+assert.equal(fakeCircleRoot.container.innerHTML, ':C_:2');
+assert.equal(fakeCircleRoot.globalTrigger.getAttribute('aria-expanded'), 'true');
+fakeCircleRoot.dispatch('click', {
+	target: fakeCircleRoot.globalTrigger,
+	type: 'click'
+});
+assert.equal(circleController.isOpen(), false);
+assert.equal(fakeCircleRoot.globalTrigger.getAttribute('aria-expanded'), 'false');
+fakeCircleRoot.dispatch('click', {
+	target: fakeCircleRoot.sectionTrigger,
+	type: 'click'
+});
+assert.equal(fakeCircleRoot.container.innerHTML, 'B:F_:2');
 fakeCircleRoot.dispatch('click', {
 	target: fakeCircleRoot.sectionLink,
 	type: 'click'
 });
 assert.deepEqual(appliedTargets, ['B:F_', 'applied']);
+fakeCircleRoot.dispatch('click', {
+	target: fakeCircleRoot.globalTrigger,
+	type: 'click'
+});
+fakeCircleRoot.dispatch('click', {
+	target: fakeCircleRoot.globalLink,
+	type: 'click'
+});
+assert.deepEqual(appliedTargets, ['B:F_', 'applied', 'global:G_', 'applied']);
 circleController.updateAccess(null);
 assert.equal(fakeCircleRoot.popover.hidden, true);
+
+const fakeInstrumentRoot = createFakeInstrumentRoot();
+const selectedInstruments = [];
+const instrumentMenu = global.CodaWorkbenchInstrumentMenu.initialize({
+	data: {
+		midiInstruments: [
+			{ id: 'piano', nombre: 'Piano' },
+			{ id: 'organ&lead', nombre: 'Organ <Lead>' }
+		]
+	},
+	i18n: null,
+	onInstrumentSelected: function (instrumentId) {
+		selectedInstruments.push(instrumentId);
+	},
+	root: fakeInstrumentRoot
+});
+instrumentMenu.render({ midiInstrument: 'organ&lead' });
+assert.ok(fakeInstrumentRoot.menu.innerHTML.indexOf('organ&amp;lead') > -1);
+assert.ok(fakeInstrumentRoot.menu.innerHTML.indexOf('Organ &lt;Lead&gt;') > -1);
+fakeInstrumentRoot.dispatch('click', {
+	target: fakeInstrumentRoot.contextToggle,
+	type: 'click'
+});
+assert.equal(instrumentMenu.isOpen(), true);
+assert.equal(fakeInstrumentRoot.contextToggle.getAttribute('aria-expanded'), 'true');
+fakeInstrumentRoot.dispatch('click', {
+	target: fakeInstrumentRoot.item,
+	type: 'click'
+});
+assert.deepEqual(selectedInstruments, ['drawbar_organ']);
+assert.equal(instrumentMenu.isOpen(), false);
 
 console.log('Service unit tests passed');
 
 function createFakeCircleRoot() {
 	const listeners = {};
+	const elements = {};
 	const root = {
 		addEventListener: function (eventName, handler) {
 			listeners[eventName] = listeners[eventName] || [];
@@ -212,33 +303,137 @@ function createFakeCircleRoot() {
 			});
 		},
 		querySelector: function (selector) {
-			if (selector === '#circleOfFifthsPopover') {
-				return root.popover;
-			}
-			if (selector === '.circlePopover__titlebar') {
-				return null;
-			}
-			return null;
+			return elements[selector] || null;
 		},
-		querySelectorAll: function () {
-			return [];
+		querySelectorAll: function (selector) {
+			return selector === '.progressionSectionCircleButton' ? [root.sectionTrigger] : [];
 		}
 	};
 
-	root.popover = {
-		hidden: false,
-		setAttribute: function () {},
-		style: {}
+	root.popover = fakeElement('circleOfFifthsPopover');
+	root.popover.hidden = true;
+	root.popover.offsetHeight = 260;
+	root.popover.offsetWidth = 300;
+	root.popover.querySelector = function () { return null; };
+	root.popover.getBoundingClientRect = function () {
+		return { bottom: 0, left: 0, top: 0 };
 	};
-	root.sectionLink = {
-		closest: function (selector) {
-			return selector === '.revamp' ? root.sectionLink : null;
-		},
-		getAttribute: function (name) {
-			return name === 'data-section-circle-target' ? 'B' : '';
-		},
-		id: 'F_'
+	root.popover.closest = function (selector) {
+		return selector === '.circlePopover__surface' ? root.popover : null;
+	};
+	root.popover.style = {};
+	root.container = fakeElement('circuloQuintas');
+	root.globalTrigger = fakeElement('toggleCircleOfFifths');
+	root.globalTrigger.getBoundingClientRect = function () {
+		return { bottom: 20, left: 20, top: 0 };
+	};
+	root.sectionTrigger = fakeElement('sectionCircleB');
+	root.sectionTrigger.getAttribute = function (name) {
+		if (name === 'data-section-circle') {
+			return 'B';
+		}
+		return this.attributes[name];
+	};
+	root.sectionTrigger.closest = function (selector) {
+		return selector === '.progressionSectionCircleButton' ? root.sectionTrigger : null;
+	};
+	root.sectionTrigger.getBoundingClientRect = function () {
+		return { bottom: 20, left: 20, top: 0 };
+	};
+	root.sectionLink = fakeElement('sectionCircleF');
+	root.sectionLink.id = 'F_';
+	root.sectionLink.setAttribute('data-section-circle-target', 'B');
+	root.sectionLink.closest = function (selector) {
+		if (selector === '.revamp') {
+			return root.sectionLink;
+		}
+		if (selector === '.circlePopover__surface') {
+			return root.popover;
+		}
+		return null;
+	};
+	root.globalLink = fakeElement('globalCircleG');
+	root.globalLink.id = 'G_';
+	root.globalLink.closest = function (selector) {
+		if (selector === '.revamp') {
+			return root.globalLink;
+		}
+		if (selector === '.circlePopover__surface') {
+			return root.popover;
+		}
+		return null;
 	};
 
+	elements['#circleOfFifthsPopover'] = root.popover;
+	elements['#circuloQuintas'] = root.container;
+	elements['#toggleCircleOfFifths'] = root.globalTrigger;
+	elements['#toggleCircleOfFifthsFromContext'] = fakeElement('toggleCircleOfFifthsFromContext');
+	elements['#toggleCircleOfFifthsFromForm'] = fakeElement('toggleCircleOfFifthsFromForm');
+	elements['#workbenchContextKeyToggle'] = fakeElement('workbenchContextKeyToggle');
+	elements['.circlePopover__titlebar'] = null;
+
 	return root;
+}
+
+function createFakeInstrumentRoot() {
+	const listeners = {};
+	const elements = {};
+	const root = {
+		addEventListener: function (eventName, handler) {
+			listeners[eventName] = listeners[eventName] || [];
+			listeners[eventName].push(handler);
+		},
+		dispatch: function (eventName, event) {
+			(listeners[eventName] || []).forEach(function (handler) {
+				handler(event);
+			});
+		},
+		querySelector: function (selector) {
+			return elements[selector] || null;
+		}
+	};
+
+	root.menu = fakeElement('workbenchInstrumentMenu');
+	root.menu.hidden = true;
+	root.contextToggle = fakeElement('workbenchContextInstrumentToggle');
+	root.contextToggle.closest = function (selector) {
+		return selector === '#workbenchContextInstrumentToggle' ? root.contextToggle : null;
+	};
+	root.item = fakeElement('drawbarOrganItem');
+	root.item.setAttribute('data-workbench-instrument-id', 'drawbar_organ');
+	root.item.closest = function (selector) {
+		return selector === '.workbenchInstrumentMenuItem' ? root.item : null;
+	};
+	elements['#workbenchInstrumentMenu'] = root.menu;
+	elements['#toggleWorkbenchInstrumentMenu'] = fakeElement('toggleWorkbenchInstrumentMenu');
+	elements['#workbenchContextInstrumentToggle'] = root.contextToggle;
+	elements['#toggleWorkbenchInstrumentMenu .material-icons'] = fakeElement('instrumentMenuIcon');
+
+	return root;
+}
+
+function fakeElement(id) {
+	return {
+		attributes: {},
+		classList: {
+			add: function () {},
+			remove: function () {}
+		},
+		closest: function (selector) {
+			return selector.charAt(0) === '#' && selector.slice(1) === id ? this : null;
+		},
+		getAttribute: function (name) {
+			return this.attributes[name];
+		},
+		id: id,
+		innerHTML: '',
+		offsetHeight: 0,
+		offsetWidth: 0,
+		style: {}
+		,
+		setAttribute: function (name, value) {
+			this.attributes[name] = String(value);
+		},
+		textContent: ''
+	};
 }
