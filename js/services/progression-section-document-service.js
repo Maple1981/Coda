@@ -12,10 +12,12 @@
 	function measuresForSection(progression, id, progressionState) {
 		var measures = progression && progression.measures ? progression.measures : [];
 		var section = findSection(progression, id);
-		var length = section ? section.length : Number(progressionState && progressionState.bars) || measures.length;
-		var startIndex = section ? section.startIndex : 0;
+		var range = section ? sectionRange(section, measures.length) : {
+			end: Math.min(Number(progressionState && progressionState.bars) || measures.length, measures.length),
+			start: 0
+		};
 
-		return measures.slice(startIndex, startIndex + Math.min(length, measures.length));
+		return measures.slice(range.start, range.end);
 	}
 
 	function measuresForLastSection(progression, progressionState) {
@@ -67,7 +69,9 @@
 		for (var i = 0; i < (sections || []).length; i++) {
 			var section = sections[i];
 
-			for (var j = section.startIndex; j < section.startIndex + section.length && j < measures.length; j++) {
+			var range = sectionRange(section, measures.length);
+
+			for (var j = range.start; j < range.end; j++) {
 				measures[j].sectionId = section.id;
 				measures[j].sectionLabelKey = section.labelKey;
 			}
@@ -79,6 +83,80 @@
 
 		for (var i = 0; i < sections.length; i++) {
 			if (sections[i].id === id) {
+				return sections[i];
+			}
+		}
+
+		return null;
+	}
+
+	function previousSection(progression, id) {
+		var sections = progression && progression.sections ? progression.sections : [];
+		var index = sectionIndex(sections, id);
+
+		return index > 0 ? sections[index - 1] : null;
+	}
+
+	function nextSection(progression, id) {
+		var sections = progression && progression.sections ? progression.sections : [];
+		var index = sectionIndex(sections, id);
+
+		return index >= 0 && index < sections.length - 1 ? sections[index + 1] : null;
+	}
+
+	function sectionIndex(sections, id) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (sections[i].id === id) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	function sectionEndIndex(section) {
+		return (Number(section && section.startIndex) || 0) + (Number(section && section.length) || 0);
+	}
+
+	function sectionRange(section, measureCount) {
+		var start = Math.max(0, Number(section && section.startIndex) || 0);
+		var end = sectionEndIndex(section);
+
+		if (measureCount != null) {
+			end = Math.min(end, Math.max(0, Number(measureCount) || 0));
+		}
+
+		return {
+			end: Math.max(start, end),
+			length: Math.max(0, end - start),
+			start: start
+		};
+	}
+
+	function sectionTransitionFromOrigin(sections, originSectionId, kind) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (
+				sections[i].contrast &&
+				sections[i].modulation &&
+				(!kind || sections[i].modulation.kind === kind) &&
+				sections[i].modulation.originSectionId === originSectionId &&
+				sections[i].modulation.targetSectionId === sections[i].id
+			) {
+				return sections[i];
+			}
+		}
+
+		return null;
+	}
+
+	function sectionTransitionForTarget(sections, targetSectionId, kind) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (
+				sections[i].contrast &&
+				sections[i].modulation &&
+				(!kind || sections[i].modulation.kind === kind) &&
+				sections[i].modulation.targetSectionId === targetSectionId
+			) {
 				return sections[i];
 			}
 		}
@@ -167,9 +245,15 @@
 		measuresForLastSection: measuresForLastSection,
 		measuresForSection: measuresForSection,
 		measuresForSectionA: measuresForSectionA,
+		nextSection: nextSection,
 		normalizedSections: normalizedSections,
+		previousSection: previousSection,
+		sectionEndIndex: sectionEndIndex,
 		sectionLabelKey: sectionLabelKey,
 		sectionMetadataFromReport: sectionMetadataFromReport,
+		sectionRange: sectionRange,
+		sectionTransitionForTarget: sectionTransitionForTarget,
+		sectionTransitionFromOrigin: sectionTransitionFromOrigin,
 		sectionStateForSource: sectionStateForSource
 	};
 })(window);

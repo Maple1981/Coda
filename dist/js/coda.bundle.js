@@ -5752,6 +5752,269 @@
 
 ;
 
+/* Source: js/services/progression-section-document-service.js */
+// Shared helpers for section metadata and measure slicing.
+(function (global) {
+	'use strict';
+
+	var cloneService = global.CodaProgressionMeasureClone;
+	var objectService = global.CodaProgressionObjects;
+
+	function measuresForSectionA(progression, progressionState) {
+		return measuresForSection(progression, 'A', progressionState);
+	}
+
+	function measuresForSection(progression, id, progressionState) {
+		var measures = progression && progression.measures ? progression.measures : [];
+		var section = findSection(progression, id);
+		var range = section ? sectionRange(section, measures.length) : {
+			end: Math.min(Number(progressionState && progressionState.bars) || measures.length, measures.length),
+			start: 0
+		};
+
+		return measures.slice(range.start, range.end);
+	}
+
+	function measuresForLastSection(progression, progressionState) {
+		var sections = progression && progression.sections ? progression.sections : [];
+
+		if (sections.length) {
+			return measuresForSection(progression, sections[sections.length - 1].id, progressionState);
+		}
+
+		return measuresForSectionA(progression, progressionState);
+	}
+
+	function appendSection(progression, sectionMeasures, sectionMetadata, dependencies) {
+		var previousSections = normalizedSections(progression);
+		var combined = cloneMeasures(progression && progression.measures ? progression.measures : []).concat(cloneMeasures(sectionMeasures || []));
+		var rebuilt = dependencies.rebuildProgressionTimeline(progression, combined);
+		var startIndex = combined.length - (sectionMeasures ? sectionMeasures.length : 0);
+
+		rebuilt.sections = previousSections.concat([extendObject(sectionMetadata, {
+			length: sectionMeasures ? sectionMeasures.length : 0,
+			startIndex: startIndex
+		})]);
+		annotateSectionMeasures(rebuilt.measures, rebuilt.sections);
+
+		return rebuilt;
+	}
+
+	function normalizedSections(progression) {
+		var sections = progression && progression.sections ? progression.sections : [];
+		var result = [];
+
+		if (!sections.length && progression && progression.measures && progression.measures.length) {
+			return [{
+				id: 'A',
+				labelKey: 'progression.sectionA',
+				length: progression.measures.length,
+				startIndex: 0
+			}];
+		}
+
+		for (var i = 0; i < sections.length; i++) {
+			result.push(cloneSection(sections[i]));
+		}
+
+		return result;
+	}
+
+	function annotateSectionMeasures(measures, sections) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			var section = sections[i];
+
+			var range = sectionRange(section, measures.length);
+
+			for (var j = range.start; j < range.end; j++) {
+				measures[j].sectionId = section.id;
+				measures[j].sectionLabelKey = section.labelKey;
+			}
+		}
+	}
+
+	function findSection(progression, id) {
+		var sections = progression && progression.sections ? progression.sections : [];
+
+		for (var i = 0; i < sections.length; i++) {
+			if (sections[i].id === id) {
+				return sections[i];
+			}
+		}
+
+		return null;
+	}
+
+	function previousSection(progression, id) {
+		var sections = progression && progression.sections ? progression.sections : [];
+		var index = sectionIndex(sections, id);
+
+		return index > 0 ? sections[index - 1] : null;
+	}
+
+	function nextSection(progression, id) {
+		var sections = progression && progression.sections ? progression.sections : [];
+		var index = sectionIndex(sections, id);
+
+		return index >= 0 && index < sections.length - 1 ? sections[index + 1] : null;
+	}
+
+	function sectionIndex(sections, id) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (sections[i].id === id) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	function sectionEndIndex(section) {
+		return (Number(section && section.startIndex) || 0) + (Number(section && section.length) || 0);
+	}
+
+	function sectionRange(section, measureCount) {
+		var start = Math.max(0, Number(section && section.startIndex) || 0);
+		var end = sectionEndIndex(section);
+
+		if (measureCount != null) {
+			end = Math.min(end, Math.max(0, Number(measureCount) || 0));
+		}
+
+		return {
+			end: Math.max(start, end),
+			length: Math.max(0, end - start),
+			start: start
+		};
+	}
+
+	function sectionTransitionFromOrigin(sections, originSectionId, kind) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (
+				sections[i].contrast &&
+				sections[i].modulation &&
+				(!kind || sections[i].modulation.kind === kind) &&
+				sections[i].modulation.originSectionId === originSectionId &&
+				sections[i].modulation.targetSectionId === sections[i].id
+			) {
+				return sections[i];
+			}
+		}
+
+		return null;
+	}
+
+	function sectionTransitionForTarget(sections, targetSectionId, kind) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (
+				sections[i].contrast &&
+				sections[i].modulation &&
+				(!kind || sections[i].modulation.kind === kind) &&
+				sections[i].modulation.targetSectionId === targetSectionId
+			) {
+				return sections[i];
+			}
+		}
+
+		return null;
+	}
+
+	function sectionLabelKey(sectionId) {
+		if (sectionId === 'A\'') {
+			return 'progression.sectionAprime';
+		}
+
+		if (sectionId === 'B') {
+			return 'progression.sectionB';
+		}
+
+		if (sectionId === 'B\'') {
+			return 'progression.sectionBprime';
+		}
+
+		if (sectionId === 'C') {
+			return 'progression.sectionC';
+		}
+
+		return 'progression.sectionA';
+	}
+
+	function sectionStateForSource(section, progressionState, sourceMeasures) {
+		var state = cloneObject(section && section.state ? section.state : progressionState);
+
+		state.bars = sourceMeasures.length || state.bars || (progressionState && progressionState.bars) || 8;
+
+		return state;
+	}
+
+	function sectionMetadataFromReport(report) {
+		return {
+			circleOfFifths: report && report.circleOfFifths ? report.circleOfFifths : null,
+			contextLabel: contextLabelFromReport(report),
+			contextScaleIndex: report ? report.scaleIndex : null,
+			contextScaleName: report ? report.scaleName : '',
+			contextTonicName: report ? report.tonicName : ''
+		};
+	}
+
+	function contextLabelFromReport(report) {
+		return report && report.tonicName && report.scaleName ? report.tonicName + ' ' + report.scaleName : '';
+	}
+
+	function cloneMeasures(measures) {
+		var result = [];
+
+		for (var i = 0; i < (measures || []).length; i++) {
+			result.push(cloneService.cloneMeasure(measures[i]));
+		}
+
+		return result;
+	}
+
+	function cloneSection(section) {
+		var result = {};
+
+		for (var key in section || {}) {
+			if (Object.prototype.hasOwnProperty.call(section, key)) {
+				result[key] = key === 'state' ? cloneObject(section[key]) : section[key];
+			}
+		}
+
+		return result;
+	}
+
+	function cloneObject(value) {
+		return objectService.cloneObject(value);
+	}
+
+	function extendObject(target, values) {
+		return objectService.extendObject(target, values);
+	}
+
+	global.CodaProgressionSectionDocument = {
+		annotateSectionMeasures: annotateSectionMeasures,
+		appendSection: appendSection,
+		cloneMeasures: cloneMeasures,
+		contextLabelFromReport: contextLabelFromReport,
+		findSection: findSection,
+		measuresForLastSection: measuresForLastSection,
+		measuresForSection: measuresForSection,
+		measuresForSectionA: measuresForSectionA,
+		nextSection: nextSection,
+		normalizedSections: normalizedSections,
+		previousSection: previousSection,
+		sectionEndIndex: sectionEndIndex,
+		sectionLabelKey: sectionLabelKey,
+		sectionMetadataFromReport: sectionMetadataFromReport,
+		sectionRange: sectionRange,
+		sectionTransitionForTarget: sectionTransitionForTarget,
+		sectionTransitionFromOrigin: sectionTransitionFromOrigin,
+		sectionStateForSource: sectionStateForSource
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-measure-segment-service.js */
 // Segment and retiming helpers for split progression measures.
 (function (global) {
@@ -6272,7 +6535,7 @@
 
 	function modulationForChord(chord, options) {
 		var sections = options && options.sections ? options.sections : [];
-		var section = sectionForId(sections, chord.sectionId);
+		var section = global.CodaProgressionSectionDocument.findSection({ sections: sections }, chord.sectionId);
 		var kind = chord.modulationKind || modulationKindFromLabel(chord.modulationSourceLabelKey || chord.sourceLabelKey);
 		var transition;
 
@@ -6333,19 +6596,9 @@
 	}
 
 	function transitionFromOriginSection(sections, sectionId, kind) {
-		for (var i = 0; i < (sections || []).length; i++) {
-			if (
-				sections[i].contrast &&
-				sections[i].modulation &&
-				sections[i].modulation.kind === kind &&
-				sections[i].modulation.originSectionId === sectionId &&
-				sections[i].modulation.targetSectionId === sections[i].id
-			) {
-				return transitionFromSection(sections[i]);
-			}
-		}
+		var section = global.CodaProgressionSectionDocument.sectionTransitionFromOrigin(sections, sectionId, kind);
 
-		return null;
+		return section ? transitionFromSection(section) : null;
 	}
 
 	function isValidModulationSource(chord, options) {
@@ -6367,16 +6620,6 @@
 		}
 
 		return '';
-	}
-
-	function sectionForId(sections, sectionId) {
-		for (var i = 0; i < (sections || []).length; i++) {
-			if (sections[i].id === sectionId) {
-				return sections[i];
-			}
-		}
-
-		return null;
 	}
 
 	global.CodaProgressionHarmonicAnalysis = {
@@ -11621,185 +11864,6 @@
 	function isModalReport(report) {
 		return !!(report && report.scaleDefinition && report.scaleDefinition.modal === 'true');
 	}
-})(window);
-
-;
-
-/* Source: js/services/progression-section-document-service.js */
-// Shared helpers for section metadata and measure slicing.
-(function (global) {
-	'use strict';
-
-	var cloneService = global.CodaProgressionMeasureClone;
-	var objectService = global.CodaProgressionObjects;
-
-	function measuresForSectionA(progression, progressionState) {
-		return measuresForSection(progression, 'A', progressionState);
-	}
-
-	function measuresForSection(progression, id, progressionState) {
-		var measures = progression && progression.measures ? progression.measures : [];
-		var section = findSection(progression, id);
-		var length = section ? section.length : Number(progressionState && progressionState.bars) || measures.length;
-		var startIndex = section ? section.startIndex : 0;
-
-		return measures.slice(startIndex, startIndex + Math.min(length, measures.length));
-	}
-
-	function measuresForLastSection(progression, progressionState) {
-		var sections = progression && progression.sections ? progression.sections : [];
-
-		if (sections.length) {
-			return measuresForSection(progression, sections[sections.length - 1].id, progressionState);
-		}
-
-		return measuresForSectionA(progression, progressionState);
-	}
-
-	function appendSection(progression, sectionMeasures, sectionMetadata, dependencies) {
-		var previousSections = normalizedSections(progression);
-		var combined = cloneMeasures(progression && progression.measures ? progression.measures : []).concat(cloneMeasures(sectionMeasures || []));
-		var rebuilt = dependencies.rebuildProgressionTimeline(progression, combined);
-		var startIndex = combined.length - (sectionMeasures ? sectionMeasures.length : 0);
-
-		rebuilt.sections = previousSections.concat([extendObject(sectionMetadata, {
-			length: sectionMeasures ? sectionMeasures.length : 0,
-			startIndex: startIndex
-		})]);
-		annotateSectionMeasures(rebuilt.measures, rebuilt.sections);
-
-		return rebuilt;
-	}
-
-	function normalizedSections(progression) {
-		var sections = progression && progression.sections ? progression.sections : [];
-		var result = [];
-
-		if (!sections.length && progression && progression.measures && progression.measures.length) {
-			return [{
-				id: 'A',
-				labelKey: 'progression.sectionA',
-				length: progression.measures.length,
-				startIndex: 0
-			}];
-		}
-
-		for (var i = 0; i < sections.length; i++) {
-			result.push(cloneSection(sections[i]));
-		}
-
-		return result;
-	}
-
-	function annotateSectionMeasures(measures, sections) {
-		for (var i = 0; i < (sections || []).length; i++) {
-			var section = sections[i];
-
-			for (var j = section.startIndex; j < section.startIndex + section.length && j < measures.length; j++) {
-				measures[j].sectionId = section.id;
-				measures[j].sectionLabelKey = section.labelKey;
-			}
-		}
-	}
-
-	function findSection(progression, id) {
-		var sections = progression && progression.sections ? progression.sections : [];
-
-		for (var i = 0; i < sections.length; i++) {
-			if (sections[i].id === id) {
-				return sections[i];
-			}
-		}
-
-		return null;
-	}
-
-	function sectionLabelKey(sectionId) {
-		if (sectionId === 'A\'') {
-			return 'progression.sectionAprime';
-		}
-
-		if (sectionId === 'B') {
-			return 'progression.sectionB';
-		}
-
-		if (sectionId === 'B\'') {
-			return 'progression.sectionBprime';
-		}
-
-		if (sectionId === 'C') {
-			return 'progression.sectionC';
-		}
-
-		return 'progression.sectionA';
-	}
-
-	function sectionStateForSource(section, progressionState, sourceMeasures) {
-		var state = cloneObject(section && section.state ? section.state : progressionState);
-
-		state.bars = sourceMeasures.length || state.bars || (progressionState && progressionState.bars) || 8;
-
-		return state;
-	}
-
-	function sectionMetadataFromReport(report) {
-		return {
-			circleOfFifths: report && report.circleOfFifths ? report.circleOfFifths : null,
-			contextLabel: contextLabelFromReport(report),
-			contextScaleIndex: report ? report.scaleIndex : null,
-			contextScaleName: report ? report.scaleName : '',
-			contextTonicName: report ? report.tonicName : ''
-		};
-	}
-
-	function contextLabelFromReport(report) {
-		return report && report.tonicName && report.scaleName ? report.tonicName + ' ' + report.scaleName : '';
-	}
-
-	function cloneMeasures(measures) {
-		var result = [];
-
-		for (var i = 0; i < (measures || []).length; i++) {
-			result.push(cloneService.cloneMeasure(measures[i]));
-		}
-
-		return result;
-	}
-
-	function cloneSection(section) {
-		var result = {};
-
-		for (var key in section || {}) {
-			if (Object.prototype.hasOwnProperty.call(section, key)) {
-				result[key] = key === 'state' ? cloneObject(section[key]) : section[key];
-			}
-		}
-
-		return result;
-	}
-
-	function cloneObject(value) {
-		return objectService.cloneObject(value);
-	}
-
-	function extendObject(target, values) {
-		return objectService.extendObject(target, values);
-	}
-
-	global.CodaProgressionSectionDocument = {
-		annotateSectionMeasures: annotateSectionMeasures,
-		appendSection: appendSection,
-		cloneMeasures: cloneMeasures,
-		contextLabelFromReport: contextLabelFromReport,
-		findSection: findSection,
-		measuresForLastSection: measuresForLastSection,
-		measuresForSection: measuresForSection,
-		measuresForSectionA: measuresForSectionA,
-		normalizedSections: normalizedSections,
-		sectionLabelKey: sectionLabelKey,
-		sectionMetadataFromReport: sectionMetadataFromReport,
-		sectionStateForSource: sectionStateForSource
-	};
 })(window);
 
 ;
@@ -23168,6 +23232,94 @@
 
 ;
 
+/* Source: js/ui/progression-generation-events-controller.js */
+// Binds progression generation UI events to controller callbacks.
+(function (global) {
+	'use strict';
+
+	function initialize(options) {
+		var root = options && options.root ? options.root : global.document;
+		var constructor = query(root, '#constructorProgresiones');
+
+		on(query(root, '#generateProgression'), 'click', function () {
+			call(options, 'onGenerate');
+		});
+
+		on(constructor, 'click', function (event) {
+			if (closest(event.target, '#generateProgressionSectionB')) {
+				call(options, 'onGenerateSectionB');
+			}
+		});
+
+		on(constructor, 'click', function (event) {
+			var sectionType;
+
+			if (!closest(event.target, '#generateProgressionNextSection')) {
+				return;
+			}
+
+			sectionType = valueOf(query(root, '#progressionNextSectionType'));
+			call(options, 'onGenerateNextSection', sectionType, modulationTypeForSection(root, sectionType));
+		});
+
+		on(constructor, 'change', function (event) {
+			if (!event.target || event.target.id !== 'progressionNextSectionType') {
+				return;
+			}
+
+			call(options, 'onSectionTypeChange', event.target.value);
+		});
+
+		on(constructor, 'click', function (event) {
+			var button = closest(event.target, '.progressionSectionDeleteButton') ||
+				closest(event.target, '.progressionSectionNavDeleteButton');
+
+			if (!button) {
+				return;
+			}
+
+			call(options, 'onRemoveSection', button.getAttribute('data-section-delete'));
+		});
+	}
+
+	function modulationTypeForSection(root, sectionType) {
+		return sectionType === 'contrast' ? (valueOf(query(root, '#progressionNextSectionModulationType')) || 'none') : 'none';
+	}
+
+	function call(options, callbackName) {
+		var args = Array.prototype.slice.call(arguments, 2);
+
+		if (options && typeof options[callbackName] === 'function') {
+			options[callbackName].apply(null, args);
+		}
+	}
+
+	function on(element, eventName, handler) {
+		if (element) {
+			element.addEventListener(eventName, handler);
+		}
+	}
+
+	function query(root, selector) {
+		return root && root.querySelector ? root.querySelector(selector) : null;
+	}
+
+	function closest(target, selector) {
+		return target && target.closest ? target.closest(selector) : null;
+	}
+
+	function valueOf(element) {
+		return element ? element.value : '';
+	}
+
+	global.CodaProgressionGenerationEvents = {
+		initialize: initialize,
+		modulationTypeForSection: modulationTypeForSection
+	};
+})(window);
+
+;
+
 /* Source: js/ui/scale-report-ui.js */
 // UI orchestration for the legacy screen. It reads DOM selections and
 // mounts renderer output, but delegates musical work to the application layer.
@@ -23742,6 +23894,7 @@
 		var progressionTransport = options.progressionTransport || global.CodaProgressionTransport;
 		var progressionTransportController = null;
 		var progressionDocument = options.progressionDocument || global.CodaProgressionDocument;
+		var progressionGenerationEvents = options.progressionGenerationEvents || global.CodaProgressionGenerationEvents;
 		var progressionState = options.progressionState || global.CodaProgressionState;
 		var progressionWorkspaceStorage = options.progressionWorkspaceStorage || global.CodaProgressionWorkspaceStorage;
 		var staticText = options.staticText || global.CodaStaticText;
@@ -24109,59 +24262,32 @@
 		}
 
 		function bindProgressionGeneration() {
-			on(query('#generateProgression'), 'click', function () {
-				cancelProgressionStateUpdate();
-				updateProgressionStateFromControls();
-				generateProgressionPlan();
-				recordHistorySnapshot();
-			});
-
-			on(query('#constructorProgresiones'), 'click', function (event) {
-				if (!closest(event.target, '#generateProgressionSectionB')) {
-					return;
-				}
-
-				cancelProgressionStateUpdate();
-				updateProgressionStateFromControls();
-				generateProgressionSectionB();
-				recordHistorySnapshot();
-			});
-
-			on(query('#constructorProgresiones'), 'click', function (event) {
-				var sectionType;
-				var modulationType;
-
-				if (!closest(event.target, '#generateProgressionNextSection')) {
-					return;
-				}
-
-				sectionType = valueOf(query('#progressionNextSectionType'));
-				modulationType = sectionType === 'contrast' ? (valueOf(query('#progressionNextSectionModulationType')) || 'none') : 'none';
-				cancelProgressionStateUpdate();
-				updateProgressionStateFromControls();
-				generateProgressionNextSection(sectionType, modulationType);
-				recordHistorySnapshot();
-			});
-
-			on(query('#constructorProgresiones'), 'change', function (event) {
-				if (!event.target || event.target.id !== 'progressionNextSectionType') {
-					return;
-				}
-
-				updateNextSectionModulationVisibility(event.target.value);
-			});
-
-			on(query('#constructorProgresiones'), 'click', function (event) {
-				var button = closest(event.target, '.progressionSectionDeleteButton') ||
-					closest(event.target, '.progressionSectionNavDeleteButton');
-
-				if (!button) {
-					return;
-				}
-
-				cancelProgressionStateUpdate();
-				removeProgressionSection(button.getAttribute('data-section-delete'));
-				recordHistorySnapshot();
+			progressionGenerationEvents.initialize({
+				onGenerate: function () {
+					cancelProgressionStateUpdate();
+					updateProgressionStateFromControls();
+					generateProgressionPlan();
+					recordHistorySnapshot();
+				},
+				onGenerateNextSection: function (sectionType, modulationType) {
+					cancelProgressionStateUpdate();
+					updateProgressionStateFromControls();
+					generateProgressionNextSection(sectionType, modulationType);
+					recordHistorySnapshot();
+				},
+				onGenerateSectionB: function () {
+					cancelProgressionStateUpdate();
+					updateProgressionStateFromControls();
+					generateProgressionSectionB();
+					recordHistorySnapshot();
+				},
+				onRemoveSection: function (sectionId) {
+					cancelProgressionStateUpdate();
+					removeProgressionSection(sectionId);
+					recordHistorySnapshot();
+				},
+				onSectionTypeChange: updateNextSectionModulationVisibility,
+				root: global.document
 			});
 		}
 

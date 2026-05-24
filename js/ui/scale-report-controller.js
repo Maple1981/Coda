@@ -17,6 +17,7 @@
 		var progressionTransport = options.progressionTransport || global.CodaProgressionTransport;
 		var progressionTransportController = null;
 		var progressionDocument = options.progressionDocument || global.CodaProgressionDocument;
+		var progressionGenerationEvents = options.progressionGenerationEvents || global.CodaProgressionGenerationEvents;
 		var progressionState = options.progressionState || global.CodaProgressionState;
 		var progressionWorkspaceStorage = options.progressionWorkspaceStorage || global.CodaProgressionWorkspaceStorage;
 		var staticText = options.staticText || global.CodaStaticText;
@@ -384,59 +385,32 @@
 		}
 
 		function bindProgressionGeneration() {
-			on(query('#generateProgression'), 'click', function () {
-				cancelProgressionStateUpdate();
-				updateProgressionStateFromControls();
-				generateProgressionPlan();
-				recordHistorySnapshot();
-			});
-
-			on(query('#constructorProgresiones'), 'click', function (event) {
-				if (!closest(event.target, '#generateProgressionSectionB')) {
-					return;
-				}
-
-				cancelProgressionStateUpdate();
-				updateProgressionStateFromControls();
-				generateProgressionSectionB();
-				recordHistorySnapshot();
-			});
-
-			on(query('#constructorProgresiones'), 'click', function (event) {
-				var sectionType;
-				var modulationType;
-
-				if (!closest(event.target, '#generateProgressionNextSection')) {
-					return;
-				}
-
-				sectionType = valueOf(query('#progressionNextSectionType'));
-				modulationType = sectionType === 'contrast' ? (valueOf(query('#progressionNextSectionModulationType')) || 'none') : 'none';
-				cancelProgressionStateUpdate();
-				updateProgressionStateFromControls();
-				generateProgressionNextSection(sectionType, modulationType);
-				recordHistorySnapshot();
-			});
-
-			on(query('#constructorProgresiones'), 'change', function (event) {
-				if (!event.target || event.target.id !== 'progressionNextSectionType') {
-					return;
-				}
-
-				updateNextSectionModulationVisibility(event.target.value);
-			});
-
-			on(query('#constructorProgresiones'), 'click', function (event) {
-				var button = closest(event.target, '.progressionSectionDeleteButton') ||
-					closest(event.target, '.progressionSectionNavDeleteButton');
-
-				if (!button) {
-					return;
-				}
-
-				cancelProgressionStateUpdate();
-				removeProgressionSection(button.getAttribute('data-section-delete'));
-				recordHistorySnapshot();
+			progressionGenerationEvents.initialize({
+				onGenerate: function () {
+					cancelProgressionStateUpdate();
+					updateProgressionStateFromControls();
+					generateProgressionPlan();
+					recordHistorySnapshot();
+				},
+				onGenerateNextSection: function (sectionType, modulationType) {
+					cancelProgressionStateUpdate();
+					updateProgressionStateFromControls();
+					generateProgressionNextSection(sectionType, modulationType);
+					recordHistorySnapshot();
+				},
+				onGenerateSectionB: function () {
+					cancelProgressionStateUpdate();
+					updateProgressionStateFromControls();
+					generateProgressionSectionB();
+					recordHistorySnapshot();
+				},
+				onRemoveSection: function (sectionId) {
+					cancelProgressionStateUpdate();
+					removeProgressionSection(sectionId);
+					recordHistorySnapshot();
+				},
+				onSectionTypeChange: updateNextSectionModulationVisibility,
+				root: global.document
 			});
 		}
 

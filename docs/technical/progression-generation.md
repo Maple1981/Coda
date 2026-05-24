@@ -14,12 +14,14 @@ El flujo principal del generador se reparte en módulos pequeños para evitar qu
 - `js/services/progression-voicing-*.js` resuelve factores, registros MIDI, inversión, disposición abierta/cerrada y puntuación de conducción de voces.
 - `js/services/progression-timing-service.js` centraliza el contrato temporal de compases y segmentos para que edición, retarget de secciones, playback y exportación compartan la misma lectura de pulsos y segundos.
 - `js/services/progression-measure-*.js` gestiona compases, segmentos internos, división en varios acordes y reconstrucción de la línea temporal.
+- `js/services/progression-section-document-service.js` define el contrato estructural de secciones: rangos de compases, sección previa, sección siguiente y transiciones modulantes entre origen y destino.
 - `js/services/progression-section-retarget-service.js` reemplaza el contexto tonal de una sección existente conservando índices, tiempos absolutos, metadatos de sección y limpieza de modulaciones obsoletas.
 - `js/services/progression-section-modulation-service.js` prepara las transiciones entre secciones: dominante secundaria, acorde pivote, modulación directa y metadatos de análisis.
 - `js/services/progression-section-operations-service.js` ofrece una fachada para generar, modular y retargetear secciones sin exponer a la UI los detalles de servicios internos.
 - `js/services/progression-harmonic-analysis-service.js` define el contrato analítico formal de la progresión final: transiciones de sección, fuente de cada compás y datos de modulación normalizados.
 - `js/services/progression-analysis-label-service.js` deriva las etiquetas explicativas visibles desde el documento final de progresión; así una etiqueta de pivote o dominante secundaria sólo aparece si la relación de secciones sigue siendo válida.
 - `js/services/progression-transport-*.js` contiene el transporte de UI: reproducción, atajos, drag and drop, menú contextual, botones y acciones de edición.
+- `js/ui/progression-generation-events-controller.js` concentra los eventos DOM que generan progresiones, añaden secciones, cambian el tipo de sección siguiente o eliminan secciones.
 - `js/renderers/progression-*.js` separa etiquetas musicales, controles, línea temporal, menú contextual y composición del área de trabajo.
 - `js/services/progression-midi-*.js` y `js/services/midi-export-service.js` convierten la progresión en eventos MIDI y archivo descargable.
 - `js/application/progression-application.js` y `js/application/progression-playback-application.js` actúan como casos de uso, sin generar HTML ni leer controles directamente.

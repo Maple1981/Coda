@@ -56,7 +56,7 @@
 
 	function modulationForChord(chord, options) {
 		var sections = options && options.sections ? options.sections : [];
-		var section = sectionForId(sections, chord.sectionId);
+		var section = global.CodaProgressionSectionDocument.findSection({ sections: sections }, chord.sectionId);
 		var kind = chord.modulationKind || modulationKindFromLabel(chord.modulationSourceLabelKey || chord.sourceLabelKey);
 		var transition;
 
@@ -117,19 +117,9 @@
 	}
 
 	function transitionFromOriginSection(sections, sectionId, kind) {
-		for (var i = 0; i < (sections || []).length; i++) {
-			if (
-				sections[i].contrast &&
-				sections[i].modulation &&
-				sections[i].modulation.kind === kind &&
-				sections[i].modulation.originSectionId === sectionId &&
-				sections[i].modulation.targetSectionId === sections[i].id
-			) {
-				return transitionFromSection(sections[i]);
-			}
-		}
+		var section = global.CodaProgressionSectionDocument.sectionTransitionFromOrigin(sections, sectionId, kind);
 
-		return null;
+		return section ? transitionFromSection(section) : null;
 	}
 
 	function isValidModulationSource(chord, options) {
@@ -151,16 +141,6 @@
 		}
 
 		return '';
-	}
-
-	function sectionForId(sections, sectionId) {
-		for (var i = 0; i < (sections || []).length; i++) {
-			if (sections[i].id === sectionId) {
-				return sections[i];
-			}
-		}
-
-		return null;
 	}
 
 	global.CodaProgressionHarmonicAnalysis = {
