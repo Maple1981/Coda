@@ -76,6 +76,16 @@ const bMajorReport = app.buildScaleReport({
 	tonicName: 'B'
 });
 
+const fMajorReport = app.buildScaleReport({
+	data: data,
+	domain: domain,
+	preferFlats: true,
+	scaleIndex: 0,
+	scaleName: 'Mayor',
+	tonicIndex: noteIndex('F'),
+	tonicName: 'F'
+});
+
 assert.equal(cMajorReport.scaleDefinition.nombre, 'Mayor');
 assert.deepEqual(cMajorReport.scaleNotes.map(function (note) { return note.nombre; }), ['C', 'D', 'E', 'F', 'G', 'A', 'B']);
 assert.deepEqual(cMajorReport.scaleNotes.map(function (note) { return note.midiNote; }), [60, 62, 64, 65, 67, 69, 71]);
@@ -575,6 +585,28 @@ assert.equal(pivotModulationProgression.measures[3].degree.indexOf('/'), -1);
 assert.equal(pivotModulationProgression.measures[3].pivotTargetTonicName, pivotModulationProgression.sections[1].contextTonicName);
 assert.equal(pivotModulationProgression.measures[4].modulationRole, undefined);
 assert.equal(pivotModulationProgression.measures[4].modulationSourceLabelKey, undefined);
+const retargetedBMeasures = app.generateProgressionFromState({
+	data: data,
+	domain: domain,
+	progressionState: pivotModulationProgression.sections[1].state,
+	report: fMajorReport,
+	rng: sequenceRng([0.1, 0.1, 0.1, 0.1])
+});
+const retargetedPivotProgression = context.window.CodaProgressionSectionRetarget.replaceContext({
+	generatedMeasures: retargetedBMeasures.measures,
+	progression: pivotModulationProgression,
+	sectionId: 'B',
+	sectionState: pivotModulationProgression.sections[1].state,
+	targetReport: fMajorReport
+});
+assert.equal(retargetedPivotProgression.sections[1].contextLabel, 'F Mayor');
+assert.equal(retargetedPivotProgression.sections[1].modulation, undefined);
+assert.equal(retargetedPivotProgression.measures[3].modulationRole, undefined);
+assert.equal(retargetedPivotProgression.measures[4].sectionId, 'B');
+assert.ok(retargetedPivotProgression.measures[4].startSeconds > retargetedPivotProgression.measures[0].startSeconds);
+for (let i = 1; i < retargetedPivotProgression.measures.length; i++) {
+	assert.ok(retargetedPivotProgression.measures[i].startSeconds >= retargetedPivotProgression.measures[i - 1].startSeconds);
+}
 const pivotCompatibleProgression = app.generateProgressionSection({
 	data: data,
 	domain: domain,

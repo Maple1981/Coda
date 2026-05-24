@@ -14,6 +14,7 @@
 		var progressionTransport = options.progressionTransport || global.CodaProgressionTransport;
 		var progressionTransportController = null;
 		var progressionDocument = options.progressionDocument || global.CodaProgressionDocument;
+		var progressionSectionRetarget = options.progressionSectionRetarget || global.CodaProgressionSectionRetarget;
 		var progressionState = options.progressionState || global.CodaProgressionState;
 		var progressionWorkspaceStorage = options.progressionWorkspaceStorage || global.CodaProgressionWorkspaceStorage;
 		var staticText = options.staticText || global.CodaStaticText;
@@ -798,7 +799,7 @@
 			var sectionState;
 			var generated;
 
-			if (!progression || !section || !targetReport || !options.application || typeof options.application.generateProgressionFromState !== 'function') {
+			if (!progression || !section || !targetReport || !progressionSectionRetarget || !options.application || typeof options.application.generateProgressionFromState !== 'function') {
 				return false;
 			}
 
@@ -811,7 +812,7 @@
 				report: targetReport
 			});
 
-			setProgression(markProgressionAsUserEdited(replaceProgressionSectionContext({
+			setProgression(markProgressionAsUserEdited(progressionSectionRetarget.replaceContext({
 				generatedMeasures: generated && generated.measures ? generated.measures : [],
 				progression: progression,
 				sectionId: sectionId,
@@ -874,155 +875,6 @@
 			}
 
 			return -1;
-		}
-
-		function replaceProgressionSectionContext(options) {
-			var next = cloneJson(options.progression);
-			var sections = next && next.sections ? next.sections : [];
-			var section = null;
-			var generatedMeasures = cloneJson(options.generatedMeasures || []);
-			var length;
-			var startIndex;
-
-			for (var i = 0; i < sections.length; i++) {
-				if (sections[i].id === options.sectionId) {
-					section = sections[i];
-					break;
-				}
-			}
-
-			if (!section) {
-				return next;
-			}
-
-			length = section.length || generatedMeasures.length;
-			startIndex = section.startIndex || 0;
-			generatedMeasures = generatedMeasures.slice(0, length);
-			while (generatedMeasures.length < length && generatedMeasures.length) {
-				generatedMeasures.push(cloneJson(generatedMeasures[generatedMeasures.length - 1]));
-			}
-
-			clearModulationForTargetSection(next, options.sectionId);
-			for (var j = 0; j < generatedMeasures.length; j++) {
-				normalizeGeneratedSectionMeasure(generatedMeasures[j], (next.measures || [])[startIndex + j], section, startIndex, j);
-			}
-
-			next.measures = (next.measures || []).slice(0, startIndex)
-				.concat(generatedMeasures)
-				.concat((next.measures || []).slice(startIndex + length));
-			section.circleOfFifths = options.targetReport.circleOfFifths || null;
-			section.contextLabel = options.targetReport.tonicName + ' ' + options.targetReport.scaleName;
-			section.contextScaleIndex = options.targetReport.scaleIndex;
-			section.contextScaleName = options.targetReport.scaleName;
-			section.contextTonicName = options.targetReport.tonicName;
-			section.length = generatedMeasures.length;
-			section.state = cloneJson(options.sectionState || {});
-			delete section.modulation;
-
-			return next;
-		}
-
-		function normalizeGeneratedSectionMeasure(measure, referenceMeasure, section, startIndex, sectionMeasureIndex) {
-			var localStartBeat = Number(measure.startBeat) || 0;
-			var localStartSeconds = Number(measure.startSeconds) || 0;
-
-			measure.bar = referenceMeasure && referenceMeasure.bar != null ? referenceMeasure.bar : startIndex + sectionMeasureIndex + 1;
-			measure.startBeat = referenceMeasure && referenceMeasure.startBeat != null ? referenceMeasure.startBeat : localStartBeat;
-			measure.startSeconds = referenceMeasure && referenceMeasure.startSeconds != null ? referenceMeasure.startSeconds : localStartSeconds;
-			copyTimingField(measure, referenceMeasure, 'beatUnit');
-			copyTimingField(measure, referenceMeasure, 'beatsPerBar');
-			copyTimingField(measure, referenceMeasure, 'bpm');
-			copyTimingField(measure, referenceMeasure, 'durationBeats');
-			copyTimingField(measure, referenceMeasure, 'durationSeconds');
-			copyTimingField(measure, referenceMeasure, 'secondsPerBeat');
-			measure.sectionId = section.id;
-			measure.sectionLabelKey = section.labelKey;
-			normalizeGeneratedMeasureChords(measure, referenceMeasure, localStartBeat, localStartSeconds);
-		}
-
-		function normalizeGeneratedMeasureChords(measure, referenceMeasure, localStartBeat, localStartSeconds) {
-			var chords = measure.chords || [];
-			var referenceChords = referenceMeasure && referenceMeasure.chords ? referenceMeasure.chords : [];
-
-			for (var i = 0; i < chords.length; i++) {
-				normalizeGeneratedMeasureChord(chords[i], referenceChords[i], measure, localStartBeat, localStartSeconds);
-			}
-		}
-
-		function normalizeGeneratedMeasureChord(chord, referenceChord, parentMeasure, localStartBeat, localStartSeconds) {
-			var localBeatOffset = (Number(chord.startBeat) || 0) - localStartBeat;
-			var localSecondOffset = (Number(chord.startSeconds) || 0) - localStartSeconds;
-
-			chord.bar = parentMeasure.bar;
-			chord.startBeat = referenceChord && referenceChord.startBeat != null ? referenceChord.startBeat : parentMeasure.startBeat + localBeatOffset;
-			chord.startSeconds = referenceChord && referenceChord.startSeconds != null ? referenceChord.startSeconds : parentMeasure.startSeconds + localSecondOffset;
-			copyTimingField(chord, referenceChord || parentMeasure, 'beatUnit');
-			copyTimingField(chord, referenceChord || parentMeasure, 'beatsPerBar');
-			copyTimingField(chord, referenceChord || parentMeasure, 'bpm');
-			copyTimingField(chord, referenceChord || parentMeasure, 'durationBeats');
-			copyTimingField(chord, referenceChord || parentMeasure, 'durationSeconds');
-			copyTimingField(chord, referenceChord || parentMeasure, 'secondsPerBeat');
-			chord.sectionId = parentMeasure.sectionId;
-			chord.sectionLabelKey = parentMeasure.sectionLabelKey;
-		}
-
-		function copyTimingField(target, source, field) {
-			if (source && source[field] != null) {
-				target[field] = source[field];
-			}
-		}
-
-		function clearModulationForTargetSection(progression, sectionId) {
-			var sections = progression && progression.sections ? progression.sections : [];
-			var originIds = {};
-
-			for (var i = 0; i < sections.length; i++) {
-				if (sections[i].modulation && sections[i].modulation.targetSectionId === sectionId) {
-					originIds[sections[i].modulation.originSectionId] = true;
-					delete sections[i].modulation;
-				}
-			}
-
-			for (var j = 0; j < sections.length; j++) {
-				if (originIds[sections[j].id] || sections[j].id === sectionId) {
-					clearModulationFieldsForSection(progression.measures || [], sections[j]);
-				}
-			}
-		}
-
-		function clearModulationFieldsForSection(measures, section) {
-			var start = section.startIndex || 0;
-			var end = start + (section.length || 0);
-
-			for (var i = start; i < end && i < measures.length; i++) {
-				clearModulationFields(measures[i]);
-			}
-		}
-
-		function clearModulationFields(measure) {
-			var fields = [
-				'modulationKind',
-				'modulationRole',
-				'modulationSourceLabelKey',
-				'pivotOriginDegree',
-				'pivotTargetDegree',
-				'pivotTargetScaleIndex',
-				'pivotTargetScaleName',
-				'pivotTargetTonicName',
-				'sourceLabelKey',
-				'targetScaleIndex',
-				'targetTonicName'
-			];
-
-			for (var i = 0; i < fields.length; i++) {
-				delete measure[fields[i]];
-			}
-
-			if (measure.chords && measure.chords.length) {
-				for (var j = 0; j < measure.chords.length; j++) {
-					clearModulationFields(measure.chords[j]);
-				}
-			}
 		}
 
 		function closeCircleOfFifthsPopover() {

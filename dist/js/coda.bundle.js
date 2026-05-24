@@ -2404,7 +2404,6 @@
 			'progression.nextSectionModulation.none': 'Sin modulación',
 			'progression.nextSectionModulation.pivot': 'Acorde pivote',
 			'progression.nextSectionModulation.secondaryDominant': 'Dominante secundaria',
-			'progression.modulation.auto': 'modulación automática',
 			'progression.modulation.direct': 'modulación directa',
 			'progression.modulation.inKey': 'en',
 			'progression.modulation.pivot': 'Acorde pivote',
@@ -2693,7 +2692,6 @@
 			'progression.nextSectionModulation.none': 'No modulation',
 			'progression.nextSectionModulation.pivot': 'Pivot chord',
 			'progression.nextSectionModulation.secondaryDominant': 'Secondary dominant',
-			'progression.modulation.auto': 'automatic modulation',
 			'progression.modulation.direct': 'direct modulation',
 			'progression.modulation.inKey': 'in',
 			'progression.modulation.pivot': 'Pivot chord',
@@ -11444,6 +11442,186 @@
 
 ;
 
+/* Source: js/services/progression-section-retarget-service.js */
+(function (global) {
+	'use strict';
+
+	function replaceContext(options) {
+		options = options || {};
+		var next = cloneJson(options.progression);
+		var sections = next && next.sections ? next.sections : [];
+		var section = findSection(sections, options.sectionId);
+		var generatedMeasures = cloneJson(options.generatedMeasures || []);
+		var length;
+		var startIndex;
+
+		if (!section) {
+			return next;
+		}
+
+		length = section.length || generatedMeasures.length;
+		startIndex = section.startIndex || 0;
+		generatedMeasures = generatedMeasures.slice(0, length);
+		while (generatedMeasures.length < length && generatedMeasures.length) {
+			generatedMeasures.push(cloneJson(generatedMeasures[generatedMeasures.length - 1]));
+		}
+		if (!generatedMeasures.length) {
+			return next;
+		}
+
+		clearModulationForTargetSection(next, options.sectionId);
+		for (var i = 0; i < generatedMeasures.length; i++) {
+			normalizeGeneratedSectionMeasure(generatedMeasures[i], (next.measures || [])[startIndex + i], section, startIndex, i);
+		}
+
+		next.measures = (next.measures || []).slice(0, startIndex)
+			.concat(generatedMeasures)
+			.concat((next.measures || []).slice(startIndex + length));
+		updateSectionContext(section, options.targetReport, options.sectionState, generatedMeasures.length);
+
+		return next;
+	}
+
+	function findSection(sections, sectionId) {
+		for (var i = 0; i < (sections || []).length; i++) {
+			if (sections[i].id === sectionId) {
+				return sections[i];
+			}
+		}
+
+		return null;
+	}
+
+	function updateSectionContext(section, targetReport, sectionState, length) {
+		section.circleOfFifths = targetReport && targetReport.circleOfFifths ? targetReport.circleOfFifths : null;
+		section.contextLabel = targetReport ? targetReport.tonicName + ' ' + targetReport.scaleName : '';
+		section.contextScaleIndex = targetReport ? targetReport.scaleIndex : null;
+		section.contextScaleName = targetReport ? targetReport.scaleName : '';
+		section.contextTonicName = targetReport ? targetReport.tonicName : '';
+		section.length = length;
+		section.state = cloneJson(sectionState || {});
+		delete section.modulation;
+	}
+
+	function normalizeGeneratedSectionMeasure(measure, referenceMeasure, section, startIndex, sectionMeasureIndex) {
+		var localStartBeat = Number(measure.startBeat) || 0;
+		var localStartSeconds = Number(measure.startSeconds) || 0;
+
+		measure.bar = referenceMeasure && referenceMeasure.bar != null ? referenceMeasure.bar : startIndex + sectionMeasureIndex + 1;
+		measure.startBeat = referenceMeasure && referenceMeasure.startBeat != null ? referenceMeasure.startBeat : localStartBeat;
+		measure.startSeconds = referenceMeasure && referenceMeasure.startSeconds != null ? referenceMeasure.startSeconds : localStartSeconds;
+		copyTimingFields(measure, referenceMeasure);
+		measure.sectionId = section.id;
+		measure.sectionLabelKey = section.labelKey;
+		normalizeGeneratedMeasureChords(measure, referenceMeasure, localStartBeat, localStartSeconds);
+	}
+
+	function normalizeGeneratedMeasureChords(measure, referenceMeasure, localStartBeat, localStartSeconds) {
+		var chords = measure.chords || [];
+		var referenceChords = referenceMeasure && referenceMeasure.chords ? referenceMeasure.chords : [];
+
+		for (var i = 0; i < chords.length; i++) {
+			normalizeGeneratedMeasureChord(chords[i], referenceChords[i], measure, localStartBeat, localStartSeconds);
+		}
+	}
+
+	function normalizeGeneratedMeasureChord(chord, referenceChord, parentMeasure, localStartBeat, localStartSeconds) {
+		var localBeatOffset = (Number(chord.startBeat) || 0) - localStartBeat;
+		var localSecondOffset = (Number(chord.startSeconds) || 0) - localStartSeconds;
+
+		chord.bar = parentMeasure.bar;
+		chord.startBeat = referenceChord && referenceChord.startBeat != null ? referenceChord.startBeat : parentMeasure.startBeat + localBeatOffset;
+		chord.startSeconds = referenceChord && referenceChord.startSeconds != null ? referenceChord.startSeconds : parentMeasure.startSeconds + localSecondOffset;
+		copyTimingFields(chord, referenceChord || parentMeasure);
+		chord.sectionId = parentMeasure.sectionId;
+		chord.sectionLabelKey = parentMeasure.sectionLabelKey;
+	}
+
+	function copyTimingFields(target, source) {
+		var fields = [
+			'beatUnit',
+			'beatsPerBar',
+			'bpm',
+			'durationBeats',
+			'durationSeconds',
+			'secondsPerBeat'
+		];
+
+		for (var i = 0; i < fields.length; i++) {
+			copyTimingField(target, source, fields[i]);
+		}
+	}
+
+	function copyTimingField(target, source, field) {
+		if (source && source[field] != null) {
+			target[field] = source[field];
+		}
+	}
+
+	function clearModulationForTargetSection(progression, sectionId) {
+		var sections = progression && progression.sections ? progression.sections : [];
+		var originIds = {};
+
+		for (var i = 0; i < sections.length; i++) {
+			if (sections[i].modulation && sections[i].modulation.targetSectionId === sectionId) {
+				originIds[sections[i].modulation.originSectionId] = true;
+				delete sections[i].modulation;
+			}
+		}
+
+		for (var j = 0; j < sections.length; j++) {
+			if (originIds[sections[j].id] || sections[j].id === sectionId) {
+				clearModulationFieldsForSection(progression.measures || [], sections[j]);
+			}
+		}
+	}
+
+	function clearModulationFieldsForSection(measures, section) {
+		var start = section.startIndex || 0;
+		var end = start + (section.length || 0);
+
+		for (var i = start; i < end && i < measures.length; i++) {
+			clearModulationFields(measures[i]);
+		}
+	}
+
+	function clearModulationFields(measure) {
+		var fields = [
+			'modulationKind',
+			'modulationRole',
+			'modulationSourceLabelKey',
+			'pivotOriginDegree',
+			'pivotTargetDegree',
+			'pivotTargetScaleIndex',
+			'pivotTargetScaleName',
+			'pivotTargetTonicName',
+			'sourceLabelKey',
+			'targetScaleIndex',
+			'targetTonicName'
+		];
+
+		for (var i = 0; i < fields.length; i++) {
+			delete measure[fields[i]];
+		}
+
+		if (measure.chords && measure.chords.length) {
+			for (var j = 0; j < measure.chords.length; j++) {
+				clearModulationFields(measure.chords[j]);
+			}
+		}
+	}
+
+	function cloneJson(value) {
+		return value == null ? null : JSON.parse(JSON.stringify(value));
+	}
+
+	global.CodaProgressionSectionRetarget = {
+		replaceContext: replaceContext
+	};
+})(window);
+
+;
+
 /* Source: js/services/progression-section-variation-service.js */
 // Creates small derivative variations for cloned progression sections.
 (function (global) {
@@ -11857,321 +12035,16 @@
 
 ;
 
-/* Source: js/services/progression-section-contrast-service.js */
-// Orchestrates derivative and contrasting progression sections.
+/* Source: js/services/progression-section-modulation-service.js */
 (function (global) {
 	'use strict';
 
-	var sectionCandidates = global.CodaProgressionSectionCandidates;
-	var sectionDocument = global.CodaProgressionSectionDocument;
-	var sectionVariation = global.CodaProgressionSectionVariation;
 	var formattingService = global.CodaProgressionFormatting;
+	var objectService = global.CodaProgressionObjects;
+	var sectionDocument = global.CodaProgressionSectionDocument;
 
-	function generate(options, dependencies) {
-		var progression = options.progression || {};
-		var progressionState = cloneObject(options.progressionState || {});
-		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
-		var sectionAMeasures = sectionDocument.measuresForSectionA(progression, progressionState);
-		options.buildScaleReport = dependencies.buildScaleReport;
-		var candidate = contrastCandidateForOptions(options, rng);
-		var targetReport = candidate.report || options.report;
-		var modulation;
-		var sectionState = cloneObject(progressionState);
-		var sectionB;
-		var combined;
-		var rebuilt;
-
-		sectionState.bars = sectionAMeasures.length || progressionState.bars || 8;
-		sectionB = dependencies.generateProgressionFromState({
-			data: options.data,
-			domain: options.domain,
-			openingFunction: candidate.openingFunction,
-			progressionState: sectionState,
-			report: targetReport,
-			rng: rng
-		});
-
-		modulation = prepareSectionModulation({
-			candidate: candidate,
-			dependencies: dependencies,
-			originReport: options.report,
-			originSectionId: 'A',
-			options: options,
-			progressionState: progressionState,
-			sectionMeasures: sectionB.measures || [],
-			targetReport: targetReport,
-			targetSectionId: 'B'
-		});
-		combined = applyModulationToCombinedMeasures(
-			sectionDocument.cloneMeasures(sectionAMeasures),
-			sectionDocument.cloneMeasures(sectionB.measures || []),
-			modulation
-		);
-		rebuilt = dependencies.rebuildProgressionTimeline(progression, combined);
-		rebuilt.sections = [
-			{
-				id: 'A',
-				labelKey: 'progression.sectionA',
-				length: sectionAMeasures.length,
-				startIndex: 0
-			},
-			sectionMetadata(candidate, targetReport, 'B', sectionAMeasures.length, sectionB.measures ? sectionB.measures.length : 0, sectionState, modulation.metadata)
-		];
-		sectionDocument.annotateSectionMeasures(rebuilt.measures, rebuilt.sections);
-		rebuilt.sectionContrast = candidate.id;
-
-		return rebuilt;
-	}
-
-	function generateSection(options, dependencies) {
-		var sectionType;
-
-		options = options || {};
-		sectionType = normalizedSectionType(options.sectionType);
-		options.buildScaleReport = dependencies.buildScaleReport;
-
-		if (sectionType === 'aprimeClone') {
-			return generateDerivativeSection(options, dependencies, 'A', 'A\'', false);
-		}
-
-		if (sectionType === 'aprimeVariation') {
-			return generateDerivativeSection(options, dependencies, 'A', 'A\'', true);
-		}
-
-		if (sectionType === 'bprimeClone') {
-			return generateDerivativeSection(options, dependencies, 'B', 'B\'', false);
-		}
-
-		if (sectionType === 'bprimeVariation') {
-			return generateDerivativeSection(options, dependencies, 'B', 'B\'', true);
-		}
-
-		if (sectionType === 'contrast') {
-			return generateContrastSection(options, dependencies, sectionDocument.findSection(options.progression, 'B') ? 'C' : 'B');
-		}
-
-		return generateContrastSection(options, dependencies, 'B');
-	}
-
-	function generateAprimeSection(options, dependencies) {
-		return generateDerivativeSection(options, dependencies, 'A', 'A\'', true);
-	}
-
-	function generateCSection(options, dependencies) {
-		return generateContrastSection(options, dependencies, 'C');
-	}
-
-	function generateContrastSection(options, dependencies, targetId) {
-		var progression = options.progression || {};
-		var progressionState = cloneObject(options.progressionState || {});
-		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
-		var originSection = lastSection(progression) || sectionDocument.findSection(progression, 'A');
-		var referenceMeasures = sectionDocument.measuresForSection(progression, originSection ? originSection.id : 'A', progressionState);
-		var originReport;
-		var candidateOptions;
-		var sectionState = cloneObject(progressionState);
-		var candidate;
-		var targetReport;
-		var sectionProgression;
-		var modulation;
-
-		if (sectionDocument.findSection(progression, targetId)) {
-			return progression;
-		}
-
-		options.buildScaleReport = dependencies.buildScaleReport;
-		originReport = sectionCandidates.reportForSection(originSection, options) || options.report;
-		candidateOptions = extendObject(options, {
-			report: originReport
-		});
-		sectionState.bars = referenceMeasures.length || progressionState.bars || 8;
-		candidate = contrastCandidateForOptions(candidateOptions, rng, progression, originReport);
-		targetReport = candidate.report || options.report;
-		sectionProgression = dependencies.generateProgressionFromState({
-			data: options.data,
-			domain: options.domain,
-			openingFunction: candidate.openingFunction,
-			progressionState: sectionState,
-			report: targetReport,
-			rng: rng
-		});
-		modulation = prepareSectionModulation({
-			candidate: candidate,
-			dependencies: dependencies,
-			originReport: originReport,
-			originSectionId: originSection ? originSection.id : 'A',
-			options: options,
-			progressionState: progressionState,
-			sectionMeasures: sectionProgression.measures || [],
-			targetReport: targetReport,
-			targetSectionId: targetId
-		});
-
-		return appendContrastSection(
-			progression,
-			sectionProgression.measures || [],
-			sectionMetadata(candidate, targetReport, targetId, 0, 0, sectionState, modulation.metadata),
-			dependencies,
-			modulation
-		);
-	}
-
-	function generateDerivativeSection(options, dependencies, sourceId, targetId, shouldVary) {
-		var progression = options.progression || {};
-		var progressionState = cloneObject(options.progressionState || {});
-		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
-		var sourceSection = sectionDocument.findSection(progression, sourceId);
-		var sourceMeasures = sectionDocument.measuresForSection(progression, sourceId, progressionState);
-		var sourceReport = sectionCandidates.reportForSection(sourceSection, options) || options.report;
-		var sectionState = sectionDocument.sectionStateForSource(sourceSection, progressionState, sourceMeasures);
-		var sectionMeasures = sectionDocument.cloneMeasures(sourceMeasures);
-		var generated;
-
-		if (sectionDocument.findSection(progression, targetId) || !sourceMeasures.length) {
-			return progression;
-		}
-
-		if (shouldVary) {
-			generated = dependencies.generateProgressionFromState({
-				data: options.data,
-				domain: options.domain,
-				progressionState: sectionState,
-				report: sourceReport,
-				rng: rng
-			});
-			sectionMeasures = sectionVariation.createVariationMeasures(sourceMeasures, generated.measures || [], rng);
-		}
-
-		return sectionDocument.appendSection(progression, sectionMeasures, extendObject(sectionDocument.sectionMetadataFromReport(sourceReport), {
-			id: targetId,
-			labelKey: sectionDocument.sectionLabelKey(targetId),
-			state: cloneObject(sectionState),
-			variationKind: shouldVary ? 'small' : 'clone',
-			variationOf: sourceId
-		}), dependencies);
-	}
-
-	function sectionMetadata(candidate, report, id, startIndex, length, state, modulation) {
-		var metadata = {
-			circleOfFifths: report.circleOfFifths || null,
-			contrast: candidate.id,
-			contextLabel: candidate.label,
-			contextScaleIndex: report.scaleIndex,
-			contextScaleName: report.scaleName,
-			contextTonicName: report.tonicName,
-			id: id,
-			labelKey: sectionDocument.sectionLabelKey(id),
-			length: length,
-			startIndex: startIndex,
-			state: cloneObject(state)
-		};
-
-		if (modulation) {
-			metadata.modulation = modulation;
-		}
-
-		return metadata;
-	}
-
-	function contrastCandidateForOptions(options, rng, progression, originReport) {
-		if (isExplicitNoModulation(options)) {
-			return sectionCandidates.sameKeyNoModulation(options);
-		}
-
-		if (options && options.modulationType === 'pivot') {
-			return pivotCompatibleCandidate(options, rng, progression, originReport);
-		}
-
-		if (progression) {
-			return sectionCandidates.chooseContrastCandidateExcluding(options, rng, sectionCandidates.existingSectionContexts(progression, originReport || options.report));
-		}
-
-		return sectionCandidates.chooseContrastCandidate(options, rng);
-	}
-
-	function pivotCompatibleCandidate(options, rng, progression, originReport) {
-		var candidates = sectionCandidates.contrastCandidates(options);
-		var excludedContexts = progression ? sectionCandidates.existingSectionContexts(progression, originReport || options.report) : [];
-		var origin = originReport || options.report;
-		var filtered = pivotCandidates(candidates, origin, excludedContexts);
-
-		if (!filtered.length && excludedContexts.length) {
-			filtered = pivotCandidates(candidates, origin, []);
-		}
-
-		if (!filtered.length) {
-			return firstDifferentCandidate(candidates, origin, excludedContexts) ||
-				firstDifferentCandidate(candidates, origin, []) ||
-				sectionCandidates.sameKeyNoModulation(options);
-		}
-
-		return filtered[Math.floor(rng() * filtered.length) % filtered.length] || filtered[0];
-	}
-
-	function pivotCandidates(candidates, originReport, excludedContexts) {
-		var filtered = [];
-
-		for (var i = 0; i < (candidates || []).length; i++) {
-			if (isExcludedCandidate(candidates[i], excludedContexts) || !isModulatingCandidate(candidates[i], originReport)) {
-				continue;
-			}
-
-			if (commonPivotChord(originReport, candidates[i].report)) {
-				filtered.push(candidates[i]);
-			}
-		}
-
-		return filtered;
-	}
-
-	function firstDifferentCandidate(candidates, originReport, excludedContexts) {
-		for (var i = 0; i < (candidates || []).length; i++) {
-			if (!isExcludedCandidate(candidates[i], excludedContexts) && isModulatingCandidate(candidates[i], originReport)) {
-				return candidates[i];
-			}
-		}
-
-		return null;
-	}
-
-	function isModulatingCandidate(candidate, originReport) {
-		return !!(candidate && candidate.report && !sameReportContext(originReport, candidate.report));
-	}
-
-	function isExcludedCandidate(candidate, excludedContexts) {
-		var label = candidate && candidate.label ? candidate.label : '';
-
-		if (!label) {
-			return false;
-		}
-
-		for (var i = 0; i < (excludedContexts || []).length; i++) {
-			if (excludedContexts[i] === label) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	function appendContrastSection(progression, sectionMeasures, metadata, dependencies, modulation) {
-		var previousSections = sectionDocument.normalizedSections(progression);
-		var previousMeasures = sectionDocument.cloneMeasures(progression && progression.measures ? progression.measures : []);
-		var prepared = applyModulationToCombinedMeasures(previousMeasures, sectionDocument.cloneMeasures(sectionMeasures || []), modulation);
-		var rebuilt = dependencies.rebuildProgressionTimeline(progression, prepared);
-		var startIndex = previousMeasures.length;
-
-		rebuilt.sections = previousSections.concat([extendObject(metadata, {
-			length: sectionMeasures ? sectionMeasures.length : 0,
-			startIndex: startIndex
-		})]);
-		sectionDocument.annotateSectionMeasures(rebuilt.measures, rebuilt.sections);
-
-		return rebuilt;
-	}
-
-	function prepareSectionModulation(context) {
-		var requestedKind = normalizedModulationKind(context.options.modulationType);
+	function prepare(context) {
+		var requestedKind = normalizedKind(context.options.modulationType);
 		var originReport = context.originReport;
 		var targetReport = context.targetReport;
 		var pivot = commonPivotChord(originReport, targetReport);
@@ -12236,7 +12109,7 @@
 		};
 	}
 
-	function normalizedModulationKind(value) {
+	function normalizedKind(value) {
 		if (value === 'none' || value === 'pivot' || value === 'secondaryDominant' || value === 'direct') {
 			return value;
 		}
@@ -12244,13 +12117,9 @@
 		return 'none';
 	}
 
-	function isExplicitNoModulation(options) {
-		return options && options.modulationType === 'none';
-	}
-
 	function transitionMeasureForDegree(degreeIndex, report, context, metadata, degreeOptions) {
 		var generated;
-		var degree = extendObject({
+		var degree = objectService.extendObject({
 			index: degreeIndex,
 			source: 'diatonic'
 		}, degreeOptions || {});
@@ -12285,10 +12154,10 @@
 			return null;
 		}
 
-		return extendObject(generated.measures[0], metadata || {});
+		return objectService.extendObject(generated.measures[0], metadata || {});
 	}
 
-	function applyModulationToCombinedMeasures(previousMeasures, sectionMeasures, modulation) {
+	function applyToCombinedMeasures(previousMeasures, sectionMeasures, modulation) {
 		var result = previousMeasures.concat(sectionMeasures);
 		var previousIndex = previousMeasures.length - 1;
 		var nextIndex = previousMeasures.length;
@@ -12306,7 +12175,7 @@
 
 	function replaceMeasureHarmony(original, replacement) {
 		var timing = {};
-		var result = extendObject(original, replacement);
+		var result = objectService.extendObject(original, replacement);
 		var timingKeys = [
 			'articulation',
 			'bar',
@@ -12329,7 +12198,7 @@
 			}
 		}
 
-		result = extendObject(result, timing);
+		result = objectService.extendObject(result, timing);
 		delete result.chords;
 
 		return result;
@@ -12461,6 +12330,338 @@
 
 	function fixedRng() {
 		return 0.99;
+	}
+
+	function cloneObject(value) {
+		return objectService.extendObject({}, value || {});
+	}
+
+	global.CodaProgressionSectionModulation = {
+		applyToCombinedMeasures: applyToCombinedMeasures,
+		commonPivotChord: commonPivotChord,
+		normalizedKind: normalizedKind,
+		prepare: prepare,
+		sameReportContext: sameReportContext
+	};
+})(window);
+
+;
+
+/* Source: js/services/progression-section-contrast-service.js */
+// Orchestrates derivative and contrasting progression sections.
+(function (global) {
+	'use strict';
+
+	var sectionCandidates = global.CodaProgressionSectionCandidates;
+	var sectionDocument = global.CodaProgressionSectionDocument;
+	var sectionModulation = global.CodaProgressionSectionModulation;
+	var sectionVariation = global.CodaProgressionSectionVariation;
+
+	function generate(options, dependencies) {
+		var progression = options.progression || {};
+		var progressionState = cloneObject(options.progressionState || {});
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var sectionAMeasures = sectionDocument.measuresForSectionA(progression, progressionState);
+		options.buildScaleReport = dependencies.buildScaleReport;
+		var candidate = contrastCandidateForOptions(options, rng);
+		var targetReport = candidate.report || options.report;
+		var modulation;
+		var sectionState = cloneObject(progressionState);
+		var sectionB;
+		var combined;
+		var rebuilt;
+
+		sectionState.bars = sectionAMeasures.length || progressionState.bars || 8;
+		sectionB = dependencies.generateProgressionFromState({
+			data: options.data,
+			domain: options.domain,
+			openingFunction: candidate.openingFunction,
+			progressionState: sectionState,
+			report: targetReport,
+			rng: rng
+		});
+
+		modulation = sectionModulation.prepare({
+			candidate: candidate,
+			dependencies: dependencies,
+			originReport: options.report,
+			originSectionId: 'A',
+			options: options,
+			progressionState: progressionState,
+			sectionMeasures: sectionB.measures || [],
+			targetReport: targetReport,
+			targetSectionId: 'B'
+		});
+		combined = sectionModulation.applyToCombinedMeasures(
+			sectionDocument.cloneMeasures(sectionAMeasures),
+			sectionDocument.cloneMeasures(sectionB.measures || []),
+			modulation
+		);
+		rebuilt = dependencies.rebuildProgressionTimeline(progression, combined);
+		rebuilt.sections = [
+			{
+				id: 'A',
+				labelKey: 'progression.sectionA',
+				length: sectionAMeasures.length,
+				startIndex: 0
+			},
+			sectionMetadata(candidate, targetReport, 'B', sectionAMeasures.length, sectionB.measures ? sectionB.measures.length : 0, sectionState, modulation.metadata)
+		];
+		sectionDocument.annotateSectionMeasures(rebuilt.measures, rebuilt.sections);
+		rebuilt.sectionContrast = candidate.id;
+
+		return rebuilt;
+	}
+
+	function generateSection(options, dependencies) {
+		var sectionType;
+
+		options = options || {};
+		sectionType = normalizedSectionType(options.sectionType);
+		options.buildScaleReport = dependencies.buildScaleReport;
+
+		if (sectionType === 'aprimeClone') {
+			return generateDerivativeSection(options, dependencies, 'A', 'A\'', false);
+		}
+
+		if (sectionType === 'aprimeVariation') {
+			return generateDerivativeSection(options, dependencies, 'A', 'A\'', true);
+		}
+
+		if (sectionType === 'bprimeClone') {
+			return generateDerivativeSection(options, dependencies, 'B', 'B\'', false);
+		}
+
+		if (sectionType === 'bprimeVariation') {
+			return generateDerivativeSection(options, dependencies, 'B', 'B\'', true);
+		}
+
+		if (sectionType === 'contrast') {
+			return generateContrastSection(options, dependencies, sectionDocument.findSection(options.progression, 'B') ? 'C' : 'B');
+		}
+
+		return generateContrastSection(options, dependencies, 'B');
+	}
+
+	function generateAprimeSection(options, dependencies) {
+		return generateDerivativeSection(options, dependencies, 'A', 'A\'', true);
+	}
+
+	function generateCSection(options, dependencies) {
+		return generateContrastSection(options, dependencies, 'C');
+	}
+
+	function generateContrastSection(options, dependencies, targetId) {
+		var progression = options.progression || {};
+		var progressionState = cloneObject(options.progressionState || {});
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var originSection = lastSection(progression) || sectionDocument.findSection(progression, 'A');
+		var referenceMeasures = sectionDocument.measuresForSection(progression, originSection ? originSection.id : 'A', progressionState);
+		var originReport;
+		var candidateOptions;
+		var sectionState = cloneObject(progressionState);
+		var candidate;
+		var targetReport;
+		var sectionProgression;
+		var modulation;
+
+		if (sectionDocument.findSection(progression, targetId)) {
+			return progression;
+		}
+
+		options.buildScaleReport = dependencies.buildScaleReport;
+		originReport = sectionCandidates.reportForSection(originSection, options) || options.report;
+		candidateOptions = extendObject(options, {
+			report: originReport
+		});
+		sectionState.bars = referenceMeasures.length || progressionState.bars || 8;
+		candidate = contrastCandidateForOptions(candidateOptions, rng, progression, originReport);
+		targetReport = candidate.report || options.report;
+		sectionProgression = dependencies.generateProgressionFromState({
+			data: options.data,
+			domain: options.domain,
+			openingFunction: candidate.openingFunction,
+			progressionState: sectionState,
+			report: targetReport,
+			rng: rng
+		});
+		modulation = sectionModulation.prepare({
+			candidate: candidate,
+			dependencies: dependencies,
+			originReport: originReport,
+			originSectionId: originSection ? originSection.id : 'A',
+			options: options,
+			progressionState: progressionState,
+			sectionMeasures: sectionProgression.measures || [],
+			targetReport: targetReport,
+			targetSectionId: targetId
+		});
+
+		return appendContrastSection(
+			progression,
+			sectionProgression.measures || [],
+			sectionMetadata(candidate, targetReport, targetId, 0, 0, sectionState, modulation.metadata),
+			dependencies,
+			modulation
+		);
+	}
+
+	function generateDerivativeSection(options, dependencies, sourceId, targetId, shouldVary) {
+		var progression = options.progression || {};
+		var progressionState = cloneObject(options.progressionState || {});
+		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
+		var sourceSection = sectionDocument.findSection(progression, sourceId);
+		var sourceMeasures = sectionDocument.measuresForSection(progression, sourceId, progressionState);
+		var sourceReport = sectionCandidates.reportForSection(sourceSection, options) || options.report;
+		var sectionState = sectionDocument.sectionStateForSource(sourceSection, progressionState, sourceMeasures);
+		var sectionMeasures = sectionDocument.cloneMeasures(sourceMeasures);
+		var generated;
+
+		if (sectionDocument.findSection(progression, targetId) || !sourceMeasures.length) {
+			return progression;
+		}
+
+		if (shouldVary) {
+			generated = dependencies.generateProgressionFromState({
+				data: options.data,
+				domain: options.domain,
+				progressionState: sectionState,
+				report: sourceReport,
+				rng: rng
+			});
+			sectionMeasures = sectionVariation.createVariationMeasures(sourceMeasures, generated.measures || [], rng);
+		}
+
+		return sectionDocument.appendSection(progression, sectionMeasures, extendObject(sectionDocument.sectionMetadataFromReport(sourceReport), {
+			id: targetId,
+			labelKey: sectionDocument.sectionLabelKey(targetId),
+			state: cloneObject(sectionState),
+			variationKind: shouldVary ? 'small' : 'clone',
+			variationOf: sourceId
+		}), dependencies);
+	}
+
+	function sectionMetadata(candidate, report, id, startIndex, length, state, modulation) {
+		var metadata = {
+			circleOfFifths: report.circleOfFifths || null,
+			contrast: candidate.id,
+			contextLabel: candidate.label,
+			contextScaleIndex: report.scaleIndex,
+			contextScaleName: report.scaleName,
+			contextTonicName: report.tonicName,
+			id: id,
+			labelKey: sectionDocument.sectionLabelKey(id),
+			length: length,
+			startIndex: startIndex,
+			state: cloneObject(state)
+		};
+
+		if (modulation) {
+			metadata.modulation = modulation;
+		}
+
+		return metadata;
+	}
+
+	function contrastCandidateForOptions(options, rng, progression, originReport) {
+		if (isExplicitNoModulation(options)) {
+			return sectionCandidates.sameKeyNoModulation(options);
+		}
+
+		if (options && options.modulationType === 'pivot') {
+			return pivotCompatibleCandidate(options, rng, progression, originReport);
+		}
+
+		if (progression) {
+			return sectionCandidates.chooseContrastCandidateExcluding(options, rng, sectionCandidates.existingSectionContexts(progression, originReport || options.report));
+		}
+
+		return sectionCandidates.chooseContrastCandidate(options, rng);
+	}
+
+	function pivotCompatibleCandidate(options, rng, progression, originReport) {
+		var candidates = sectionCandidates.contrastCandidates(options);
+		var excludedContexts = progression ? sectionCandidates.existingSectionContexts(progression, originReport || options.report) : [];
+		var origin = originReport || options.report;
+		var filtered = pivotCandidates(candidates, origin, excludedContexts);
+
+		if (!filtered.length && excludedContexts.length) {
+			filtered = pivotCandidates(candidates, origin, []);
+		}
+
+		if (!filtered.length) {
+			return firstDifferentCandidate(candidates, origin, excludedContexts) ||
+				firstDifferentCandidate(candidates, origin, []) ||
+				sectionCandidates.sameKeyNoModulation(options);
+		}
+
+		return filtered[Math.floor(rng() * filtered.length) % filtered.length] || filtered[0];
+	}
+
+	function pivotCandidates(candidates, originReport, excludedContexts) {
+		var filtered = [];
+
+		for (var i = 0; i < (candidates || []).length; i++) {
+			if (isExcludedCandidate(candidates[i], excludedContexts) || !isModulatingCandidate(candidates[i], originReport)) {
+				continue;
+			}
+
+			if (sectionModulation.commonPivotChord(originReport, candidates[i].report)) {
+				filtered.push(candidates[i]);
+			}
+		}
+
+		return filtered;
+	}
+
+	function firstDifferentCandidate(candidates, originReport, excludedContexts) {
+		for (var i = 0; i < (candidates || []).length; i++) {
+			if (!isExcludedCandidate(candidates[i], excludedContexts) && isModulatingCandidate(candidates[i], originReport)) {
+				return candidates[i];
+			}
+		}
+
+		return null;
+	}
+
+	function isModulatingCandidate(candidate, originReport) {
+		return !!(candidate && candidate.report && !sectionModulation.sameReportContext(originReport, candidate.report));
+	}
+
+	function isExcludedCandidate(candidate, excludedContexts) {
+		var label = candidate && candidate.label ? candidate.label : '';
+
+		if (!label) {
+			return false;
+		}
+
+		for (var i = 0; i < (excludedContexts || []).length; i++) {
+			if (excludedContexts[i] === label) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function appendContrastSection(progression, sectionMeasures, metadata, dependencies, modulation) {
+		var previousSections = sectionDocument.normalizedSections(progression);
+		var previousMeasures = sectionDocument.cloneMeasures(progression && progression.measures ? progression.measures : []);
+		var prepared = sectionModulation.applyToCombinedMeasures(previousMeasures, sectionDocument.cloneMeasures(sectionMeasures || []), modulation);
+		var rebuilt = dependencies.rebuildProgressionTimeline(progression, prepared);
+		var startIndex = previousMeasures.length;
+
+		rebuilt.sections = previousSections.concat([extendObject(metadata, {
+			length: sectionMeasures ? sectionMeasures.length : 0,
+			startIndex: startIndex
+		})]);
+		sectionDocument.annotateSectionMeasures(rebuilt.measures, rebuilt.sections);
+
+		return rebuilt;
+	}
+
+	function isExplicitNoModulation(options) {
+		return options && options.modulationType === 'none';
 	}
 
 	function lastSection(progression) {
@@ -23284,6 +23485,7 @@
 		var progressionTransport = options.progressionTransport || global.CodaProgressionTransport;
 		var progressionTransportController = null;
 		var progressionDocument = options.progressionDocument || global.CodaProgressionDocument;
+		var progressionSectionRetarget = options.progressionSectionRetarget || global.CodaProgressionSectionRetarget;
 		var progressionState = options.progressionState || global.CodaProgressionState;
 		var progressionWorkspaceStorage = options.progressionWorkspaceStorage || global.CodaProgressionWorkspaceStorage;
 		var staticText = options.staticText || global.CodaStaticText;
@@ -24068,7 +24270,7 @@
 			var sectionState;
 			var generated;
 
-			if (!progression || !section || !targetReport || !options.application || typeof options.application.generateProgressionFromState !== 'function') {
+			if (!progression || !section || !targetReport || !progressionSectionRetarget || !options.application || typeof options.application.generateProgressionFromState !== 'function') {
 				return false;
 			}
 
@@ -24081,7 +24283,7 @@
 				report: targetReport
 			});
 
-			setProgression(markProgressionAsUserEdited(replaceProgressionSectionContext({
+			setProgression(markProgressionAsUserEdited(progressionSectionRetarget.replaceContext({
 				generatedMeasures: generated && generated.measures ? generated.measures : [],
 				progression: progression,
 				sectionId: sectionId,
@@ -24144,155 +24346,6 @@
 			}
 
 			return -1;
-		}
-
-		function replaceProgressionSectionContext(options) {
-			var next = cloneJson(options.progression);
-			var sections = next && next.sections ? next.sections : [];
-			var section = null;
-			var generatedMeasures = cloneJson(options.generatedMeasures || []);
-			var length;
-			var startIndex;
-
-			for (var i = 0; i < sections.length; i++) {
-				if (sections[i].id === options.sectionId) {
-					section = sections[i];
-					break;
-				}
-			}
-
-			if (!section) {
-				return next;
-			}
-
-			length = section.length || generatedMeasures.length;
-			startIndex = section.startIndex || 0;
-			generatedMeasures = generatedMeasures.slice(0, length);
-			while (generatedMeasures.length < length && generatedMeasures.length) {
-				generatedMeasures.push(cloneJson(generatedMeasures[generatedMeasures.length - 1]));
-			}
-
-			clearModulationForTargetSection(next, options.sectionId);
-			for (var j = 0; j < generatedMeasures.length; j++) {
-				normalizeGeneratedSectionMeasure(generatedMeasures[j], (next.measures || [])[startIndex + j], section, startIndex, j);
-			}
-
-			next.measures = (next.measures || []).slice(0, startIndex)
-				.concat(generatedMeasures)
-				.concat((next.measures || []).slice(startIndex + length));
-			section.circleOfFifths = options.targetReport.circleOfFifths || null;
-			section.contextLabel = options.targetReport.tonicName + ' ' + options.targetReport.scaleName;
-			section.contextScaleIndex = options.targetReport.scaleIndex;
-			section.contextScaleName = options.targetReport.scaleName;
-			section.contextTonicName = options.targetReport.tonicName;
-			section.length = generatedMeasures.length;
-			section.state = cloneJson(options.sectionState || {});
-			delete section.modulation;
-
-			return next;
-		}
-
-		function normalizeGeneratedSectionMeasure(measure, referenceMeasure, section, startIndex, sectionMeasureIndex) {
-			var localStartBeat = Number(measure.startBeat) || 0;
-			var localStartSeconds = Number(measure.startSeconds) || 0;
-
-			measure.bar = referenceMeasure && referenceMeasure.bar != null ? referenceMeasure.bar : startIndex + sectionMeasureIndex + 1;
-			measure.startBeat = referenceMeasure && referenceMeasure.startBeat != null ? referenceMeasure.startBeat : localStartBeat;
-			measure.startSeconds = referenceMeasure && referenceMeasure.startSeconds != null ? referenceMeasure.startSeconds : localStartSeconds;
-			copyTimingField(measure, referenceMeasure, 'beatUnit');
-			copyTimingField(measure, referenceMeasure, 'beatsPerBar');
-			copyTimingField(measure, referenceMeasure, 'bpm');
-			copyTimingField(measure, referenceMeasure, 'durationBeats');
-			copyTimingField(measure, referenceMeasure, 'durationSeconds');
-			copyTimingField(measure, referenceMeasure, 'secondsPerBeat');
-			measure.sectionId = section.id;
-			measure.sectionLabelKey = section.labelKey;
-			normalizeGeneratedMeasureChords(measure, referenceMeasure, localStartBeat, localStartSeconds);
-		}
-
-		function normalizeGeneratedMeasureChords(measure, referenceMeasure, localStartBeat, localStartSeconds) {
-			var chords = measure.chords || [];
-			var referenceChords = referenceMeasure && referenceMeasure.chords ? referenceMeasure.chords : [];
-
-			for (var i = 0; i < chords.length; i++) {
-				normalizeGeneratedMeasureChord(chords[i], referenceChords[i], measure, localStartBeat, localStartSeconds);
-			}
-		}
-
-		function normalizeGeneratedMeasureChord(chord, referenceChord, parentMeasure, localStartBeat, localStartSeconds) {
-			var localBeatOffset = (Number(chord.startBeat) || 0) - localStartBeat;
-			var localSecondOffset = (Number(chord.startSeconds) || 0) - localStartSeconds;
-
-			chord.bar = parentMeasure.bar;
-			chord.startBeat = referenceChord && referenceChord.startBeat != null ? referenceChord.startBeat : parentMeasure.startBeat + localBeatOffset;
-			chord.startSeconds = referenceChord && referenceChord.startSeconds != null ? referenceChord.startSeconds : parentMeasure.startSeconds + localSecondOffset;
-			copyTimingField(chord, referenceChord || parentMeasure, 'beatUnit');
-			copyTimingField(chord, referenceChord || parentMeasure, 'beatsPerBar');
-			copyTimingField(chord, referenceChord || parentMeasure, 'bpm');
-			copyTimingField(chord, referenceChord || parentMeasure, 'durationBeats');
-			copyTimingField(chord, referenceChord || parentMeasure, 'durationSeconds');
-			copyTimingField(chord, referenceChord || parentMeasure, 'secondsPerBeat');
-			chord.sectionId = parentMeasure.sectionId;
-			chord.sectionLabelKey = parentMeasure.sectionLabelKey;
-		}
-
-		function copyTimingField(target, source, field) {
-			if (source && source[field] != null) {
-				target[field] = source[field];
-			}
-		}
-
-		function clearModulationForTargetSection(progression, sectionId) {
-			var sections = progression && progression.sections ? progression.sections : [];
-			var originIds = {};
-
-			for (var i = 0; i < sections.length; i++) {
-				if (sections[i].modulation && sections[i].modulation.targetSectionId === sectionId) {
-					originIds[sections[i].modulation.originSectionId] = true;
-					delete sections[i].modulation;
-				}
-			}
-
-			for (var j = 0; j < sections.length; j++) {
-				if (originIds[sections[j].id] || sections[j].id === sectionId) {
-					clearModulationFieldsForSection(progression.measures || [], sections[j]);
-				}
-			}
-		}
-
-		function clearModulationFieldsForSection(measures, section) {
-			var start = section.startIndex || 0;
-			var end = start + (section.length || 0);
-
-			for (var i = start; i < end && i < measures.length; i++) {
-				clearModulationFields(measures[i]);
-			}
-		}
-
-		function clearModulationFields(measure) {
-			var fields = [
-				'modulationKind',
-				'modulationRole',
-				'modulationSourceLabelKey',
-				'pivotOriginDegree',
-				'pivotTargetDegree',
-				'pivotTargetScaleIndex',
-				'pivotTargetScaleName',
-				'pivotTargetTonicName',
-				'sourceLabelKey',
-				'targetScaleIndex',
-				'targetTonicName'
-			];
-
-			for (var i = 0; i < fields.length; i++) {
-				delete measure[fields[i]];
-			}
-
-			if (measure.chords && measure.chords.length) {
-				for (var j = 0; j < measure.chords.length; j++) {
-					clearModulationFields(measure.chords[j]);
-				}
-			}
 		}
 
 		function closeCircleOfFifthsPopover() {
