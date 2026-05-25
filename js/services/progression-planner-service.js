@@ -58,6 +58,7 @@
 		degrees = applyClassicMinorDominants(degrees, options.report, progressionState, mode);
 		degrees = applyPartimentoChromaticDegrees(degrees, options.report);
 		degrees = applyModalInterchangeSources(degrees, options.report, progressionState, rng);
+		degrees = applyOpeningSectionFunctionBias(degrees, options.report, options.openingFunction, rng, options.allowRandomOpeningFunctionBias);
 		degrees = applyOpeningFunction(degrees, options.report, options.openingFunction, rng);
 		degrees = applySparseChordRepetition(degrees, progressionState, rng);
 
@@ -99,6 +100,70 @@
 		});
 
 		return degrees;
+	}
+
+	function applyOpeningSectionFunctionBias(degrees, report, openingFunction, rng, enabled) {
+		var degreeIndex;
+
+		if (!enabled || !degrees || !degrees.length || openingFunction || !canReplaceOpeningDegree(degrees[0])) {
+			return degrees;
+		}
+
+		degreeIndex = openingDegreeForSectionStart(report, rng);
+		if (degreeIndex === null || degreeIndex === undefined) {
+			return degrees;
+		}
+
+		degrees[0] = extendObject(degrees[0], {
+			index: degreeIndex,
+			source: 'diatonic'
+		});
+
+		return degrees;
+	}
+
+	function canReplaceOpeningDegree(degree) {
+		return degree &&
+			degree.index !== undefined &&
+			!degree.cadentialRole &&
+			!degree.chromaticRole &&
+			degree.forceInversionIndex === undefined &&
+			!degree.forceKind;
+	}
+
+	function openingDegreeForSectionStart(report, rng) {
+		var roll;
+		var tonicAlternatives;
+		var subdominantAlternatives;
+
+		rng = typeof rng === 'function' ? rng : Math.random;
+		roll = rng();
+
+		if (roll < 0.84) {
+			return 0;
+		}
+
+		tonicAlternatives = degreeIndexesForFunction(report, 'T');
+		if (roll < 0.96) {
+			return chooseOpeningDegree(tonicAlternatives, rng, 0);
+		}
+
+		subdominantAlternatives = degreeIndexesForFunction(report, 'SD');
+		if (roll < 0.995) {
+			return subdominantAlternatives.length ? chooseOpeningDegree(subdominantAlternatives, rng, 0) : chooseOpeningDegree(tonicAlternatives, rng, 0);
+		}
+
+		return null;
+	}
+
+	function chooseOpeningDegree(candidates, rng, fallback) {
+		if (!candidates || !candidates.length) {
+			return fallback;
+		}
+
+		rng = typeof rng === 'function' ? rng : Math.random;
+
+		return candidates[Math.floor(rng() * candidates.length) % candidates.length];
 	}
 
 	function applySparseChordRepetition(degrees, progressionState, rng) {
@@ -480,8 +545,10 @@
 	global.CodaProgressionPlanner = {
 		applyClassicMinorDominants: applyClassicMinorDominants,
 		applyModalInterchangeSources: applyModalInterchangeSources,
+		applyOpeningSectionFunctionBias: applyOpeningSectionFunctionBias,
 		applyOpeningFunction: applyOpeningFunction,
 		applyPartimentoChromaticDegrees: applyPartimentoChromaticDegrees,
+		canReplaceOpeningDegree: canReplaceOpeningDegree,
 		applySparseChordRepetition: applySparseChordRepetition,
 		chromaticDegreeForMarker: chromaticDegreeForMarker,
 		chooseInterchangeSource: chooseInterchangeSource,
@@ -492,6 +559,7 @@
 		fitDegreesToBars: fitDegreesToBars,
 		degreeFromSource: degreeFromSource,
 		harmonicMinorDominantSource: harmonicMinorDominantSource,
+		openingDegreeForSectionStart: openingDegreeForSectionStart,
 		repetitionChance: repetitionChance,
 		shouldUseClassicMinorDominant: shouldUseClassicMinorDominant,
 		varyBlockOpening: varyBlockOpening,

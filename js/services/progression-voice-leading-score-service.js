@@ -14,6 +14,7 @@
 		score += parallelPerfects * 18;
 		score += exteriorParallelPerfects * 28;
 		score += registerCenterPenalty(nextPlan, options && options.registerCenterMidi);
+		score += lowRegisterBassPenalty(nextPlan);
 
 		return score;
 	}
@@ -38,7 +39,7 @@
 	}
 
 	function firstVoicingScore(voicing, options) {
-		return voicing.inversionIndex * 2 + voiceSpan(voicing.midiNotes) / 12 + registerCenterPenalty(voicing, options && options.registerCenterMidi);
+		return voicing.inversionIndex * 2 + voiceSpan(voicing.midiNotes) / 12 + registerCenterPenalty(voicing, options && options.registerCenterMidi) + lowRegisterBassPenalty(voicing);
 	}
 
 	function transitionScore(previousMidiNotes, nextMidiNotes) {
@@ -105,9 +106,24 @@
 		return (excess * excess) / 3;
 	}
 
+	function lowRegisterBassPenalty(voicing) {
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes : [];
+		var bass = Number(midiNotes[0]);
+		var excess;
+
+		if (!isFinite(bass) || bass >= 28) {
+			return 0;
+		}
+
+		excess = 28 - bass;
+
+		return excess * excess * 4;
+	}
+
 	global.CodaProgressionVoiceLeadingScore = {
 		countParallelPerfects: countParallelPerfects,
 		firstVoicingScore: firstVoicingScore,
+		lowRegisterBassPenalty: lowRegisterBassPenalty,
 		registerCenterPenalty: registerCenterPenalty,
 		voiceLeadingTransitionScore: voiceLeadingTransitionScore
 	};

@@ -103,6 +103,7 @@ assert.ok(global.CodaProgressionPatternWeight.adjustedPatternWeight);
 assert.ok(global.CodaProgressionPatternSelector.choose);
 assert.ok(global.CodaProgressionPhraseBlockSelector.choose);
 assert.ok(global.CodaProgressionPlanner.createPlan);
+assert.ok(global.CodaProgressionPlanner.applyOpeningSectionFunctionBias);
 assert.ok(global.CodaProgressionBuilder.fromState);
 assert.ok(global.CodaProgressionSectionDocument.appendSection);
 assert.ok(global.CodaProgressionSectionDocument.sectionRange);
@@ -682,6 +683,99 @@ const openVoicing = global.CodaProgressionVoicing.chooseVoicing({
 	voices: 4
 });
 assert.ok(global.CodaProgressionVoicing.upperVoiceSpan(openVoicing.midiNotes) > global.CodaProgressionVoicing.upperVoiceSpan(closedVoicing.midiNotes));
+const openingTonicVoicing = global.CodaProgressionVoicing.chooseVoicing({
+	baseNotes: ['C', 'E', 'G'],
+	chordName: 'C',
+	extraNotes: [],
+	initialMidiNote: 60,
+	kind: 'triad',
+	openingTonic: true,
+	openingTonicInversionPolicy: 'root',
+	registerCenterMidi: 54,
+	voicing: 'open',
+	voices: 4
+});
+assert.equal(openingTonicVoicing.inversionIndex, 0);
+const rareOpeningTonicVoicing = global.CodaProgressionVoicing.chooseVoicing({
+	baseNotes: ['C', 'E', 'G'],
+	chordName: 'C',
+	extraNotes: [],
+	initialMidiNote: 60,
+	kind: 'triad',
+	openingTonic: true,
+	openingTonicInversionPolicy: 'first',
+	registerCenterMidi: 54,
+	voicing: 'open',
+	voices: 4
+});
+assert.equal(rareOpeningTonicVoicing.inversionIndex, 1);
+assert.ok(global.CodaProgressionVoicingSelection.openingTonicInversionPenalty({
+	inversionIndex: 1
+}, {
+	openingTonic: true,
+	openingTonicInversionPolicy: 'root'
+}) > 0);
+assert.equal(global.CodaProgressionVoicingSelection.openingTonicInversionPenalty({
+	inversionIndex: 1
+}, {
+	openingTonic: true,
+	openingTonicInversionPolicy: 'first'
+}), 0);
+const originalOpeningPolicyRandom = vm.runInContext('Math.random', context);
+context.__openingPolicyRandom = function () { return 0.005; };
+vm.runInContext('Math.random = __openingPolicyRandom;', context);
+assert.equal(global.CodaProgressionChordPlan.openingTonicInversionPolicy({
+	index: 0,
+	options: {
+		allowRandomOpeningTonicInversion: true,
+		rng: vm.runInContext('Math.random', context)
+	},
+	resolvedDegree: { degreeIndex: 0 }
+}), 'upper');
+context.__openingPolicyRandom = function () { return 0.05; };
+vm.runInContext('Math.random = __openingPolicyRandom;', context);
+assert.equal(global.CodaProgressionChordPlan.openingTonicInversionPolicy({
+	index: 0,
+	options: {
+		allowRandomOpeningTonicInversion: true,
+		rng: vm.runInContext('Math.random', context)
+	},
+	resolvedDegree: { degreeIndex: 0 }
+}), 'first');
+vm.runInContext('Math.random = __openingPolicyOriginalRandom;', Object.assign(context, {
+	__openingPolicyOriginalRandom: originalOpeningPolicyRandom
+}));
+delete context.__openingPolicyRandom;
+delete context.__openingPolicyOriginalRandom;
+assert.deepEqual(global.CodaProgressionVoicingDisposition.spreadLowRegister({
+	midiNotes: [36, 40, 43, 60],
+	voiceNotes: [
+		{ midiNote: 36, note: 'C', role: 'root' },
+		{ midiNote: 40, note: 'E', role: 'third' },
+		{ midiNote: 43, note: 'G', role: 'fifth' },
+		{ midiNote: 60, note: 'C', role: 'root-doubling' }
+	]
+}).midiNotes, [36, 52, 55, 72]);
+const lowOpenVoicing = global.CodaProgressionVoicing.chooseVoicing({
+	baseNotes: ['C', 'E', 'G'],
+	chordName: 'C',
+	extraNotes: [],
+	initialMidiNote: 60,
+	kind: 'triad',
+	previousPlan: {
+		midiNotes: [24, 28, 31, 36],
+		notes: ['C', 'E', 'G', 'C']
+	},
+	registerCenterMidi: 42,
+	voicing: 'open',
+	voices: 4
+});
+assert.ok(lowOpenVoicing.midiNotes[1] - lowOpenVoicing.midiNotes[0] >= global.CodaProgressionVoicingDisposition.minimumLowRegisterGap(lowOpenVoicing.midiNotes[0], 1));
+assert.ok(global.CodaProgressionVoiceLeadingScore.lowRegisterBassPenalty({
+	midiNotes: [16, 31, 48, 72]
+}) > global.CodaProgressionVoiceLeadingScore.lowRegisterBassPenalty({
+	midiNotes: [36, 48, 55, 72]
+}));
 assert.equal(global.CodaProgressionChordPlan.registerCenterMidi({
 	initialMidiNote: 60,
 	scaleNotes: [{ nombre: 'A' }]
@@ -957,6 +1051,26 @@ assert.deepEqual(global.CodaProgressionPlanner.createPlan({
 	{ index: 1, source: 'diatonic' },
 	{ index: 4, source: 'diatonic' },
 	{ index: 0, source: 'diatonic' }
+]);
+const majorFunctionReport = { scaleDefinition: { funciones: 'T-SD-T-SD-D-T-D' } };
+assert.equal(global.CodaProgressionPlanner.openingDegreeForSectionStart(majorFunctionReport, sequenceRng([0.2])), 0);
+assert.equal(global.CodaProgressionPlanner.openingDegreeForSectionStart(majorFunctionReport, sequenceRng([0.9, 0])), 2);
+assert.equal(global.CodaProgressionPlanner.openingDegreeForSectionStart(majorFunctionReport, sequenceRng([0.97, 0.99])), 3);
+assert.equal(global.CodaProgressionPlanner.openingDegreeForSectionStart(majorFunctionReport, sequenceRng([0.999])), null);
+assert.deepEqual(global.CodaProgressionPlanner.applyOpeningSectionFunctionBias([
+	{ index: 4, source: 'diatonic' }
+], majorFunctionReport, null, sequenceRng([0.2]), true), [
+	{ index: 0, source: 'diatonic' }
+]);
+assert.deepEqual(global.CodaProgressionPlanner.applyOpeningSectionFunctionBias([
+	{ index: 4, source: 'diatonic' }
+], majorFunctionReport, 'SD', sequenceRng([0.2]), true), [
+	{ index: 4, source: 'diatonic' }
+]);
+assert.deepEqual(global.CodaProgressionPlanner.applyOpeningSectionFunctionBias([
+	{ index: 4, source: 'diatonic', chromaticRole: 'secondary-dominant' }
+], majorFunctionReport, null, sequenceRng([0.2]), true), [
+	{ index: 4, source: 'diatonic', chromaticRole: 'secondary-dominant' }
 ]);
 const cadentialSixFourPlan = global.CodaProgressionPlanner.createPlan({
 	progressionState: {

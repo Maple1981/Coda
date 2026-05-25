@@ -442,7 +442,7 @@
 	}
 
 	function notesLabel(chord, options) {
-		var notes = uniqueNotes(chord.notes || notesFromVoices(chord.voiceNotes));
+		var notes = soundingNotes(chord);
 		var formatted = [];
 
 		if (!notes.length) {
@@ -460,30 +460,39 @@
 		return formatted.join(' - ');
 	}
 
+	function soundingNotes(chord) {
+		if (chord && chord.voiceNotes && chord.voiceNotes.length) {
+			return notesFromVoices(chord.voiceNotes);
+		}
+
+		return chord && chord.notes ? chord.notes : [];
+	}
+
 	function notesFromVoices(voiceNotes) {
 		var notes = [];
+		var voices = orderedVoiceNotes(voiceNotes);
 
-		for (var i = 0; i < (voiceNotes || []).length; i++) {
-			notes.push(voiceNotes[i].note);
+		for (var i = 0; i < voices.length; i++) {
+			notes.push(voices[i].note);
 		}
 
 		return notes;
 	}
 
-	function uniqueNotes(notes) {
-		var result = [];
-		var seen = {};
+	function orderedVoiceNotes(voiceNotes) {
+		var voices = (voiceNotes || []).slice();
 
-		for (var i = 0; i < (notes || []).length; i++) {
-			var note = notes[i];
-
-			if (note && !seen[note]) {
-				seen[note] = true;
-				result.push(note);
-			}
+		if (!voices.length || !voices.every(hasMidiNote)) {
+			return voices;
 		}
 
-		return result;
+		return voices.sort(function (a, b) {
+			return Number(a.midiNote) - Number(b.midiNote);
+		});
+	}
+
+	function hasMidiNote(voice) {
+		return isFinite(Number(voice && voice.midiNote));
 	}
 
 	function sourceLabel(chord, options) {
@@ -535,6 +544,7 @@
 		renderSectionHeader: renderSectionHeader,
 		renderSectionNavigator: renderSectionNavigator,
 		notesLabel: notesLabel,
+		orderedVoiceNotes: orderedVoiceNotes,
 		nextSectionModulationOptions: nextSectionModulationOptions,
 		nextSectionOptions: nextSectionOptions,
 		sectionContextLabel: sectionContextLabel,

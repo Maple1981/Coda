@@ -47,6 +47,8 @@
 			forceInversionIndex: context.options.forceInversionIndex,
 			initialMidiNote: context.options.initialMidiNote || 60,
 			kind: useSeventh ? 'seventh' : 'triad',
+			openingTonic: context.index === 0 && resolvedDegree.degreeIndex === 0,
+			openingTonicInversionPolicy: openingTonicInversionPolicy(context),
 			previousPlan: context.previousPlan,
 			registerCenterMidi: registerCenterMidi(context.options),
 			voicing: context.progressionState.voicing,
@@ -105,9 +107,39 @@
 		return pitchService.nearestMidiTo(initialMidiNote, tonicMidi) - 6;
 	}
 
+	function openingTonicInversionPolicy(context) {
+		var rng = context && context.options && typeof context.options.rng === 'function' ? context.options.rng : null;
+		var roll;
+
+		if (
+			!context ||
+			context.index !== 0 ||
+			!context.resolvedDegree ||
+			context.resolvedDegree.degreeIndex !== 0 ||
+			!context.options ||
+			!context.options.allowRandomOpeningTonicInversion ||
+			!rng ||
+			rng !== Math.random
+		) {
+			return 'root';
+		}
+
+		roll = rng();
+		if (roll < 0.01) {
+			return 'upper';
+		}
+
+		if (roll < 0.08) {
+			return 'first';
+		}
+
+		return 'root';
+	}
+
 	global.CodaProgressionChordPlan = {
 		build: build,
 		chordNotes: chordNotes,
+		openingTonicInversionPolicy: openingTonicInversionPolicy,
 		nextTriadNotes: nextTriadNotes,
 		registerCenterMidi: registerCenterMidi,
 		suspendedNotes: suspendedNotes,

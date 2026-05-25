@@ -34,7 +34,7 @@
 			candidates = isOpenVoicing(voicing.midiNotes) ? [voicing] : [
 				openUpperVoice(voicing, voicing.midiNotes.length - 1)
 			];
-			return registerShiftCandidates(candidates);
+			return registerShiftCandidates(candidates).map(spreadLowRegister);
 		}
 
 		candidates = isOpenVoicing(voicing.midiNotes) ? [compactUpperVoices(voicing)] : [voicing];
@@ -98,6 +98,76 @@
 		});
 	}
 
+	function spreadLowRegister(voicing) {
+		var midiNotes = voicing.midiNotes ? voicing.midiNotes.slice() : [];
+		var voiceNotes = cloneVoiceNotes(voicing.voiceNotes);
+		var changed = false;
+
+		for (var i = 1; i < midiNotes.length; i++) {
+			var minimumGap = minimumLowRegisterGap(midiNotes[i - 1], i);
+
+			while (minimumGap && midiNotes[i] - midiNotes[i - 1] < minimumGap) {
+				midiNotes[i] += 12;
+				changed = true;
+			}
+
+			if (changed && voiceNotes[i]) {
+				voiceNotes[i] = extendObject(voiceNotes[i], {
+					midiNote: midiNotes[i]
+				});
+			}
+		}
+
+		while (midiNotes.length >= 3 && !isOpenVoicing(midiNotes)) {
+			var topIndex = midiNotes.length - 1;
+
+			midiNotes[topIndex] += 12;
+			changed = true;
+			if (voiceNotes[topIndex]) {
+				voiceNotes[topIndex] = extendObject(voiceNotes[topIndex], {
+					midiNote: midiNotes[topIndex]
+				});
+			}
+		}
+
+		return changed ? extendObject(voicing, {
+			midiNotes: midiNotes,
+			voiceNotes: voiceNotes
+		}) : voicing;
+	}
+
+	function minimumLowRegisterGap(lowerMidiNote, upperVoiceIndex) {
+		var lower = Number(lowerMidiNote);
+
+		if (!isFinite(lower)) {
+			return 0;
+		}
+
+		if (upperVoiceIndex === 1) {
+			if (lower < 40) {
+				return 12;
+			}
+
+			if (lower < 48) {
+				return 9;
+			}
+
+			if (lower < 52) {
+				return 7;
+			}
+		}
+
+		if (lower < 43) {
+			return 7;
+		}
+
+		if (lower < 50) {
+			return 5;
+		}
+
+		return 1;
+	}
+
 	function compactUpperVoices(voicing) {
 		var midiNotes = voicing.midiNotes.slice();
 		var voiceNotes = cloneVoiceNotes(voicing.voiceNotes);
@@ -143,8 +213,10 @@
 
 	global.CodaProgressionVoicingDisposition = {
 		chooseCandidate: chooseCandidate,
+		minimumLowRegisterGap: minimumLowRegisterGap,
 		registerShiftCandidates: registerShiftCandidates,
 		score: score,
+		spreadLowRegister: spreadLowRegister,
 		upperVoiceSpan: upperVoiceSpan
 	};
 })(window);

@@ -667,7 +667,7 @@ assert.ok(renderedProgressionTimeline.indexOf('measureChordQuickToggle') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('data-i18n-title="progression.quickEditChord"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<strong>Cmaj7 add9</strong>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<em class="measureDegree">Imaj7</em>') > -1);
-assert.ok(renderedProgressionTimeline.indexOf('<span class="measureNotes">C - E - G - B - D</span>') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('<span class="measureNotes">C - E - G - B - D - C</span>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('<span class="measureFunction">T</span>') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('measureChordQuickEditor') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('measureChordQuickButton') > -1);
@@ -731,7 +731,19 @@ assert.equal(context.window.CodaRenderers.progressionTimeline.notesLabel({
 }, {
 	notation: notation,
 	notationStyle: 'latin'
-}), 'Do - Mi♭ - Sol');
+}), 'Do - Mi♭ - Sol - Do');
+assert.equal(context.window.CodaRenderers.progressionTimeline.notesLabel({
+	notes: ['C', 'E', 'G'],
+	voiceNotes: [
+		{ midiNote: 67, note: 'G' },
+		{ midiNote: 60, note: 'C' },
+		{ midiNote: 64, note: 'E' },
+		{ midiNote: 72, note: 'C' }
+	]
+}, {
+	notation: notation,
+	notationStyle: 'anglosaxon'
+}), 'C - E - G - C');
 const sectionBContextTimeline = progressionWorkbenchRenderer.renderTimelineMeasures({
 	measures: [
 		{ bar: 1, chordName: 'C' },

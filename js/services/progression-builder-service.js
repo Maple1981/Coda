@@ -46,6 +46,7 @@
 		var progressionState = stateNormalizer.normalize(options.progressionState);
 		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
 		var generationPlan = plannerService.createPlan({
+			allowRandomOpeningFunctionBias: !options.rng && !options.rules,
 			openingFunction: options.openingFunction,
 			progressionState: progressionState,
 			report: options.report,
@@ -63,6 +64,7 @@
 			interchangeSources: options.report.modalInterchangeSources || [],
 			avoidDominantSeventh: isModalReport(options.report),
 			rng: rng,
+			allowRandomOpeningTonicInversion: !options.rng && !options.rules,
 			scaleDefinition: options.report.scaleDefinition,
 			scaleNotes: options.report.scaleNotes
 		});

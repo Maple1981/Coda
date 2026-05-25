@@ -4642,6 +4642,7 @@
 		score += parallelPerfects * 18;
 		score += exteriorParallelPerfects * 28;
 		score += registerCenterPenalty(nextPlan, options && options.registerCenterMidi);
+		score += lowRegisterBassPenalty(nextPlan);
 
 		return score;
 	}
@@ -4666,7 +4667,7 @@
 	}
 
 	function firstVoicingScore(voicing, options) {
-		return voicing.inversionIndex * 2 + voiceSpan(voicing.midiNotes) / 12 + registerCenterPenalty(voicing, options && options.registerCenterMidi);
+		return voicing.inversionIndex * 2 + voiceSpan(voicing.midiNotes) / 12 + registerCenterPenalty(voicing, options && options.registerCenterMidi) + lowRegisterBassPenalty(voicing);
 	}
 
 	function transitionScore(previousMidiNotes, nextMidiNotes) {
@@ -4733,9 +4734,24 @@
 		return (excess * excess) / 3;
 	}
 
+	function lowRegisterBassPenalty(voicing) {
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes : [];
+		var bass = Number(midiNotes[0]);
+		var excess;
+
+		if (!isFinite(bass) || bass >= 28) {
+			return 0;
+		}
+
+		excess = 28 - bass;
+
+		return excess * excess * 4;
+	}
+
 	global.CodaProgressionVoiceLeadingScore = {
 		countParallelPerfects: countParallelPerfects,
 		firstVoicingScore: firstVoicingScore,
+		lowRegisterBassPenalty: lowRegisterBassPenalty,
 		registerCenterPenalty: registerCenterPenalty,
 		voiceLeadingTransitionScore: voiceLeadingTransitionScore
 	};
@@ -4780,7 +4796,7 @@
 			candidates = isOpenVoicing(voicing.midiNotes) ? [voicing] : [
 				openUpperVoice(voicing, voicing.midiNotes.length - 1)
 			];
-			return registerShiftCandidates(candidates);
+			return registerShiftCandidates(candidates).map(spreadLowRegister);
 		}
 
 		candidates = isOpenVoicing(voicing.midiNotes) ? [compactUpperVoices(voicing)] : [voicing];
@@ -4844,6 +4860,76 @@
 		});
 	}
 
+	function spreadLowRegister(voicing) {
+		var midiNotes = voicing.midiNotes ? voicing.midiNotes.slice() : [];
+		var voiceNotes = cloneVoiceNotes(voicing.voiceNotes);
+		var changed = false;
+
+		for (var i = 1; i < midiNotes.length; i++) {
+			var minimumGap = minimumLowRegisterGap(midiNotes[i - 1], i);
+
+			while (minimumGap && midiNotes[i] - midiNotes[i - 1] < minimumGap) {
+				midiNotes[i] += 12;
+				changed = true;
+			}
+
+			if (changed && voiceNotes[i]) {
+				voiceNotes[i] = extendObject(voiceNotes[i], {
+					midiNote: midiNotes[i]
+				});
+			}
+		}
+
+		while (midiNotes.length >= 3 && !isOpenVoicing(midiNotes)) {
+			var topIndex = midiNotes.length - 1;
+
+			midiNotes[topIndex] += 12;
+			changed = true;
+			if (voiceNotes[topIndex]) {
+				voiceNotes[topIndex] = extendObject(voiceNotes[topIndex], {
+					midiNote: midiNotes[topIndex]
+				});
+			}
+		}
+
+		return changed ? extendObject(voicing, {
+			midiNotes: midiNotes,
+			voiceNotes: voiceNotes
+		}) : voicing;
+	}
+
+	function minimumLowRegisterGap(lowerMidiNote, upperVoiceIndex) {
+		var lower = Number(lowerMidiNote);
+
+		if (!isFinite(lower)) {
+			return 0;
+		}
+
+		if (upperVoiceIndex === 1) {
+			if (lower < 40) {
+				return 12;
+			}
+
+			if (lower < 48) {
+				return 9;
+			}
+
+			if (lower < 52) {
+				return 7;
+			}
+		}
+
+		if (lower < 43) {
+			return 7;
+		}
+
+		if (lower < 50) {
+			return 5;
+		}
+
+		return 1;
+	}
+
 	function compactUpperVoices(voicing) {
 		var midiNotes = voicing.midiNotes.slice();
 		var voiceNotes = cloneVoiceNotes(voicing.voiceNotes);
@@ -4889,8 +4975,10 @@
 
 	global.CodaProgressionVoicingDisposition = {
 		chooseCandidate: chooseCandidate,
+		minimumLowRegisterGap: minimumLowRegisterGap,
 		registerShiftCandidates: registerShiftCandidates,
 		score: score,
+		spreadLowRegister: spreadLowRegister,
 		upperVoiceSpan: upperVoiceSpan
 	};
 })(window);
@@ -5156,7 +5244,8 @@
 		for (var i = 0; i < maxInversions; i++) {
 			var voicing = buildVoicingCandidate(options, i, labels[i], disposition);
 			var score = voicingDispositionService.score(voicing, options.previousPlan, disposition, scoreOptions(options)) +
-				inversionRunPenalty(voicing, options.previousPlan);
+				inversionRunPenalty(voicing, options.previousPlan) +
+				openingTonicInversionPenalty(voicing, options);
 
 			if (score < bestScore) {
 				bestScore = score;
@@ -5252,6 +5341,29 @@
 		return nextInversionRunLength(previousPlan, voicing) > MAX_INVERSION_RUN ? INVERSION_RUN_PENALTY : 0;
 	}
 
+	function openingTonicInversionPenalty(voicing, options) {
+		var inversionIndex = Number(voicing && voicing.inversionIndex);
+		var policy = options && options.openingTonicInversionPolicy ? options.openingTonicInversionPolicy : 'root';
+
+		if (!options || !options.openingTonic || !isFinite(inversionIndex)) {
+			return 0;
+		}
+
+		if (inversionIndex === 0) {
+			return policy === 'first' ? 24 : (policy === 'upper' ? 48 : 0);
+		}
+
+		if (policy === 'upper') {
+			return inversionIndex >= 2 ? 0 : 48;
+		}
+
+		if (policy === 'first') {
+			return inversionIndex === 1 ? 0 : 96;
+		}
+
+		return inversionIndex === 1 ? 64 : 96;
+	}
+
 	function withInversionRunMetadata(voicing, previousPlan) {
 		var runKey = inversionRunKey(voicing);
 		var runLength = nextInversionRunLength(previousPlan, voicing);
@@ -5287,6 +5399,7 @@
 		inversionRunPenalty: inversionRunPenalty,
 		nextInversionRunLength: nextInversionRunLength,
 		normalizeVoicingDisposition: normalizeVoicingDisposition,
+		openingTonicInversionPenalty: openingTonicInversionPenalty,
 		registerCenterMidi: registerCenterMidi,
 		withInversionRunMetadata: withInversionRunMetadata
 	};
@@ -8386,6 +8499,8 @@
 			forceInversionIndex: context.options.forceInversionIndex,
 			initialMidiNote: context.options.initialMidiNote || 60,
 			kind: useSeventh ? 'seventh' : 'triad',
+			openingTonic: context.index === 0 && resolvedDegree.degreeIndex === 0,
+			openingTonicInversionPolicy: openingTonicInversionPolicy(context),
 			previousPlan: context.previousPlan,
 			registerCenterMidi: registerCenterMidi(context.options),
 			voicing: context.progressionState.voicing,
@@ -8444,9 +8559,39 @@
 		return pitchService.nearestMidiTo(initialMidiNote, tonicMidi) - 6;
 	}
 
+	function openingTonicInversionPolicy(context) {
+		var rng = context && context.options && typeof context.options.rng === 'function' ? context.options.rng : null;
+		var roll;
+
+		if (
+			!context ||
+			context.index !== 0 ||
+			!context.resolvedDegree ||
+			context.resolvedDegree.degreeIndex !== 0 ||
+			!context.options ||
+			!context.options.allowRandomOpeningTonicInversion ||
+			!rng ||
+			rng !== Math.random
+		) {
+			return 'root';
+		}
+
+		roll = rng();
+		if (roll < 0.01) {
+			return 'upper';
+		}
+
+		if (roll < 0.08) {
+			return 'first';
+		}
+
+		return 'root';
+	}
+
 	global.CodaProgressionChordPlan = {
 		build: build,
 		chordNotes: chordNotes,
+		openingTonicInversionPolicy: openingTonicInversionPolicy,
 		nextTriadNotes: nextTriadNotes,
 		registerCenterMidi: registerCenterMidi,
 		suspendedNotes: suspendedNotes,
@@ -11330,6 +11475,7 @@
 		degrees = applyClassicMinorDominants(degrees, options.report, progressionState, mode);
 		degrees = applyPartimentoChromaticDegrees(degrees, options.report);
 		degrees = applyModalInterchangeSources(degrees, options.report, progressionState, rng);
+		degrees = applyOpeningSectionFunctionBias(degrees, options.report, options.openingFunction, rng, options.allowRandomOpeningFunctionBias);
 		degrees = applyOpeningFunction(degrees, options.report, options.openingFunction, rng);
 		degrees = applySparseChordRepetition(degrees, progressionState, rng);
 
@@ -11371,6 +11517,70 @@
 		});
 
 		return degrees;
+	}
+
+	function applyOpeningSectionFunctionBias(degrees, report, openingFunction, rng, enabled) {
+		var degreeIndex;
+
+		if (!enabled || !degrees || !degrees.length || openingFunction || !canReplaceOpeningDegree(degrees[0])) {
+			return degrees;
+		}
+
+		degreeIndex = openingDegreeForSectionStart(report, rng);
+		if (degreeIndex === null || degreeIndex === undefined) {
+			return degrees;
+		}
+
+		degrees[0] = extendObject(degrees[0], {
+			index: degreeIndex,
+			source: 'diatonic'
+		});
+
+		return degrees;
+	}
+
+	function canReplaceOpeningDegree(degree) {
+		return degree &&
+			degree.index !== undefined &&
+			!degree.cadentialRole &&
+			!degree.chromaticRole &&
+			degree.forceInversionIndex === undefined &&
+			!degree.forceKind;
+	}
+
+	function openingDegreeForSectionStart(report, rng) {
+		var roll;
+		var tonicAlternatives;
+		var subdominantAlternatives;
+
+		rng = typeof rng === 'function' ? rng : Math.random;
+		roll = rng();
+
+		if (roll < 0.84) {
+			return 0;
+		}
+
+		tonicAlternatives = degreeIndexesForFunction(report, 'T');
+		if (roll < 0.96) {
+			return chooseOpeningDegree(tonicAlternatives, rng, 0);
+		}
+
+		subdominantAlternatives = degreeIndexesForFunction(report, 'SD');
+		if (roll < 0.995) {
+			return subdominantAlternatives.length ? chooseOpeningDegree(subdominantAlternatives, rng, 0) : chooseOpeningDegree(tonicAlternatives, rng, 0);
+		}
+
+		return null;
+	}
+
+	function chooseOpeningDegree(candidates, rng, fallback) {
+		if (!candidates || !candidates.length) {
+			return fallback;
+		}
+
+		rng = typeof rng === 'function' ? rng : Math.random;
+
+		return candidates[Math.floor(rng() * candidates.length) % candidates.length];
 	}
 
 	function applySparseChordRepetition(degrees, progressionState, rng) {
@@ -11752,8 +11962,10 @@
 	global.CodaProgressionPlanner = {
 		applyClassicMinorDominants: applyClassicMinorDominants,
 		applyModalInterchangeSources: applyModalInterchangeSources,
+		applyOpeningSectionFunctionBias: applyOpeningSectionFunctionBias,
 		applyOpeningFunction: applyOpeningFunction,
 		applyPartimentoChromaticDegrees: applyPartimentoChromaticDegrees,
+		canReplaceOpeningDegree: canReplaceOpeningDegree,
 		applySparseChordRepetition: applySparseChordRepetition,
 		chromaticDegreeForMarker: chromaticDegreeForMarker,
 		chooseInterchangeSource: chooseInterchangeSource,
@@ -11764,6 +11976,7 @@
 		fitDegreesToBars: fitDegreesToBars,
 		degreeFromSource: degreeFromSource,
 		harmonicMinorDominantSource: harmonicMinorDominantSource,
+		openingDegreeForSectionStart: openingDegreeForSectionStart,
 		repetitionChance: repetitionChance,
 		shouldUseClassicMinorDominant: shouldUseClassicMinorDominant,
 		varyBlockOpening: varyBlockOpening,
@@ -11822,6 +12035,7 @@
 		var progressionState = stateNormalizer.normalize(options.progressionState);
 		var rng = typeof options.rng === 'function' ? options.rng : Math.random;
 		var generationPlan = plannerService.createPlan({
+			allowRandomOpeningFunctionBias: !options.rng && !options.rules,
 			openingFunction: options.openingFunction,
 			progressionState: progressionState,
 			report: options.report,
@@ -11839,6 +12053,7 @@
 			interchangeSources: options.report.modalInterchangeSources || [],
 			avoidDominantSeventh: isModalReport(options.report),
 			rng: rng,
+			allowRandomOpeningTonicInversion: !options.rng && !options.rules,
 			scaleDefinition: options.report.scaleDefinition,
 			scaleNotes: options.report.scaleNotes
 		});
@@ -20998,7 +21213,7 @@
 	}
 
 	function notesLabel(chord, options) {
-		var notes = uniqueNotes(chord.notes || notesFromVoices(chord.voiceNotes));
+		var notes = soundingNotes(chord);
 		var formatted = [];
 
 		if (!notes.length) {
@@ -21016,30 +21231,39 @@
 		return formatted.join(' - ');
 	}
 
+	function soundingNotes(chord) {
+		if (chord && chord.voiceNotes && chord.voiceNotes.length) {
+			return notesFromVoices(chord.voiceNotes);
+		}
+
+		return chord && chord.notes ? chord.notes : [];
+	}
+
 	function notesFromVoices(voiceNotes) {
 		var notes = [];
+		var voices = orderedVoiceNotes(voiceNotes);
 
-		for (var i = 0; i < (voiceNotes || []).length; i++) {
-			notes.push(voiceNotes[i].note);
+		for (var i = 0; i < voices.length; i++) {
+			notes.push(voices[i].note);
 		}
 
 		return notes;
 	}
 
-	function uniqueNotes(notes) {
-		var result = [];
-		var seen = {};
+	function orderedVoiceNotes(voiceNotes) {
+		var voices = (voiceNotes || []).slice();
 
-		for (var i = 0; i < (notes || []).length; i++) {
-			var note = notes[i];
-
-			if (note && !seen[note]) {
-				seen[note] = true;
-				result.push(note);
-			}
+		if (!voices.length || !voices.every(hasMidiNote)) {
+			return voices;
 		}
 
-		return result;
+		return voices.sort(function (a, b) {
+			return Number(a.midiNote) - Number(b.midiNote);
+		});
+	}
+
+	function hasMidiNote(voice) {
+		return isFinite(Number(voice && voice.midiNote));
 	}
 
 	function sourceLabel(chord, options) {
@@ -21091,6 +21315,7 @@
 		renderSectionHeader: renderSectionHeader,
 		renderSectionNavigator: renderSectionNavigator,
 		notesLabel: notesLabel,
+		orderedVoiceNotes: orderedVoiceNotes,
 		nextSectionModulationOptions: nextSectionModulationOptions,
 		nextSectionOptions: nextSectionOptions,
 		sectionContextLabel: sectionContextLabel,

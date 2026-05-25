@@ -152,6 +152,8 @@ Conforme más grave descendemos, más necesitaremos abrir la parte baja con octa
 
 El principio general es: voces más abiertas hacia los graves, y más cerradas hacia los agudos. En el bajo, incluso disposiciones mayores de una octava pueden funcionar bien.
 
+Regla básica de claridad: cuanto más grave sea el registro, más separación debe haber entre las voces. En la zona baja, las terceras y segundas apretadas se vuelven turbias con facilidad; conviene dejar más aire entre bajo y tenor, y trasladar alguna voz media o superior una octava arriba si el acorde queda demasiado compacto. En registros medios y altos puede admitirse mayor densidad sin que la sonoridad se embarre.
+
 Otras disposiciones pueden funcionar bien, dependiendo del grosor o agudeza de la instrumentación. P. ej., los trombones bajos en fff suenan afilados en su registro grave, más que las tubas, y permiten disposiciones más cerradas en esa zona.
 
 Al final, lo importante para un sonido amplio y lleno es que las voces estén equilibradas, sin grandes huecos en ninguna octava.
