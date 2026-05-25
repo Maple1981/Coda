@@ -581,6 +581,29 @@ assert.equal(capturedNextSectionModulation, 'pivot');
 assert.equal(initialized.uiState.getProgression().sections.slice(-1)[0].modulation.kind, 'pivot');
 assert.notEqual(initialized.uiState.getProgression().sections.slice(-1)[0].contextLabel, initialized.uiState.getProgression().sections[0].contextLabel);
 
+document.getElementById('progressionNextSectionType').value = 'contrast';
+document.getElementById('progressionNextSectionModulationType').value = 'secondaryDominant';
+document.resetNextSectionControlsOnRender = true;
+document.getElementById('constructorProgresiones').dispatchEvent({
+	target: {
+		closest: function (selector) {
+			return selector === '.progressionSectionDeleteButton' || selector === '.progressionSectionNavDeleteButton' ? {
+				getAttribute: function (name) {
+					return name === 'data-section-delete' ? 'B' : '';
+				}
+			} : null;
+		}
+	},
+	type: 'click'
+});
+document.resetNextSectionControlsOnRender = false;
+assert.equal(document.getElementById('progressionNextSectionType').value, 'contrast');
+assert.equal(document.getElementById('progressionNextSectionModulationType').value, 'secondaryDominant');
+assert.equal(document.getElementById('progressionNextSectionModulationType').hidden, false);
+assert.equal(initialized.uiState.getProgression().sections.some(function (section) {
+	return section.id === 'B';
+}), false);
+
 const liveProgression = initialized.uiState.getProgression();
 const liveProgressionRendersBefore = rendered.progression;
 const liveWorkspaceCountBefore = savedWorkspaces.length;
@@ -722,6 +745,10 @@ function createFakeUi(fakeDocument, renderedCounter) {
 		},
 		renderProgression: function () {
 			renderedCounter.progression += 1;
+			if (fakeDocument.resetNextSectionControlsOnRender) {
+				fakeDocument.getElementById('progressionNextSectionType').value = 'aprimeClone';
+				fakeDocument.getElementById('progressionNextSectionModulationType').value = 'none';
+			}
 			if (fakeDocument.resetNextSectionModulationOnRender && fakeDocument.getElementById('progressionNextSectionModulationType')) {
 				fakeDocument.getElementById('progressionNextSectionModulationType').value = 'none';
 			}

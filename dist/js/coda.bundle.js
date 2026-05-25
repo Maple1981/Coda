@@ -24715,6 +24715,10 @@
 		var progressionStateInputTimer = null;
 		var progressionStateInputDelay = 160;
 		var expressiveControlsVisible = null;
+		var nextSectionSelection = {
+			modulationType: 'none',
+			sectionType: ''
+		};
 		var initialProgressionWorkspace = options.initialProgressionWorkspace || null;
 		var initialProgressionWorkspaceRestored = false;
 		uiState.setNotationStyle(notation ? notation.normalizeStyle(options.initialNotation) : 'anglosaxon');
@@ -25068,6 +25072,7 @@
 				onGenerateNextSection: function (sectionType, modulationType) {
 					cancelProgressionStateUpdate();
 					updateProgressionStateFromControls();
+					rememberNextSectionSelection(sectionType, modulationType);
 					generateProgressionNextSection(sectionType, modulationType);
 					recordHistorySnapshot();
 				},
@@ -25079,10 +25084,14 @@
 				},
 				onRemoveSection: function (sectionId) {
 					cancelProgressionStateUpdate();
+					rememberNextSectionSelectionFromControls();
 					removeProgressionSection(sectionId);
 					recordHistorySnapshot();
 				},
-				onSectionTypeChange: updateNextSectionModulationVisibility,
+				onSectionTypeChange: function (sectionType) {
+					rememberNextSectionSelectionFromControls();
+					updateNextSectionModulationVisibility(sectionType);
+				},
 				root: global.document
 			});
 		}
@@ -25565,6 +25574,36 @@
 			}
 		}
 
+		function rememberNextSectionSelectionFromControls() {
+			rememberNextSectionSelection(valueOf(query('#progressionNextSectionType')), valueOf(query('#progressionNextSectionModulationType')));
+		}
+
+		function rememberNextSectionSelection(sectionType, modulationType) {
+			nextSectionSelection.sectionType = sectionType || nextSectionSelection.sectionType || '';
+			if (sectionType === 'contrast' || modulationType && modulationType !== 'none') {
+				nextSectionSelection.modulationType = modulationType || nextSectionSelection.modulationType || 'none';
+			}
+		}
+
+		function restoreNextSectionSelection() {
+			var sectionControl = query('#progressionNextSectionType');
+			var modulationControl = query('#progressionNextSectionModulationType');
+			var sectionType = nextSectionSelection.sectionType;
+
+			if (sectionControl && optionExists(sectionControl, sectionType)) {
+				sectionControl.value = sectionType;
+			} else if (sectionControl) {
+				sectionType = sectionControl.value;
+				nextSectionSelection.sectionType = sectionType || '';
+			}
+
+			if (modulationControl && optionExists(modulationControl, nextSectionSelection.modulationType)) {
+				modulationControl.value = nextSectionSelection.modulationType;
+			}
+
+			updateNextSectionModulationVisibility(sectionType || valueOf(sectionControl));
+		}
+
 		function updateNextSectionModulationVisibility(sectionType) {
 			var modulationControl = query('#progressionNextSectionModulationType');
 			var isContrast = sectionType === 'contrast' || sectionType === 'C' || sectionType === 'c';
@@ -25672,6 +25711,7 @@
 					renderers: options.renderers
 				});
 			}
+			restoreNextSectionSelection();
 
 			if (staticText && typeof staticText.applyProgressionLabels === 'function') {
 				staticText.applyProgressionLabels(i18n);
@@ -26394,6 +26434,26 @@
 		if (element && value !== undefined && value !== null) {
 			element.value = value;
 		}
+	}
+
+	function optionExists(select, value) {
+		var options = select && select.options ? select.options : null;
+
+		if (!value) {
+			return false;
+		}
+
+		if (!options || !options.length) {
+			return true;
+		}
+
+		for (var i = 0; i < options.length; i++) {
+			if (options[i].value === value) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	function valueOf(element) {
