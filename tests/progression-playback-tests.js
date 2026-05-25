@@ -263,6 +263,41 @@ assert.deepEqual(passingSchedule[0].midiNoteEvents, [
 	{ duration: 1.9, midiNote: 60 },
 	{ delay: 1, duration: 0.25, kind: 'passing', midiNote: 62 }
 ]);
+const structuralMelodySchedule = app.buildProgressionPlaybackSchedule({
+	measures: [
+		{
+			articulation: 'sustain',
+			bar: 1,
+			degree: 'I',
+			durationSeconds: 2,
+			intensity: 120,
+			melodicVoiceIndex: 3,
+			midiNotes: [48, 52, 55, 60],
+			notes: ['C', 'E', 'G', 'C'],
+			startSeconds: 0,
+			voiceNotes: [
+				{ midiNote: 48, note: 'C' },
+				{ midiNote: 52, note: 'E' },
+				{ midiNote: 55, note: 'G' },
+				{ midiNote: 60, note: 'C' }
+			],
+			voices: 4
+		}
+	]
+});
+assert.deepEqual(structuralMelodySchedule[0].midiNoteEvents.map(function (event) {
+	return {
+		duration: event.duration,
+		kind: event.kind,
+		midiNote: event.midiNote,
+		velocity: event.velocity
+	};
+}), [
+	{ duration: 1.9, kind: undefined, midiNote: 48, velocity: 58 },
+	{ duration: 1.9, kind: undefined, midiNote: 52, velocity: 58 },
+	{ duration: 1.9, kind: undefined, midiNote: 55, velocity: 58 },
+	{ duration: 1.9, kind: 'melody-structural', midiNote: 72, velocity: 93 }
+]);
 const passingPlaybackCalls = [];
 context.window.CodaProgressionMidiEventPlayer.playMidiNoteEvents({
 	playMidiNote: function (note, options) {

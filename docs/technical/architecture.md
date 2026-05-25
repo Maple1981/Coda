@@ -41,6 +41,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/services/progression-modal-planner-service.js`: planificación específica para modos griegos. Prioriza centro modal, tónica recurrente, acordes cadenciales modales, movimiento de bajo por segunda o tercera y evitación de gestos funcionales dominantes.
 - `js/services/progression-style-service.js`: perfiles históricos de estilo, alias de compatibilidad, afinidades de patrones, sesgos de densidad, tratamiento de séptimas y reglas activas por capa, desde Renacimiento hasta Contemporáneo.
 - `js/services/progression-classical-dissonance-service.js`: contrato de preparación, aparición y resolución de disonancias para estilos que requieren disonancia preparada. Filtra suspensiones, notas de paso y tensiones añadidas sin alterar el documento público de progresión.
+- `js/services/progression-melodic-counterpoint-service.js`: moldea una voz real de la progresión, preferentemente la superior, como línea melódica estructural. Después planifica comienzo, motivo rítmico, curva, silencios, anticipaciones, retardos y notas de paso para que la reproducción/exportación usen eventos melódicos independientes desde el contrato compartido de eventos.
 - `js/services/progression-chromatic-cadence-service.js`: generación de cadencias cromáticas tonales con sexta napolitana y acordes de sexta aumentada, siempre como preparación de dominante.
 - `js/services/progression-timing-service.js`: contrato temporal común para compases y segmentos: pulsos por compás, segundos por pulso, copia de campos temporales y validación de orden temporal.
 - `js/services/progression-harmonic-analysis-service.js`: contrato formal de análisis armónico derivado del documento final: transiciones de sección, fuentes de acordes y metadatos analíticos normalizados.
@@ -60,7 +61,7 @@ La aplicación sigue siendo frontend puro: HTML, CSS/Sass y JavaScript en navega
 - `js/services/progression-section-contrast-service.js`: orquestador de alto nivel para secciones clonadas, variantes y contrastantes.
 - `js/services/progression-section-operations-service.js`: fachada interna para operaciones de sección de alto nivel, usada por la capa de aplicación para generar, modular y retargetear secciones sin exponer detalles de implementación a la UI.
 - `js/services/midi-export-service.js`: conversión de progresiones a eventos MIDI y bytes de archivo Standard MIDI File sin depender del DOM.
-- `js/services/progression-playback-note-event-service.js`: eventos de nota compartidos por playback y exportación MIDI para staccato, notas de paso y pedales, evitando divergencias entre preescucha y archivo exportado.
+- `js/services/progression-playback-note-event-service.js`: eventos de nota compartidos por playback y exportación MIDI para staccato, línea melódica, notas de paso y pedales, evitando divergencias entre preescucha y archivo exportado.
 - `js/application/scale-report-application.js`: construye informes de escala e instrumentos.
 - `js/application/chord-playback-application.js`: traduce identificadores de acordes de UI y alturas MIDI de instrumentos a eventos de playback.
 - `js/application/progression-application.js`: casos de uso iniciales para progresiones armónicas. Convierte el estado normalizado de progresiones en un plan diatónico con compases, duración en beats/segundos y acordes resueltos.

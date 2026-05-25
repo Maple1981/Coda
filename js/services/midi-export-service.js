@@ -149,8 +149,15 @@
 	function shouldUseSharedNoteEvents(measure, instrument) {
 		return measure.articulation === 'staccato' ||
 			isArpeggioArticulation(measure.articulation) ||
+			hasStructuralMelody(measure) ||
 			(hasPedals(measure) && supportsPedalHold(instrument)) ||
 			(!isArpeggioArticulation(measure.articulation) && measure.passingNotes && measure.passingNotes.length);
+	}
+
+	function hasStructuralMelody(measure) {
+		var voiceIndex = measure && measure.melodicVoiceIndex != null ? Number(measure.melodicVoiceIndex) : null;
+
+		return isFinite(voiceIndex) && measure && measure.voiceNotes && measure.voiceNotes[voiceIndex];
 	}
 
 	function hasPedals(measure) {
@@ -169,9 +176,21 @@
 		}
 
 		result.midiNotes = midiNotes;
+		copyHiddenMeasureValue(result, measure, 'melodicVoiceIndex');
+		copyHiddenMeasureValue(result, measure, 'melody');
+		copyHiddenMeasureValue(result, measure, 'melodyEvents');
+		copyHiddenMeasureValue(result, measure, 'melodicStartType');
 		result.pedalsOut = pedalsWithDurationFallback(result.pedalsOut, options);
 
 		return result;
+	}
+
+	function copyHiddenMeasureValue(target, source, key) {
+		if (!source || source[key] == null) {
+			return;
+		}
+
+		target[key] = source[key];
 	}
 
 	function pedalsWithDurationFallback(pedals, options) {
@@ -675,6 +694,7 @@
 		mimeType: midiMimeType,
 		noteIndex: noteIndex,
 		secondsPerBeatForMeasure: secondsPerBeatForMeasure,
+		hasStructuralMelody: hasStructuralMelody,
 		shouldUseSharedNoteEvents: shouldUseSharedNoteEvents,
 		variableLengthQuantity: variableLengthQuantity
 	};

@@ -5,7 +5,10 @@
 	function build(measure, duration, options) {
 		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
 		var events = [];
-		var melodicEvents = passingNoteEvents(measure);
+		var usesPatternArticulation = isArpeggioArticulation(measure && measure.articulation) || (measure && measure.articulation === 'staccato');
+		var melodicEvents = usesPatternArticulation ? legacyPassingNoteEvents(measure) : passingNoteEvents(measure);
+		var hasMelody = hasStructuralMelody(measure, melodicEvents);
+		var melodyVoiceIndex = hasMelody ? melodicEventVoiceIndex(measure, melodicEvents) : null;
 
 		if (isArpeggioArticulation(measure && measure.articulation)) {
 			return arpeggioNoteEvents(midiNotes, measure, duration, options).concat(melodicEvents);
@@ -16,10 +19,14 @@
 		}
 
 		if (!hasPedals(measure) || !supportsPedalHold(options ? options.instrument : null)) {
-			return melodicEvents.length ? chordNoteEvents(midiNotes, duration).concat(melodicEvents) : [];
+			return hasMelody || melodicEvents.length ? chordAndMelodyNoteEvents(midiNotes, measure, duration, melodicEvents) : [];
 		}
 
 		for (var i = 0; i < midiNotes.length; i++) {
+			if (i === melodyVoiceIndex) {
+				continue;
+			}
+
 			if (isPedalIn(midiNotes[i], measure)) {
 				continue;
 			}
@@ -30,7 +37,17 @@
 			});
 		}
 
-		return events.concat(melodicEvents);
+		return hasMelody ? events.concat(structuralMelodyNoteEvents(measure, duration, melodicEvents, melodyVoiceIndex)) : events.concat(melodicEvents);
+	}
+
+	function chordAndMelodyNoteEvents(midiNotes, measure, duration, melodicEvents) {
+		var voiceIndex = melodicEventVoiceIndex(measure, melodicEvents);
+
+		if (voiceIndex == null || !measure.voiceNotes || !measure.voiceNotes[voiceIndex]) {
+			return chordNoteEvents(midiNotes, duration).concat(melodicEvents);
+		}
+
+		return chordNoteEventsExcept(midiNotes, duration, voiceIndex, accompanimentVelocity(measure)).concat(structuralMelodyNoteEvents(measure, duration, melodicEvents, voiceIndex));
 	}
 
 	function staccatoNoteEvents(midiNotes, measure) {
@@ -86,20 +103,271 @@
 		return events;
 	}
 
-	function passingNoteEvents(measure) {
+	function chordNoteEventsExcept(midiNotes, duration, excludedIndex, velocity) {
 		var events = [];
-		var passingNotes = measure.passingNotes || [];
 
-		for (var i = 0; i < passingNotes.length; i++) {
+		for (var i = 0; i < midiNotes.length; i++) {
+			if (i === excludedIndex) {
+				continue;
+			}
+
+			var event = {
+				duration: duration,
+				midiNote: midiNotes[i]
+			};
+
+			if (isFinite(Number(velocity))) {
+				event.velocity = clampVelocity(velocity);
+			}
+
+			events.push(event);
+		}
+
+		return events;
+	}
+
+	function structuralMelodyNoteEvents(measure, duration, melodicEvents, voiceIndex) {
+		var events = [];
+		var melodyVelocity = structuralMelodyVelocity(measure);
+		var ornamentVelocity = passingMelodyVelocity(measure);
+		var structuralNote = measure.voiceNotes[voiceIndex].midiNote;
+		var cursor = 0;
+		var sortedEvents = clampSequentialMelodicEvents(melodicEvents);
+
+		if (hasPlannedMelodyEvents(sortedEvents)) {
+			return plannedMelodyNoteEvents(sortedEvents, duration, melodyVelocity, ornamentVelocity);
+		}
+
+		for (var i = 0; i < sortedEvents.length; i++) {
+			var eventDelay = Math.max(0, Math.min(duration, sortedEvents[i].delay));
+			var eventDuration = boundedEventDuration(sortedEvents[i], eventDelay, duration);
+
+			if (eventDuration <= 0) {
+				continue;
+			}
+
+			if (eventDelay > cursor) {
+				events.push({
+					delay: cursor,
+					duration: eventDelay - cursor,
+					kind: 'melody-structural',
+					midiNote: isolatedMelodyMidiNote(structuralNote),
+					velocity: melodyVelocity
+				});
+			}
+
 			events.push({
-				delay: Math.max(0, Number(passingNotes[i].delaySeconds) || 0),
-				duration: Math.max(0.05, Number(passingNotes[i].durationSeconds) || 0.12),
-				kind: 'passing',
-				midiNote: passingNotes[i].midiNote
+				delay: eventDelay,
+				duration: eventDuration,
+				kind: sortedEvents[i].kind || 'passing',
+				midiNote: isolatedMelodyMidiNote(sortedEvents[i].midiNote),
+				velocity: sortedEvents[i].velocity || ornamentVelocity
+			});
+			cursor = Math.max(cursor, eventDelay + eventDuration);
+		}
+
+		if (cursor < duration && shouldReturnToStructural(sortedEvents)) {
+			events.push({
+				delay: cursor,
+				duration: duration - cursor,
+				kind: 'melody-structural',
+				midiNote: isolatedMelodyMidiNote(structuralNote),
+				velocity: melodyVelocity
 			});
 		}
 
 		return events;
+	}
+
+	function passingNoteEvents(measure) {
+		if (measure && measure.melodyEvents && measure.melodyEvents.length) {
+			return normalizeMelodicEvents(measure.melodyEvents);
+		}
+
+		return legacyPassingNoteEvents(measure);
+	}
+
+	function legacyPassingNoteEvents(measure) {
+		return normalizeMelodicEvents(measure ? measure.passingNotes || [] : []);
+	}
+
+	function normalizeMelodicEvents(sourceEvents) {
+		var events = [];
+
+		for (var i = 0; i < sourceEvents.length; i++) {
+			var duration = Number(sourceEvents[i].durationSeconds);
+			var event = {
+				delay: Math.max(0, Number(sourceEvents[i].delaySeconds) || 0),
+				duration: isFinite(duration) && duration > 0 ? duration : 0.12,
+				kind: sourceEvents[i].kind || 'passing',
+				midiNote: sourceEvents[i].midiNote
+			};
+
+			if (sourceEvents[i].melodic) {
+				event.melodic = true;
+			}
+
+			if (sourceEvents[i].rest) {
+				event.rest = true;
+			}
+
+			if (sourceEvents[i].voiceIndex != null) {
+				event.voiceIndex = sourceEvents[i].voiceIndex;
+			}
+
+			events.push(event);
+		}
+
+		return clampSequentialMelodicEvents(events);
+	}
+
+	function clampSequentialMelodicEvents(events) {
+		var source = (events || []).slice().sort(function (a, b) {
+			return (a.delay || 0) - (b.delay || 0);
+		});
+		var result = [];
+
+		for (var i = 0; i < source.length; i++) {
+			var event = cloneEvent(source[i]);
+			var nextDelay = i < source.length - 1 ? Math.max(0, Number(source[i + 1].delay) || 0) : null;
+
+			event.delay = Math.max(0, Number(event.delay) || 0);
+			event.duration = Math.max(0, Number(event.duration) || 0);
+
+			if (nextDelay != null) {
+				event.duration = Math.min(event.duration, Math.max(0, nextDelay - event.delay));
+			}
+
+			if (event.duration > 0.001) {
+				result.push(event);
+			}
+		}
+
+		return result;
+	}
+
+	function cloneEvent(event) {
+		var result = {};
+
+		for (var key in event || {}) {
+			if (Object.prototype.hasOwnProperty.call(event, key)) {
+				result[key] = event[key];
+			}
+		}
+
+		return result;
+	}
+
+	function hasPlannedMelodyEvents(events) {
+		for (var i = 0; i < (events || []).length; i++) {
+			if (events[i].melodic) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function plannedMelodyNoteEvents(events, duration, melodyVelocity, ornamentVelocity) {
+		var result = [];
+
+		for (var i = 0; i < events.length; i++) {
+			if (events[i].rest || events[i].midiNote == null) {
+				continue;
+			}
+
+			var eventDelay = Math.max(0, Math.min(duration, events[i].delay || 0));
+			var eventDuration = boundedEventDuration(events[i], eventDelay, duration);
+
+			if (eventDuration <= 0) {
+				continue;
+			}
+
+			result.push({
+				delay: eventDelay,
+				duration: eventDuration,
+				kind: events[i].kind || 'melody-structural',
+				midiNote: isolatedMelodyMidiNote(events[i].midiNote),
+				velocity: melodyEventVelocity(events[i], melodyVelocity, ornamentVelocity)
+			});
+		}
+
+		return result;
+	}
+
+	function boundedEventDuration(event, delay, maxDuration) {
+		return Math.max(0, Math.min(maxDuration - delay, Number(event && event.duration) || 0));
+	}
+
+	function melodyEventVelocity(event, melodyVelocity, ornamentVelocity) {
+		if (event.kind === 'passing' || event.kind === 'neighbor' || event.kind === 'anticipation' || event.kind === 'anacrusis') {
+			return ornamentVelocity;
+		}
+
+		return melodyVelocity;
+	}
+
+	function isolatedMelodyMidiNote(midiNote) {
+		var note = Number(midiNote);
+
+		return isFinite(note) ? note + 12 : midiNote;
+	}
+
+	function melodicEventVoiceIndex(measure, melodicEvents) {
+		var voiceIndex = measure && measure.melodicVoiceIndex != null ? Number(measure.melodicVoiceIndex) : null;
+
+		if (!isFinite(voiceIndex)) {
+			voiceIndex = null;
+		}
+
+		for (var i = 0; i < (melodicEvents || []).length; i++) {
+			if (melodicEvents[i].voiceIndex != null) {
+				voiceIndex = Number(melodicEvents[i].voiceIndex);
+				break;
+			}
+		}
+
+		return isFinite(voiceIndex) ? voiceIndex : null;
+	}
+
+	function hasStructuralMelody(measure, melodicEvents) {
+		var voiceIndex = melodicEventVoiceIndex(measure, melodicEvents);
+
+		return voiceIndex != null && measure && measure.voiceNotes && measure.voiceNotes[voiceIndex];
+	}
+
+	function accompanimentVelocity(measure) {
+		return clampVelocity(Math.round(melodicBaseVelocity(measure) * 0.72));
+	}
+
+	function structuralMelodyVelocity(measure) {
+		return clampVelocity(Math.round(melodicBaseVelocity(measure) * 1.16));
+	}
+
+	function passingMelodyVelocity(measure) {
+		return clampVelocity(Math.round(melodicBaseVelocity(measure) * 1.04));
+	}
+
+	function melodicBaseVelocity(measure) {
+		if (!measure || !measure.articulation || measure.articulation === 'sustain') {
+			return 80;
+		}
+
+		return clampVelocity(Number(measure.intensity) || 80);
+	}
+
+	function clampVelocity(value) {
+		return Math.max(1, Math.min(127, Math.round(Number(value) || 1)));
+	}
+
+	function shouldReturnToStructural(melodicEvents) {
+		if (!melodicEvents.length) {
+			return true;
+		}
+
+		var lastKind = melodicEvents[melodicEvents.length - 1].kind;
+
+		return lastKind === 'neighbor' || lastKind === 'appoggiatura';
 	}
 
 	function pulseCountForMeasure(measure) {
@@ -190,6 +458,8 @@
 		arpeggioStepSeconds: arpeggioStepSeconds,
 		build: build,
 		chordNoteEvents: chordNoteEvents,
+		chordNoteEventsExcept: chordNoteEventsExcept,
+		hasStructuralMelody: hasStructuralMelody,
 		isArpeggioArticulation: isArpeggioArticulation,
 		passingNoteEvents: passingNoteEvents,
 		pulseCountForMeasure: pulseCountForMeasure,

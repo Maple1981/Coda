@@ -37,3 +37,7 @@ Archivos Markdown de teoría musical, un archivo por hoja.
 | 31 | Orquestación | [31-orquestacion.md](./31-orquestacion.md) | `A1:I34` | 69 |
 | 32 | Ejemplos Canciones | [32-ejemplos-canciones.md](./32-ejemplos-canciones.md) | `A2:I11` | 47 |
 | 33 | Diapasón | [33-diapason.md](./33-diapason.md) | `A1:S27` | 161 |
+| 34 | Melodía: línea esencial | [34-melodia-linea-esencial.md](./34-melodia-linea-esencial.md) | síntesis | — |
+| 35 | Melodía: forma, ritmo y modulación | [35-melodia-forma-ritmo-modulacion.md](./35-melodia-forma-ritmo-modulacion.md) | síntesis | — |
+| 36 | Melodía: ornamentación y expresión | [36-melodia-ornamentacion-expresion.md](./36-melodia-ornamentacion-expresion.md) | síntesis | — |
+| 37 | Melodía: ritmo generativo | [37-melodia-ritmo-generativo.md](./37-melodia-ritmo-generativo.md) | síntesis | — |

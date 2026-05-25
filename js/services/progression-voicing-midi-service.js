@@ -16,8 +16,6 @@
 				continue;
 			}
 
-			midiNote -= 12;
-
 			while (previousNote != null && midiNote <= previousNote) {
 				midiNote += 12;
 			}

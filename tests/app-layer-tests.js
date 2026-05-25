@@ -771,7 +771,7 @@ assert.equal(sectionBRemovedProgression.measures[8].bar, 9);
 	assert.equal(contrasted.measures.length, 8);
 	assert.equal(contrasted.measures[4].sectionId, 'B');
 });
-assert.deepEqual(cMajorProgressionPlan.measures[1], {
+assert.deepEqual(measureWithoutMelody(cMajorProgressionPlan.measures[1]), {
 	articulation: 'sustain',
 	bar: 2,
 	beatUnit: 4,
@@ -790,7 +790,7 @@ assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	intensity: 80,
 	inversion: '6/4',
 	inversionIndex: 2,
-	midiNotes: [48, 53, 57],
+	midiNotes: [60, 65, 69],
 	notes: ['C', 'F', 'A'],
 	pedalsIn: [],
 	pedalsOut: [],
@@ -801,9 +801,9 @@ assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	suspension: '',
 	tonalFunction: 'SD',
 	voiceNotes: [
-		{ midiNote: 48, note: 'C', role: 'fifth' },
-		{ midiNote: 53, note: 'F', role: 'root' },
-		{ midiNote: 57, note: 'A', role: 'third' }
+		{ midiNote: 60, note: 'C', role: 'fifth' },
+		{ midiNote: 65, note: 'F', role: 'root' },
+		{ midiNote: 69, note: 'A', role: 'third' }
 	],
 	voiceLeading: {
 		commonTones: 1,
@@ -813,6 +813,8 @@ assert.deepEqual(cMajorProgressionPlan.measures[1], {
 	},
 	voices: 3
 });
+assert.ok(cMajorProgressionPlan.measures[1].melodyEvents.length > 1);
+assert.equal(cMajorProgressionPlan.measures[1].melodicVoiceIndex, 2);
 assert.deepEqual(cMajorProgressionPlan.harmonicColor, {
 	chromaticism: 10,
 	counterpoint: 30,
@@ -1490,7 +1492,7 @@ assert.equal(generatedHighColorProgression.measures[1].inversion, '6/4');
 assert.equal(generatedHighColorProgression.measures[1].suspension, 'sus2');
 assert.equal(generatedHighColorProgression.measures[1].degree, 'iv 6/4 sus2');
 assert.equal(generatedHighColorProgression.measures[1].displayName, 'Fm 6/4 sus2 add11 add13');
-assert.deepEqual(generatedHighColorProgression.measures[1].pedalsIn.map(function (pedal) { return pedal.midiNote; }), [48, 55]);
+assert.deepEqual(generatedHighColorProgression.measures[1].pedalsIn.map(function (pedal) { return pedal.midiNote; }), [60, 67]);
 assert.equal(generatedHighColorProgression.measures[1].voiceLeading.parallelPerfects, 0);
 assert.equal(generatedHighColorProgression.measures[2].displayName, 'Fm7 4/2 sus2 11 13');
 assert.equal(generatedHighColorProgression.measures[2].voiceNotes.filter(function (voice) { return voice.role === 'seventh-doubling' || voice.role === 'tension-doubling'; }).length, 0);
@@ -1830,7 +1832,7 @@ assert.deepEqual(cMajorProgressionMidi.events.filter(function (event) {
 	return event.type === 'noteOn';
 }).slice(0, 3).map(function (event) {
 	return event.note;
-}), [48, 52, 55]);
+}), [60, 64, 81]);
 assert.ok(cMajorProgressionMidi.bytes.length > 60);
 
 const cMajorGuitar = app.buildInstrumentView({
@@ -2084,6 +2086,18 @@ function sequenceRng(values) {
 
 function upperVoiceSpan(midiNotes) {
 	return midiNotes[midiNotes.length - 1] - midiNotes[1];
+}
+
+function measureWithoutMelody(measure) {
+	var result = {};
+
+	Object.keys(measure || {}).forEach(function (key) {
+		if (key !== 'melodicVoiceIndex' && key !== 'melody' && key !== 'melodyEvents' && key !== 'melodicStartType') {
+			result[key] = measure[key];
+		}
+	});
+
+	return result;
 }
 
 function changedMeasureCount(sourceMeasures, variationMeasures) {

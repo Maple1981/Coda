@@ -180,6 +180,30 @@ El primer acorde de una progresión que empieza en tónica favorece claramente e
 
 La selección de voicings incluye una fuerza suave de centrado registral. El centro se calcula a partir de la tónica cercana al C central, y la puntuación penaliza progresivamente los voicings cuyo centro de masa se aleja demasiado. Esta regla no impide excepciones ni saltos expresivos, pero evita que las progresiones largas deriven estadísticamente hacia registros demasiado graves o demasiado agudos.
 
+El bloque armónico generado evita comenzar en registros demasiado graves: los voicings se construyen alrededor de la tónica central y el centro registral objetivo queda por encima de ella, de modo que el bajo tienda a la segunda octava útil o superior según el instrumento. La disposición cerrada y la abierta comparten esta regla de registro; la abierta añade separación interna, pero no debe arrastrar el bajo hacia la primera octava.
+
+## Melodía generada
+
+Cada progresión generada recibe una línea melódica estructural derivada de una voz real del acorde, normalmente la voz superior. La melodía no se construye como una pista ajena a la armonía: el generador toma los factores del acorde disponible en cada compás, escoge una nota cantable para esa voz y actualiza sus alturas MIDI para que la preescucha, el render de notas y la exportación MIDI compartan el mismo resultado.
+
+La selección de la nota melódica aplica las reglas de `docs/theory/34-melodia-linea-esencial.md`: favorece movimiento conjunto y terceras, penaliza saltos amplios sin compensación, evita tritonos expuestos, pide cambio de dirección después de saltos grandes y trata `7̂`, `6̂` y `4̂` como grados activos con tendencia de resolución. En el primer compás, si la armonía es tónica, se favorece un factor estable; en el cierre, si la progresión llega a tónica, la fundamental recibe prioridad para producir reposo.
+
+Cuando el control **Contrapunto** es alto, la misma capa puede añadir notas de paso entre una nota estructural y la siguiente. Estas notas no crean acordes nuevos: son eventos melódicos breves asociados a la misma voz. En reproducción sostenida, la voz melódica deja de sonar como bloque continuo y se articula como línea: nota estructural, nota de paso y llegada al siguiente compás. Las demás voces mantienen el acorde.
+
+Aunque no haya notas de paso, la voz melódica estructural se exporta como evento propio de nota. En la preescucha, el resto del acorde queda ligeramente atenuado y la voz melódica se realza con una velocidad estable; en articulación **Sostenido**, este realce no depende de **Intensidad**, **Humanización** ni **Swing**.
+
+La melodía tiene además una capa rítmica independiente, documentada en `docs/theory/37-melodia-ritmo-generativo.md`. El generador escoge pseudoaleatoriamente un tipo de comienzo tético, acéfalo o anacrúsico, un motivo rítmico y una curva melódica. A partir de esa decisión crea eventos con negras, corcheas, semicorcheas, silencios, anticipaciones, retardos, bordaduras o repeticiones. La armonía puede seguir ocupando el compás completo, pero la voz melódica queda subdividida para que se perciba como línea real.
+
+Cuando un compás se divide en dos o más acordes, los eventos melódicos del compás se proyectan sobre cada segmento interno. Cada acorde recibe sólo la porción temporal de melodía que le corresponde, conservando silencios, anticipaciones y notas mantenidas que crucen el cambio armónico. Esto evita que la melodía se corte al añadir acordes dentro de un mismo compás.
+
+La salida audible y MIDI de la melodía se desplaza una octava por encima de la voz estructural de origen. La regla no altera los voicings ni las notas de los acordes: sólo separa la línea melódica para que no compita con el acompañamiento.
+
+La repetición inmediata de una misma altura se trata como recurso excepcional. La capa melódica mantiene un presupuesto máximo cercano al 5 % de las notas emitidas; si una nota prevista repite la anterior y no entra en ese margen, se sustituye por silencio, apoyatura, trino breve o nota de arpegio del acorde. La repetición deja de ser textura por defecto y pasa a ser un gesto anecdótico.
+
+La voz melódica es monofónica: antes de reproducir o exportar, sus eventos se ordenan temporalmente y cada evento se recorta contra el comienzo del siguiente. Si un recorte deja duración nula, el evento se descarta. De momento no se permiten solapamientos dentro de la línea melódica.
+
+Los comienzos acéfalos tienen peso real en la generación: una frase puede dejar vacío el primer pulso y entrar en una subdivisión o en otro pulso posterior. En cambio, el último pulso de los compases no finales queda protegido contra silencios aleatorios, porque suele servir de enlace hacia el compás siguiente. Además, algunos compases no finales pueden recortar su nota larga final para insertar una conexión breve de `1/8` o `1/16`, normalmente como nota de paso, bordadura o anticipación hacia el compás siguiente. El silencio en ese punto se reserva sobre todo para el acorde final del conjunto, donde puede funcionar como respiración conclusiva.
+
 Los controles del constructor se aplican también sobre la progresión en curso mediante `CodaProgressionDocumentTransform`. Cuando la progresión ya contiene ediciones del usuario, la aplicación no descarta sus compases, secciones ni acordes añadidos: reinterpreta el material existente con el nuevo estado, recalculando voicings, tensiones, número de voces, duraciones, pedales y parámetros expresivos. El botón **Generar progresión aleatoria** sigue usando esos mismos controles para crear material nuevo desde cero.
 
 El generador elige inversiones para reducir el desplazamiento entre voces consecutivas. La nomenclatura usada es la tradicional:

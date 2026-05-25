@@ -779,7 +779,7 @@ assert.ok(global.CodaProgressionVoiceLeadingScore.lowRegisterBassPenalty({
 assert.equal(global.CodaProgressionChordPlan.registerCenterMidi({
 	initialMidiNote: 60,
 	scaleNotes: [{ nombre: 'A' }]
-}), 51);
+}), 63);
 const lowRegisterVoicing = global.CodaProgressionVoicing.chooseVoicing({
 	baseNotes: ['C', 'E', 'G'],
 	chordName: 'C',
@@ -906,8 +906,225 @@ const melodicCounterpointMeasures = global.CodaProgressionMelodicCounterpoint.an
 	scaleNotes: [{ nombre: 'C' }, { nombre: 'D' }, { nombre: 'E' }, { nombre: 'F' }, { nombre: 'G' }, { nombre: 'A' }, { nombre: 'B' }]
 });
 assert.equal(melodicCounterpointMeasures[0].melodicVoiceIndex, 3);
+assert.equal(melodicCounterpointMeasures[0].melody.voiceIndex, 3);
+assert.equal(melodicCounterpointMeasures[0].melody.startType, 'anacrusic');
+assert.equal(melodicCounterpointMeasures[0].melodicStartType, 'anacrusic');
+assert.equal(melodicCounterpointMeasures[0].voiceNotes[3].melodic, true);
 assert.equal(melodicCounterpointMeasures[0].passingNotes[0].note, 'D');
 assert.equal(melodicCounterpointMeasures[0].passingNotes[0].delaySeconds, 1);
+assert.ok(melodicCounterpointMeasures[0].melodyEvents.length > 2);
+assert.ok(melodicCounterpointMeasures[0].melodyEvents.some(function (event) {
+	return event.delaySeconds > 0 && event.durationSeconds < melodicCounterpointMeasures[0].durationSeconds;
+}));
+const normalizedMelodicDocument = global.CodaProgressionDocument.normalize({
+	measures: melodicCounterpointMeasures
+});
+assert.ok(normalizedMelodicDocument.measures[0].melodyEvents.length > 2);
+assert.equal(normalizedMelodicDocument.measures[0].melodicVoiceIndex, 3);
+assert.equal(normalizedMelodicDocument.measures[0].melody.startType, 'anacrusic');
+const normalizedMelodicSchedule = global.CodaProgressionPlaybackSchedule.buildProgressionPlaybackSchedule(normalizedMelodicDocument);
+assert.ok(normalizedMelodicSchedule[0].midiNoteEvents.length > 4);
+assert.ok(normalizedMelodicSchedule[0].midiNoteEvents.some(function (event) {
+	return event.kind === 'anacrusis' || event.kind === 'passing' || event.kind === 'neighbor';
+}));
+const melodicRepeatStats = consecutiveMelodyRepeatStats(melodicCounterpointMeasures);
+assert.ok(melodicRepeatStats.repeats <= Math.floor(melodicRepeatStats.total * 0.05));
+const acephalousMelodyMeasures = global.CodaProgressionMelodicCounterpoint.annotateMeasures([
+	{
+		bar: 1,
+		durationBeats: 4,
+		durationSeconds: 2,
+		midiNotes: [48, 52, 55, 60],
+		notes: ['C', 'E', 'G'],
+		voiceNotes: [
+			{ midiNote: 48, note: 'C', role: 'root' },
+			{ midiNote: 52, note: 'E', role: 'third' },
+			{ midiNote: 55, note: 'G', role: 'fifth' },
+			{ midiNote: 60, note: 'C', role: 'root' }
+		]
+	},
+	{
+		bar: 2,
+		durationBeats: 4,
+		durationSeconds: 2,
+		midiNotes: [55, 59, 62, 67],
+		notes: ['G', 'B', 'D'],
+		voiceNotes: [
+			{ midiNote: 55, note: 'G', role: 'root' },
+			{ midiNote: 59, note: 'B', role: 'third' },
+			{ midiNote: 62, note: 'D', role: 'fifth' },
+			{ midiNote: 67, note: 'G', role: 'root' }
+		]
+	}
+], { counterpoint: 30, voices: 4 }, {
+	initialMidiNote: 60,
+	rng: sequenceRng([0.1, 0.3, 0.5, 0.6, 0.2, 0.5]),
+	scaleNotes: [{ nombre: 'C' }, { nombre: 'D' }, { nombre: 'E' }, { nombre: 'F' }, { nombre: 'G' }, { nombre: 'A' }, { nombre: 'B' }]
+});
+assert.equal(acephalousMelodyMeasures[0].melodicStartType, 'acephalous');
+assert.ok(firstAudibleMelodyDelay(acephalousMelodyMeasures[0]) > 0);
+const lastPulseProtectedMelodyMeasures = global.CodaProgressionMelodicCounterpoint.annotateMeasures([
+	{
+		bar: 1,
+		durationBeats: 4,
+		durationSeconds: 2,
+		midiNotes: [48, 52, 55, 60],
+		notes: ['C', 'E', 'G'],
+		voiceNotes: [
+			{ midiNote: 48, note: 'C', role: 'root' },
+			{ midiNote: 52, note: 'E', role: 'third' },
+			{ midiNote: 55, note: 'G', role: 'fifth' },
+			{ midiNote: 60, note: 'C', role: 'root' }
+		]
+	},
+	{
+		bar: 2,
+		durationBeats: 4,
+		durationSeconds: 2,
+		midiNotes: [55, 59, 62, 67],
+		notes: ['G', 'B', 'D'],
+		voiceNotes: [
+			{ midiNote: 55, note: 'G', role: 'root' },
+			{ midiNote: 59, note: 'B', role: 'third' },
+			{ midiNote: 62, note: 'D', role: 'fifth' },
+			{ midiNote: 67, note: 'G', role: 'root' }
+		]
+	}
+], { counterpoint: 30, voices: 4 }, {
+	initialMidiNote: 60,
+	rng: sequenceRng([0.1, 0.6, 0.5, 0.6, 0.5, 0.5, 0.5, 0.75, 0.5]),
+	scaleNotes: [{ nombre: 'C' }, { nombre: 'D' }, { nombre: 'E' }, { nombre: 'F' }, { nombre: 'G' }, { nombre: 'A' }, { nombre: 'B' }]
+});
+assert.equal(hasAudibleMelodyOnLastPulse(lastPulseProtectedMelodyMeasures[0]), true);
+const endConnectionMelodyMeasures = global.CodaProgressionMelodicCounterpoint.annotateMeasures([
+	{
+		bar: 1,
+		durationBeats: 4,
+		durationSeconds: 2,
+		midiNotes: [48, 52, 55, 60],
+		notes: ['C', 'E', 'G'],
+		voiceNotes: [
+			{ midiNote: 48, note: 'C', role: 'root' },
+			{ midiNote: 52, note: 'E', role: 'third' },
+			{ midiNote: 55, note: 'G', role: 'fifth' },
+			{ midiNote: 60, note: 'C', role: 'root' }
+		]
+	},
+	{
+		bar: 2,
+		durationBeats: 4,
+		durationSeconds: 2,
+		midiNotes: [55, 59, 62, 67],
+		notes: ['G', 'B', 'D'],
+		voiceNotes: [
+			{ midiNote: 55, note: 'G', role: 'root' },
+			{ midiNote: 59, note: 'B', role: 'third' },
+			{ midiNote: 62, note: 'D', role: 'fifth' },
+			{ midiNote: 67, note: 'G', role: 'root' }
+		]
+	}
+], { counterpoint: 30, voices: 4 }, {
+	initialMidiNote: 60,
+	rng: sequenceRng([0.1, 0.6, 0.5, 0.1, 0.5, 0.5, 0.5, 0.1, 0.4]),
+	scaleNotes: [{ nombre: 'C' }, { nombre: 'D' }, { nombre: 'E' }, { nombre: 'F' }, { nombre: 'G' }, { nombre: 'A' }, { nombre: 'B' }]
+});
+assert.equal(hasShortMelodyConnectionAtMeasureEnd(endConnectionMelodyMeasures[0]), true);
+assert.equal(global.CodaProgressionMelodicCounterpoint.melodicIntervalPenalty(2) < global.CodaProgressionMelodicCounterpoint.melodicIntervalPenalty(8), true);
+const structuralMelodyCandidate = global.CodaProgressionMelodicCounterpoint.chooseStructuralMelodyNote({
+	bar: 2,
+	degreeIndex: 4,
+	midiNotes: [55, 59, 62, 67],
+	notes: ['G', 'B', 'D'],
+	voiceNotes: [
+		{ midiNote: 55, note: 'G', role: 'root' },
+		{ midiNote: 59, note: 'B', role: 'third' },
+		{ midiNote: 62, note: 'D', role: 'fifth' },
+		{ midiNote: 67, note: 'G', role: 'root' }
+	]
+}, 3, {
+	initialMidiNote: 60,
+	isFirst: false,
+	isLast: false,
+	previous: { midiNote: 64, note: 'E' },
+	previousInterval: 8,
+	scaleNotes: [{ nombre: 'C' }, { nombre: 'D' }, { nombre: 'E' }, { nombre: 'F' }, { nombre: 'G' }, { nombre: 'A' }, { nombre: 'B' }]
+});
+assert.ok(structuralMelodyCandidate.midiNote <= 67);
+const generatedMelodyEvents = global.CodaProgressionPlaybackNoteEvents.build({
+	articulation: 'sustain',
+	durationSeconds: 2,
+	melodicVoiceIndex: 3,
+	midiNotes: [48, 52, 55, 60],
+	passingNotes: [{ delaySeconds: 1, durationSeconds: 1, kind: 'passing', midiNote: 62, note: 'D', voiceIndex: 3 }],
+	voiceNotes: [
+		{ midiNote: 48, note: 'C' },
+		{ midiNote: 52, note: 'E' },
+		{ midiNote: 55, note: 'G' },
+		{ midiNote: 60, note: 'C' }
+	],
+	voices: 4
+}, 2, {});
+assert.deepEqual(generatedMelodyEvents.map(function (event) { return event.midiNote; }), [48, 52, 55, 72, 74]);
+assert.equal(generatedMelodyEvents.filter(function (event) { return event.midiNote === 72; })[0].duration, 1);
+const structuralOnlyMelodyEvents = global.CodaProgressionPlaybackNoteEvents.build({
+	articulation: 'sustain',
+	durationSeconds: 2,
+	intensity: 120,
+	melodicVoiceIndex: 3,
+	midiNotes: [48, 52, 55, 60],
+	voiceNotes: [
+		{ midiNote: 48, note: 'C' },
+		{ midiNote: 52, note: 'E' },
+		{ midiNote: 55, note: 'G' },
+		{ midiNote: 60, note: 'C' }
+	],
+	voices: 4
+}, 2, {});
+assert.deepEqual(structuralOnlyMelodyEvents.map(function (event) { return event.midiNote; }), [48, 52, 55, 72]);
+assert.equal(structuralOnlyMelodyEvents[3].kind, 'melody-structural');
+assert.equal(structuralOnlyMelodyEvents[3].duration, 2);
+assert.ok(structuralOnlyMelodyEvents[0].velocity < structuralOnlyMelodyEvents[3].velocity);
+assert.ok(structuralOnlyMelodyEvents[3].velocity < 120);
+const plannedRhythmicMelodyEvents = global.CodaProgressionPlaybackNoteEvents.build({
+	articulation: 'sustain',
+	durationSeconds: 2,
+	melodyEvents: [
+		{ delaySeconds: 0, durationSeconds: 0.25, kind: 'anacrusis', melodic: true, midiNote: 59, note: 'B', voiceIndex: 3 },
+		{ delaySeconds: 0.25, durationSeconds: 0.25, kind: 'rest', melodic: true, rest: true, voiceIndex: 3 },
+		{ delaySeconds: 0.5, durationSeconds: 0.5, kind: 'melody-structural', melodic: true, midiNote: 60, note: 'C', voiceIndex: 3 }
+	],
+	melodicVoiceIndex: 3,
+	midiNotes: [48, 52, 55, 60],
+	voiceNotes: [
+		{ midiNote: 48, note: 'C' },
+		{ midiNote: 52, note: 'E' },
+		{ midiNote: 55, note: 'G' },
+		{ midiNote: 60, note: 'C' }
+	],
+	voices: 4
+}, 2, {});
+assert.deepEqual(plannedRhythmicMelodyEvents.map(function (event) { return event.midiNote; }), [48, 52, 55, 71, 72]);
+assert.deepEqual(plannedRhythmicMelodyEvents.slice(3).map(function (event) { return event.delay; }), [0, 0.5]);
+const overlappingMelodyEvents = global.CodaProgressionPlaybackNoteEvents.build({
+	articulation: 'sustain',
+	durationSeconds: 1,
+	melodyEvents: [
+		{ delaySeconds: 0, durationSeconds: 0.4, kind: 'melody-structural', melodic: true, midiNote: 60, note: 'C', voiceIndex: 3 },
+		{ delaySeconds: 0.25, durationSeconds: 0.4, kind: 'neighbor', melodic: true, midiNote: 62, note: 'D', voiceIndex: 3 },
+		{ delaySeconds: 0.65, durationSeconds: 0.35, kind: 'melody-structural', melodic: true, midiNote: 64, note: 'E', voiceIndex: 3 }
+	],
+	melodicVoiceIndex: 3,
+	midiNotes: [48, 52, 55, 60],
+	voiceNotes: [
+		{ midiNote: 48, note: 'C' },
+		{ midiNote: 52, note: 'E' },
+		{ midiNote: 55, note: 'G' },
+		{ midiNote: 60, note: 'C' }
+	],
+	voices: 4
+}, 1, {});
+assert.equal(melodyEventsOverlap(overlappingMelodyEvents.slice(3)), false);
+assert.deepEqual(overlappingMelodyEvents.slice(3).map(function (event) { return event.duration; }), [0.25, 0.4, 0.35]);
 const timelineProgression = global.CodaProgressionMeasureTimeline.rebuildTimeline({
 	beatsPerBar: 4,
 	bpm: 120,
@@ -1699,6 +1916,92 @@ function sequenceRng(values) {
 
 		return value;
 	};
+}
+
+function consecutiveMelodyRepeatStats(measures) {
+	let previous = null;
+	let repeats = 0;
+	let total = 0;
+
+	(measures || []).forEach(function (measure) {
+		(measure.melodyEvents || []).forEach(function (event) {
+			if (event.rest || event.midiNote == null) {
+				return;
+			}
+
+			if (previous != null && event.midiNote === previous) {
+				repeats += 1;
+			}
+
+			previous = event.midiNote;
+			total += 1;
+		});
+	});
+
+	return {
+		repeats: repeats,
+		total: total
+	};
+}
+
+function firstAudibleMelodyDelay(measure) {
+	const firstEvent = (measure.melodyEvents || []).find(function (event) {
+		return !event.rest && event.midiNote != null;
+	});
+
+	return firstEvent ? firstEvent.delaySeconds : null;
+}
+
+function hasAudibleMelodyOnLastPulse(measure) {
+	const durationSeconds = Number(measure && measure.durationSeconds) || 0;
+	const durationBeats = Number(measure && measure.durationBeats) || 0;
+	const secondsPerBeat = durationSeconds && durationBeats ? durationSeconds / durationBeats : 0.5;
+	const lastPulseStart = Math.max(0, durationSeconds - secondsPerBeat);
+
+	return (measure.melodyEvents || []).some(function (event) {
+		if (event.rest || event.midiNote == null) {
+			return false;
+		}
+
+		const start = Number(event.delaySeconds) || 0;
+		const end = start + (Number(event.durationSeconds) || 0);
+
+		return end > lastPulseStart + 0.001;
+	});
+}
+
+function hasShortMelodyConnectionAtMeasureEnd(measure) {
+	const durationSeconds = Number(measure && measure.durationSeconds) || 0;
+	const durationBeats = Number(measure && measure.durationBeats) || 0;
+	const secondsPerBeat = durationSeconds && durationBeats ? durationSeconds / durationBeats : 0.5;
+	const eighthNoteSeconds = secondsPerBeat * 0.5;
+	const endConnectionStart = Math.max(0, durationSeconds - eighthNoteSeconds);
+
+	return (measure.melodyEvents || []).some(function (event) {
+		if (event.rest || event.midiNote == null) {
+			return false;
+		}
+
+		return Number(event.delaySeconds) >= endConnectionStart - 0.001 &&
+			Number(event.durationSeconds) <= eighthNoteSeconds + 0.001;
+	});
+}
+
+function melodyEventsOverlap(events) {
+	const sortedEvents = (events || []).slice().sort(function (a, b) {
+		return (a.delay || 0) - (b.delay || 0);
+	});
+
+	for (let i = 1; i < sortedEvents.length; i++) {
+		const previousEnd = (Number(sortedEvents[i - 1].delay) || 0) + (Number(sortedEvents[i - 1].duration) || 0);
+		const currentStart = Number(sortedEvents[i].delay) || 0;
+
+		if (previousEnd > currentStart + 0.001) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 console.log('Architecture tests passed');

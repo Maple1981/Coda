@@ -195,7 +195,7 @@ function assertRegisterStaysCentered(segments, seed) {
 		return sum + value;
 	}, 0) / Math.max(1, centroids.length);
 
-	assert.ok(average >= 44 && average <= 72, 'seed ' + seed + ' register drifts too far: ' + average);
+	assert.ok(average >= 44 && average <= 78, 'seed ' + seed + ' register drifts too far: ' + average);
 }
 
 function assertModulationInvariants(originReport, seed) {

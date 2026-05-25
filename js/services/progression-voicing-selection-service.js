@@ -86,7 +86,7 @@
 			return center;
 		}
 
-		return (isFinite(fallback) ? fallback : 60) - 6;
+		return (isFinite(fallback) ? fallback : 60) + 6;
 	}
 
 	function inversionRunKey(plan) {

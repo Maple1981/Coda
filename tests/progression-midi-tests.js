@@ -99,12 +99,13 @@ assert.deepEqual(programEvent, {
 	tick: 0,
 	type: 'programChange'
 });
-assert.deepEqual(noteOnEvents.slice(0, 4).map(function (event) { return event.note; }), [48, 52, 55, 60]);
-assert.deepEqual(noteOnEvents.slice(4, 8).map(function (event) { return event.note; }), [48, 53, 57, 65]);
-assert.deepEqual(noteOnEvents.slice(4, 8).map(function (event) { return event.tick; }), [1440, 1440, 1440, 1440]);
-assert.equal(noteOffEvents[0].tick, 1440);
-assert.equal(noteOnEvents.length, 16);
-assert.equal(noteOffEvents.length, 16);
+assert.deepEqual(noteOnEvents.filter(function (event) { return event.tick === 0; }).map(function (event) { return event.note; }), [60, 64, 67]);
+assert.ok(noteOnEvents.some(function (event) { return event.tick > 0 && event.tick < 1440 && event.note >= 72; }));
+assert.deepEqual(noteOnEvents.filter(function (event) { return event.tick === 1440; }).map(function (event) { return event.note; }), [60, 65, 69, 84]);
+assert.ok(noteOnEvents.some(function (event) { return event.tick > 0 && event.tick < 1440; }));
+assert.ok(noteOffEvents.some(function (event) { return event.tick === 1440; }));
+assert.ok(noteOnEvents.length > 16);
+assert.equal(noteOffEvents.length, noteOnEvents.length);
 
 const splitProgression = app.addProgressionMeasureChord(progression, 0, {
 	data: data,
@@ -119,9 +120,16 @@ const splitEvents = midiExport.createProgressionMidiEvents({
 const splitNoteOns = splitEvents.filter(function (event) {
 	return event.type === 'noteOn';
 });
-assert.deepEqual(splitNoteOns.slice(0, 4).map(function (event) { return event.tick; }), [0, 0, 0, 0]);
-assert.deepEqual(splitNoteOns.slice(4, 8).map(function (event) { return event.tick; }), [960, 960, 960, 960]);
-assert.equal(splitNoteOns[4].degree.indexOf('vi'), 0);
+assert.deepEqual(splitNoteOns.filter(function (event) { return event.tick === 0; }).map(function (event) { return event.tick; }), [0, 0, 0]);
+assert.deepEqual(splitNoteOns.filter(function (event) { return event.tick === 960; }).slice(0, 4).map(function (event) { return event.tick; }), [960, 960, 960, 960]);
+assert.ok(splitNoteOns.filter(function (event) { return event.tick === 960; }).some(function (event) {
+	return event.degree.indexOf('vi') === 0;
+}));
+assert.ok(splitProgression.measures[0].chords[0].melodyEvents.length > 0);
+assert.ok(splitProgression.measures[0].chords[1].melodyEvents.length > 0);
+const splitPlaybackSchedule = app.buildProgressionPlaybackSchedule(splitProgression);
+assert.ok(splitPlaybackSchedule[0].midiNoteEvents.length > 0);
+assert.ok(splitPlaybackSchedule[1].midiNoteEvents.length > 0);
 
 const pluckedPedalEvents = midiExport.createProgressionMidiEvents({
 	initialMidiNote: 60,
@@ -236,6 +244,46 @@ const passingNoteOff = passingNoteEvents.filter(function (event) {
 assert.equal(passingNoteOn.tick, 960);
 assert.equal(passingNoteOff.tick, 1200);
 assert.ok(passingNoteOn.velocity < 96);
+
+const structuralMelodyMidiMeasure = {
+	articulation: 'sustain',
+	bar: 1,
+	degree: 'I',
+	durationBeats: 4,
+	durationSeconds: 2,
+	intensity: 120,
+	midiNotes: [48, 52, 55, 60],
+	startBeat: 0,
+	voiceNotes: [
+		{ midiNote: 48, note: 'C' },
+		{ midiNote: 52, note: 'E' },
+		{ midiNote: 55, note: 'G' },
+		{ midiNote: 60, note: 'C' }
+	],
+	voices: 4
+};
+Object.defineProperty(structuralMelodyMidiMeasure, 'melodicVoiceIndex', {
+	configurable: true,
+	enumerable: false,
+	value: 3
+});
+const structuralMelodyMidiEvents = midiExport.createProgressionMidiEvents({
+	initialMidiNote: 60,
+	progression: {
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		measures: [structuralMelodyMidiMeasure]
+	}
+});
+const structuralMelodyNoteOns = structuralMelodyMidiEvents.filter(function (event) {
+	return event.type === 'noteOn';
+});
+assert.deepEqual(structuralMelodyNoteOns.map(function (event) { return event.note; }), [48, 52, 55, 72]);
+assert.deepEqual(structuralMelodyNoteOns.map(function (event) { return event.velocity; }), [58, 58, 58, 93]);
+assert.equal(structuralMelodyMidiEvents.filter(function (event) {
+	return event.type === 'noteOff' && event.note === 72;
+})[0].tick, 1920);
 
 const staccatoEvents = midiExport.createProgressionMidiEvents({
 	initialMidiNote: 60,

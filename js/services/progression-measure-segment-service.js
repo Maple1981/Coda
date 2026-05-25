@@ -47,15 +47,78 @@
 
 		for (var i = 0; i < chords.length; i++) {
 			var durationBeats = durationPlan[i];
-			result.push(segmentFromMeasure(chords[i], {
+			var segment = segmentFromMeasure(chords[i], {
 				chordIndex: i,
 				durationBeats: durationBeats,
 				durationSeconds: durationBeats * secondsPerBeat,
 				startBeat: startBeat,
 				startSeconds: startSeconds
-			}));
+			});
+
+			result.push(applyParentMelodySlice(segment, measure));
 			startBeat += durationBeats;
 			startSeconds += durationBeats * secondsPerBeat;
+		}
+
+		return result;
+	}
+
+	function applyParentMelodySlice(segment, measure) {
+		var sourceEvents = measure && measure.melodyEvents;
+		var slicedEvents;
+
+		if (!sourceEvents || !sourceEvents.length) {
+			return segment;
+		}
+
+		slicedEvents = sliceMelodyEventsForSegment(sourceEvents, measure, segment);
+		if (!slicedEvents.length) {
+			delete segment.melodyEvents;
+			delete segment.melodicStartType;
+			return segment;
+		}
+
+		segment.melodyEvents = slicedEvents;
+		segment.melodicVoiceIndex = measure.melodicVoiceIndex;
+		segment.melodicStartType = measure.melodicStartType;
+		segment.melody = measure.melody;
+
+		return segment;
+	}
+
+	function sliceMelodyEventsForSegment(events, measure, segment) {
+		var parentStart = Number(measure && measure.startSeconds) || 0;
+		var segmentStart = Number(segment && segment.startSeconds) || parentStart;
+		var segmentEnd = segmentStart + (Number(segment && segment.durationSeconds) || 0);
+		var result = [];
+
+		for (var i = 0; i < (events || []).length; i++) {
+			var eventStart = parentStart + (Number(events[i].delaySeconds) || 0);
+			var eventEnd = eventStart + (Number(events[i].durationSeconds) || 0);
+			var clippedStart = Math.max(eventStart, segmentStart);
+			var clippedEnd = Math.min(eventEnd, segmentEnd);
+			var event;
+
+			if (clippedEnd <= clippedStart) {
+				continue;
+			}
+
+			event = cloneMelodyEvent(events[i]);
+			event.delaySeconds = clippedStart - segmentStart;
+			event.durationSeconds = clippedEnd - clippedStart;
+			result.push(event);
+		}
+
+		return result;
+	}
+
+	function cloneMelodyEvent(event) {
+		var result = {};
+
+		for (var key in event || {}) {
+			if (Object.prototype.hasOwnProperty.call(event, key)) {
+				result[key] = event[key];
+			}
 		}
 
 		return result;
@@ -141,6 +204,7 @@
 	global.CodaProgressionMeasureSegments = {
 		chordDurationPlan: chordDurationPlan,
 		measureSegments: measureSegments,
+		sliceMelodyEventsForSegment: sliceMelodyEventsForSegment,
 		retimeMeasureChordList: retimeMeasureChordList,
 		retimeMeasureChords: retimeMeasureChords,
 		segmentFromMeasure: segmentFromMeasure

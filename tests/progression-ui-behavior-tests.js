@@ -270,7 +270,7 @@ document.getElementById('progressionLoop').dispatchEvent({
 });
 assert.equal(rendered.progression, 3);
 assert.strictEqual(initialized.uiState.getProgression(), changedProgression);
-assert.deepEqual(changedProgression.measures[1], {
+assert.deepEqual(measureWithoutMelody(changedProgression.measures[1]), {
 	articulation: 'staccato',
 	bar: 2,
 	beatUnit: 4,
@@ -289,7 +289,7 @@ assert.deepEqual(changedProgression.measures[1], {
 	intensity: 80,
 	inversion: '6/4',
 	inversionIndex: 2,
-	midiNotes: [48, 53, 57],
+	midiNotes: [60, 65, 69],
 	notes: ['C', 'F', 'A'],
 	pedalsIn: [],
 	pedalsOut: [],
@@ -300,9 +300,9 @@ assert.deepEqual(changedProgression.measures[1], {
 	suspension: '',
 	tonalFunction: 'SD',
 	voiceNotes: [
-		{ midiNote: 48, note: 'C', role: 'fifth' },
-		{ midiNote: 53, note: 'F', role: 'root' },
-		{ midiNote: 57, note: 'A', role: 'third' }
+		{ midiNote: 60, note: 'C', role: 'fifth' },
+		{ midiNote: 65, note: 'F', role: 'root' },
+		{ midiNote: 69, note: 'A', role: 'third' }
 	],
 	voiceLeading: {
 		commonTones: 1,
@@ -312,6 +312,8 @@ assert.deepEqual(changedProgression.measures[1], {
 	},
 	voices: 3
 });
+assert.ok(changedProgression.measures[1].melodyEvents.length > 1);
+assert.equal(changedProgression.measures[1].melodicVoiceIndex, 2);
 assert.deepEqual(changedProgression.harmonicColor, {
 	chromaticism: 10,
 	counterpoint: 20,
@@ -989,6 +991,18 @@ function changedMeasureCount(sourceMeasures, variationMeasures) {
 	}
 
 	return count;
+}
+
+function measureWithoutMelody(measure) {
+	const result = {};
+
+	Object.keys(measure || {}).forEach(function (key) {
+		if (key !== 'melodicVoiceIndex' && key !== 'melody' && key !== 'melodyEvents' && key !== 'melodicStartType') {
+			result[key] = measure[key];
+		}
+	});
+
+	return result;
 }
 
 function measureSignature(measure) {

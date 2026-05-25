@@ -111,11 +111,11 @@
 		var bass = Number(midiNotes[0]);
 		var excess;
 
-		if (!isFinite(bass) || bass >= 28) {
+		if (!isFinite(bass) || bass >= 40) {
 			return 0;
 		}
 
-		excess = 28 - bass;
+		excess = 40 - bass;
 
 		return excess * excess * 4;
 	}

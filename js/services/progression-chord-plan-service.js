@@ -104,7 +104,7 @@
 			tonicMidi = initialMidiNote;
 		}
 
-		return pitchService.nearestMidiTo(initialMidiNote, tonicMidi) - 6;
+		return pitchService.nearestMidiTo(initialMidiNote, tonicMidi) + 6;
 	}
 
 	function openingTonicInversionPolicy(context) {
