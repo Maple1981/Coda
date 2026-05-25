@@ -85,6 +85,7 @@ for (let invariantSeed = 1; invariantSeed <= 40; invariantSeed++) {
 
 assertModulationInvariants(cMajorReport, 51);
 assertModulationInvariants(bMajorReport, 77);
+assertMultiplePivotGenerationCanReachBack(cMajorReport);
 
 console.log('Progression invariant tests passed');
 
@@ -268,14 +269,86 @@ function assertModulationInvariants(originReport, seed) {
 function assertPivotHasCommonChord(progression, originReport, seed) {
 	var targetSection = progression.sections[1];
 	var targetReport = reportForSection(targetSection);
-	var pivot = sectionModulation.commonPivotChord(originReport, targetReport);
-	var pivotMeasure = progression.measures[targetSection.startIndex - 1];
+	var pivots = sectionModulation.commonPivotChords(originReport, targetReport);
+	var targetDegrees = pivots.map(function (pivot) {
+		return pivot.targetDegree;
+	});
+	var pivotChords = transitionPivotChords(progression, targetSection);
 
 	assert.equal(targetSection.modulation.kind, 'pivot', 'seed ' + seed + ' did not create pivot metadata');
-	assert.ok(pivot, 'seed ' + seed + ' pivot target has no common chord');
-	assert.equal(pivotMeasure.modulationRole, 'pivot', 'seed ' + seed + ' missing pivot measure');
-	assert.equal(pivotMeasure.pivotTargetDegree, pivot.targetDegree, 'seed ' + seed + ' pivot target degree mismatch');
+	assert.ok(pivots.length, 'seed ' + seed + ' pivot target has no common chord');
+	assert.ok(pivotChords.length >= 1 && pivotChords.length <= 3, 'seed ' + seed + ' invalid pivot count');
+	assert.equal(targetSection.modulation.pivotCount, pivotChords.length, 'seed ' + seed + ' pivot metadata count mismatch');
+	pivotChords.forEach(function (pivotChord) {
+		assert.ok(targetDegrees.indexOf(pivotChord.pivotTargetDegree) > -1, 'seed ' + seed + ' pivot target degree mismatch');
+	});
 	assert.notEqual(targetSection.contextLabel, originReport.tonicName + ' ' + originReport.scaleName, 'seed ' + seed + ' pivot did not modulate');
+}
+
+function assertMultiplePivotGenerationCanReachBack(originReport) {
+	var state = {
+		articulation: 'sustain',
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		chromaticism: 35,
+		counterpoint: 70,
+		harmonicDensity: 0,
+		humanization: 0,
+		intensity: 80,
+		meter: '3/4',
+		modalInterchange: 10,
+		style: 'baroque',
+		swing: 0,
+		tensions: 35,
+		voicing: 'closed',
+		voices: 4
+	};
+	var base = app.buildProgressionFromState({
+		domain: domain,
+		progressionState: state,
+		report: originReport
+	});
+	var foundMultiple = false;
+
+	for (var seed = 1; seed <= 12; seed++) {
+		var pivot = app.generateProgressionSection({
+			data: data,
+			domain: domain,
+			modulationType: 'pivot',
+			progression: base,
+			progressionState: state,
+			report: originReport,
+			rng: lcg(seed),
+			sectionType: 'contrast',
+			selection: { preferFlats: false }
+		});
+
+		if (transitionPivotChords(pivot, pivot.sections[1]).length > 1) {
+			foundMultiple = true;
+			break;
+		}
+	}
+
+	assert.equal(foundMultiple, true, 'pivot modulation never reached back to multiple chords');
+}
+
+function transitionPivotChords(progression, targetSection) {
+	var result = [];
+	var originMeasures = progression.measures.slice(0, targetSection.startIndex);
+
+	originMeasures.forEach(function (measure) {
+		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
+
+		chords.forEach(function (chord) {
+			if (chord.modulationRole === 'pivot') {
+				result.push(chord);
+			}
+		});
+	});
+
+	return result;
 }
 
 function assertTargetSectionConfirmsTonicAndDominant(progression, seed) {

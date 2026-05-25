@@ -35,10 +35,12 @@
 		modulation = sectionModulation.prepare({
 			candidate: candidate,
 			dependencies: dependencies,
+			originMeasures: sectionAMeasures,
 			originReport: options.report,
 			originSectionId: 'A',
 			options: options,
 			progressionState: progressionState,
+			rng: rng,
 			sectionMeasures: sectionB.measures || [],
 			targetReport: targetReport,
 			targetSectionId: 'B'
@@ -139,10 +141,12 @@
 		modulation = sectionModulation.prepare({
 			candidate: candidate,
 			dependencies: dependencies,
+			originMeasures: referenceMeasures,
 			originReport: originReport,
 			originSectionId: originSection ? originSection.id : 'A',
 			options: options,
 			progressionState: progressionState,
+			rng: rng,
 			sectionMeasures: sectionProgression.measures || [],
 			targetReport: targetReport,
 			targetSectionId: targetId

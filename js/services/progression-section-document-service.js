@@ -74,7 +74,17 @@
 			for (var j = range.start; j < range.end; j++) {
 				measures[j].sectionId = section.id;
 				measures[j].sectionLabelKey = section.labelKey;
+				annotateMeasureChords(measures[j], section);
 			}
+		}
+	}
+
+	function annotateMeasureChords(measure, section) {
+		var chords = measure && measure.chords ? measure.chords : [];
+
+		for (var i = 0; i < chords.length; i++) {
+			chords[i].sectionId = section.id;
+			chords[i].sectionLabelKey = section.labelKey;
 		}
 	}
 
@@ -237,6 +247,7 @@
 	}
 
 	global.CodaProgressionSectionDocument = {
+		annotateMeasureChords: annotateMeasureChords,
 		annotateSectionMeasures: annotateSectionMeasures,
 		appendSection: appendSection,
 		cloneMeasures: cloneMeasures,

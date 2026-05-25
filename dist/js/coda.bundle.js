@@ -5829,7 +5829,17 @@
 			for (var j = range.start; j < range.end; j++) {
 				measures[j].sectionId = section.id;
 				measures[j].sectionLabelKey = section.labelKey;
+				annotateMeasureChords(measures[j], section);
 			}
+		}
+	}
+
+	function annotateMeasureChords(measure, section) {
+		var chords = measure && measure.chords ? measure.chords : [];
+
+		for (var i = 0; i < chords.length; i++) {
+			chords[i].sectionId = section.id;
+			chords[i].sectionLabelKey = section.labelKey;
 		}
 	}
 
@@ -5992,6 +6002,7 @@
 	}
 
 	global.CodaProgressionSectionDocument = {
+		annotateMeasureChords: annotateMeasureChords,
 		annotateSectionMeasures: annotateSectionMeasures,
 		appendSection: appendSection,
 		cloneMeasures: cloneMeasures,
@@ -12479,6 +12490,7 @@
 	'use strict';
 
 	var formattingService = global.CodaProgressionFormatting;
+	var measureCloneService = global.CodaProgressionMeasureClone;
 	var objectService = global.CodaProgressionObjects;
 	var sectionDocument = global.CodaProgressionSectionDocument;
 	var timingService = global.CodaProgressionTiming;
@@ -12487,9 +12499,10 @@
 		var requestedKind = normalizedKind(context.options.modulationType);
 		var originReport = context.originReport;
 		var targetReport = context.targetReport;
-		var pivot = commonPivotChord(originReport, targetReport);
+		var pivots = commonPivotChords(originReport, targetReport);
 		var kind = requestedKind;
 		var metadata;
+		var pivotPlan;
 
 		if (!kind || kind === 'none' || sameReportContext(originReport, targetReport)) {
 			return emptyModulation('none');
@@ -12520,20 +12533,27 @@
 			};
 		}
 
-		if (kind === 'pivot' && pivot) {
-			metadata.pivotDegree = pivot.originDegree + ' -> ' + pivot.targetDegree;
+		if (kind === 'pivot' && pivots.length) {
+			pivotPlan = pivotTransitionPlan(context, pivots);
+			if (!pivotPlan.previousPivots.length) {
+				metadata.kind = 'direct';
+				return {
+					metadata: metadata
+				};
+			}
+
+			metadata.pivotCount = pivotPlan.pivots.length;
+			metadata.pivotDegree = pivotPlan.pivots.map(pivotDegreeLabel).join(', ');
+			metadata.pivotDegrees = pivotPlan.pivots.map(function (pivot) {
+				return {
+					originDegree: pivot.originDegree,
+					targetDegree: pivot.targetDegree
+				};
+			});
+
 			return {
 				metadata: metadata,
-				previousMeasure: transitionMeasureForDegree(pivot.originIndex, originReport, context, {
-					modulationKind: kind,
-					modulationRole: 'pivot',
-					modulationSourceLabelKey: 'progression.modulation.pivot',
-					pivotOriginDegree: pivot.originDegree,
-					pivotTargetDegree: pivot.targetDegree,
-					pivotTargetScaleIndex: targetReport ? targetReport.scaleIndex : null,
-					pivotTargetScaleName: targetReport ? targetReport.scaleName : '',
-					pivotTargetTonicName: targetReport ? targetReport.tonicName : ''
-				})
+				previousPivots: pivotPlan.previousPivots
 			};
 		}
 
@@ -12558,14 +12578,19 @@
 	}
 
 	function transitionMeasureForDegree(degreeIndex, report, context, metadata, degreeOptions) {
-		var generated;
-		var degree = objectService.extendObject({
+		var measures = transitionMeasuresForDegrees([objectService.extendObject({
 			index: degreeIndex,
 			source: 'diatonic'
-		}, degreeOptions || {});
+		}, degreeOptions || {})], report, context, [metadata || {}]);
+
+		return measures.length ? measures[0] : null;
+	}
+
+	function transitionMeasuresForDegrees(degrees, report, context, metadatas) {
+		var generated;
 		var state = cloneObject(context.progressionState || {});
 
-		state.bars = 1;
+		state.bars = degrees.length || 1;
 		state.harmonicDensity = 0;
 		state.chromaticism = 0;
 		state.style = 'baroque';
@@ -12581,7 +12606,7 @@
 					{
 						cadence: 'authentic',
 						counterpoint: Number(state.counterpoint) || 50,
-						degrees: [degree],
+						degrees: degrees,
 						id: 'section-modulation-transition',
 						modes: ['major', 'minor'],
 						weight: 100
@@ -12591,10 +12616,12 @@
 		});
 
 		if (!generated || !generated.measures || !generated.measures.length) {
-			return null;
+			return [];
 		}
 
-		return objectService.extendObject(generated.measures[0], metadata || {});
+		return generated.measures.slice(0, degrees.length).map(function (measure, index) {
+			return objectService.extendObject(measure, metadatas && metadatas[index] ? metadatas[index] : {});
+		});
 	}
 
 	function applyToCombinedMeasures(previousMeasures, sectionMeasures, modulation) {
@@ -12606,8 +12633,142 @@
 			result[previousIndex] = replaceMeasureHarmony(result[previousIndex], modulation.previousMeasure);
 		}
 
+		if (modulation && modulation.previousPivots && modulation.previousPivots.length) {
+			result = applyPreviousPivots(result, previousMeasures.length, modulation.previousPivots);
+		}
+
 		if (modulation && modulation.nextMeasure && nextIndex < result.length) {
 			result[nextIndex] = replaceMeasureHarmony(result[nextIndex], modulation.nextMeasure);
+		}
+
+		return result;
+	}
+
+	function pivotTransitionPlan(context, pivots) {
+		var originSlots = trailingChordSlots(context.originMeasures || [], 3);
+		var maxCount = Math.min(3, originSlots.length, pivots.length);
+		var count = maxCount ? Math.min(maxCount, 1 + Math.floor(modulationRng(context)() * maxCount)) : 0;
+		var selected = selectPivotSequence(originSlots.slice(originSlots.length - count), context.sectionMeasures || [], pivots, count);
+		var degrees = selected.map(function (pivot) {
+			return {
+				index: pivot.originIndex,
+				source: 'diatonic'
+			};
+		});
+		var metadatas = selected.map(function (pivot, index) {
+			return pivotMetadata(pivot, index, selected.length, context.targetReport);
+		});
+
+		return {
+			pivots: selected,
+			previousPivots: transitionMeasuresForDegrees(degrees, context.originReport, context, metadatas)
+		};
+	}
+
+	function selectPivotSequence(slots, sectionMeasures, pivots, count) {
+		var selected = [];
+		var used = {};
+
+		for (var i = 0; i < count; i++) {
+			var previousChord = i > 0 ? selected[i - 1].originChord : previousSlotChord(slots, i);
+			var nextChord = i < count - 1 ? slots[i + 1].chord : firstSectionChord(sectionMeasures);
+			var pivot = bestPivotForSlot(slots[i], previousChord, nextChord, pivots, used);
+
+			if (!pivot) {
+				break;
+			}
+
+			selected.push(pivot);
+			used[pivot.originIndex + ':' + pivot.targetIndex] = true;
+		}
+
+		return selected;
+	}
+
+	function bestPivotForSlot(slot, previousChord, nextChord, pivots, used) {
+		var best = null;
+		var bestScore = -1;
+
+		for (var i = 0; i < pivots.length; i++) {
+			var key = pivots[i].originIndex + ':' + pivots[i].targetIndex;
+			var score;
+
+			if (used[key] && Object.keys(used).length < pivots.length) {
+				continue;
+			}
+
+			score = pivotPlacementScore(slot, previousChord, nextChord, pivots[i]);
+			if (score > bestScore) {
+				bestScore = score;
+				best = pivots[i];
+			}
+		}
+
+		return best;
+	}
+
+	function pivotPlacementScore(slot, previousChord, nextChord, pivot) {
+		var score = pivot.score || 0;
+
+		if (slot && chordSignature(slot.chord) === pivot.signature) {
+			score += 20;
+		}
+
+		score += commonToneScore(previousChord, pivot.originChord) * 3;
+		score += commonToneScore(pivot.originChord, nextChord) * 2;
+
+		return score;
+	}
+
+	function previousSlotChord(slots, index) {
+		return index > 0 && slots[index - 1] ? slots[index - 1].chord : null;
+	}
+
+	function firstSectionChord(sectionMeasures) {
+		var slots = chordSlots((sectionMeasures || []).slice(0, 1));
+
+		return slots.length ? slots[0].chord : null;
+	}
+
+	function pivotMetadata(pivot, index, count, targetReport) {
+		return {
+			modulationKind: 'pivot',
+			modulationPivotCount: count,
+			modulationPivotIndex: index,
+			modulationRole: 'pivot',
+			modulationSourceLabelKey: 'progression.modulation.pivot',
+			pivotOriginDegree: pivot.originDegree,
+			pivotTargetDegree: pivot.targetDegree,
+			pivotTargetScaleIndex: targetReport ? targetReport.scaleIndex : null,
+			pivotTargetScaleName: targetReport ? targetReport.scaleName : '',
+			pivotTargetTonicName: targetReport ? targetReport.tonicName : ''
+		};
+	}
+
+	function applyPreviousPivots(measures, previousMeasureCount, replacements) {
+		var result = measures.slice();
+		var slots = trailingChordSlots(result.slice(0, previousMeasureCount), replacements.length);
+
+		for (var i = 0; i < replacements.length && i < slots.length; i++) {
+			result[slots[i].measureIndex] = replaceSlotHarmony(result[slots[i].measureIndex], slots[i], replacements[i]);
+		}
+
+		return result;
+	}
+
+	function replaceSlotHarmony(measure, slot, replacement) {
+		if (slot.chordIndex == null) {
+			return replaceMeasureHarmony(measure, replacement);
+		}
+
+		var result = measureCloneService.cloneMeasure(measure);
+		var chords = result.chords ? result.chords.slice() : [];
+
+		chords[slot.chordIndex] = replaceMeasureHarmony(chords[slot.chordIndex], replacement);
+		result.chords = chords;
+
+		if (slot.chordIndex === 0) {
+			measureCloneService.copySegmentToMeasure(result, chords[0]);
 		}
 
 		return result;
@@ -12637,9 +12798,45 @@
 		return result;
 	}
 
+	function trailingChordSlots(measures, maxCount) {
+		var slots = chordSlots(measures);
+
+		return maxCount ? slots.slice(Math.max(0, slots.length - maxCount)) : slots;
+	}
+
+	function chordSlots(measures) {
+		var slots = [];
+
+		for (var i = 0; i < (measures || []).length; i++) {
+			if (measures[i].chords && measures[i].chords.length) {
+				for (var j = 0; j < measures[i].chords.length; j++) {
+					slots.push({
+						chord: measures[i].chords[j],
+						chordIndex: j,
+						measureIndex: i
+					});
+				}
+			} else {
+				slots.push({
+					chord: measures[i],
+					chordIndex: null,
+					measureIndex: i
+				});
+			}
+		}
+
+		return slots;
+	}
+
 	function commonPivotChord(originReport, targetReport) {
+		var pivots = commonPivotChords(originReport, targetReport);
+
+		return pivots.length ? pivots[0] : null;
+	}
+
+	function commonPivotChords(originReport, targetReport) {
 		var best = null;
-		var bestScore = -1;
+		var result = [];
 		var originChords = originReport && originReport.scaleChords ? originReport.scaleChords : [];
 		var targetChords = targetReport && targetReport.scaleChords ? targetReport.scaleChords : [];
 
@@ -12647,19 +12844,27 @@
 			for (var j = 0; j < targetChords.length; j++) {
 				var score = pivotScore(originChords[i], targetChords[j], i, j);
 
-				if (score > bestScore) {
-					bestScore = score;
+				if (score > 0) {
 					best = {
+						originChord: originChords[i],
 						originDegree: degreeName(originReport, i, originChords[i]),
 						originIndex: i,
+						score: score,
+						signature: chordSignature(originChords[i]),
+						targetChord: targetChords[j],
 						targetDegree: degreeName(targetReport, j, targetChords[j]),
 						targetIndex: j
 					};
+					result.push(best);
 				}
 			}
 		}
 
-		return bestScore > 0 ? best : null;
+		result.sort(function (a, b) {
+			return b.score - a.score;
+		});
+
+		return result;
 	}
 
 	function pivotScore(originChord, targetChord, originIndex, targetIndex) {
@@ -12711,6 +12916,31 @@
 		}
 
 		return [chord.fundamental, chord.tercera, chord.quinta].filter(Boolean);
+	}
+
+	function commonToneScore(chordA, chordB) {
+		var a = chordPitchSet(chordA);
+		var b = chordPitchSet(chordB);
+		var score = 0;
+
+		for (var key in a) {
+			if (Object.prototype.hasOwnProperty.call(a, key) && b[key]) {
+				score += 1;
+			}
+		}
+
+		return score;
+	}
+
+	function chordPitchSet(chord) {
+		var notes = chord && chord.factorNotes ? chord.factorNotes.slice(0, 3) : chordFactors(chord);
+		var result = {};
+
+		for (var i = 0; i < notes.length; i++) {
+			result[notePitch(notes[i])] = true;
+		}
+
+		return result;
 	}
 
 	function notePitch(noteName) {
@@ -12765,6 +12995,14 @@
 		return 0.99;
 	}
 
+	function modulationRng(context) {
+		return context && typeof context.rng === 'function' ? context.rng : fixedRng;
+	}
+
+	function pivotDegreeLabel(pivot) {
+		return pivot.originDegree + ' -> ' + pivot.targetDegree;
+	}
+
 	function cloneObject(value) {
 		return objectService.extendObject({}, value || {});
 	}
@@ -12772,6 +13010,7 @@
 	global.CodaProgressionSectionModulation = {
 		applyToCombinedMeasures: applyToCombinedMeasures,
 		commonPivotChord: commonPivotChord,
+		commonPivotChords: commonPivotChords,
 		normalizedKind: normalizedKind,
 		prepare: prepare,
 		sameReportContext: sameReportContext
@@ -12818,10 +13057,12 @@
 		modulation = sectionModulation.prepare({
 			candidate: candidate,
 			dependencies: dependencies,
+			originMeasures: sectionAMeasures,
 			originReport: options.report,
 			originSectionId: 'A',
 			options: options,
 			progressionState: progressionState,
+			rng: rng,
 			sectionMeasures: sectionB.measures || [],
 			targetReport: targetReport,
 			targetSectionId: 'B'
@@ -12922,10 +13163,12 @@
 		modulation = sectionModulation.prepare({
 			candidate: candidate,
 			dependencies: dependencies,
+			originMeasures: referenceMeasures,
 			originReport: originReport,
 			originSectionId: originSection ? originSection.id : 'A',
 			options: options,
 			progressionState: progressionState,
+			rng: rng,
 			sectionMeasures: sectionProgression.measures || [],
 			targetReport: targetReport,
 			targetSectionId: targetId

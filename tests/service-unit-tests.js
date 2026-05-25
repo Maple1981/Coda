@@ -171,6 +171,161 @@ const fakeRoot = {
 };
 assert.equal(global.CodaProgressionGenerationEvents.modulationTypeForSection(fakeRoot, 'contrast'), 'pivot');
 assert.equal(global.CodaProgressionGenerationEvents.modulationTypeForSection(fakeRoot, 'variation'), 'none');
+const cMajorReportForPivots = reportFor('C', 0, false);
+const gMajorReportForPivots = reportFor('G', 0, false);
+const commonPivots = global.CodaProgressionSectionModulation.commonPivotChords(cMajorReportForPivots, gMajorReportForPivots);
+const splitOriginMeasures = [
+	{
+		bar: 1,
+		chordName: 'C',
+		degree: 'I',
+		durationBeats: 4,
+		durationSeconds: 2,
+		startBeat: 0,
+		startSeconds: 0
+	},
+	{
+		bar: 2,
+		chordName: 'F',
+		chords: [
+			{
+				bar: 2,
+				chordName: 'F',
+				degree: 'IV',
+				durationBeats: 2,
+				durationSeconds: 1,
+				startBeat: 4,
+				startSeconds: 2
+			},
+			{
+				bar: 2,
+				chordName: 'Am',
+				degree: 'vi',
+				durationBeats: 2,
+				durationSeconds: 1,
+				startBeat: 6,
+				startSeconds: 3
+			}
+		],
+		degree: 'IV',
+		durationBeats: 4,
+		durationSeconds: 2,
+		startBeat: 4,
+		startSeconds: 2
+	},
+	{
+		bar: 3,
+		chordName: 'G',
+		degree: 'V',
+		durationBeats: 4,
+		durationSeconds: 2,
+		startBeat: 8,
+		startSeconds: 4
+	}
+];
+const splitPivotModulation = global.CodaProgressionSectionModulation.prepare({
+	dependencies: {
+		generateProgressionFromState: function (options) {
+			return {
+				measures: options.rules.patterns[0].degrees.map(function (degree, index) {
+					const chord = options.report.scaleChords[degree.index];
+
+					return {
+						bar: index + 1,
+						chord: chord,
+						chordName: chord.nombre,
+						degree: options.report.scaleNotes[degree.index].grado,
+						degreeIndex: degree.index,
+						displayName: chord.nombre,
+						durationBeats: 4,
+						durationSeconds: 2,
+						notes: chord.factorNotes || [chord.fundamental, chord.tercera, chord.quinta],
+						source: 'diatonic',
+						startBeat: index * 4,
+						startSeconds: index * 2,
+						tonalFunction: 'T'
+					};
+				})
+			};
+		}
+	},
+	originMeasures: splitOriginMeasures,
+	originReport: cMajorReportForPivots,
+	options: {
+		data: global.CodaData,
+		domain: global.CodaDomain,
+		modulationType: 'pivot'
+	},
+	progressionState: {
+		bars: 3,
+		beatsPerBar: 4,
+		bpm: 120,
+		counterpoint: 70
+	},
+	rng: function () {
+		return 0.99;
+	},
+	sectionMeasures: [{ bar: 4, chordName: 'G', degree: 'I' }],
+	targetReport: gMajorReportForPivots
+});
+const splitPivotApplied = global.CodaProgressionSectionModulation.applyToCombinedMeasures(
+	splitOriginMeasures,
+	[{ bar: 4, chordName: 'G', degree: 'I', sectionId: 'B' }],
+	splitPivotModulation
+);
+assert.ok(commonPivots.length >= 3);
+assert.equal(splitPivotModulation.metadata.kind, 'pivot');
+assert.equal(splitPivotModulation.metadata.pivotCount, 3);
+assert.equal(splitPivotApplied[1].chords[0].modulationRole, 'pivot');
+assert.equal(splitPivotApplied[1].chords[1].modulationRole, 'pivot');
+assert.equal(splitPivotApplied[2].modulationRole, 'pivot');
+assert.equal(splitPivotApplied[3].modulationRole, undefined);
+assert.equal(splitPivotApplied[1].chords[0].durationBeats, 2);
+assert.equal(splitPivotApplied[1].chords[1].startBeat, 6);
+global.CodaProgressionSectionDocument.annotateSectionMeasures(splitPivotApplied, [
+	{ id: 'A', labelKey: 'progression.sectionA', length: 3, startIndex: 0 },
+	{
+		contrast: true,
+		contextLabel: 'G Major',
+		contextScaleIndex: 0,
+		contextScaleName: 'Mayor',
+		contextTonicName: 'G',
+		id: 'B',
+		labelKey: 'progression.sectionB',
+		length: 1,
+		modulation: splitPivotModulation.metadata,
+		startIndex: 3
+	}
+]);
+assert.equal(splitPivotApplied[1].chords[0].sectionId, 'A');
+assert.equal(global.CodaProgressionAnalysisLabels.sourceLabelDescriptor(splitPivotApplied[1].chords[0], {
+	i18n: {
+		t: function (key) {
+			return {
+				'data.scales.0': 'Major',
+				'progression.modulation.inKey': 'in',
+				'progression.modulation.pivot': 'pivot chord'
+			}[key] || key;
+		}
+	},
+	notation: global.CodaNotation,
+	notationStyle: 'anglosaxon',
+	sections: [
+		{ id: 'A', labelKey: 'progression.sectionA', length: 3, startIndex: 0 },
+		{
+			contrast: true,
+			contextLabel: 'G Major',
+			contextScaleIndex: 0,
+			contextScaleName: 'Mayor',
+			contextTonicName: 'G',
+			id: 'B',
+			labelKey: 'progression.sectionB',
+			length: 1,
+			modulation: splitPivotModulation.metadata,
+			startIndex: 3
+		}
+	]
+}).visible, true);
 assert.equal(global.CodaCircleOfFifthsPopover.triggerIdFor({ id: 'toggleCircleOfFifths' }), 'toggleCircleOfFifths');
 assert.equal(global.CodaCircleOfFifthsPopover.triggerIdFor({
 	getAttribute: function (name) {
@@ -373,6 +528,28 @@ function createFakeCircleRoot() {
 	elements['.circlePopover__titlebar'] = null;
 
 	return root;
+}
+
+function reportFor(tonicName, scaleIndex, preferFlats) {
+	return global.CodaApplication.buildScaleReport({
+		data: global.CodaData,
+		domain: global.CodaDomain,
+		preferFlats: preferFlats,
+		scaleIndex: scaleIndex,
+		scaleName: global.CodaData.scales[scaleIndex].nombre,
+		tonicIndex: noteIndex(tonicName),
+		tonicName: tonicName
+	});
+}
+
+function noteIndex(noteName) {
+	for (let i = 0; i < global.CodaData.notes.length; i++) {
+		if (global.CodaData.notes[i].nombre === noteName || global.CodaData.notes[i].enarmonica === noteName) {
+			return i;
+		}
+	}
+
+	return 0;
 }
 
 function createFakeInstrumentRoot() {
