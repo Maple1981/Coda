@@ -918,9 +918,15 @@ assert.equal(melodicCounterpointMeasures[0].melodicStartType, 'anacrusic');
 assert.equal(melodicCounterpointMeasures[0].voiceNotes[3].melodic, true);
 assert.equal(melodicCounterpointMeasures[0].passingNotes[0].note, 'D');
 assert.equal(melodicCounterpointMeasures[0].passingNotes[0].delaySeconds, 1);
+assert.deepEqual(melodicCounterpointMeasures[0].melody.melodicCell, [2, -1, 2]);
+assert.deepEqual(melodicCounterpointMeasures[0].melody.answerCell, [-2, 1, -3]);
+assert.equal(melodicCounterpointMeasures[0].melody.motifRole, 'question');
 assert.ok(melodicCounterpointMeasures[0].melodyEvents.length > 2);
 assert.ok(melodicCounterpointMeasures[0].melodyEvents.some(function (event) {
 	return event.delaySeconds > 0 && event.durationSeconds < melodicCounterpointMeasures[0].durationSeconds;
+}));
+assert.ok(melodicCounterpointMeasures[0].melodyEvents.some(function (event) {
+	return String(event.kind || '').indexOf('motif-') === 0;
 }));
 const normalizedMelodicDocument = global.CodaProgressionDocument.normalize({
 	generateMelodicVoice: true,
@@ -936,6 +942,37 @@ assert.ok(normalizedMelodicSchedule[0].midiNoteEvents.some(function (event) {
 }));
 const melodicRepeatStats = consecutiveMelodyRepeatStats(melodicCounterpointMeasures);
 assert.ok(melodicRepeatStats.repeats <= Math.floor(melodicRepeatStats.total * 0.05));
+const questionAnswerMelodyMeasures = global.CodaProgressionMelodicCounterpoint.annotateMeasures([
+	melodicTestMeasure(1, [48, 52, 55, 60], ['C', 'E', 'G']),
+	melodicTestMeasure(2, [50, 53, 57, 62], ['D', 'F', 'A']),
+	melodicTestMeasure(3, [52, 55, 59, 64], ['E', 'G', 'B']),
+	melodicTestMeasure(4, [53, 57, 60, 65], ['F', 'A', 'C'])
+], { counterpoint: 70, voices: 4 }, {
+	initialMidiNote: 60,
+	rng: sequenceRng([0.1, 0.6, 0.2, 0.4, 0.7, 0.1, 0.1, 0.1]),
+	scaleNotes: [{ nombre: 'C' }, { nombre: 'D' }, { nombre: 'E' }, { nombre: 'F' }, { nombre: 'G' }, { nombre: 'A' }, { nombre: 'B' }]
+});
+assert.equal(questionAnswerMelodyMeasures[0].melody.motifRole, 'question');
+assert.equal(questionAnswerMelodyMeasures[2].melody.motifRole, 'answer');
+assert.equal(questionAnswerMelodyMeasures[3].melody.motifRole, 'close');
+assert.ok(questionAnswerMelodyMeasures[2].melodyEvents.some(function (event) {
+	return String(event.kind || '').indexOf('motif-answer') === 0;
+}));
+assert.ok(questionAnswerMelodyMeasures[3].melodyEvents.some(function (event) {
+	return event.kind === 'phrase-closure' || event.kind === 'cadential';
+}));
+const finalTonicMelodyMeasures = global.CodaProgressionMelodicCounterpoint.annotateMeasures([
+	melodicTestMeasure(1, [48, 52, 55, 60], ['C', 'E', 'G']),
+	melodicTestMeasure(2, [50, 53, 57, 62], ['D', 'F', 'A']),
+	melodicTestMeasure(3, [55, 59, 62, 67], ['G', 'B', 'D']),
+	melodicTestMeasure(4, [60, 64, 67, 72], ['C', 'E', 'G'])
+], { counterpoint: 70, voices: 4 }, {
+	initialMidiNote: 60,
+	rng: sequenceRng([0.1, 0.6, 0.2, 0.4, 0.7, 0.1, 0.1, 0.1]),
+	scaleNotes: [{ nombre: 'C' }, { nombre: 'D' }, { nombre: 'E' }, { nombre: 'F' }, { nombre: 'G' }, { nombre: 'A' }, { nombre: 'B' }]
+});
+assert.equal(lastAudibleMelodyEvent(finalTonicMelodyMeasures[3]).kind, 'cadential');
+assert.equal(lastAudibleMelodyEvent(finalTonicMelodyMeasures[3]).note, 'C');
 const acephalousMelodyMeasures = global.CodaProgressionMelodicCounterpoint.annotateMeasures([
 	{
 		bar: 1,
@@ -1951,12 +1988,51 @@ function consecutiveMelodyRepeatStats(measures) {
 	};
 }
 
+function melodicTestMeasure(bar, midiNotes, notes) {
+	return {
+		bar: bar,
+		degreeIndex: melodicTestDegreeIndex(notes[0]),
+		durationBeats: 4,
+		durationSeconds: 2,
+		midiNotes: midiNotes.slice(),
+		notes: notes.slice(),
+		voiceNotes: [
+			{ midiNote: midiNotes[0], note: notes[0], role: 'root' },
+			{ midiNote: midiNotes[1], note: notes[1], role: 'third' },
+			{ midiNote: midiNotes[2], note: notes[2], role: 'fifth' },
+			{ midiNote: midiNotes[3], note: notes[0], role: 'root' }
+		]
+	};
+}
+
+function melodicTestDegreeIndex(noteName) {
+	const indexes = {
+		C: 0,
+		D: 1,
+		E: 2,
+		F: 3,
+		G: 4,
+		A: 5,
+		B: 6
+	};
+
+	return indexes[noteName] != null ? indexes[noteName] : 0;
+}
+
 function firstAudibleMelodyDelay(measure) {
 	const firstEvent = (measure.melodyEvents || []).find(function (event) {
 		return !event.rest && event.midiNote != null;
 	});
 
 	return firstEvent ? firstEvent.delaySeconds : null;
+}
+
+function lastAudibleMelodyEvent(measure) {
+	const audibleEvents = (measure.melodyEvents || []).filter(function (event) {
+		return !event.rest && event.midiNote != null;
+	});
+
+	return audibleEvents[audibleEvents.length - 1] || null;
 }
 
 function hasAudibleMelodyOnLastPulse(measure) {

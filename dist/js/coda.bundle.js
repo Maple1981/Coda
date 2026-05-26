@@ -6006,11 +6006,13 @@
 	function planMelodicRhythm(measures, voiceIndex, progressionState, options, rng) {
 		var phrasePlan = chooseMelodicPhrasePlan(measures, progressionState, rng);
 		var repetitionState = createMelodyRepetitionState();
+		var motifState = createMotifState();
 
 		for (var i = 0; i < measures.length; i++) {
 			var events = buildMeasureMelodyEvents(measures[i], {
 				index: i,
 				isLastMeasure: i === measures.length - 1,
+				motifState: motifState,
 				nextMeasure: measures[i + 1] || null,
 				options: options || {},
 				phrasePlan: phrasePlan,
@@ -6025,8 +6027,12 @@
 				setMeasureValue(measures[i], 'melodyEvents', events);
 				setMeasureValue(measures[i], 'melodicStartType', phrasePlan.startType);
 				setMeasureValue(measures[i], 'melody', extendObject(measures[i].melody, {
+					answerCell: phrasePlan.answerCell.slice(),
 					contourShape: phrasePlan.contourShape,
+					melodicCell: phrasePlan.primaryCell.slice(),
+					motifCount: phrasePlan.motifCells.length,
 					motifId: phrasePlan.motifId,
+					motifRole: motifRoleForMeasure(i),
 					rhythmSource: 'melodic-rhythm-plan',
 					startType: phrasePlan.startType
 				}));
@@ -6038,13 +6044,103 @@
 		var startRoll = rng();
 		var contourRoll = rng();
 		var motifRoll = rng();
+		var cellRoll = rng();
+		var secondaryCellRoll = rng();
+		var primaryCell = choosePrimaryMelodicCell(cellRoll);
+		var motifCells = melodicMotifCells(primaryCell, secondaryCellRoll);
 
 		return {
 			contourShape: contourRoll < 0.28 ? 'descending-ramp' : (contourRoll < 0.56 ? 'ascending-ramp' : (contourRoll < 0.82 ? 'arch' : 'inverted-arch')),
 			motifId: motifRoll < 0.25 ? 'short-short-long' : (motifRoll < 0.5 ? 'eighth-run-cadence' : (motifRoll < 0.75 ? 'syncopated-cell' : 'sixteenth-turn')),
+			answerCell: motifCells[1].slice(),
+			motifCells: motifCells,
+			primaryCell: primaryCell,
 			startType: startRoll < 0.18 ? 'anacrusic' : (startRoll < 0.55 ? 'acephalous' : 'thetic'),
 			totalMeasures: measures ? measures.length : 0,
 			voices: progressionState ? progressionState.voices : 4
+		};
+	}
+
+	function choosePrimaryMelodicCell(roll) {
+		if (roll < 0.2) {
+			return [2, -1, 2];
+		}
+
+		if (roll < 0.4) {
+			return [2, 2, -1];
+		}
+
+		if (roll < 0.6) {
+			return [-2, 1, -2];
+		}
+
+		if (roll < 0.8) {
+			return [3, -1, 2];
+		}
+
+		return [-1, 2, 1];
+	}
+
+	function melodicMotifCells(primaryCell, roll) {
+		var answerCell = answerCellFromPrimary(primaryCell);
+		var cells = [primaryCell.slice(), answerCell];
+
+		if (roll > 0.62) {
+			cells.push(contrastCellForPrimary(primaryCell, roll));
+		}
+
+		return cells;
+	}
+
+	function answerCellFromPrimary(primaryCell) {
+		var result = [];
+
+		for (var i = 0; i < (primaryCell || []).length; i++) {
+			result.push(-primaryCell[i]);
+		}
+
+		if (result.length) {
+			result[result.length - 1] += result[result.length - 1] < 0 ? -1 : 1;
+		}
+
+		return result;
+	}
+
+	function contrastCellForPrimary(primaryCell, roll) {
+		var candidates = [
+			[1, 2, -1],
+			[-2, -1, 2],
+			[3, -2, 1],
+			[-1, 3, -2]
+		];
+		var index = Math.floor(Math.max(0, Math.min(0.999999, roll)) * candidates.length);
+		var candidate = candidates[index] || candidates[0];
+
+		if (sameCell(candidate, primaryCell)) {
+			return candidates[(index + 1) % candidates.length].slice();
+		}
+
+		return candidate.slice();
+	}
+
+	function sameCell(a, b) {
+		if (!a || !b || a.length !== b.length) {
+			return false;
+		}
+
+		for (var i = 0; i < a.length; i++) {
+			if (a[i] !== b[i]) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	function createMotifState() {
+		return {
+			previousInterval: 0,
+			previousNote: null
 		};
 	}
 
@@ -6089,9 +6185,13 @@
 				durationBeats: duration,
 				durationTotalBeats: durationBeats,
 				isLastMeasure: context.isLastMeasure,
+				measureIndex: context.index,
+				motifState: context.motifState,
 				nextNote: nextNote,
 				patternItem: patternItem,
+				phrasePlan: context.phrasePlan,
 				previousNote: previousNote,
+				progressionState: context.progressionState,
 				rng: context.rng,
 				scaleNotes: scaleNotesForMeasure(measure, context.options),
 				slotIndex: slotIndex,
@@ -6192,6 +6292,7 @@
 		var rendered = melodyEvent(measure, context.voiceIndex, planned.note, beat, durationBeats, secondsPerBeat, planned.kind, planned.rest);
 
 		registerMelodyEvent(context.repetitionState, rendered);
+		registerMotifEvent(context.motifState, rendered);
 
 		return rendered;
 	}
@@ -6227,7 +6328,7 @@
 			return cadenceRhythmPattern(result);
 		}
 
-		if (measureIndex % 2 === 1 && rng() < Math.min(0.7, 0.25 + counterpoint / 180)) {
+		if (measureIndex % 2 === 1 && rng() < Math.min(0.42, 0.14 + counterpoint / 260)) {
 			return varyRhythmPattern(result);
 		}
 
@@ -6265,6 +6366,8 @@
 	function plannedMelodyEvent(measure, args) {
 		var isFinalSlot = args.beat + args.durationBeats >= args.durationTotalBeats - 0.001;
 		var roll = args.rng();
+		var closureEvent;
+		var motifEvent;
 		var note = args.voiceNote;
 
 		if (shouldRest(args, roll)) {
@@ -6272,6 +6375,16 @@
 				kind: 'rest',
 				rest: true
 			};
+		}
+
+		closureEvent = phraseClosureMelodyEvent(measure, args, roll, isFinalSlot);
+		if (closureEvent) {
+			return closureEvent;
+		}
+
+		motifEvent = motifMelodyEvent(measure, args, roll, isFinalSlot);
+		if (motifEvent) {
+			return motifEvent;
 		}
 
 		if (args.beat < 0.001 && args.previousNote && roll < 0.16) {
@@ -6307,6 +6420,362 @@
 			kind: isFinalSlot && measure.degreeIndex === 0 ? 'cadential' : 'melody-structural',
 			note: args.voiceNote
 		};
+	}
+
+	function motifMelodyEvent(measure, args, roll, isFinalSlot) {
+		var motifNote;
+
+		if (!args.phrasePlan || !motifCellForMeasure(args.phrasePlan, args.measureIndex).length) {
+			return null;
+		}
+
+		if (args.beat < 0.001 && args.previousNote && roll < 0.12) {
+			return null;
+		}
+
+		motifNote = motifNoteForSlot(measure, args);
+		if (!motifNote) {
+			return null;
+		}
+
+		return {
+			kind: isFinalSlot && measure.degreeIndex === 0 ? 'cadential' : motifKindForMeasure(args.measureIndex),
+			note: motifNote
+		};
+	}
+
+	function motifKindForMeasure(measureIndex) {
+		var transformation = motifTransformationForMeasure(measureIndex);
+		var role = motifRoleForMeasure(measureIndex);
+
+		if (role === 'answer') {
+			return transformation === 'repeat' ? 'motif-answer' : 'motif-answer-' + transformation;
+		}
+
+		if (role === 'close') {
+			return 'motif-closure';
+		}
+
+		return transformation === 'repeat' ? 'motif-question' : 'motif-question-' + transformation;
+	}
+
+	function motifNoteForSlot(measure, args) {
+		var cell = transformedMelodicCell(motifCellForMeasure(args.phrasePlan, args.measureIndex), args.measureIndex);
+		var interval = variedMotifInterval(cell[args.slotIndex % cell.length], args.measureIndex, args.slotIndex);
+		var contourOffset = contourOffsetForSlot(args.phrasePlan, args.measureIndex, args.slotIndex);
+		var anchor = motifAnchorNote(args);
+		var targetMidi = anchor.midiNote + interval + contourOffset;
+		var strongBeat = isStrongBeat(args.beat);
+		var noteNames = strongBeat ? uniqueNoteNames(measure.notes || []) : scaleNoteNames(args.scaleNotes);
+		var candidates = motifNoteCandidates(noteNames, targetMidi, measure, args, strongBeat);
+
+		if (!candidates.length && !strongBeat) {
+			candidates = motifNoteCandidates(uniqueNoteNames(measure.notes || []), targetMidi, measure, args, true);
+		}
+
+		candidates.sort(function (a, b) {
+			return a.score - b.score;
+		});
+
+		return candidates[0] || null;
+	}
+
+	function phraseClosureMelodyEvent(measure, args, roll, isFinalSlot) {
+		var note;
+
+		if (!isFinalSlot || !isPhraseClosureMeasure(args.measureIndex, args.phrasePlan.totalMeasures)) {
+			return null;
+		}
+
+		if (!args.isLastMeasure && roll > 0.84) {
+			return null;
+		}
+
+		note = phraseClosureNote(measure, args);
+		if (!note) {
+			return null;
+		}
+
+		return {
+			kind: args.isLastMeasure && measure.degreeIndex === 0 ? 'cadential' : 'phrase-closure',
+			note: note
+		};
+	}
+
+	function phraseClosureNote(measure, args) {
+		var previous = args.motifState && args.motifState.previousNote ? args.motifState.previousNote : args.voiceNote;
+		var chordNotes = uniqueNoteNames(measure.notes || []);
+		var candidates = [];
+
+		for (var i = 0; i < chordNotes.length; i++) {
+			var noteName = chordNotes[i];
+			var midiNote = pitchService.noteNameToMidi(noteName, args.optionsInitialMidiNote || 60);
+			var interval;
+			var score;
+
+			if (midiNote == null) {
+				continue;
+			}
+
+			midiNote = pitchService.nearestMidiTo(previous.midiNote, midiNote);
+			interval = midiNote - previous.midiNote;
+			score = Math.abs(interval) * 1.1;
+			score += melodicIntervalPenalty(interval);
+			score += closureRolePenalty(measure, noteName);
+			score += finalTonicClosurePenalty(measure, args, noteName);
+			score += registerPenalty(midiNote);
+
+			candidates.push({
+				midiNote: midiNote,
+				note: noteName,
+				score: score
+			});
+		}
+
+		candidates.sort(function (a, b) {
+			return a.score - b.score;
+		});
+
+		return candidates[0] || args.voiceNote;
+	}
+
+	function closureRolePenalty(measure, noteName) {
+		var role = roleForNote(measure.voiceNotes, noteName);
+
+		if (measure && measure.degreeIndex === 0 && isRootRole(role)) {
+			return -7;
+		}
+
+		if (isThirdRole(role)) {
+			return -3;
+		}
+
+		if (isFifthRole(role)) {
+			return 1;
+		}
+
+		return 0;
+	}
+
+	function finalTonicClosurePenalty(measure, args, noteName) {
+		var degree;
+
+		if (!args || !args.isLastMeasure || !measure || measure.degreeIndex !== 0) {
+			return 0;
+		}
+
+		degree = scaleDegreeIndex(noteName, args.scaleNotes);
+		if (degree === 0) {
+			return -22;
+		}
+
+		if (degree === 2) {
+			return -10;
+		}
+
+		if (degree === 4) {
+			return -1;
+		}
+
+		return finalTonicClosureRolePenalty(measure, noteName);
+	}
+
+	function finalTonicClosureRolePenalty(measure, noteName) {
+		var role = roleForNote(measure.voiceNotes, noteName);
+
+		if (isRootRole(role)) {
+			return -18;
+		}
+
+		if (isThirdRole(role)) {
+			return -9;
+		}
+
+		if (isFifthRole(role)) {
+			return -1;
+		}
+
+		return 8;
+	}
+
+	function motifAnchorNote(args) {
+		if (args.motifState && args.motifState.previousNote) {
+			return args.motifState.previousNote;
+		}
+
+		return args.voiceNote;
+	}
+
+	function motifNoteCandidates(noteNames, targetMidi, measure, args, strongBeat) {
+		var previous = args.motifState && args.motifState.previousNote;
+		var candidates = [];
+
+		for (var i = 0; i < (noteNames || []).length; i++) {
+			var noteName = noteNames[i];
+			var midiNote = pitchService.noteNameToMidi(noteName, args.optionsInitialMidiNote || 60);
+			var interval;
+			var score;
+
+			if (midiNote == null) {
+				continue;
+			}
+
+			midiNote = pitchService.nearestMidiTo(targetMidi, midiNote);
+			interval = previous ? midiNote - previous.midiNote : midiNote - args.voiceNote.midiNote;
+			score = Math.abs(targetMidi - midiNote) * 0.8;
+			score += melodicIntervalPenalty(interval);
+			score += activeDegreeResolutionPenalty(previous ? previous.note : args.voiceNote.note, noteName, interval, args.scaleNotes);
+			score += uncompensatedLeapPenalty(interval, args.motifState ? args.motifState.previousInterval : 0);
+			score += registerPenalty(midiNote);
+
+			if (strongBeat && !isChordTone(noteName, measure.notes || [])) {
+				score += 9;
+			}
+
+			if (previous && midiNote === previous.midiNote) {
+				score += 18;
+			}
+
+			candidates.push({
+				midiNote: midiNote,
+				note: noteName,
+				score: score
+			});
+		}
+
+		return candidates;
+	}
+
+	function transformedMelodicCell(cell, measureIndex) {
+		var transformation = motifTransformationForMeasure(measureIndex);
+		var result = (cell || []).slice();
+
+		if (transformation === 'retrograde' || transformation === 'retrograde-inversion') {
+			result.reverse();
+		}
+
+		if (transformation === 'inversion' || transformation === 'retrograde-inversion') {
+			for (var i = 0; i < result.length; i++) {
+				result[i] = -result[i];
+			}
+		}
+
+		return result;
+	}
+
+	function motifCellForMeasure(phrasePlan, measureIndex) {
+		var cells = phrasePlan && phrasePlan.motifCells ? phrasePlan.motifCells : [];
+		var phraseGroup = Math.floor((Number(measureIndex) || 0) / 4);
+		var role = motifRoleForMeasure(measureIndex);
+
+		if (!cells.length && phrasePlan && phrasePlan.primaryCell) {
+			return phrasePlan.primaryCell;
+		}
+
+		if (role === 'answer' || role === 'close') {
+			return cells[1] || cells[0] || [];
+		}
+
+		if (cells.length > 2 && phraseGroup % 3 === 2) {
+			return cells[2];
+		}
+
+		return cells[0] || [];
+	}
+
+	function motifRoleForMeasure(measureIndex) {
+		var position = (Number(measureIndex) || 0) % 4;
+
+		if (position < 2) {
+			return 'question';
+		}
+
+		if (position === 2) {
+			return 'answer';
+		}
+
+		return 'close';
+	}
+
+	function isPhraseClosureMeasure(measureIndex, totalMeasures) {
+		var index = Number(measureIndex) || 0;
+		var total = Number(totalMeasures) || 0;
+
+		return (index + 1) % 4 === 0 || (total > 0 && index === total - 1);
+	}
+
+	function motifTransformationForMeasure(measureIndex) {
+		var cycle = measureIndex % 8;
+		var role = motifRoleForMeasure(measureIndex);
+
+		if (role === 'answer') {
+			return cycle === 6 ? 'variation' : 'repeat';
+		}
+
+		if (role === 'close') {
+			return cycle === 7 ? 'retrograde-inversion' : 'inversion';
+		}
+
+		if (cycle === 0 || cycle === 1 || cycle === 4) {
+			return 'repeat';
+		}
+
+		if (cycle === 2 || cycle === 6) {
+			return 'variation';
+		}
+
+		if (cycle === 3) {
+			return 'inversion';
+		}
+
+		if (cycle === 5) {
+			return 'retrograde';
+		}
+
+		return 'retrograde-inversion';
+	}
+
+	function variedMotifInterval(interval, measureIndex, slotIndex) {
+		if (motifTransformationForMeasure(measureIndex) !== 'variation') {
+			return interval;
+		}
+
+		if (slotIndex % 3 !== 1) {
+			return interval;
+		}
+
+		return interval + (interval < 0 ? -1 : 1);
+	}
+
+	function contourOffsetForSlot(phrasePlan, measureIndex, slotIndex) {
+		var total = Math.max(1, Number(phrasePlan.totalMeasures) || 1);
+		var progress = total <= 1 ? 0 : measureIndex / (total - 1);
+		var shape = phrasePlan.contourShape;
+		var local = slotIndex % 2 ? 1 : 0;
+
+		if (shape === 'ascending-ramp') {
+			return Math.round(progress * 4) + local;
+		}
+
+		if (shape === 'descending-ramp') {
+			return -Math.round(progress * 4) - local;
+		}
+
+		if (shape === 'arch') {
+			return Math.round((1 - Math.abs(progress - 0.5) * 2) * 5);
+		}
+
+		return -Math.round((1 - Math.abs(progress - 0.5) * 2) * 5);
+	}
+
+	function scaleNoteNames(scaleNotes) {
+		var result = [];
+
+		for (var i = 0; i < (scaleNotes || []).length; i++) {
+			result.push(scaleNotes[i].nombre || scaleNotes[i]);
+		}
+
+		return result;
 	}
 
 	function avoidExcessiveRepeatedNote(measure, context, event, beat, durationBeats) {
@@ -6416,6 +6885,25 @@
 
 		state.previousMidi = event.midiNote;
 		state.totalNotes += 1;
+	}
+
+	function registerMotifEvent(state, event) {
+		var note;
+
+		if (!state || !event || event.rest || event.midiNote == null) {
+			return;
+		}
+
+		note = {
+			midiNote: event.midiNote,
+			note: event.note
+		};
+
+		if (state.previousNote) {
+			state.previousInterval = note.midiNote - state.previousNote.midiNote;
+		}
+
+		state.previousNote = note;
 	}
 
 	function shouldRest(args, roll) {

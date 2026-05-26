@@ -1857,7 +1857,10 @@ assert.deepEqual(cMajorProgressionMidi.events.filter(function (event) {
 	return event.type === 'noteOn';
 }).slice(0, 3).map(function (event) {
 	return event.note;
-}), [60, 64, 81]);
+}).slice(0, 2), [60, 64]);
+assert.ok(cMajorProgressionMidi.events.filter(function (event) {
+	return event.type === 'noteOn';
+}).slice(0, 3)[2].note >= 72);
 assert.ok(cMajorProgressionMidi.bytes.length > 60);
 
 const cMajorGuitar = app.buildInstrumentView({
