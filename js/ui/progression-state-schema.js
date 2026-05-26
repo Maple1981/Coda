@@ -27,6 +27,7 @@
 		bpm: 120,
 		chromaticism: 10,
 		counterpoint: 20,
+		generateMelodicVoice: false,
 		harmonicDensity: 0,
 		humanization: 0,
 		intensity: 80,
@@ -51,6 +52,7 @@
 			bpm: clampInteger(values.bpm, 20, 200, fallback.bpm),
 			chromaticism: clampInteger(values.chromaticism, 0, 100, fallback.chromaticism),
 			counterpoint: clampInteger(values.counterpoint, 0, 100, fallback.counterpoint),
+			generateMelodicVoice: booleanOrDefault(values.generateMelodicVoice, fallback.generateMelodicVoice),
 			harmonicDensity: clampInteger(values.harmonicDensity, 0, 100, fallback.harmonicDensity),
 			humanization: clampInteger(values.humanization, 0, 100, fallback.humanization),
 			intensity: clampInteger(values.intensity, 1, 127, fallback.intensity),
@@ -73,6 +75,7 @@
 			bpm: value.bpm,
 			chromaticism: value.chromaticism,
 			counterpoint: value.counterpoint,
+			generateMelodicVoice: value.generateMelodicVoice === true,
 			harmonicDensity: value.harmonicDensity,
 			humanization: value.humanization,
 			intensity: value.intensity,
@@ -110,6 +113,18 @@
 		}
 
 		return Math.max(min, Math.min(max, numericValue));
+	}
+
+	function booleanOrDefault(value, fallback) {
+		if (value === true || value === 'true' || value === '1' || value === 1 || value === 'on') {
+			return true;
+		}
+
+		if (value === false || value === 'false' || value === '0' || value === 0 || value === '') {
+			return false;
+		}
+
+		return fallback === true;
 	}
 
 	function meterBeats(meter) {

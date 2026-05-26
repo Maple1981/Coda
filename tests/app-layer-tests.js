@@ -226,6 +226,7 @@ const cMajorProgressionPlan = app.buildProgressionFromState({
 		beatsPerBar: 3,
 		bpm: 120,
 		counterpoint: 30,
+		generateMelodicVoice: true,
 		meter: '3/4',
 		modalInterchange: 10,
 		tensions: 40,
@@ -366,6 +367,7 @@ const aprimeCloneProgression = app.generateProgressionSection({
 		beatsPerBar: 3,
 		bpm: 120,
 		counterpoint: 30,
+		generateMelodicVoice: true,
 		meter: '3/4',
 		modalInterchange: 10,
 		tensions: 40,
@@ -392,6 +394,7 @@ const bAfterAprimeProgression = app.generateProgressionSection({
 		beatsPerBar: 3,
 		bpm: 120,
 		counterpoint: 30,
+		generateMelodicVoice: true,
 		meter: '3/4',
 		modalInterchange: 10,
 		tensions: 40,
@@ -815,6 +818,28 @@ assert.deepEqual(measureWithoutMelody(cMajorProgressionPlan.measures[1]), {
 });
 assert.ok(cMajorProgressionPlan.measures[1].melodyEvents.length > 1);
 assert.equal(cMajorProgressionPlan.measures[1].melodicVoiceIndex, 2);
+const cMajorProgressionWithoutMelody = app.buildProgressionFromState({
+	domain: domain,
+	progressionState: {
+		bars: 4,
+		beatUnit: 4,
+		beatsPerBar: 3,
+		bpm: 120,
+		counterpoint: 30,
+		generateMelodicVoice: false,
+		harmonicDensity: 0,
+		meter: '3/4',
+		modalInterchange: 10,
+		tensions: 40,
+		voices: 3
+	},
+	report: cMajorReport,
+	rng: sequenceRng([0.1, 0])
+});
+assert.equal(cMajorProgressionWithoutMelody.generateMelodicVoice, false);
+assert.equal(cMajorProgressionWithoutMelody.measures.some(function (measure) {
+	return measure.melodyEvents && measure.melodyEvents.length;
+}), false);
 assert.deepEqual(cMajorProgressionPlan.harmonicColor, {
 	chromaticism: 10,
 	counterpoint: 30,

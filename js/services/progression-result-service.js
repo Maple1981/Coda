@@ -27,6 +27,7 @@
 			harmonicDensity: progressionState.harmonicDensity,
 			humanization: progressionState.humanization,
 			intensity: progressionState.intensity,
+			generateMelodicVoice: progressionState.generateMelodicVoice === true,
 			measures: options.measures || [],
 			meter: progressionState.meter,
 			secondsPerBeat: secondsPerBeat,

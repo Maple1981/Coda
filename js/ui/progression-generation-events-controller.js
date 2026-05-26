@@ -10,6 +10,10 @@
 			call(options, 'onGenerate');
 		});
 
+		on(query(root, '#progressionGenerateMelodicVoice'), 'change', function () {
+			call(options, 'onMelodicVoiceChange');
+		});
+
 		on(constructor, 'click', function (event) {
 			if (closest(event.target, '#generateProgressionSectionB')) {
 				call(options, 'onGenerateSectionB');

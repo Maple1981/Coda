@@ -30,6 +30,7 @@
 			bpm: valueOf(root, 'progressionBpm'),
 			chromaticism: valueOf(root, 'progressionChromaticism'),
 			counterpoint: valueOf(root, 'progressionCounterpoint'),
+			generateMelodicVoice: checkedValueOf(root, 'progressionGenerateMelodicVoice'),
 			harmonicDensity: valueOf(root, 'progressionHarmonicDensity'),
 			humanization: valueOf(root, 'progressionHumanization'),
 			intensity: valueOf(root, 'progressionIntensity'),
@@ -51,6 +52,12 @@
 		var element = root && typeof root.getElementById === 'function' ? root.getElementById(id) : null;
 
 		return element ? element.value : undefined;
+	}
+
+	function checkedValueOf(root, id) {
+		var element = root && typeof root.getElementById === 'function' ? root.getElementById(id) : null;
+
+		return element ? element.checked !== false : undefined;
 	}
 
 	function clone(value) {

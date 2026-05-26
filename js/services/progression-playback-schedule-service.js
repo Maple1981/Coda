@@ -10,10 +10,11 @@
 		var measures = progression && progression.measures ? progression.measures : [];
 		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
 		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
+		var playbackOptions = playbackOptionsForProgression(progression, options);
 		var schedule = [];
 
 		for (var i = startIndex; i < measures.length; i++) {
-			schedule = schedule.concat(eventBuilder.buildMeasurePlaybackEvents(measures[i], i, startOffset, options));
+			schedule = schedule.concat(eventBuilder.buildMeasurePlaybackEvents(measures[i], i, startOffset, playbackOptions));
 		}
 
 		return schedule;
@@ -64,7 +65,7 @@
 			return event;
 		}
 
-		refreshed = eventBuilder.buildMeasurePlaybackEvent(measure, event.index, event.startOffset || 0, options || {}, event.chordIndex || 0);
+		refreshed = eventBuilder.buildMeasurePlaybackEvent(measure, event.index, event.startOffset || 0, playbackOptionsForProgression(progression, options), event.chordIndex || 0);
 		refreshed.delay = Math.max(0, (refreshed.delay || 0) - (event.delay || 0));
 
 		return refreshed;
@@ -86,6 +87,23 @@
 		return measure;
 	}
 
+	function playbackOptionsForProgression(progression, options) {
+		var result = {};
+		var key;
+
+		for (key in options || {}) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		if (result.enableMelodicVoice === undefined) {
+			result.enableMelodicVoice = !!(progression && progression.generateMelodicVoice === true);
+		}
+
+		return result;
+	}
+
 	global.CodaProgressionPlaybackSchedule = {
 		articulationDurationFactor: articulationDurationFactor,
 		buildProgressionMetronomeSchedule: buildProgressionMetronomeSchedule,
@@ -93,6 +111,7 @@
 		buildScheduledMeasures: buildScheduledMeasures,
 		normalizeStartIndex: normalizeStartIndex,
 		notesForVoices: notesForVoices,
+		playbackOptionsForProgression: playbackOptionsForProgression,
 		playbackTotalSeconds: playbackTotalSeconds,
 		refreshPlaybackEvent: refreshPlaybackEvent
 	};

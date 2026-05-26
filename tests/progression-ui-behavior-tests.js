@@ -177,6 +177,7 @@ assert.deepEqual(initialState, {
 	bpm: 120,
 	chromaticism: 10,
 	counterpoint: 20,
+	generateMelodicVoice: false,
 	harmonicDensity: 0,
 	humanization: 0,
 	intensity: 80,
@@ -243,6 +244,7 @@ assert.deepEqual(savedPreferences, {
 	progressionBpm: '120',
 	progressionChromaticism: 10,
 	progressionCounterpoint: 20,
+	progressionGenerateMelodicVoice: false,
 	progressionHarmonicDensity: '0',
 	progressionHumanization: 0,
 	progressionIntensity: 80,
@@ -312,8 +314,10 @@ assert.deepEqual(measureWithoutMelody(changedProgression.measures[1]), {
 	},
 	voices: 3
 });
-assert.ok(changedProgression.measures[1].melodyEvents.length > 1);
-assert.equal(changedProgression.measures[1].melodicVoiceIndex, 2);
+assert.equal(changedProgression.generateMelodicVoice, false);
+assert.equal(changedProgression.measures.some(function (measure) {
+	return measure.melodyEvents && measure.melodyEvents.length;
+}), false);
 assert.deepEqual(changedProgression.harmonicColor, {
 	chromaticism: 10,
 	counterpoint: 20,

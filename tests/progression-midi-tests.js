@@ -40,6 +40,7 @@ const state = progressionState.normalize({
 	articulation: 'sustain',
 	bars: 4,
 	bpm: 120,
+	generateMelodicVoice: true,
 	meter: '3/4',
 	voices: 4
 });
@@ -142,6 +143,7 @@ const pluckedPedalEvents = midiExport.createProgressionMidiEvents({
 		beatUnit: 4,
 		beatsPerBar: 4,
 		bpm: 120,
+		generateMelodicVoice: true,
 		measures: [
 			{
 				articulation: 'sustain',
@@ -184,6 +186,7 @@ const sustainedPedalEvents = midiExport.createProgressionMidiEvents({
 		beatUnit: 4,
 		beatsPerBar: 4,
 		bpm: 120,
+		generateMelodicVoice: true,
 		measures: [
 			{
 				articulation: 'sustain',
@@ -221,6 +224,7 @@ const passingNoteEvents = midiExport.createProgressionMidiEvents({
 		beatUnit: 4,
 		beatsPerBar: 4,
 		bpm: 120,
+		generateMelodicVoice: true,
 		measures: [
 			{
 				articulation: 'sustain',
@@ -273,6 +277,7 @@ const structuralMelodyMidiEvents = midiExport.createProgressionMidiEvents({
 		beatUnit: 4,
 		beatsPerBar: 4,
 		bpm: 120,
+		generateMelodicVoice: true,
 		measures: [structuralMelodyMidiMeasure]
 	}
 });
@@ -284,6 +289,19 @@ assert.deepEqual(structuralMelodyNoteOns.map(function (event) { return event.vel
 assert.equal(structuralMelodyMidiEvents.filter(function (event) {
 	return event.type === 'noteOff' && event.note === 72;
 })[0].tick, 1920);
+const mutedStructuralMelodyMidiEvents = midiExport.createProgressionMidiEvents({
+	initialMidiNote: 60,
+	progression: {
+		beatUnit: 4,
+		beatsPerBar: 4,
+		bpm: 120,
+		generateMelodicVoice: false,
+		measures: [structuralMelodyMidiMeasure]
+	}
+});
+assert.deepEqual(mutedStructuralMelodyMidiEvents.filter(function (event) {
+	return event.type === 'noteOn';
+}).map(function (event) { return event.note; }), [48, 52, 55, 60]);
 
 const staccatoEvents = midiExport.createProgressionMidiEvents({
 	initialMidiNote: 60,

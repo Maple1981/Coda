@@ -441,6 +441,7 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	progressionBpm: '132',
 	progressionChromaticism: '55',
 	progressionCounterpoint: '65',
+	progressionGenerateMelodicVoice: 'false',
 	progressionHarmonicDensity: '48',
 	progressionHumanization: '12',
 	progressionIntensity: '94',
@@ -467,6 +468,7 @@ assert.deepEqual(global.CodaPreferences.sanitizeValues({
 	progressionBpm: 132,
 	progressionChromaticism: 55,
 	progressionCounterpoint: 65,
+	progressionGenerateMelodicVoice: false,
 	progressionHarmonicDensity: 48,
 	progressionHumanization: 12,
 	progressionIntensity: 94,
@@ -512,6 +514,7 @@ assert.deepEqual(global.CodaProgressionPreferences.fromPreferences({
 	progressionBpm: 132,
 	progressionChromaticism: 55,
 	progressionCounterpoint: 65,
+	progressionGenerateMelodicVoice: false,
 	progressionHarmonicDensity: 48,
 	progressionMeter: '6/8',
 	progressionModalInterchange: 40,
@@ -525,6 +528,7 @@ assert.deepEqual(global.CodaProgressionPreferences.fromPreferences({
 	bpm: 132,
 	chromaticism: 55,
 	counterpoint: 65,
+	generateMelodicVoice: false,
 	harmonicDensity: 48,
 	meter: '6/8',
 	modalInterchange: 40,
@@ -543,6 +547,7 @@ assert.deepEqual(global.CodaProgressionPreferences.normalizeControls({
 	bpm: 132,
 	chromaticism: 10,
 	counterpoint: 20,
+	generateMelodicVoice: false,
 	harmonicDensity: 0,
 	humanization: 0,
 	intensity: 80,
@@ -632,6 +637,7 @@ assert.deepEqual(global.CodaProgressionStateNormalizer.normalize({
 	bpm: 132,
 	chromaticism: 10,
 	counterpoint: 20,
+	generateMelodicVoice: false,
 	harmonicDensity: 0,
 	humanization: 0,
 	intensity: 80,
@@ -917,6 +923,7 @@ assert.ok(melodicCounterpointMeasures[0].melodyEvents.some(function (event) {
 	return event.delaySeconds > 0 && event.durationSeconds < melodicCounterpointMeasures[0].durationSeconds;
 }));
 const normalizedMelodicDocument = global.CodaProgressionDocument.normalize({
+	generateMelodicVoice: true,
 	measures: melodicCounterpointMeasures
 });
 assert.ok(normalizedMelodicDocument.measures[0].melodyEvents.length > 2);

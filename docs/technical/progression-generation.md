@@ -186,6 +186,8 @@ El bloque armónico generado evita comenzar en registros demasiado graves: los v
 
 Cada progresión generada recibe una línea melódica estructural derivada de una voz real del acorde, normalmente la voz superior. La melodía no se construye como una pista ajena a la armonía: el generador toma los factores del acorde disponible en cada compás, escoge una nota cantable para esa voz y actualiza sus alturas MIDI para que la preescucha, el render de notas y la exportación MIDI compartan el mismo resultado.
 
+El control **Generar voz melódica** permite desactivar esta capa. Cuando está apagado, la progresión conserva sólo el acompañamiento armónico: no se anotan nuevos eventos melódicos, la preescucha ignora cualquier metadato melódico residual y la exportación MIDI no añade esa voz.
+
 La selección de la nota melódica aplica las reglas de `docs/theory/34-melodia-linea-esencial.md`: favorece movimiento conjunto y terceras, penaliza saltos amplios sin compensación, evita tritonos expuestos, pide cambio de dirección después de saltos grandes y trata `7̂`, `6̂` y `4̂` como grados activos con tendencia de resolución. En el primer compás, si la armonía es tónica, se favorece un factor estable; en el cierre, si la progresión llega a tónica, la fundamental recibe prioridad para producir reposo.
 
 Cuando el control **Contrapunto** es alto, la misma capa puede añadir notas de paso entre una nota estructural y la siguiente. Estas notas no crean acordes nuevos: son eventos melódicos breves asociados a la misma voz. En reproducción sostenida, la voz melódica deja de sonar como bloque continuo y se articula como línea: nota estructural, nota de paso y llegada al siguiente compás. Las demás voces mantienen el acorde.

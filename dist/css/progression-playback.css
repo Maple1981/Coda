@@ -1,7 +1,22 @@
 .progressionGenerateBar {
   display: flex;
+  align-items: center;
+  gap: 0.8em;
   justify-content: center;
   margin: 1em 0 0.9em 0;
+}
+
+.melodicVoiceToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  color: #eee;
+  font-size: 0.88em;
+  font-weight: 600;
+}
+
+.melodicVoiceToggle input {
+  accent-color: #d85ee0;
 }
 
 .transportButton--generate {
@@ -767,7 +782,15 @@ body[data-theme="day"] .loopControl {
   font-size: 0.88em;
 }
 
+body[data-theme="day"] .melodicVoiceToggle {
+  color: #1f2528;
+}
+
 body[data-theme="day"] .loopControl input {
+  accent-color: #00764f;
+}
+
+body[data-theme="day"] .melodicVoiceToggle input {
   accent-color: #00764f;
 }
 

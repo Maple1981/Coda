@@ -242,6 +242,7 @@ assert.deepEqual(pedalSchedule[1].midiNoteEvents, [
 	{ duration: 1.9, midiNote: 65 }
 ]);
 const passingSchedule = app.buildProgressionPlaybackSchedule({
+	generateMelodicVoice: true,
 	measures: [
 		{
 			articulation: 'sustain',
@@ -264,6 +265,7 @@ assert.deepEqual(passingSchedule[0].midiNoteEvents, [
 	{ delay: 1, duration: 0.25, kind: 'passing', midiNote: 62 }
 ]);
 const structuralMelodySchedule = app.buildProgressionPlaybackSchedule({
+	generateMelodicVoice: true,
 	measures: [
 		{
 			articulation: 'sustain',
@@ -298,6 +300,30 @@ assert.deepEqual(structuralMelodySchedule[0].midiNoteEvents.map(function (event)
 	{ duration: 1.9, kind: undefined, midiNote: 55, velocity: 58 },
 	{ duration: 1.9, kind: 'melody-structural', midiNote: 72, velocity: 93 }
 ]);
+const mutedStructuralMelodySchedule = app.buildProgressionPlaybackSchedule({
+	generateMelodicVoice: false,
+	measures: [
+		{
+			articulation: 'sustain',
+			bar: 1,
+			degree: 'I',
+			durationSeconds: 2,
+			intensity: 120,
+			melodicVoiceIndex: 3,
+			midiNotes: [48, 52, 55, 60],
+			notes: ['C', 'E', 'G', 'C'],
+			startSeconds: 0,
+			voiceNotes: [
+				{ midiNote: 48, note: 'C' },
+				{ midiNote: 52, note: 'E' },
+				{ midiNote: 55, note: 'G' },
+				{ midiNote: 60, note: 'C' }
+			],
+			voices: 4
+		}
+	]
+});
+assert.deepEqual(mutedStructuralMelodySchedule[0].midiNoteEvents, undefined);
 const passingPlaybackCalls = [];
 context.window.CodaProgressionMidiEventPlayer.playMidiNoteEvents({
 	playMidiNote: function (note, options) {

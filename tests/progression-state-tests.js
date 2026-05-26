@@ -31,6 +31,7 @@ assert.deepEqual(progressionState.defaults, {
 	bpm: 120,
 	chromaticism: 10,
 	counterpoint: 20,
+	generateMelodicVoice: false,
 	harmonicDensity: 0,
 	humanization: 0,
 	intensity: 80,
@@ -49,6 +50,7 @@ assert.deepEqual(progressionState.normalize({
 	bpm: '128',
 	chromaticism: '80',
 	counterpoint: '90',
+	generateMelodicVoice: false,
 	harmonicDensity: '66',
 	humanization: '22',
 	intensity: '104',
@@ -67,6 +69,7 @@ assert.deepEqual(progressionState.normalize({
 	bpm: 128,
 	chromaticism: 80,
 	counterpoint: 90,
+	generateMelodicVoice: false,
 	harmonicDensity: 66,
 	humanization: 22,
 	intensity: 104,
@@ -85,6 +88,7 @@ assert.deepEqual(progressionState.normalize({
 	bpm: '999',
 	chromaticism: '200',
 	counterpoint: '-4',
+	generateMelodicVoice: 'maybe',
 	harmonicDensity: '240',
 	humanization: '200',
 	intensity: '999',
@@ -103,6 +107,7 @@ assert.deepEqual(progressionState.normalize({
 	bpm: 200,
 	chromaticism: 100,
 	counterpoint: 0,
+	generateMelodicVoice: false,
 	harmonicDensity: 100,
 	humanization: 100,
 	intensity: 127,
@@ -129,6 +134,7 @@ assert.deepEqual(state.get(), {
 	bpm: 80,
 	chromaticism: 10,
 	counterpoint: 20,
+	generateMelodicVoice: false,
 	harmonicDensity: 0,
 	humanization: 0,
 	intensity: 80,
@@ -163,6 +169,7 @@ const fakeDocument = {
 		progressionBpm: '140',
 		progressionChromaticism: '72',
 		progressionCounterpoint: '33',
+		progressionGenerateMelodicVoice: false,
 		progressionHarmonicDensity: '58',
 		progressionHumanization: '18',
 		progressionIntensity: '96',
@@ -175,7 +182,15 @@ const fakeDocument = {
 		progressionVoices: '5'
 	},
 	getElementById: function (id) {
-		return this.values[id] !== undefined ? { value: this.values[id] } : null;
+		if (this.values[id] === undefined) {
+			return null;
+		}
+
+		if (id === 'progressionGenerateMelodicVoice') {
+			return { checked: this.values[id], type: 'checkbox' };
+		}
+
+		return { value: this.values[id] };
 	}
 };
 
@@ -187,6 +202,7 @@ assert.deepEqual(progressionState.readFromControls(fakeDocument), {
 	bpm: 140,
 	chromaticism: 72,
 	counterpoint: 33,
+	generateMelodicVoice: false,
 	harmonicDensity: 58,
 	humanization: 18,
 	intensity: 96,

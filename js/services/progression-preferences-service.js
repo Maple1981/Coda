@@ -8,6 +8,7 @@
 		{ id: 'progressionBpm', preference: 'progressionBpm', state: 'bpm' },
 		{ id: 'progressionChromaticism', preference: 'progressionChromaticism', state: 'chromaticism' },
 		{ id: 'progressionCounterpoint', preference: 'progressionCounterpoint', state: 'counterpoint' },
+		{ id: 'progressionGenerateMelodicVoice', preference: 'progressionGenerateMelodicVoice', state: 'generateMelodicVoice' },
 		{ id: 'progressionHarmonicDensity', preference: 'progressionHarmonicDensity', state: 'harmonicDensity' },
 		{ id: 'progressionHumanization', preference: 'progressionHumanization', state: 'humanization' },
 		{ id: 'progressionIntensity', preference: 'progressionIntensity', state: 'intensity' },
@@ -85,6 +86,14 @@
 	function valueOf(root, id) {
 		var element = elementById(root, id);
 
+		if (!element && id === 'progressionGenerateMelodicVoice') {
+			return false;
+		}
+
+		if (element && element.type === 'checkbox') {
+			return element.checked !== false;
+		}
+
 		return element ? element.value : '';
 	}
 
@@ -92,6 +101,11 @@
 		var element = elementById(root, id);
 
 		if (element && value !== undefined && value !== null) {
+			if (element.type === 'checkbox') {
+				element.checked = value !== false && value !== 'false' && value !== '0';
+				return;
+			}
+
 			element.value = value;
 		}
 	}

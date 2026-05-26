@@ -168,6 +168,7 @@
 		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'aria-label', 'circle.open');
 		setText(i18n, '.transportButton--generate span[data-i18n="progression.generate"]', 'progression.generate');
+		setText(i18n, '.melodicVoiceToggle span[data-i18n="progression.generateMelodicVoice"]', 'progression.generateMelodicVoice');
 		setText(i18n, '.transportButton--goStart span[data-i18n="progression.goStart"]', 'progression.goStart');
 		setText(i18n, '.transportButton--listen span[data-i18n="progression.listen"]', 'progression.listen');
 		setText(i18n, '.transportButton--export span[data-i18n="progression.exportMidi"]', 'progression.exportMidi');

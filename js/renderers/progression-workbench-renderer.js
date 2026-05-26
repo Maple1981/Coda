@@ -27,6 +27,7 @@
 	function renderGenerateBar() {
 		return '<div class="progressionGenerateBar">' +
 			'<button id="generateProgression" type="button" class="transportButton transportButton--generate"><span class="material-icons" aria-hidden="true">auto_awesome</span><span data-i18n="progression.generate"></span></button>' +
+			'<label class="melodicVoiceToggle"><input id="progressionGenerateMelodicVoice" type="checkbox" /><span data-i18n="progression.generateMelodicVoice"></span></label>' +
 			'</div>';
 	}
 

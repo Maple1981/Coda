@@ -666,7 +666,15 @@ body[data-theme="day"] .loopControl {
   font-size: .88em;
 }
 
+body[data-theme="day"] .melodicVoiceToggle {
+  color: #1f2528;
+}
+
 body[data-theme="day"] .loopControl input {
+  accent-color: #00764f;
+}
+
+body[data-theme="day"] .melodicVoiceToggle input {
   accent-color: #00764f;
 }
 
@@ -2291,10 +2299,31 @@ section#bienvenida .columnata article {
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  gap: .8em;
   -webkit-box-pack: center;
       -ms-flex-pack: center;
           justify-content: center;
   margin: 1em 0 .9em 0;
+}
+
+.melodicVoiceToggle {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  gap: .4em;
+  color: #eee;
+  font-size: .88em;
+  font-weight: 600;
+}
+
+.melodicVoiceToggle input {
+  accent-color: #d85ee0;
 }
 
 .transportButton--generate {

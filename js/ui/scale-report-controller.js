@@ -392,6 +392,11 @@
 					generateProgressionPlan();
 					recordHistorySnapshot();
 				},
+				onMelodicVoiceChange: function () {
+					cancelProgressionStateUpdate();
+					updateProgressionStateFromControls();
+					recordHistorySnapshot();
+				},
 				onGenerateNextSection: function (sectionType, modulationType) {
 					cancelProgressionStateUpdate();
 					updateProgressionStateFromControls();
@@ -656,6 +661,7 @@
 					bpm: valueOf(query('#progressionBpm')),
 					counterpoint: valueOf(query('#progressionCounterpoint')),
 					format: valueOf(query('#interface input[type="radio"][name="formato"]:checked')),
+					generateMelodicVoice: checkedValue(query('#progressionGenerateMelodicVoice')),
 					harmonicDensity: valueOf(query('#progressionHarmonicDensity')),
 					humanization: valueOf(query('#progressionHumanization')),
 					intensity: valueOf(query('#progressionIntensity')),
@@ -723,6 +729,7 @@
 			setValue(query('#progressionBpm'), controls.bpm);
 			setValue(query('#progressionChromaticism'), controls.chromaticism);
 			setValue(query('#progressionCounterpoint'), controls.counterpoint);
+			setChecked(query('#progressionGenerateMelodicVoice'), controls.generateMelodicVoice);
 			setValue(query('#progressionHarmonicDensity'), controls.harmonicDensity);
 			setValue(query('#progressionHumanization'), controls.humanization);
 			setValue(query('#progressionIntensity'), controls.intensity);
@@ -1540,6 +1547,7 @@
 		preferences.setValue('progressionBars', valueOf(query('#progressionBars')));
 		preferences.setValue('progressionBpm', valueOf(query('#progressionBpm')));
 		preferences.setValue('progressionCounterpoint', valueOf(query('#progressionCounterpoint')));
+		preferences.setValue('progressionGenerateMelodicVoice', checkedValue(query('#progressionGenerateMelodicVoice')));
 		preferences.setValue('progressionHarmonicDensity', valueOf(query('#progressionHarmonicDensity')));
 		preferences.setValue('progressionMeter', valueOf(query('#progressionMeter')));
 		preferences.setValue('progressionModalInterchange', valueOf(query('#progressionModalInterchange')));
@@ -1564,6 +1572,7 @@
 			bpm: state.bpm,
 			chromaticism: state.chromaticism,
 			counterpoint: state.counterpoint,
+			generateMelodicVoice: state.generateMelodicVoice,
 			harmonicDensity: state.harmonicDensity,
 			humanization: state.humanization,
 			intensity: state.intensity,
@@ -1759,6 +1768,12 @@
 		}
 	}
 
+	function setChecked(element, value) {
+		if (element && value !== undefined && value !== null) {
+			element.checked = value !== false && value !== 'false' && value !== '0';
+		}
+	}
+
 	function optionExists(select, value) {
 		var options = select && select.options ? select.options : null;
 
@@ -1781,6 +1796,10 @@
 
 	function valueOf(element) {
 		return element ? element.value : '';
+	}
+
+	function checkedValue(element) {
+		return element ? element.checked !== false : true;
 	}
 
 	function resolvePlaybackInstrument(data, selectedInstrument) {

@@ -18,6 +18,9 @@
 
 		refreshed = progressionWithState(progression, state);
 		measures = normalizeMeasureDurations(adjustedMeasuresForState(progression, options), state);
+		if (state.generateMelodicVoice === false) {
+			stripMelodicMetadata(measures);
+		}
 		refreshed = measureTimelineService.rebuildTimeline(refreshed, measures, {
 			rng: options && options.rng
 		});
@@ -93,6 +96,7 @@
 		next.harmonicDensity = state.harmonicDensity;
 		next.humanization = state.humanization;
 		next.intensity = state.intensity;
+		next.generateMelodicVoice = state.generateMelodicVoice === true;
 		next.meter = state.meter;
 		next.secondsPerBeat = secondsPerBeat;
 		next.style = state.style;
@@ -130,6 +134,27 @@
 		measure.swing = state.swing;
 	}
 
+	function stripMelodicMetadata(measures) {
+		for (var i = 0; i < (measures || []).length; i++) {
+			stripMeasureMelody(measures[i]);
+			if (measures[i].chords && measures[i].chords.length) {
+				stripMelodicMetadata(measures[i].chords);
+			}
+		}
+	}
+
+	function stripMeasureMelody(measure) {
+		if (!measure) {
+			return;
+		}
+
+		delete measure.melodicVoiceIndex;
+		delete measure.melody;
+		delete measure.melodyEvents;
+		delete measure.melodicStartType;
+		delete measure.passingNotes;
+	}
+
 	function cloneJson(value) {
 		return objectService.cloneJson(value);
 	}
@@ -139,6 +164,7 @@
 		applyState: applyState,
 		extendMeasuresByRepetition: extendMeasuresByRepetition,
 		normalizeMeasureDurations: normalizeMeasureDurations,
-		progressionWithState: progressionWithState
+		progressionWithState: progressionWithState,
+		stripMelodicMetadata: stripMelodicMetadata
 	};
 })(window);

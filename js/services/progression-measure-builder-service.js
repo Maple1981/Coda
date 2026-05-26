@@ -84,6 +84,10 @@
 
 		measures = voiceLeadingService.annotateMeasures(measures, progressionState);
 
+		if (progressionState.generateMelodicVoice === false) {
+			return measures;
+		}
+
 		return melodicCounterpointService.annotateMeasures(measures, progressionState, {
 			initialMidiNote: options.initialMidiNote,
 			rng: options.rng,

@@ -77,6 +77,7 @@
 			progressionBpm: integerRange(20, 200),
 			progressionChromaticism: integerRange(0, 100),
 			progressionCounterpoint: integerRange(0, 100),
+			progressionGenerateMelodicVoice: booleanValue,
 			progressionHarmonicDensity: integerRange(0, 100),
 			progressionHumanization: integerRange(0, 100),
 			progressionIntensity: integerRange(1, 127),
@@ -165,6 +166,18 @@
 
 			return numericValue;
 		};
+	}
+
+	function booleanValue(value) {
+		if (value === true || value === 'true' || value === '1' || value === 1 || value === 'on') {
+			return true;
+		}
+
+		if (value === false || value === 'false' || value === '0' || value === 0 || value === '') {
+			return false;
+		}
+
+		return undefined;
 	}
 
 	function readCookie(name) {

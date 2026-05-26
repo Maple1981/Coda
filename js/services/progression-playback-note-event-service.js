@@ -5,9 +5,10 @@
 	function build(measure, duration, options) {
 		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
 		var events = [];
+		var melodicVoiceEnabled = !options || options.enableMelodicVoice !== false;
 		var usesPatternArticulation = isArpeggioArticulation(measure && measure.articulation) || (measure && measure.articulation === 'staccato');
-		var melodicEvents = usesPatternArticulation ? legacyPassingNoteEvents(measure) : passingNoteEvents(measure);
-		var hasMelody = hasStructuralMelody(measure, melodicEvents);
+		var melodicEvents = melodicVoiceEnabled ? (usesPatternArticulation ? legacyPassingNoteEvents(measure) : passingNoteEvents(measure)) : [];
+		var hasMelody = melodicVoiceEnabled && hasStructuralMelody(measure, melodicEvents);
 		var melodyVoiceIndex = hasMelody ? melodicEventVoiceIndex(measure, melodicEvents) : null;
 
 		if (isArpeggioArticulation(measure && measure.articulation)) {

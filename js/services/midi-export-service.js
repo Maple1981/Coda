@@ -73,6 +73,7 @@
 				channel: channel,
 				initialMidiNote: initialMidiNote,
 				articulationInstruments: options.articulationInstruments || [],
+				enableMelodicVoice: progression.generateMelodicVoice === true,
 				instrument: instrument,
 				nextMeasure: measures[i + 1] || null,
 				ticksPerBeat: ticksPerBeat,
@@ -103,9 +104,10 @@
 
 		appendProgramChange(events, playbackInstrument, options.channel, startTick);
 
-		if (shouldUseSharedNoteEvents(measure, options.instrument)) {
+		if (shouldUseSharedNoteEvents(measure, options.instrument, options)) {
 			sharedNoteEvents = noteEventService.build(measureWithMidiNotes(measure, notes, options), ticksToSeconds(durationTicks, measure, options), {
 				arpeggioStepSeconds: secondsPerBeatForMeasure(measure) / 4,
+				enableMelodicVoice: options.enableMelodicVoice !== false,
 				instrument: options.instrument
 			});
 			appendSharedNoteEvents(events, sharedNoteEvents, measure, options, startTick, velocity);
@@ -143,15 +145,19 @@
 			});
 		}
 
-		appendPassingNoteEvents(events, measure, options, startTick);
+		if (options.enableMelodicVoice !== false) {
+			appendPassingNoteEvents(events, measure, options, startTick);
+		}
 	}
 
-	function shouldUseSharedNoteEvents(measure, instrument) {
+	function shouldUseSharedNoteEvents(measure, instrument, options) {
+		var melodicVoiceEnabled = !options || options.enableMelodicVoice !== false;
+
 		return measure.articulation === 'staccato' ||
 			isArpeggioArticulation(measure.articulation) ||
-			hasStructuralMelody(measure) ||
+			(melodicVoiceEnabled && hasStructuralMelody(measure)) ||
 			(hasPedals(measure) && supportsPedalHold(instrument)) ||
-			(!isArpeggioArticulation(measure.articulation) && measure.passingNotes && measure.passingNotes.length);
+			(melodicVoiceEnabled && !isArpeggioArticulation(measure.articulation) && measure.passingNotes && measure.passingNotes.length);
 	}
 
 	function hasStructuralMelody(measure) {

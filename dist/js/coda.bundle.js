@@ -2340,6 +2340,7 @@
 			'progression.dragMeasureChord': 'Reordenar acorde añadido dentro del compás',
 			'progression.exportMidi': 'Exportar MIDI',
 			'progression.generate': 'Generar progresión aleatoria',
+			'progression.generateMelodicVoice': 'Generar voz melódica',
 			'progression.generateNextSection': 'Generar siguiente sección',
 			'progression.generateSectionB': 'Generar Sección B contrastante',
 			'progression.goStart': 'Inicio',
@@ -2628,6 +2629,7 @@
 			'progression.dragMeasureChord': 'Reorder added chord inside bar',
 			'progression.exportMidi': 'Export MIDI',
 			'progression.generate': 'Generate random progression',
+			'progression.generateMelodicVoice': 'Generate melodic voice',
 			'progression.generateNextSection': 'Generate next section',
 			'progression.generateSectionB': 'Generate contrasting Section B',
 			'progression.goStart': 'Start',
@@ -3150,6 +3152,7 @@
 			progressionBpm: integerRange(20, 200),
 			progressionChromaticism: integerRange(0, 100),
 			progressionCounterpoint: integerRange(0, 100),
+			progressionGenerateMelodicVoice: booleanValue,
 			progressionHarmonicDensity: integerRange(0, 100),
 			progressionHumanization: integerRange(0, 100),
 			progressionIntensity: integerRange(1, 127),
@@ -3240,6 +3243,18 @@
 		};
 	}
 
+	function booleanValue(value) {
+		if (value === true || value === 'true' || value === '1' || value === 1 || value === 'on') {
+			return true;
+		}
+
+		if (value === false || value === 'false' || value === '0' || value === 0 || value === '') {
+			return false;
+		}
+
+		return undefined;
+	}
+
 	function readCookie(name) {
 		if (!global.document || !global.document.cookie) {
 			return '';
@@ -3286,6 +3301,7 @@
 		{ id: 'progressionBpm', preference: 'progressionBpm', state: 'bpm' },
 		{ id: 'progressionChromaticism', preference: 'progressionChromaticism', state: 'chromaticism' },
 		{ id: 'progressionCounterpoint', preference: 'progressionCounterpoint', state: 'counterpoint' },
+		{ id: 'progressionGenerateMelodicVoice', preference: 'progressionGenerateMelodicVoice', state: 'generateMelodicVoice' },
 		{ id: 'progressionHarmonicDensity', preference: 'progressionHarmonicDensity', state: 'harmonicDensity' },
 		{ id: 'progressionHumanization', preference: 'progressionHumanization', state: 'humanization' },
 		{ id: 'progressionIntensity', preference: 'progressionIntensity', state: 'intensity' },
@@ -3363,6 +3379,14 @@
 	function valueOf(root, id) {
 		var element = elementById(root, id);
 
+		if (!element && id === 'progressionGenerateMelodicVoice') {
+			return false;
+		}
+
+		if (element && element.type === 'checkbox') {
+			return element.checked !== false;
+		}
+
 		return element ? element.value : '';
 	}
 
@@ -3370,6 +3394,11 @@
 		var element = elementById(root, id);
 
 		if (element && value !== undefined && value !== null) {
+			if (element.type === 'checkbox') {
+				element.checked = value !== false && value !== 'false' && value !== '0';
+				return;
+			}
+
 			element.value = value;
 		}
 	}
@@ -4071,6 +4100,7 @@
 			bpm: numberOrDefault(progressionState.bpm, 120),
 			chromaticism: numberOrDefault(progressionState.chromaticism, 10),
 			counterpoint: numberOrDefault(progressionState.counterpoint, 20),
+			generateMelodicVoice: progressionState.generateMelodicVoice === true,
 			harmonicDensity: numberOrDefault(progressionState.harmonicDensity, 0),
 			humanization: numberOrDefault(progressionState.humanization, 0),
 			intensity: numberOrDefault(progressionState.intensity, 80),
@@ -10266,6 +10296,9 @@
 
 		refreshed = progressionWithState(progression, state);
 		measures = normalizeMeasureDurations(adjustedMeasuresForState(progression, options), state);
+		if (state.generateMelodicVoice === false) {
+			stripMelodicMetadata(measures);
+		}
 		refreshed = measureTimelineService.rebuildTimeline(refreshed, measures, {
 			rng: options && options.rng
 		});
@@ -10341,6 +10374,7 @@
 		next.harmonicDensity = state.harmonicDensity;
 		next.humanization = state.humanization;
 		next.intensity = state.intensity;
+		next.generateMelodicVoice = state.generateMelodicVoice === true;
 		next.meter = state.meter;
 		next.secondsPerBeat = secondsPerBeat;
 		next.style = state.style;
@@ -10378,6 +10412,27 @@
 		measure.swing = state.swing;
 	}
 
+	function stripMelodicMetadata(measures) {
+		for (var i = 0; i < (measures || []).length; i++) {
+			stripMeasureMelody(measures[i]);
+			if (measures[i].chords && measures[i].chords.length) {
+				stripMelodicMetadata(measures[i].chords);
+			}
+		}
+	}
+
+	function stripMeasureMelody(measure) {
+		if (!measure) {
+			return;
+		}
+
+		delete measure.melodicVoiceIndex;
+		delete measure.melody;
+		delete measure.melodyEvents;
+		delete measure.melodicStartType;
+		delete measure.passingNotes;
+	}
+
 	function cloneJson(value) {
 		return objectService.cloneJson(value);
 	}
@@ -10387,7 +10442,8 @@
 		applyState: applyState,
 		extendMeasuresByRepetition: extendMeasuresByRepetition,
 		normalizeMeasureDurations: normalizeMeasureDurations,
-		progressionWithState: progressionWithState
+		progressionWithState: progressionWithState,
+		stripMelodicMetadata: stripMelodicMetadata
 	};
 })(window);
 
@@ -10480,6 +10536,10 @@
 
 		measures = voiceLeadingService.annotateMeasures(measures, progressionState);
 
+		if (progressionState.generateMelodicVoice === false) {
+			return measures;
+		}
+
 		return melodicCounterpointService.annotateMeasures(measures, progressionState, {
 			initialMidiNote: options.initialMidiNote,
 			rng: options.rng,
@@ -10571,6 +10631,7 @@
 			harmonicDensity: progressionState.harmonicDensity,
 			humanization: progressionState.humanization,
 			intensity: progressionState.intensity,
+			generateMelodicVoice: progressionState.generateMelodicVoice === true,
 			measures: options.measures || [],
 			meter: progressionState.meter,
 			secondsPerBeat: secondsPerBeat,
@@ -15232,9 +15293,10 @@
 	function build(measure, duration, options) {
 		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
 		var events = [];
+		var melodicVoiceEnabled = !options || options.enableMelodicVoice !== false;
 		var usesPatternArticulation = isArpeggioArticulation(measure && measure.articulation) || (measure && measure.articulation === 'staccato');
-		var melodicEvents = usesPatternArticulation ? legacyPassingNoteEvents(measure) : passingNoteEvents(measure);
-		var hasMelody = hasStructuralMelody(measure, melodicEvents);
+		var melodicEvents = melodicVoiceEnabled ? (usesPatternArticulation ? legacyPassingNoteEvents(measure) : passingNoteEvents(measure)) : [];
+		var hasMelody = melodicVoiceEnabled && hasStructuralMelody(measure, melodicEvents);
 		var melodyVoiceIndex = hasMelody ? melodicEventVoiceIndex(measure, melodicEvents) : null;
 
 		if (isArpeggioArticulation(measure && measure.articulation)) {
@@ -15772,6 +15834,7 @@
 				channel: channel,
 				initialMidiNote: initialMidiNote,
 				articulationInstruments: options.articulationInstruments || [],
+				enableMelodicVoice: progression.generateMelodicVoice === true,
 				instrument: instrument,
 				nextMeasure: measures[i + 1] || null,
 				ticksPerBeat: ticksPerBeat,
@@ -15802,9 +15865,10 @@
 
 		appendProgramChange(events, playbackInstrument, options.channel, startTick);
 
-		if (shouldUseSharedNoteEvents(measure, options.instrument)) {
+		if (shouldUseSharedNoteEvents(measure, options.instrument, options)) {
 			sharedNoteEvents = noteEventService.build(measureWithMidiNotes(measure, notes, options), ticksToSeconds(durationTicks, measure, options), {
 				arpeggioStepSeconds: secondsPerBeatForMeasure(measure) / 4,
+				enableMelodicVoice: options.enableMelodicVoice !== false,
 				instrument: options.instrument
 			});
 			appendSharedNoteEvents(events, sharedNoteEvents, measure, options, startTick, velocity);
@@ -15842,15 +15906,19 @@
 			});
 		}
 
-		appendPassingNoteEvents(events, measure, options, startTick);
+		if (options.enableMelodicVoice !== false) {
+			appendPassingNoteEvents(events, measure, options, startTick);
+		}
 	}
 
-	function shouldUseSharedNoteEvents(measure, instrument) {
+	function shouldUseSharedNoteEvents(measure, instrument, options) {
+		var melodicVoiceEnabled = !options || options.enableMelodicVoice !== false;
+
 		return measure.articulation === 'staccato' ||
 			isArpeggioArticulation(measure.articulation) ||
-			hasStructuralMelody(measure) ||
+			(melodicVoiceEnabled && hasStructuralMelody(measure)) ||
 			(hasPedals(measure) && supportsPedalHold(instrument)) ||
-			(!isArpeggioArticulation(measure.articulation) && measure.passingNotes && measure.passingNotes.length);
+			(melodicVoiceEnabled && !isArpeggioArticulation(measure.articulation) && measure.passingNotes && measure.passingNotes.length);
 	}
 
 	function hasStructuralMelody(measure) {
@@ -16811,10 +16879,11 @@
 		var measures = progression && progression.measures ? progression.measures : [];
 		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
 		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
+		var playbackOptions = playbackOptionsForProgression(progression, options);
 		var schedule = [];
 
 		for (var i = startIndex; i < measures.length; i++) {
-			schedule = schedule.concat(eventBuilder.buildMeasurePlaybackEvents(measures[i], i, startOffset, options));
+			schedule = schedule.concat(eventBuilder.buildMeasurePlaybackEvents(measures[i], i, startOffset, playbackOptions));
 		}
 
 		return schedule;
@@ -16865,7 +16934,7 @@
 			return event;
 		}
 
-		refreshed = eventBuilder.buildMeasurePlaybackEvent(measure, event.index, event.startOffset || 0, options || {}, event.chordIndex || 0);
+		refreshed = eventBuilder.buildMeasurePlaybackEvent(measure, event.index, event.startOffset || 0, playbackOptionsForProgression(progression, options), event.chordIndex || 0);
 		refreshed.delay = Math.max(0, (refreshed.delay || 0) - (event.delay || 0));
 
 		return refreshed;
@@ -16887,6 +16956,23 @@
 		return measure;
 	}
 
+	function playbackOptionsForProgression(progression, options) {
+		var result = {};
+		var key;
+
+		for (key in options || {}) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		if (result.enableMelodicVoice === undefined) {
+			result.enableMelodicVoice = !!(progression && progression.generateMelodicVoice === true);
+		}
+
+		return result;
+	}
+
 	global.CodaProgressionPlaybackSchedule = {
 		articulationDurationFactor: articulationDurationFactor,
 		buildProgressionMetronomeSchedule: buildProgressionMetronomeSchedule,
@@ -16894,6 +16980,7 @@
 		buildScheduledMeasures: buildScheduledMeasures,
 		normalizeStartIndex: normalizeStartIndex,
 		notesForVoices: notesForVoices,
+		playbackOptionsForProgression: playbackOptionsForProgression,
 		playbackTotalSeconds: playbackTotalSeconds,
 		refreshPlaybackEvent: refreshPlaybackEvent
 	};
@@ -22907,6 +22994,7 @@
 	function renderGenerateBar() {
 		return '<div class="progressionGenerateBar">' +
 			'<button id="generateProgression" type="button" class="transportButton transportButton--generate"><span class="material-icons" aria-hidden="true">auto_awesome</span><span data-i18n="progression.generate"></span></button>' +
+			'<label class="melodicVoiceToggle"><input id="progressionGenerateMelodicVoice" type="checkbox" /><span data-i18n="progression.generateMelodicVoice"></span></label>' +
 			'</div>';
 	}
 
@@ -23211,6 +23299,7 @@
 		bpm: 120,
 		chromaticism: 10,
 		counterpoint: 20,
+		generateMelodicVoice: false,
 		harmonicDensity: 0,
 		humanization: 0,
 		intensity: 80,
@@ -23235,6 +23324,7 @@
 			bpm: clampInteger(values.bpm, 20, 200, fallback.bpm),
 			chromaticism: clampInteger(values.chromaticism, 0, 100, fallback.chromaticism),
 			counterpoint: clampInteger(values.counterpoint, 0, 100, fallback.counterpoint),
+			generateMelodicVoice: booleanOrDefault(values.generateMelodicVoice, fallback.generateMelodicVoice),
 			harmonicDensity: clampInteger(values.harmonicDensity, 0, 100, fallback.harmonicDensity),
 			humanization: clampInteger(values.humanization, 0, 100, fallback.humanization),
 			intensity: clampInteger(values.intensity, 1, 127, fallback.intensity),
@@ -23257,6 +23347,7 @@
 			bpm: value.bpm,
 			chromaticism: value.chromaticism,
 			counterpoint: value.counterpoint,
+			generateMelodicVoice: value.generateMelodicVoice === true,
 			harmonicDensity: value.harmonicDensity,
 			humanization: value.humanization,
 			intensity: value.intensity,
@@ -23294,6 +23385,18 @@
 		}
 
 		return Math.max(min, Math.min(max, numericValue));
+	}
+
+	function booleanOrDefault(value, fallback) {
+		if (value === true || value === 'true' || value === '1' || value === 1 || value === 'on') {
+			return true;
+		}
+
+		if (value === false || value === 'false' || value === '0' || value === 0 || value === '') {
+			return false;
+		}
+
+		return fallback === true;
 	}
 
 	function meterBeats(meter) {
@@ -23351,6 +23454,7 @@
 			bpm: valueOf(root, 'progressionBpm'),
 			chromaticism: valueOf(root, 'progressionChromaticism'),
 			counterpoint: valueOf(root, 'progressionCounterpoint'),
+			generateMelodicVoice: checkedValueOf(root, 'progressionGenerateMelodicVoice'),
 			harmonicDensity: valueOf(root, 'progressionHarmonicDensity'),
 			humanization: valueOf(root, 'progressionHumanization'),
 			intensity: valueOf(root, 'progressionIntensity'),
@@ -23372,6 +23476,12 @@
 		var element = root && typeof root.getElementById === 'function' ? root.getElementById(id) : null;
 
 		return element ? element.value : undefined;
+	}
+
+	function checkedValueOf(root, id) {
+		var element = root && typeof root.getElementById === 'function' ? root.getElementById(id) : null;
+
+		return element ? element.checked !== false : undefined;
 	}
 
 	function clone(value) {
@@ -23564,6 +23674,7 @@
 		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'title', 'circle.open');
 		setAttribute(i18n, '#toggleCircleOfFifthsFromForm', 'aria-label', 'circle.open');
 		setText(i18n, '.transportButton--generate span[data-i18n="progression.generate"]', 'progression.generate');
+		setText(i18n, '.melodicVoiceToggle span[data-i18n="progression.generateMelodicVoice"]', 'progression.generateMelodicVoice');
 		setText(i18n, '.transportButton--goStart span[data-i18n="progression.goStart"]', 'progression.goStart');
 		setText(i18n, '.transportButton--listen span[data-i18n="progression.listen"]', 'progression.listen');
 		setText(i18n, '.transportButton--export span[data-i18n="progression.exportMidi"]', 'progression.exportMidi');
@@ -25075,6 +25186,10 @@
 
 		on(query(root, '#generateProgression'), 'click', function () {
 			call(options, 'onGenerate');
+		});
+
+		on(query(root, '#progressionGenerateMelodicVoice'), 'change', function () {
+			call(options, 'onMelodicVoiceChange');
 		});
 
 		on(constructor, 'click', function (event) {
@@ -26638,6 +26753,11 @@
 					generateProgressionPlan();
 					recordHistorySnapshot();
 				},
+				onMelodicVoiceChange: function () {
+					cancelProgressionStateUpdate();
+					updateProgressionStateFromControls();
+					recordHistorySnapshot();
+				},
 				onGenerateNextSection: function (sectionType, modulationType) {
 					cancelProgressionStateUpdate();
 					updateProgressionStateFromControls();
@@ -26902,6 +27022,7 @@
 					bpm: valueOf(query('#progressionBpm')),
 					counterpoint: valueOf(query('#progressionCounterpoint')),
 					format: valueOf(query('#interface input[type="radio"][name="formato"]:checked')),
+					generateMelodicVoice: checkedValue(query('#progressionGenerateMelodicVoice')),
 					harmonicDensity: valueOf(query('#progressionHarmonicDensity')),
 					humanization: valueOf(query('#progressionHumanization')),
 					intensity: valueOf(query('#progressionIntensity')),
@@ -26969,6 +27090,7 @@
 			setValue(query('#progressionBpm'), controls.bpm);
 			setValue(query('#progressionChromaticism'), controls.chromaticism);
 			setValue(query('#progressionCounterpoint'), controls.counterpoint);
+			setChecked(query('#progressionGenerateMelodicVoice'), controls.generateMelodicVoice);
 			setValue(query('#progressionHarmonicDensity'), controls.harmonicDensity);
 			setValue(query('#progressionHumanization'), controls.humanization);
 			setValue(query('#progressionIntensity'), controls.intensity);
@@ -27786,6 +27908,7 @@
 		preferences.setValue('progressionBars', valueOf(query('#progressionBars')));
 		preferences.setValue('progressionBpm', valueOf(query('#progressionBpm')));
 		preferences.setValue('progressionCounterpoint', valueOf(query('#progressionCounterpoint')));
+		preferences.setValue('progressionGenerateMelodicVoice', checkedValue(query('#progressionGenerateMelodicVoice')));
 		preferences.setValue('progressionHarmonicDensity', valueOf(query('#progressionHarmonicDensity')));
 		preferences.setValue('progressionMeter', valueOf(query('#progressionMeter')));
 		preferences.setValue('progressionModalInterchange', valueOf(query('#progressionModalInterchange')));
@@ -27810,6 +27933,7 @@
 			bpm: state.bpm,
 			chromaticism: state.chromaticism,
 			counterpoint: state.counterpoint,
+			generateMelodicVoice: state.generateMelodicVoice,
 			harmonicDensity: state.harmonicDensity,
 			humanization: state.humanization,
 			intensity: state.intensity,
@@ -28005,6 +28129,12 @@
 		}
 	}
 
+	function setChecked(element, value) {
+		if (element && value !== undefined && value !== null) {
+			element.checked = value !== false && value !== 'false' && value !== '0';
+		}
+	}
+
 	function optionExists(select, value) {
 		var options = select && select.options ? select.options : null;
 
@@ -28027,6 +28157,10 @@
 
 	function valueOf(element) {
 		return element ? element.value : '';
+	}
+
+	function checkedValue(element) {
+		return element ? element.checked !== false : true;
 	}
 
 	function resolvePlaybackInstrument(data, selectedInstrument) {
