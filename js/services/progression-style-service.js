@@ -10,6 +10,7 @@
 	var profiles = {
 		renaissance: {
 			avoidsStrongDominantResolution: true,
+			diminishedHarmonyScale: 0.22,
 			harmonicDensityBias: -0.04,
 			minimizesDiminishedHarmony: true,
 			patternAffinities: {
@@ -28,6 +29,7 @@
 		},
 		baroque: {
 			avoidsStrongDominantResolution: false,
+			diminishedHarmonyScale: 1,
 			harmonicDensityBias: 0.08,
 			minimizesDiminishedHarmony: false,
 			patternAffinities: {
@@ -81,6 +83,7 @@
 		},
 		classic: {
 			avoidsStrongDominantResolution: false,
+			diminishedHarmonyScale: 1,
 			harmonicDensityBias: 0.02,
 			minimizesDiminishedHarmony: false,
 			patternAffinities: {
@@ -115,6 +118,7 @@
 		},
 		romantic: {
 			avoidsStrongDominantResolution: false,
+			diminishedHarmonyScale: 1,
 			harmonicDensityBias: 0.08,
 			minimizesDiminishedHarmony: false,
 			patternAffinities: {
@@ -142,6 +146,7 @@
 		},
 		impressionist: {
 			avoidsStrongDominantResolution: true,
+			diminishedHarmonyScale: 0.18,
 			harmonicDensityBias: 0.03,
 			minimizesDiminishedHarmony: true,
 			patternAffinities: {
@@ -160,6 +165,7 @@
 		},
 		contemporary: {
 			avoidsStrongDominantResolution: true,
+			diminishedHarmonyScale: 0.1,
 			harmonicDensityBias: 0,
 			minimizesDiminishedHarmony: true,
 			patternAffinities: {
@@ -230,6 +236,16 @@
 		return profile(progressionState).minimizesDiminishedHarmony === true;
 	}
 
+	function diminishedHarmonyScale(progressionState) {
+		var scale = Number(profile(progressionState).diminishedHarmonyScale);
+
+		if (isFinite(scale) && scale >= 0) {
+			return scale;
+		}
+
+		return minimizesDiminishedHarmony(progressionState) ? 0.32 : 1;
+	}
+
 	function patternAffinity(progressionState, pattern) {
 		var affinities = profile(progressionState).patternAffinities || {};
 		var form = pattern && pattern.form;
@@ -265,6 +281,7 @@
 		isClassic: isClassic,
 		isAtLeast: isAtLeast,
 		isModern: isModern,
+		diminishedHarmonyScale: diminishedHarmonyScale,
 		minimizesDiminishedHarmony: minimizesDiminishedHarmony,
 		normalize: normalize,
 		patternAffinity: patternAffinity,

@@ -241,6 +241,43 @@ assert.deepEqual(pedalSchedule[1].midiNoteEvents, [
 	{ duration: 1.9, midiNote: 60 },
 	{ duration: 1.9, midiNote: 65 }
 ]);
+const partialPedalSchedule = app.buildProgressionPlaybackSchedule({
+	measures: [
+		{
+			articulation: 'sustain',
+			bar: 1,
+			degree: 'I',
+			durationSeconds: 2,
+			midiNotes: [48, 52, 55],
+			notes: ['C', 'E', 'G'],
+			pedalsOut: [{ durationSeconds: 2, midiNote: 55, note: 'G', toBar: 2 }],
+			startSeconds: 0,
+			voices: 3
+		},
+		{
+			articulation: 'sustain',
+			bar: 2,
+			degree: 'IV',
+			durationSeconds: 2,
+			midiNotes: [55, 60, 65],
+			notes: ['G', 'C', 'F'],
+			pedalsIn: [{ durationSeconds: 2, midiNote: 55, note: 'G', fromBar: 1 }],
+			startSeconds: 2,
+			voices: 3
+		}
+	]
+}, {
+	instrument: {
+		pedalBehavior: 'sustain',
+		supportsPedalHold: true
+	},
+	startIndex: 1
+});
+assert.deepEqual(partialPedalSchedule[0].midiNoteEvents, [
+	{ duration: 1.9, midiNote: 55 },
+	{ duration: 1.9, midiNote: 60 },
+	{ duration: 1.9, midiNote: 65 }
+]);
 const passingSchedule = app.buildProgressionPlaybackSchedule({
 	generateMelodicVoice: true,
 	measures: [

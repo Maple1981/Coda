@@ -52,6 +52,7 @@
 			previousPlan: context.previousPlan,
 			registerCenterMidi: registerCenterMidi(context.options),
 			commonToneStickiness: sustainedInstrumentCommonToneStickiness(context.progressionState),
+			playableRange: playableMidiRange(context.progressionState),
 			voicing: context.progressionState.voicing,
 			voices: context.progressionState.voices
 		});
@@ -148,6 +149,19 @@
 		return sustainedInstruments[instrument] && isSustainArticulation(progressionState) ? 42 : 0;
 	}
 
+	function playableMidiRange(progressionState) {
+		var instrument = progressionState && progressionState.midiInstrument;
+		var ranges = {
+			acoustic_grand_piano: { min: 21, max: 109 },
+			acoustic_guitar_nylon: { min: 21, max: 108 },
+			drawbar_organ: { min: 21, max: 108 },
+			pad_2_warm: { min: 21, max: 108 },
+			string_ensemble_1: { min: 21, max: 108 }
+		};
+
+		return ranges[instrument] || { min: 21, max: 108 };
+	}
+
 	function isSustainArticulation(progressionState) {
 		var articulation = progressionState && progressionState.articulation;
 
@@ -159,6 +173,7 @@
 		chordNotes: chordNotes,
 		openingTonicInversionPolicy: openingTonicInversionPolicy,
 		nextTriadNotes: nextTriadNotes,
+		playableMidiRange: playableMidiRange,
 		registerCenterMidi: registerCenterMidi,
 		sustainedInstrumentCommonToneStickiness: sustainedInstrumentCommonToneStickiness,
 		suspendedNotes: suspendedNotes,

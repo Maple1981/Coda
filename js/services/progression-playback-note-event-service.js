@@ -28,7 +28,7 @@
 				continue;
 			}
 
-			if (isPedalIn(midiNotes[i], measure)) {
+			if (!forcePedalAttack(options) && isPedalIn(midiNotes[i], measure)) {
 				continue;
 			}
 
@@ -393,6 +393,10 @@
 		return instrument && (instrument.supportsPedalHold === true || instrument.sustained === true || instrument.pedalBehavior === 'sustain');
 	}
 
+	function forcePedalAttack(options) {
+		return !!(options && options.forcePedalAttack === true);
+	}
+
 	function arpeggioStepSeconds(measure, duration, options) {
 		var configuredStep = Number(options && options.arpeggioStepSeconds);
 
@@ -464,6 +468,7 @@
 		isArpeggioArticulation: isArpeggioArticulation,
 		passingNoteEvents: passingNoteEvents,
 		pulseCountForMeasure: pulseCountForMeasure,
+		forcePedalAttack: forcePedalAttack,
 		supportsPedalHold: supportsPedalHold
 	};
 })(window);

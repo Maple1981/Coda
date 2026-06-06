@@ -3,6 +3,8 @@
 	'use strict';
 
 	var formattingService = global.CodaProgressionFormatting;
+	var chordQualityService = global.CodaProgressionChordQuality;
+	var styleService = global.CodaProgressionStyle;
 	var tonalFunctionService = global.CodaProgressionTonalFunction;
 	var voicingService = global.CodaProgressionVoicing;
 
@@ -35,6 +37,7 @@
 			result -= 16;
 		}
 
+		result -= diminishedCandidatePenalty(options);
 		result -= voicingService.voiceLeadingTransitionScore(options.currentMeasure, options.chordPlan) * 0.45;
 
 		if (options.nextPlan) {
@@ -54,7 +57,28 @@
 		return measure && (measure.chord === chord || measure.chordName === chord.nombre || measure.chordName === formattingService.triadName(chord));
 	}
 
+	function diminishedCandidatePenalty(options) {
+		var chord = options && options.resolvedDegree && options.resolvedDegree.chord;
+		var scale = styleService && typeof styleService.diminishedHarmonyScale === 'function' ?
+			styleService.diminishedHarmonyScale(options && options.progressionState) :
+			0.32;
+
+		if (
+			!styleService ||
+			typeof styleService.minimizesDiminishedHarmony !== 'function' ||
+			!styleService.minimizesDiminishedHarmony(options && options.progressionState) ||
+			!chordQualityService ||
+			typeof chordQualityService.isDiminishedSeventhQuality !== 'function' ||
+			!chordQualityService.isDiminishedSeventhQuality(chord && chord.nombre)
+		) {
+			return 0;
+		}
+
+		return 42 * (1 - Math.max(0, Math.min(1, scale)));
+	}
+
 	global.CodaProgressionAdditionalChordScore = {
+		diminishedCandidatePenalty: diminishedCandidatePenalty,
 		sameChordFamily: sameChordFamily,
 		score: score
 	};

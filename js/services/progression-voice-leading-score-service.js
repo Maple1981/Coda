@@ -15,6 +15,7 @@
 		score += exteriorParallelPerfects * 28;
 		score += registerCenterPenalty(nextPlan, options && options.registerCenterMidi);
 		score += lowRegisterBassPenalty(nextPlan);
+		score += playableRangePenalty(nextPlan, options && options.playableRange);
 		score -= commonToneStickinessBonus(previousPlan, nextPlan, options && options.commonToneStickiness);
 
 		return score;
@@ -40,7 +41,11 @@
 	}
 
 	function firstVoicingScore(voicing, options) {
-		return voicing.inversionIndex * 2 + voiceSpan(voicing.midiNotes) / 12 + registerCenterPenalty(voicing, options && options.registerCenterMidi) + lowRegisterBassPenalty(voicing);
+		return voicing.inversionIndex * 2 +
+			voiceSpan(voicing.midiNotes) / 12 +
+			registerCenterPenalty(voicing, options && options.registerCenterMidi) +
+			lowRegisterBassPenalty(voicing) +
+			playableRangePenalty(voicing, options && options.playableRange);
 	}
 
 	function transitionScore(previousMidiNotes, nextMidiNotes) {
@@ -180,11 +185,42 @@
 		return excess * excess * 4;
 	}
 
+	function playableRangePenalty(voicing, range) {
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes : [];
+		var min = range && range.min != null ? Number(range.min) : NaN;
+		var max = range && range.max != null ? Number(range.max) : NaN;
+		var penalty = 0;
+
+		if (!isFinite(min) && !isFinite(max)) {
+			return 0;
+		}
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			var midiNote = Number(midiNotes[i]);
+			var excess = 0;
+
+			if (!isFinite(midiNote)) {
+				continue;
+			}
+
+			if (isFinite(min) && midiNote < min) {
+				excess = min - midiNote;
+			} else if (isFinite(max) && midiNote > max) {
+				excess = midiNote - max;
+			}
+
+			penalty += excess * excess * 10000;
+		}
+
+		return penalty;
+	}
+
 	global.CodaProgressionVoiceLeadingScore = {
 		commonToneStickinessBonus: commonToneStickinessBonus,
 		countParallelPerfects: countParallelPerfects,
 		firstVoicingScore: firstVoicingScore,
 		lowRegisterBassPenalty: lowRegisterBassPenalty,
+		playableRangePenalty: playableRangePenalty,
 		registerCenterPenalty: registerCenterPenalty,
 		voiceLeadingTransitionScore: voiceLeadingTransitionScore
 	};

@@ -20,6 +20,8 @@ const domain = context.window.CodaDomain;
 const instrumentDomain = context.window.CodaInstrumentDomain;
 const styleService = context.window.CodaProgressionStyle;
 const chromaticCadenceService = context.window.CodaProgressionChromaticCadence;
+const additionalChordScoreService = context.window.CodaProgressionAdditionalChordScore;
+const plannerService = context.window.CodaProgressionPlanner;
 
 assert.equal(styleService.normalize('modern'), 'contemporary');
 assert.equal(styleService.normalize({ style: 'baroque' }), 'baroque');
@@ -30,6 +32,8 @@ assert.equal(styleService.prefersPartimentoBass({ style: 'baroque' }), true);
 assert.equal(styleService.prefersFourPartHarmony({ style: 'baroque' }), true);
 assert.equal(styleService.prefersFourPartHarmony({ style: 'contemporary' }), false);
 assert.equal(styleService.minimizesDiminishedHarmony({ style: 'contemporary' }), true);
+assert.ok(styleService.diminishedHarmonyScale({ style: 'contemporary' }) < styleService.diminishedHarmonyScale({ style: 'classic' }));
+assert.ok(styleService.diminishedHarmonyScale({ style: 'contemporary' }) < 0.15);
 assert.ok(styleService.seventhProbabilityScale({ style: 'baroque' }) > styleService.seventhProbabilityScale({ style: 'contemporary' }));
 assert.ok(styleService.patternAffinity({ style: 'baroque' }, { form: 'partimento-double-cadence' }) > 1);
 assert.ok(styleService.patternAffinity({ style: 'baroque' }, { form: 'partimento-phrygian-half' }) > 1);
@@ -93,6 +97,7 @@ assert.deepEqual(cMajorReport.scaleChords.map(function (chord) { return chord.no
 assert.deepEqual(cMajorReport.parallelScaleChords.map(function (chord) { return chord.nombre; }), ['Cm7', 'Dm7♭5', 'Ebmaj7', 'Fm7', 'Gm7', 'Abmaj7', 'Bb7']);
 assert.ok(cMajorReport.modalInterchangeSources.some(function (source) { return source.scaleIndex === 3 && source.scaleChords[4].nombre === 'G7'; }));
 assert.ok(cMajorReport.modalInterchangeSources.some(function (source) { return source.scaleIndex === 15 && source.scaleChords[3].nombre === 'Fm7'; }));
+assert.equal(plannerService.chooseInterchangeSource(cMajorReport, 1, sequenceRng([0.5, 0]), { style: 'contemporary' }).scaleChords[1].nombre.indexOf('7♭5'), -1);
 assert.equal(cMajorReport.extendedHarmonyEnabled, true);
 assert.equal(cMajorReport.mode, 'M');
 assert.equal(cMajorReport.circleOfFifths.selectedKey, 'C');
@@ -265,8 +270,16 @@ assert.equal(patternWeightService.adjustedPatternWeight(baroquePartimentoPattern
 	style: 'contemporary',
 	tensions: 50
 }, 'major'), 0);
-assert.ok(patternWeightService.sensitiveDegreeFactor([0, 6, 4, 0], 'major', { style: 'contemporary' }) < 1);
+assert.ok(patternWeightService.sensitiveDegreeFactor([0, 6, 4, 0], 'major', { style: 'contemporary' }) <= 0.1);
 assert.equal(patternWeightService.sensitiveDegreeFactor([0, 6, 4, 0], 'major', { style: 'baroque' }), 1);
+assert.ok(additionalChordScoreService.diminishedCandidatePenalty({
+	progressionState: { style: 'contemporary' },
+	resolvedDegree: { chord: { nombre: 'Bm7♭5' } }
+}) > 30);
+assert.equal(additionalChordScoreService.diminishedCandidatePenalty({
+	progressionState: { style: 'baroque' },
+	resolvedDegree: { chord: { nombre: 'Bm7♭5' } }
+}), 0);
 assert.ok(patternWeightService.figuredBassShapeScore([
 	0,
 	{ forceInversionIndex: 1, index: 1 },

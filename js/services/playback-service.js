@@ -410,6 +410,7 @@
 				family: instrument.family || '',
 				id: instrument.id || activeInstrument,
 				pedalBehavior: instrument.pedalBehavior || (instrument.sustained ? 'sustain' : 'reattack'),
+				playableRange: instrument.playableRange || null,
 				soundEnvelope: instrument.soundEnvelope || (instrument.sustained ? 'sustained' : 'percussive'),
 				supportsPedalHold: instrument.supportsPedalHold === true || instrument.sustained === true,
 				sustained: instrument.sustained === true

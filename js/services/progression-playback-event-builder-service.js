@@ -21,7 +21,7 @@
 		var duration = timingService.playbackDuration(measure);
 		var notes = timingService.notesForVoices(measure.notes, measure.voices);
 		var midiNotes = timingService.notesForVoices(measure.midiNotes, measure.voices);
-		var midiNoteEvents = noteEventService.build(measure, duration, options);
+		var midiNoteEvents = noteEventService.build(measure, duration, noteEventOptions(options, chordIndex));
 		var mode = timingService.isArpeggioArticulation(measure.articulation) ? 'arpeggio' : 'chord';
 		var delay = Math.max(0, (measure.startSeconds || 0) - (startOffset || 0));
 		var event = {
@@ -66,6 +66,24 @@
 		if (instrumentId) {
 			event.playbackInstrumentId = instrumentId;
 		}
+	}
+
+	function noteEventOptions(options, chordIndex) {
+		if (!options || !options.forcePedalAttackOnFirstEvent || chordIndex) {
+			return options;
+		}
+
+		var result = {};
+
+		for (var key in options) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		result.forcePedalAttack = true;
+
+		return result;
 	}
 
 	function setHiddenStartOffset(event, startOffset) {
@@ -141,6 +159,7 @@
 		buildMeasurePlaybackEvent: buildMeasurePlaybackEvent,
 		buildMeasurePlaybackEvents: buildMeasurePlaybackEvents,
 		expressiveDelay: expressiveDelay,
-		expressiveVelocity: expressiveVelocity
+		expressiveVelocity: expressiveVelocity,
+		noteEventOptions: noteEventOptions
 	};
 })(window);

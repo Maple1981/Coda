@@ -75,6 +75,7 @@
 	function scoreOptions(options) {
 		return {
 			commonToneStickiness: numberOrDefault(options && options.commonToneStickiness, 0),
+			playableRange: playableRange(options && options.playableRange),
 			registerCenterMidi: registerCenterMidi(options)
 		};
 	}
@@ -94,6 +95,20 @@
 		var number = Number(value);
 
 		return isFinite(number) ? number : fallback;
+	}
+
+	function playableRange(range) {
+		var min = Number(range && range.min);
+		var max = Number(range && range.max);
+
+		if (!isFinite(min) && !isFinite(max)) {
+			return null;
+		}
+
+		return {
+			min: isFinite(min) ? min : null,
+			max: isFinite(max) ? max : null
+		};
 	}
 
 	function inversionRunKey(plan) {

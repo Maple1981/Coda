@@ -41,6 +41,7 @@
 			nombre: 'Piano acústico',
 			family: 'piano',
 			pedalBehavior: 'reattack',
+			playableRange: { min: 21, max: 109 },
 			program: 0,
 			soundEnvelope: 'percussive',
 			supportsPedalHold: false,
@@ -53,6 +54,7 @@
 			nombre: 'Guitarra clásica',
 			family: 'guitar',
 			pedalBehavior: 'reattack',
+			playableRange: { min: 21, max: 108 },
 			program: 24,
 			soundEnvelope: 'plucked',
 			supportsPedalHold: false,
@@ -69,6 +71,7 @@
 			},
 			family: 'organ',
 			pedalBehavior: 'sustain',
+			playableRange: { min: 21, max: 108 },
 			program: 16,
 			soundEnvelope: 'sustained',
 			supportsPedalHold: true,
@@ -85,6 +88,7 @@
 			},
 			family: 'strings',
 			pedalBehavior: 'sustain',
+			playableRange: { min: 21, max: 108 },
 			program: 48,
 			soundEnvelope: 'sustained',
 			supportsPedalHold: true,
@@ -97,6 +101,7 @@
 			nombre: 'Pad cálido',
 			family: 'synth-pad',
 			pedalBehavior: 'sustain',
+			playableRange: { min: 21, max: 108 },
 			program: 89,
 			soundEnvelope: 'sustained',
 			supportsPedalHold: true,
@@ -112,6 +117,7 @@
 			nombre: 'Órgano percutivo',
 			family: 'organ',
 			pedalBehavior: 'reattack',
+			playableRange: { min: 21, max: 108 },
 			program: 17,
 			soundEnvelope: 'percussive',
 			supportsPedalHold: false,
@@ -124,6 +130,7 @@
 			nombre: 'Cuerdas pizzicato',
 			family: 'strings',
 			pedalBehavior: 'reattack',
+			playableRange: { min: 21, max: 108 },
 			program: 45,
 			soundEnvelope: 'plucked',
 			supportsPedalHold: false,
@@ -3822,6 +3829,7 @@
 	var profiles = {
 		renaissance: {
 			avoidsStrongDominantResolution: true,
+			diminishedHarmonyScale: 0.22,
 			harmonicDensityBias: -0.04,
 			minimizesDiminishedHarmony: true,
 			patternAffinities: {
@@ -3840,6 +3848,7 @@
 		},
 		baroque: {
 			avoidsStrongDominantResolution: false,
+			diminishedHarmonyScale: 1,
 			harmonicDensityBias: 0.08,
 			minimizesDiminishedHarmony: false,
 			patternAffinities: {
@@ -3893,6 +3902,7 @@
 		},
 		classic: {
 			avoidsStrongDominantResolution: false,
+			diminishedHarmonyScale: 1,
 			harmonicDensityBias: 0.02,
 			minimizesDiminishedHarmony: false,
 			patternAffinities: {
@@ -3927,6 +3937,7 @@
 		},
 		romantic: {
 			avoidsStrongDominantResolution: false,
+			diminishedHarmonyScale: 1,
 			harmonicDensityBias: 0.08,
 			minimizesDiminishedHarmony: false,
 			patternAffinities: {
@@ -3954,6 +3965,7 @@
 		},
 		impressionist: {
 			avoidsStrongDominantResolution: true,
+			diminishedHarmonyScale: 0.18,
 			harmonicDensityBias: 0.03,
 			minimizesDiminishedHarmony: true,
 			patternAffinities: {
@@ -3972,6 +3984,7 @@
 		},
 		contemporary: {
 			avoidsStrongDominantResolution: true,
+			diminishedHarmonyScale: 0.1,
 			harmonicDensityBias: 0,
 			minimizesDiminishedHarmony: true,
 			patternAffinities: {
@@ -4042,6 +4055,16 @@
 		return profile(progressionState).minimizesDiminishedHarmony === true;
 	}
 
+	function diminishedHarmonyScale(progressionState) {
+		var scale = Number(profile(progressionState).diminishedHarmonyScale);
+
+		if (isFinite(scale) && scale >= 0) {
+			return scale;
+		}
+
+		return minimizesDiminishedHarmony(progressionState) ? 0.32 : 1;
+	}
+
 	function patternAffinity(progressionState, pattern) {
 		var affinities = profile(progressionState).patternAffinities || {};
 		var form = pattern && pattern.form;
@@ -4077,6 +4100,7 @@
 		isClassic: isClassic,
 		isAtLeast: isAtLeast,
 		isModern: isModern,
+		diminishedHarmonyScale: diminishedHarmonyScale,
 		minimizesDiminishedHarmony: minimizesDiminishedHarmony,
 		normalize: normalize,
 		patternAffinity: patternAffinity,
@@ -4694,6 +4718,7 @@
 		score += exteriorParallelPerfects * 28;
 		score += registerCenterPenalty(nextPlan, options && options.registerCenterMidi);
 		score += lowRegisterBassPenalty(nextPlan);
+		score += playableRangePenalty(nextPlan, options && options.playableRange);
 		score -= commonToneStickinessBonus(previousPlan, nextPlan, options && options.commonToneStickiness);
 
 		return score;
@@ -4719,7 +4744,11 @@
 	}
 
 	function firstVoicingScore(voicing, options) {
-		return voicing.inversionIndex * 2 + voiceSpan(voicing.midiNotes) / 12 + registerCenterPenalty(voicing, options && options.registerCenterMidi) + lowRegisterBassPenalty(voicing);
+		return voicing.inversionIndex * 2 +
+			voiceSpan(voicing.midiNotes) / 12 +
+			registerCenterPenalty(voicing, options && options.registerCenterMidi) +
+			lowRegisterBassPenalty(voicing) +
+			playableRangePenalty(voicing, options && options.playableRange);
 	}
 
 	function transitionScore(previousMidiNotes, nextMidiNotes) {
@@ -4859,11 +4888,42 @@
 		return excess * excess * 4;
 	}
 
+	function playableRangePenalty(voicing, range) {
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes : [];
+		var min = range && range.min != null ? Number(range.min) : NaN;
+		var max = range && range.max != null ? Number(range.max) : NaN;
+		var penalty = 0;
+
+		if (!isFinite(min) && !isFinite(max)) {
+			return 0;
+		}
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			var midiNote = Number(midiNotes[i]);
+			var excess = 0;
+
+			if (!isFinite(midiNote)) {
+				continue;
+			}
+
+			if (isFinite(min) && midiNote < min) {
+				excess = min - midiNote;
+			} else if (isFinite(max) && midiNote > max) {
+				excess = midiNote - max;
+			}
+
+			penalty += excess * excess * 10000;
+		}
+
+		return penalty;
+	}
+
 	global.CodaProgressionVoiceLeadingScore = {
 		commonToneStickinessBonus: commonToneStickinessBonus,
 		countParallelPerfects: countParallelPerfects,
 		firstVoicingScore: firstVoicingScore,
 		lowRegisterBassPenalty: lowRegisterBassPenalty,
+		playableRangePenalty: playableRangePenalty,
 		registerCenterPenalty: registerCenterPenalty,
 		voiceLeadingTransitionScore: voiceLeadingTransitionScore
 	};
@@ -5405,6 +5465,7 @@
 	function scoreOptions(options) {
 		return {
 			commonToneStickiness: numberOrDefault(options && options.commonToneStickiness, 0),
+			playableRange: playableRange(options && options.playableRange),
 			registerCenterMidi: registerCenterMidi(options)
 		};
 	}
@@ -5424,6 +5485,20 @@
 		var number = Number(value);
 
 		return isFinite(number) ? number : fallback;
+	}
+
+	function playableRange(range) {
+		var min = Number(range && range.min);
+		var max = Number(range && range.max);
+
+		if (!isFinite(min) && !isFinite(max)) {
+			return null;
+		}
+
+		return {
+			min: isFinite(min) ? min : null,
+			max: isFinite(max) ? max : null
+		};
 	}
 
 	function inversionRunKey(plan) {
@@ -9051,6 +9126,8 @@
 	'use strict';
 
 	var formattingService = global.CodaProgressionFormatting;
+	var chordQualityService = global.CodaProgressionChordQuality;
+	var styleService = global.CodaProgressionStyle;
 	var tonalFunctionService = global.CodaProgressionTonalFunction;
 	var voicingService = global.CodaProgressionVoicing;
 
@@ -9083,6 +9160,7 @@
 			result -= 16;
 		}
 
+		result -= diminishedCandidatePenalty(options);
 		result -= voicingService.voiceLeadingTransitionScore(options.currentMeasure, options.chordPlan) * 0.45;
 
 		if (options.nextPlan) {
@@ -9102,7 +9180,28 @@
 		return measure && (measure.chord === chord || measure.chordName === chord.nombre || measure.chordName === formattingService.triadName(chord));
 	}
 
+	function diminishedCandidatePenalty(options) {
+		var chord = options && options.resolvedDegree && options.resolvedDegree.chord;
+		var scale = styleService && typeof styleService.diminishedHarmonyScale === 'function' ?
+			styleService.diminishedHarmonyScale(options && options.progressionState) :
+			0.32;
+
+		if (
+			!styleService ||
+			typeof styleService.minimizesDiminishedHarmony !== 'function' ||
+			!styleService.minimizesDiminishedHarmony(options && options.progressionState) ||
+			!chordQualityService ||
+			typeof chordQualityService.isDiminishedSeventhQuality !== 'function' ||
+			!chordQualityService.isDiminishedSeventhQuality(chord && chord.nombre)
+		) {
+			return 0;
+		}
+
+		return 42 * (1 - Math.max(0, Math.min(1, scale)));
+	}
+
 	global.CodaProgressionAdditionalChordScore = {
+		diminishedCandidatePenalty: diminishedCandidatePenalty,
 		sameChordFamily: sameChordFamily,
 		score: score
 	};
@@ -10220,6 +10319,7 @@
 			previousPlan: context.previousPlan,
 			registerCenterMidi: registerCenterMidi(context.options),
 			commonToneStickiness: sustainedInstrumentCommonToneStickiness(context.progressionState),
+			playableRange: playableMidiRange(context.progressionState),
 			voicing: context.progressionState.voicing,
 			voices: context.progressionState.voices
 		});
@@ -10316,6 +10416,19 @@
 		return sustainedInstruments[instrument] && isSustainArticulation(progressionState) ? 42 : 0;
 	}
 
+	function playableMidiRange(progressionState) {
+		var instrument = progressionState && progressionState.midiInstrument;
+		var ranges = {
+			acoustic_grand_piano: { min: 21, max: 109 },
+			acoustic_guitar_nylon: { min: 21, max: 108 },
+			drawbar_organ: { min: 21, max: 108 },
+			pad_2_warm: { min: 21, max: 108 },
+			string_ensemble_1: { min: 21, max: 108 }
+		};
+
+		return ranges[instrument] || { min: 21, max: 108 };
+	}
+
 	function isSustainArticulation(progressionState) {
 		var articulation = progressionState && progressionState.articulation;
 
@@ -10327,6 +10440,7 @@
 		chordNotes: chordNotes,
 		openingTonicInversionPolicy: openingTonicInversionPolicy,
 		nextTriadNotes: nextTriadNotes,
+		playableMidiRange: playableMidiRange,
 		registerCenterMidi: registerCenterMidi,
 		sustainedInstrumentCommonToneStickiness: sustainedInstrumentCommonToneStickiness,
 		suspendedNotes: suspendedNotes,
@@ -12319,6 +12433,9 @@
 
 	function sensitiveDegreeFactor(degrees, mode, progressionState) {
 		var sensitiveDegree = mode === 'major' ? 6 : 1;
+		var diminishedScale = typeof styleService.diminishedHarmonyScale === 'function' ?
+			styleService.diminishedHarmonyScale(progressionState) :
+			0.32;
 		var factor = 1;
 
 		if (!styleService.minimizesDiminishedHarmony(progressionState) || !degrees) {
@@ -12327,7 +12444,7 @@
 
 		for (var i = 0; i < degrees.length; i++) {
 			if (degreeIndex(degrees[i]) === sensitiveDegree) {
-				factor *= 0.32;
+				factor *= diminishedScale;
 			}
 		}
 
@@ -13187,6 +13304,7 @@
 	'use strict';
 
 	var cadencePlanner = global.CodaProgressionCadencePlanner;
+	var chordQualityService = global.CodaProgressionChordQuality;
 	var chromaticCadenceService = global.CodaProgressionChromaticCadence;
 	var modalPlanner = global.CodaProgressionModalPlanner;
 	var patternSelector = global.CodaProgressionPatternSelector;
@@ -13477,7 +13595,7 @@
 			var isBorrowedMarker = degree.source === 'parallel';
 			var canInterchange = !degree.source || degree.source === 'diatonic' || degree.source === 'parallel';
 			var shouldTryInterchange = canInterchange && i > 0 && (isBorrowedMarker || (chance > 0 && rng() < chance));
-			var source = shouldTryInterchange ? chooseInterchangeSource(report, degree.index, rng) : null;
+			var source = shouldTryInterchange ? chooseInterchangeSource(report, degree.index, rng, progressionState) : null;
 
 			if (source) {
 				degree.source = 'interchange';
@@ -13556,9 +13674,10 @@
 		return null;
 	}
 
-	function chooseInterchangeSource(report, degreeIndex, rng) {
+	function chooseInterchangeSource(report, degreeIndex, rng, progressionState) {
 		var sources = report && report.modalInterchangeSources ? report.modalInterchangeSources : [];
 		var candidates = [];
+		var stableCandidates = [];
 		var baseChord = report && report.scaleChords ? report.scaleChords[degreeIndex] : null;
 
 		for (var i = 0; i < sources.length; i++) {
@@ -13566,6 +13685,9 @@
 
 			if (chord && (!baseChord || chord.nombre !== baseChord.nombre)) {
 				candidates.push(sources[i]);
+				if (!isDiminishedChord(chord)) {
+					stableCandidates.push(sources[i]);
+				}
 			}
 		}
 
@@ -13573,7 +13695,29 @@
 			return null;
 		}
 
+		if (
+			stableCandidates.length &&
+			styleService.minimizesDiminishedHarmony(progressionState) &&
+			rng() >= diminishedInterchangeChance(progressionState)
+		) {
+			candidates = stableCandidates;
+		}
+
 		return candidates[Math.floor(rng() * candidates.length) % candidates.length];
+	}
+
+	function diminishedInterchangeChance(progressionState) {
+		var scale = typeof styleService.diminishedHarmonyScale === 'function' ?
+			styleService.diminishedHarmonyScale(progressionState) :
+			0.32;
+
+		return Math.max(0.04, Math.min(0.18, scale));
+	}
+
+	function isDiminishedChord(chord) {
+		return chordQualityService &&
+			typeof chordQualityService.isDiminishedSeventhQuality === 'function' &&
+			chordQualityService.isDiminishedSeventhQuality(chord && chord.nombre);
 	}
 
 	function harmonicMinorDominantSource(report) {
@@ -15968,7 +16112,7 @@
 				continue;
 			}
 
-			if (isPedalIn(midiNotes[i], measure)) {
+			if (!forcePedalAttack(options) && isPedalIn(midiNotes[i], measure)) {
 				continue;
 			}
 
@@ -16333,6 +16477,10 @@
 		return instrument && (instrument.supportsPedalHold === true || instrument.sustained === true || instrument.pedalBehavior === 'sustain');
 	}
 
+	function forcePedalAttack(options) {
+		return !!(options && options.forcePedalAttack === true);
+	}
+
 	function arpeggioStepSeconds(measure, duration, options) {
 		var configuredStep = Number(options && options.arpeggioStepSeconds);
 
@@ -16404,6 +16552,7 @@
 		isArpeggioArticulation: isArpeggioArticulation,
 		passingNoteEvents: passingNoteEvents,
 		pulseCountForMeasure: pulseCountForMeasure,
+		forcePedalAttack: forcePedalAttack,
 		supportsPedalHold: supportsPedalHold
 	};
 })(window);
@@ -17392,7 +17541,7 @@
 		var duration = timingService.playbackDuration(measure);
 		var notes = timingService.notesForVoices(measure.notes, measure.voices);
 		var midiNotes = timingService.notesForVoices(measure.midiNotes, measure.voices);
-		var midiNoteEvents = noteEventService.build(measure, duration, options);
+		var midiNoteEvents = noteEventService.build(measure, duration, noteEventOptions(options, chordIndex));
 		var mode = timingService.isArpeggioArticulation(measure.articulation) ? 'arpeggio' : 'chord';
 		var delay = Math.max(0, (measure.startSeconds || 0) - (startOffset || 0));
 		var event = {
@@ -17437,6 +17586,24 @@
 		if (instrumentId) {
 			event.playbackInstrumentId = instrumentId;
 		}
+	}
+
+	function noteEventOptions(options, chordIndex) {
+		if (!options || !options.forcePedalAttackOnFirstEvent || chordIndex) {
+			return options;
+		}
+
+		var result = {};
+
+		for (var key in options) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		result.forcePedalAttack = true;
+
+		return result;
 	}
 
 	function setHiddenStartOffset(event, startOffset) {
@@ -17512,7 +17679,8 @@
 		buildMeasurePlaybackEvent: buildMeasurePlaybackEvent,
 		buildMeasurePlaybackEvents: buildMeasurePlaybackEvents,
 		expressiveDelay: expressiveDelay,
-		expressiveVelocity: expressiveVelocity
+		expressiveVelocity: expressiveVelocity,
+		noteEventOptions: noteEventOptions
 	};
 })(window);
 
@@ -17535,7 +17703,7 @@
 		var schedule = [];
 
 		for (var i = startIndex; i < measures.length; i++) {
-			schedule = schedule.concat(eventBuilder.buildMeasurePlaybackEvents(measures[i], i, startOffset, playbackOptions));
+			schedule = schedule.concat(eventBuilder.buildMeasurePlaybackEvents(measures[i], i, startOffset, measurePlaybackOptions(playbackOptions, i === startIndex && startIndex > 0)));
 		}
 
 		return schedule;
@@ -17625,6 +17793,24 @@
 		return result;
 	}
 
+	function measurePlaybackOptions(options, forcePedalAttackOnFirstEvent) {
+		if (!forcePedalAttackOnFirstEvent) {
+			return options;
+		}
+
+		var result = {};
+
+		for (var key in options || {}) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		result.forcePedalAttackOnFirstEvent = true;
+
+		return result;
+	}
+
 	global.CodaProgressionPlaybackSchedule = {
 		articulationDurationFactor: articulationDurationFactor,
 		buildProgressionMetronomeSchedule: buildProgressionMetronomeSchedule,
@@ -17632,6 +17818,7 @@
 		buildScheduledMeasures: buildScheduledMeasures,
 		normalizeStartIndex: normalizeStartIndex,
 		notesForVoices: notesForVoices,
+		measurePlaybackOptions: measurePlaybackOptions,
 		playbackOptionsForProgression: playbackOptionsForProgression,
 		playbackTotalSeconds: playbackTotalSeconds,
 		refreshPlaybackEvent: refreshPlaybackEvent
@@ -29285,6 +29472,7 @@
 				family: instrument.family || '',
 				id: instrument.id || activeInstrument,
 				pedalBehavior: instrument.pedalBehavior || (instrument.sustained ? 'sustain' : 'reattack'),
+				playableRange: instrument.playableRange || null,
 				soundEnvelope: instrument.soundEnvelope || (instrument.sustained ? 'sustained' : 'percussive'),
 				supportsPedalHold: instrument.supportsPedalHold === true || instrument.sustained === true,
 				sustained: instrument.sustained === true

@@ -50,6 +50,7 @@ assert.equal(data.midiInstruments[2].id, 'drawbar_organ');
 assert.equal(data.midiInstruments[3].id, 'string_ensemble_1');
 assert.equal(data.midiInstruments[4].id, 'pad_2_warm');
 assert.equal(data.midiInstruments[4].program, 89);
+assert.deepEqual(data.midiInstruments[4].playableRange, { min: 21, max: 108 });
 assert.equal(data.notes.length, 12);
 assert.equal(data.indexes.notes.indexByName.C, 0);
 assert.equal(data.indexes.notes.indexByName.Db, 1);

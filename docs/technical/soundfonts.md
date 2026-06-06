@@ -20,6 +20,8 @@ La atribución documental de estos archivos se mantiene en [`docs/ATTRIBUTIONS.m
 
 Los presets alternativos de articulación se declaran en `js/data/midi-data.js` mediante `articulationInstruments`. La interfaz conserva el instrumento elegido por el usuario, pero la preescucha y la exportación MIDI pueden usar un preset corto asociado para que Staccato y Arpegio tengan un ataque más definido.
 
+Cada instrumento declara también su `playableRange` MIDI según las muestras disponibles en los soundfonts locales. El banco actual cubre desde A0 (`21`) hasta C8 (`108`) en la mayoría de presets; el piano acústico llega hasta `109`. El generador de progresiones usa ese rango al puntuar voicings para evitar bajos o voces extremas que el soundfont no pueda reproducir.
+
 ## Regla de carga
 
 El motor de playback debe seguir cargando soundfonts de forma diferida. Cambiar el instrumento en la interfaz solo selecciona el preset activo; el archivo de soundfont se carga con la primera preescucha que lo necesite.

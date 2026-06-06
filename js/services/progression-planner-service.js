@@ -3,6 +3,7 @@
 	'use strict';
 
 	var cadencePlanner = global.CodaProgressionCadencePlanner;
+	var chordQualityService = global.CodaProgressionChordQuality;
 	var chromaticCadenceService = global.CodaProgressionChromaticCadence;
 	var modalPlanner = global.CodaProgressionModalPlanner;
 	var patternSelector = global.CodaProgressionPatternSelector;
@@ -293,7 +294,7 @@
 			var isBorrowedMarker = degree.source === 'parallel';
 			var canInterchange = !degree.source || degree.source === 'diatonic' || degree.source === 'parallel';
 			var shouldTryInterchange = canInterchange && i > 0 && (isBorrowedMarker || (chance > 0 && rng() < chance));
-			var source = shouldTryInterchange ? chooseInterchangeSource(report, degree.index, rng) : null;
+			var source = shouldTryInterchange ? chooseInterchangeSource(report, degree.index, rng, progressionState) : null;
 
 			if (source) {
 				degree.source = 'interchange';
@@ -372,9 +373,10 @@
 		return null;
 	}
 
-	function chooseInterchangeSource(report, degreeIndex, rng) {
+	function chooseInterchangeSource(report, degreeIndex, rng, progressionState) {
 		var sources = report && report.modalInterchangeSources ? report.modalInterchangeSources : [];
 		var candidates = [];
+		var stableCandidates = [];
 		var baseChord = report && report.scaleChords ? report.scaleChords[degreeIndex] : null;
 
 		for (var i = 0; i < sources.length; i++) {
@@ -382,6 +384,9 @@
 
 			if (chord && (!baseChord || chord.nombre !== baseChord.nombre)) {
 				candidates.push(sources[i]);
+				if (!isDiminishedChord(chord)) {
+					stableCandidates.push(sources[i]);
+				}
 			}
 		}
 
@@ -389,7 +394,29 @@
 			return null;
 		}
 
+		if (
+			stableCandidates.length &&
+			styleService.minimizesDiminishedHarmony(progressionState) &&
+			rng() >= diminishedInterchangeChance(progressionState)
+		) {
+			candidates = stableCandidates;
+		}
+
 		return candidates[Math.floor(rng() * candidates.length) % candidates.length];
+	}
+
+	function diminishedInterchangeChance(progressionState) {
+		var scale = typeof styleService.diminishedHarmonyScale === 'function' ?
+			styleService.diminishedHarmonyScale(progressionState) :
+			0.32;
+
+		return Math.max(0.04, Math.min(0.18, scale));
+	}
+
+	function isDiminishedChord(chord) {
+		return chordQualityService &&
+			typeof chordQualityService.isDiminishedSeventhQuality === 'function' &&
+			chordQualityService.isDiminishedSeventhQuality(chord && chord.nombre);
 	}
 
 	function harmonicMinorDominantSource(report) {

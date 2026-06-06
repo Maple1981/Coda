@@ -783,10 +783,35 @@ assert.ok(global.CodaProgressionVoiceLeadingScore.lowRegisterBassPenalty({
 }) > global.CodaProgressionVoiceLeadingScore.lowRegisterBassPenalty({
 	midiNotes: [36, 48, 55, 72]
 }));
+assert.ok(global.CodaProgressionVoiceLeadingScore.playableRangePenalty({
+	midiNotes: [16, 31, 48, 72]
+}, {
+	min: 21,
+	max: 108
+}) > 0);
 assert.equal(global.CodaProgressionChordPlan.registerCenterMidi({
 	initialMidiNote: 60,
 	scaleNotes: [{ nombre: 'A' }]
 }), 63);
+assert.deepEqual(global.CodaProgressionChordPlan.playableMidiRange({
+	midiInstrument: 'pad_2_warm'
+}), { min: 21, max: 108 });
+const playableLowOpenVoicing = global.CodaProgressionVoicing.chooseVoicing({
+	baseNotes: ['E', 'G', 'B'],
+	chordName: 'Em',
+	extraNotes: [],
+	initialMidiNote: 60,
+	kind: 'triad',
+	playableRange: { min: 21, max: 108 },
+	previousPlan: {
+		midiNotes: [16, 19, 23, 28],
+		notes: ['E', 'G', 'B', 'E']
+	},
+	registerCenterMidi: 30,
+	voicing: 'open',
+	voices: 4
+});
+assert.ok(playableLowOpenVoicing.midiNotes[0] >= 21);
 const lowRegisterVoicing = global.CodaProgressionVoicing.chooseVoicing({
 	baseNotes: ['C', 'E', 'G'],
 	chordName: 'C',

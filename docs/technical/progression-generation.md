@@ -71,7 +71,7 @@ Los perfiles actuales quedan compartimentados así:
 - **Clásico**: marco tónica-dominante. Favorece cadencias auténticas, 6/4 cadenciales y preparación-resolución de disonancias, incluyendo séptimas.
 - **Romántico**: marco funcional extendido. Hereda la lógica clásica, pero deja preparado un mayor peso para cromatismo, intercambio modal, dominantes, tensiones y disolución progresiva de la tonalidad estricta.
 - **Impresionista**: giro hacia color, modalidad y ambigüedad. Por ahora suaviza la atracción dominante y reserva espacio para planing, acordes paralelos y campos armónicos menos funcionales.
-- **Contemporáneo**: continuación del antiguo estilo moderno. Mantiene la conducción parsimoniosa, pero evita cadencias auténticas finales como `V-I`, `V-i`, `viidim-I` o `viidim-i`, priorizando semicadencias, cadencias plagales y cadencias rotas. En menor conserva preferentemente el `v` modal frente al `V` con sensible y minimiza, sin prohibir por completo, el uso de grados disminuidos o semidisminuidos.
+- **Contemporáneo**: continuación del antiguo estilo moderno. Mantiene la conducción parsimoniosa, pero evita cadencias auténticas finales como `V-I`, `V-i`, `viidim-I` o `viidim-i`, priorizando semicadencias, cadencias plagales y cadencias rotas. En menor conserva preferentemente el `v` modal frente al `V` con sensible. Los acordes `dim` y `7♭5` no desaparecen, pero quedan tratados como rarezas: bajan mucho el peso de patrones, préstamos y acordes añadidos dentro del compás para evitar que una progresión acumule varios de ellos.
 
 Esta distinción afecta a la selección de patrones completos, a los bloques de frase usados en progresiones largas y al tipo de cierre armónico elegido. No cambia la escala ni los acordes disponibles; modifica la probabilidad y la lectura funcional de los recursos.
 
@@ -80,7 +80,7 @@ En tonalidades menores, los estilos **Barroco**, **Clásico** y **Romántico** t
 Los perfiles de estilo ya no actúan sólo como interruptores de cadencia. También exponen afinidades internas que el generador usa al puntuar patrones y bloques de frase:
 
 - **Barroco** multiplica el peso de formas de partimento, círculo, regla de la octava y romanesca; además incrementa ligeramente la densidad armónica y la aparición de séptimas preparadas.
-- **Renacimiento**, **Impresionista** y **Contemporáneo** aplican un factor de reducción a grados sensibles disminuidos cuando el estilo busca menos atracción dominante.
+- **Renacimiento**, **Impresionista** y **Contemporáneo** aplican un factor de reducción a grados sensibles disminuidos cuando el estilo busca menos atracción dominante. En **Contemporáneo** ese factor es especialmente severo y también penaliza acordes `dim` o `7♭5` propuestos por intercambio modal o densidad armónica interna.
 - **Clásico** favorece formas periódicas y cadencias funcionales claras.
 - **Romántico** conserva el marco funcional, pero tolera más densidad, séptimas y secuencias.
 
@@ -176,6 +176,8 @@ En escritura de cuatro o más voces, una tríada completa dobla factores del aco
 
 El control **Disposición** alterna entre escritura cerrada y abierta. En disposición cerrada, las voces superiores se mantienen dentro del registro más compacto posible y el generador penaliza aperturas innecesarias. En disposición abierta, el algoritmo abre la voz superior cuando es necesario para que el espacio entre voces superiores supere la octava, escogiendo la inversión que conserva el movimiento más parsimonioso frente al acorde anterior. Además, si el bajo cae en registros graves o extremos, se aplica una regla de claridad de arreglo: cuanto más baja esté la voz inferior, mayor debe ser la separación con la siguiente voz. Si un candidato queda demasiado cerrado abajo, una o varias voces superiores se desplazan una octava arriba para evitar un sonido embarrado.
 
+La selección de voicings también respeta el rango sonoro declarado para el instrumento MIDI activo. Cualquier candidato con notas por debajo o por encima del `playableRange` del soundfont recibe una penalización muy alta, de modo que el generador prefiera otra octava, inversión o disposición antes que producir una voz muda. Esto es especialmente importante en disposición abierta, donde el bajo puede desplazarse más lejos que en disposición cerrada.
+
 El primer acorde de una progresión que empieza en tónica favorece claramente el estado fundamental. La primera inversión de la tónica inicial puede aparecer con baja probabilidad, y las inversiones más inestables sólo con una probabilidad mínima. Fuera de esos casos raros, el scoring penaliza las inversiones iniciales para que `I` o `i` en estado fundamental sea el arranque normal.
 
 La selección de voicings incluye una fuerza suave de centrado registral. El centro se calcula a partir de la tónica cercana al C central, y la puntuación penaliza progresivamente los voicings cuyo centro de masa se aleja demasiado. Esta regla no impide excepciones ni saltos expresivos, pero evita que las progresiones largas deriven estadísticamente hacia registros demasiado graves o demasiado agudos.
@@ -240,6 +242,8 @@ Si el instrumento seleccionado es sostenido, actualmente `drawbar_organ`, `strin
 Ese sesgo no se activa en articulaciones cortas o articuladas, como `staccato` o cualquier variante de `arpeggio`. En esos casos las notas comunes pueden existir por conducción normal, pero no deben convertirse en pedales prolongados ni condicionar de forma fuerte la selección del voicing, porque la articulación pide reataque o dibujo rítmico.
 
 El comportamiento audible del pedal depende del instrumento. En instrumentos sostenidos, como órgano, cuerdas o pad, la preescucha y la exportación MIDI prolongan el `noteOff` y omiten el `noteOn` duplicado en el compás siguiente. En instrumentos pulsados o percusivos, como piano y guitarra, la nota se reataca aunque sea común, para que la voz no quede muda por la caída natural del sonido.
+
+Cuando la reproducción empieza desde un compás intermedio que contiene pedales entrantes, la primera tarjeta programada reataca esas notas aunque estén marcadas como `pedalsIn`. No existe un compás anterior sonando en ese arranque parcial, por lo que omitir el `noteOn` produciría una falsa voz muda.
 
 Los acordes pueden suspender la tercera cuando la conducción de voces lo justifica. Las calidades menores, disminuidas y semidisminuidas tienden a `sus2`; las calidades mayores, dominantes y de séptima mayor tienden a `sus4`. El cifrado se muestra después de la inversión y antes de las tensiones añadidas, por ejemplo `G 6 sus4`, `Cm7 sus2` o `D7♭5 4/2 sus2`. Los grados reflejan la misma suspensión, por ejemplo `V 6 sus4` o `ii7♭5 4/2 sus2`.
 

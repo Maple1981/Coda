@@ -54,6 +54,9 @@
 
 	function sensitiveDegreeFactor(degrees, mode, progressionState) {
 		var sensitiveDegree = mode === 'major' ? 6 : 1;
+		var diminishedScale = typeof styleService.diminishedHarmonyScale === 'function' ?
+			styleService.diminishedHarmonyScale(progressionState) :
+			0.32;
 		var factor = 1;
 
 		if (!styleService.minimizesDiminishedHarmony(progressionState) || !degrees) {
@@ -62,7 +65,7 @@
 
 		for (var i = 0; i < degrees.length; i++) {
 			if (degreeIndex(degrees[i]) === sensitiveDegree) {
-				factor *= 0.32;
+				factor *= diminishedScale;
 			}
 		}
 

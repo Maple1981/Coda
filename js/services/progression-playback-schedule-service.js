@@ -14,7 +14,7 @@
 		var schedule = [];
 
 		for (var i = startIndex; i < measures.length; i++) {
-			schedule = schedule.concat(eventBuilder.buildMeasurePlaybackEvents(measures[i], i, startOffset, playbackOptions));
+			schedule = schedule.concat(eventBuilder.buildMeasurePlaybackEvents(measures[i], i, startOffset, measurePlaybackOptions(playbackOptions, i === startIndex && startIndex > 0)));
 		}
 
 		return schedule;
@@ -104,6 +104,24 @@
 		return result;
 	}
 
+	function measurePlaybackOptions(options, forcePedalAttackOnFirstEvent) {
+		if (!forcePedalAttackOnFirstEvent) {
+			return options;
+		}
+
+		var result = {};
+
+		for (var key in options || {}) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		result.forcePedalAttackOnFirstEvent = true;
+
+		return result;
+	}
+
 	global.CodaProgressionPlaybackSchedule = {
 		articulationDurationFactor: articulationDurationFactor,
 		buildProgressionMetronomeSchedule: buildProgressionMetronomeSchedule,
@@ -111,6 +129,7 @@
 		buildScheduledMeasures: buildScheduledMeasures,
 		normalizeStartIndex: normalizeStartIndex,
 		notesForVoices: notesForVoices,
+		measurePlaybackOptions: measurePlaybackOptions,
 		playbackOptionsForProgression: playbackOptionsForProgression,
 		playbackTotalSeconds: playbackTotalSeconds,
 		refreshPlaybackEvent: refreshPlaybackEvent
