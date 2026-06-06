@@ -24,6 +24,7 @@
 		for (var i = 0; i < maxInversions; i++) {
 			var voicing = buildVoicingCandidate(options, i, labels[i], disposition);
 			var score = voicingDispositionService.score(voicing, options.previousPlan, disposition, scoreOptions(options)) +
+				inversionStabilityPenalty(voicing, options) +
 				inversionRunPenalty(voicing, options.previousPlan) +
 				openingTonicInversionPenalty(voicing, options);
 
@@ -144,6 +145,28 @@
 		return nextInversionRunLength(previousPlan, voicing) > MAX_INVERSION_RUN ? INVERSION_RUN_PENALTY : 0;
 	}
 
+	function inversionStabilityPenalty(voicing, options) {
+		var inversionIndex = Number(voicing && voicing.inversionIndex);
+
+		if (!isFinite(inversionIndex) || options && options.forceInversionIndex != null) {
+			return 0;
+		}
+
+		if (inversionIndex === 1) {
+			return 3;
+		}
+
+		if (inversionIndex === 2) {
+			return 14;
+		}
+
+		if (inversionIndex >= 3) {
+			return 10;
+		}
+
+		return 0;
+	}
+
 	function openingTonicInversionPenalty(voicing, options) {
 		var inversionIndex = Number(voicing && voicing.inversionIndex);
 		var policy = options && options.openingTonicInversionPolicy ? options.openingTonicInversionPolicy : 'root';
@@ -200,6 +223,7 @@
 		chooseVoicing: chooseVoicing,
 		inversionRunKey: inversionRunKey,
 		inversionRunPenalty: inversionRunPenalty,
+		inversionStabilityPenalty: inversionStabilityPenalty,
 		nextInversionRunLength: nextInversionRunLength,
 		normalizeVoicingDisposition: normalizeVoicingDisposition,
 		openingTonicInversionPenalty: openingTonicInversionPenalty,

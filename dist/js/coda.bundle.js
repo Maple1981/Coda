@@ -4724,6 +4724,9 @@
 		score += lowRegisterBassPenalty(nextPlan);
 		score += playableRangePenalty(nextPlan, options && options.playableRange);
 		score += idiomaticInstrumentPenalty(nextPlan, options && options.midiInstrument);
+		score += melodicMotionPenalty(previousPlan.midiNotes, nextPlan.midiNotes, options);
+		score += upperVoiceGapPenalty(nextPlan);
+		score += extremeUpperRegisterPenalty(nextPlan);
 		score -= commonToneStickinessBonus(previousPlan, nextPlan, options && options.commonToneStickiness);
 
 		return score;
@@ -4753,6 +4756,8 @@
 			voiceSpan(voicing.midiNotes) / 12 +
 			registerCenterPenalty(voicing, options && options.registerCenterMidi) +
 			lowRegisterBassPenalty(voicing) +
+			upperVoiceGapPenalty(voicing) +
+			extremeUpperRegisterPenalty(voicing) +
 			playableRangePenalty(voicing, options && options.playableRange) +
 			idiomaticInstrumentPenalty(voicing, options && options.midiInstrument);
 	}
@@ -4768,6 +4773,64 @@
 		}
 
 		return score;
+	}
+
+	function melodicMotionPenalty(previousMidiNotes, nextMidiNotes, options) {
+		var length = Math.min((previousMidiNotes || []).length, (nextMidiNotes || []).length);
+		var penalty = 0;
+
+		for (var i = 0; i < length; i++) {
+			var motion = options && options.pitchClassOnly ?
+				Math.abs(pitchService.nearestMidiTo(previousMidiNotes[i], nextMidiNotes[i]) - previousMidiNotes[i]) :
+				Math.abs(Number(nextMidiNotes[i]) - Number(previousMidiNotes[i]));
+
+			if (!isFinite(motion)) {
+				continue;
+			}
+
+			penalty += melodicLeapPenalty(motion) * voiceMotionWeight(i, length);
+		}
+
+		return penalty;
+	}
+
+	function melodicLeapPenalty(motion) {
+		var interval = Math.max(0, Number(motion) || 0);
+		var excess;
+
+		if (interval <= 2) {
+			return 0;
+		}
+
+		if (interval <= 4) {
+			return (interval - 2) * 1.5;
+		}
+
+		if (interval <= 7) {
+			excess = interval - 4;
+			return 4 + (excess * excess * 3);
+		}
+
+		if (interval <= 12) {
+			excess = interval - 7;
+			return 32 + (excess * excess * 5);
+		}
+
+		excess = interval - 12;
+
+		return 160 + (excess * excess * 12);
+	}
+
+	function voiceMotionWeight(index, length) {
+		if (index === length - 1) {
+			return 2.6;
+		}
+
+		if (index === 0) {
+			return 1.35;
+		}
+
+		return 1.7;
 	}
 
 	function commonToneStickinessBonus(previousPlan, nextPlan, weight) {
@@ -4879,7 +4942,7 @@
 		distance = Math.abs(centroid - center);
 		excess = Math.max(0, distance - 6);
 
-		return (excess * excess) / 3;
+		return (excess * excess) / 1.5;
 	}
 
 	function lowRegisterBassPenalty(voicing) {
@@ -4893,7 +4956,40 @@
 
 		excess = 40 - bass;
 
-		return excess * excess * 4;
+		return excess * excess * 40;
+	}
+
+	function upperVoiceGapPenalty(voicing) {
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes : [];
+		var penalty = 0;
+
+		for (var i = 2; i < midiNotes.length; i++) {
+			var gap = Number(midiNotes[i]) - Number(midiNotes[i - 1]);
+			var excess;
+
+			if (!isFinite(gap) || gap <= 17) {
+				continue;
+			}
+
+			excess = gap - 17;
+			penalty += excess * excess * 8;
+		}
+
+		return penalty;
+	}
+
+	function extremeUpperRegisterPenalty(voicing) {
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes : [];
+		var top = Number(midiNotes[midiNotes.length - 1]);
+		var excess;
+
+		if (!isFinite(top) || top <= 96) {
+			return 0;
+		}
+
+		excess = top - 96;
+
+		return excess * excess * 6;
 	}
 
 	function playableRangePenalty(voicing, range) {
@@ -5184,16 +5280,20 @@
 	global.CodaProgressionVoiceLeadingScore = {
 		commonToneStickinessBonus: commonToneStickinessBonus,
 		countParallelPerfects: countParallelPerfects,
+		extremeUpperRegisterPenalty: extremeUpperRegisterPenalty,
 		firstVoicingScore: firstVoicingScore,
 		guitarFingeringOptions: guitarFingeringOptions,
 		guitarVoicingPenalty: guitarVoicingPenalty,
 		idiomaticInstrumentPenalty: idiomaticInstrumentPenalty,
 		lowRegisterBassPenalty: lowRegisterBassPenalty,
 		lowRegisterSpacingPenalty: lowRegisterSpacingPenalty,
+		melodicLeapPenalty: melodicLeapPenalty,
+		melodicMotionPenalty: melodicMotionPenalty,
 		playableRangePenalty: playableRangePenalty,
 		pianoHandSpanPenaltyForSpan: pianoHandSpanPenaltyForSpan,
 		pianoVoicingPenalty: pianoVoicingPenalty,
 		registerCenterPenalty: registerCenterPenalty,
+		upperVoiceGapPenalty: upperVoiceGapPenalty,
 		voiceLeadingTransitionScore: voiceLeadingTransitionScore
 	};
 })(window);
@@ -5244,7 +5344,11 @@
 
 		candidates = registerShiftCandidates(candidates);
 
-		return prefersLowRegisterSpacing(options && options.midiInstrument) ? candidates.map(spreadLowRegisterSpacing) : candidates;
+		if (!prefersLowRegisterSpacing(options && options.midiInstrument)) {
+			return candidates;
+		}
+
+		return shouldForceLowRegisterSpacing(voicing, options) ? candidates.map(spreadLowRegisterSpacing) : lowRegisterSpacingAlternatives(candidates, spreadLowRegisterSpacing);
 	}
 
 	function score(voicing, previousPlan, disposition, options) {
@@ -5351,6 +5455,41 @@
 			midiNotes: midiNotes,
 			voiceNotes: voiceNotes
 		}) : voicing;
+	}
+
+	function lowRegisterSpacingAlternatives(candidates, spacingFunction) {
+		var result = [];
+
+		for (var i = 0; i < candidates.length; i++) {
+			appendUniqueCandidate(result, candidates[i]);
+			appendUniqueCandidate(result, spacingFunction(candidates[i]));
+		}
+
+		return result;
+	}
+
+	function shouldForceLowRegisterSpacing(voicing, options) {
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes : [];
+		var bass = Number(midiNotes[0]);
+		var center = Number(options && options.registerCenterMidi);
+
+		return isFinite(bass) && (bass < 40 || (bass < 48 && isFinite(center) && center < 50));
+	}
+
+	function appendUniqueCandidate(target, candidate) {
+		var key = candidateKey(candidate);
+
+		for (var i = 0; i < target.length; i++) {
+			if (candidateKey(target[i]) === key) {
+				return;
+			}
+		}
+
+		target.push(candidate);
+	}
+
+	function candidateKey(candidate) {
+		return (candidate && candidate.midiNotes ? candidate.midiNotes : []).join(',');
 	}
 
 	function minimumLowRegisterGap(lowerMidiNote, upperVoiceIndex) {
@@ -5705,6 +5844,7 @@
 		for (var i = 0; i < maxInversions; i++) {
 			var voicing = buildVoicingCandidate(options, i, labels[i], disposition);
 			var score = voicingDispositionService.score(voicing, options.previousPlan, disposition, scoreOptions(options)) +
+				inversionStabilityPenalty(voicing, options) +
 				inversionRunPenalty(voicing, options.previousPlan) +
 				openingTonicInversionPenalty(voicing, options);
 
@@ -5825,6 +5965,28 @@
 		return nextInversionRunLength(previousPlan, voicing) > MAX_INVERSION_RUN ? INVERSION_RUN_PENALTY : 0;
 	}
 
+	function inversionStabilityPenalty(voicing, options) {
+		var inversionIndex = Number(voicing && voicing.inversionIndex);
+
+		if (!isFinite(inversionIndex) || options && options.forceInversionIndex != null) {
+			return 0;
+		}
+
+		if (inversionIndex === 1) {
+			return 3;
+		}
+
+		if (inversionIndex === 2) {
+			return 14;
+		}
+
+		if (inversionIndex >= 3) {
+			return 10;
+		}
+
+		return 0;
+	}
+
 	function openingTonicInversionPenalty(voicing, options) {
 		var inversionIndex = Number(voicing && voicing.inversionIndex);
 		var policy = options && options.openingTonicInversionPolicy ? options.openingTonicInversionPolicy : 'root';
@@ -5881,6 +6043,7 @@
 		chooseVoicing: chooseVoicing,
 		inversionRunKey: inversionRunKey,
 		inversionRunPenalty: inversionRunPenalty,
+		inversionStabilityPenalty: inversionStabilityPenalty,
 		nextInversionRunLength: nextInversionRunLength,
 		normalizeVoicingDisposition: normalizeVoicingDisposition,
 		openingTonicInversionPenalty: openingTonicInversionPenalty,
@@ -10663,7 +10826,7 @@
 			baseNotes: baseNotes,
 			chordName: chord.nombre,
 			extraNotes: tensionOptions.notes.slice(baseNotes.length),
-			forceInversionIndex: context.options.forceInversionIndex,
+			forceInversionIndex: forcedInversionIndex(context),
 			initialMidiNote: context.options.initialMidiNote || 60,
 			kind: useSeventh ? 'seventh' : 'triad',
 			openingTonic: context.index === 0 && resolvedDegree.degreeIndex === 0,
@@ -10758,6 +10921,24 @@
 		return 'root';
 	}
 
+	function forcedInversionIndex(context) {
+		if (context && context.options && context.options.forceInversionIndex != null) {
+			return context.options.forceInversionIndex;
+		}
+
+		if (
+			context &&
+			context.resolvedDegree &&
+			context.resolvedDegree.degreeIndex === 0 &&
+			context.resolvedDegrees &&
+			context.index === context.resolvedDegrees.length - 1
+		) {
+			return 0;
+		}
+
+		return null;
+	}
+
 	function sustainedInstrumentCommonToneStickiness(progressionState) {
 		var instrument = progressionState && progressionState.midiInstrument;
 		var sustainedInstruments = {
@@ -10791,6 +10972,7 @@
 	global.CodaProgressionChordPlan = {
 		build: build,
 		chordNotes: chordNotes,
+		forcedInversionIndex: forcedInversionIndex,
 		openingTonicInversionPolicy: openingTonicInversionPolicy,
 		nextTriadNotes: nextTriadNotes,
 		playableMidiRange: playableMidiRange,

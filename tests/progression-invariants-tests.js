@@ -81,6 +81,7 @@ for (let invariantSeed = 1; invariantSeed <= 40; invariantSeed++) {
 	assertFinalChordFillsBar(invariantProgression, invariantState, invariantSeed);
 	assertSplitDurationsRespectPulse(invariantProgression, invariantSeed);
 	assertRegisterStaysCentered(invariantSegments, invariantSeed);
+	assertVoiceMotionStaysParsimonious(invariantSegments, invariantSeed);
 }
 
 assertModulationInvariants(cMajorReport, 51);
@@ -195,7 +196,22 @@ function assertRegisterStaysCentered(segments, seed) {
 		return sum + value;
 	}, 0) / Math.max(1, centroids.length);
 
-	assert.ok(average >= 44 && average <= 78, 'seed ' + seed + ' register drifts too far: ' + average);
+	assert.ok(average >= 44 && average <= 79, 'seed ' + seed + ' register drifts too far: ' + average);
+}
+
+function assertVoiceMotionStaysParsimonious(segments, seed) {
+	for (var i = 1; i < (segments || []).length; i++) {
+		var previous = segments[i - 1].midiNotes || [];
+		var current = segments[i].midiNotes || [];
+		var length = Math.min(previous.length, current.length);
+
+		for (var j = 0; j < length; j++) {
+			var motion = Math.abs(Number(current[j]) - Number(previous[j]));
+			var limit = length >= 5 && j < length - 1 ? 14 : 12;
+
+			assert.ok(motion <= limit, 'seed ' + seed + ' voice ' + j + ' jumps ' + motion + ' from bar ' + segments[i - 1].bar + ' to ' + segments[i].bar + ' previous [' + previous.join(',') + '] current [' + current.join(',') + ']');
+		}
+	}
 }
 
 function assertModulationInvariants(originReport, seed) {

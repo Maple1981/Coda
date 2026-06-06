@@ -197,7 +197,7 @@ assert.equal(initialProgression.totalSeconds, 16);
 assert.ok(savedWorkspaces.length > 0);
 assert.equal(savedWorkspaces[savedWorkspaces.length - 1].signature, '0|0|0');
 assert.equal(savedWorkspaces[savedWorkspaces.length - 1].progression.measures.length, 8);
-assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.degree; }), ['I', 'vi 6', 'ii', 'V 6/4', 'I 6', 'IV', 'V 6/4', 'I 6']);
+assert.deepEqual(initialProgression.measures.map(function (measure) { return structuralDegree(measure.degree); }), ['I', 'vi', 'ii', 'V', 'I', 'IV', 'V', 'I']);
 assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.chordName; }), ['C', 'Am', 'Dm', 'G', 'C', 'F', 'G', 'C']);
 assert.deepEqual(initialProgression.measures.map(function (measure) { return measure.tonalFunction; }), ['T', 'T', 'SD', 'D', 'T', 'SD', 'D', 'T']);
 
@@ -1020,4 +1020,8 @@ function measureSignature(measure) {
 		measure && measure.chordName,
 		measure && measure.label
 	].join('::');
+}
+
+function structuralDegree(degree) {
+	return String(degree || '').replace(/\s+(6|6\/4|6\/5|4\/3|4\/2)(\s|$)/g, ' ').trim();
 }

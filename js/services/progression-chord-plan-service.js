@@ -44,7 +44,7 @@
 			baseNotes: baseNotes,
 			chordName: chord.nombre,
 			extraNotes: tensionOptions.notes.slice(baseNotes.length),
-			forceInversionIndex: context.options.forceInversionIndex,
+			forceInversionIndex: forcedInversionIndex(context),
 			initialMidiNote: context.options.initialMidiNote || 60,
 			kind: useSeventh ? 'seventh' : 'triad',
 			openingTonic: context.index === 0 && resolvedDegree.degreeIndex === 0,
@@ -139,6 +139,24 @@
 		return 'root';
 	}
 
+	function forcedInversionIndex(context) {
+		if (context && context.options && context.options.forceInversionIndex != null) {
+			return context.options.forceInversionIndex;
+		}
+
+		if (
+			context &&
+			context.resolvedDegree &&
+			context.resolvedDegree.degreeIndex === 0 &&
+			context.resolvedDegrees &&
+			context.index === context.resolvedDegrees.length - 1
+		) {
+			return 0;
+		}
+
+		return null;
+	}
+
 	function sustainedInstrumentCommonToneStickiness(progressionState) {
 		var instrument = progressionState && progressionState.midiInstrument;
 		var sustainedInstruments = {
@@ -172,6 +190,7 @@
 	global.CodaProgressionChordPlan = {
 		build: build,
 		chordNotes: chordNotes,
+		forcedInversionIndex: forcedInversionIndex,
 		openingTonicInversionPolicy: openingTonicInversionPolicy,
 		nextTriadNotes: nextTriadNotes,
 		playableMidiRange: playableMidiRange,

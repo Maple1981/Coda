@@ -19,6 +19,9 @@
 		score += lowRegisterBassPenalty(nextPlan);
 		score += playableRangePenalty(nextPlan, options && options.playableRange);
 		score += idiomaticInstrumentPenalty(nextPlan, options && options.midiInstrument);
+		score += melodicMotionPenalty(previousPlan.midiNotes, nextPlan.midiNotes, options);
+		score += upperVoiceGapPenalty(nextPlan);
+		score += extremeUpperRegisterPenalty(nextPlan);
 		score -= commonToneStickinessBonus(previousPlan, nextPlan, options && options.commonToneStickiness);
 
 		return score;
@@ -48,6 +51,8 @@
 			voiceSpan(voicing.midiNotes) / 12 +
 			registerCenterPenalty(voicing, options && options.registerCenterMidi) +
 			lowRegisterBassPenalty(voicing) +
+			upperVoiceGapPenalty(voicing) +
+			extremeUpperRegisterPenalty(voicing) +
 			playableRangePenalty(voicing, options && options.playableRange) +
 			idiomaticInstrumentPenalty(voicing, options && options.midiInstrument);
 	}
@@ -63,6 +68,64 @@
 		}
 
 		return score;
+	}
+
+	function melodicMotionPenalty(previousMidiNotes, nextMidiNotes, options) {
+		var length = Math.min((previousMidiNotes || []).length, (nextMidiNotes || []).length);
+		var penalty = 0;
+
+		for (var i = 0; i < length; i++) {
+			var motion = options && options.pitchClassOnly ?
+				Math.abs(pitchService.nearestMidiTo(previousMidiNotes[i], nextMidiNotes[i]) - previousMidiNotes[i]) :
+				Math.abs(Number(nextMidiNotes[i]) - Number(previousMidiNotes[i]));
+
+			if (!isFinite(motion)) {
+				continue;
+			}
+
+			penalty += melodicLeapPenalty(motion) * voiceMotionWeight(i, length);
+		}
+
+		return penalty;
+	}
+
+	function melodicLeapPenalty(motion) {
+		var interval = Math.max(0, Number(motion) || 0);
+		var excess;
+
+		if (interval <= 2) {
+			return 0;
+		}
+
+		if (interval <= 4) {
+			return (interval - 2) * 1.5;
+		}
+
+		if (interval <= 7) {
+			excess = interval - 4;
+			return 4 + (excess * excess * 3);
+		}
+
+		if (interval <= 12) {
+			excess = interval - 7;
+			return 32 + (excess * excess * 5);
+		}
+
+		excess = interval - 12;
+
+		return 160 + (excess * excess * 12);
+	}
+
+	function voiceMotionWeight(index, length) {
+		if (index === length - 1) {
+			return 2.6;
+		}
+
+		if (index === 0) {
+			return 1.35;
+		}
+
+		return 1.7;
 	}
 
 	function commonToneStickinessBonus(previousPlan, nextPlan, weight) {
@@ -174,7 +237,7 @@
 		distance = Math.abs(centroid - center);
 		excess = Math.max(0, distance - 6);
 
-		return (excess * excess) / 3;
+		return (excess * excess) / 1.5;
 	}
 
 	function lowRegisterBassPenalty(voicing) {
@@ -188,7 +251,40 @@
 
 		excess = 40 - bass;
 
-		return excess * excess * 4;
+		return excess * excess * 40;
+	}
+
+	function upperVoiceGapPenalty(voicing) {
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes : [];
+		var penalty = 0;
+
+		for (var i = 2; i < midiNotes.length; i++) {
+			var gap = Number(midiNotes[i]) - Number(midiNotes[i - 1]);
+			var excess;
+
+			if (!isFinite(gap) || gap <= 17) {
+				continue;
+			}
+
+			excess = gap - 17;
+			penalty += excess * excess * 8;
+		}
+
+		return penalty;
+	}
+
+	function extremeUpperRegisterPenalty(voicing) {
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes : [];
+		var top = Number(midiNotes[midiNotes.length - 1]);
+		var excess;
+
+		if (!isFinite(top) || top <= 96) {
+			return 0;
+		}
+
+		excess = top - 96;
+
+		return excess * excess * 6;
 	}
 
 	function playableRangePenalty(voicing, range) {
@@ -479,16 +575,20 @@
 	global.CodaProgressionVoiceLeadingScore = {
 		commonToneStickinessBonus: commonToneStickinessBonus,
 		countParallelPerfects: countParallelPerfects,
+		extremeUpperRegisterPenalty: extremeUpperRegisterPenalty,
 		firstVoicingScore: firstVoicingScore,
 		guitarFingeringOptions: guitarFingeringOptions,
 		guitarVoicingPenalty: guitarVoicingPenalty,
 		idiomaticInstrumentPenalty: idiomaticInstrumentPenalty,
 		lowRegisterBassPenalty: lowRegisterBassPenalty,
 		lowRegisterSpacingPenalty: lowRegisterSpacingPenalty,
+		melodicLeapPenalty: melodicLeapPenalty,
+		melodicMotionPenalty: melodicMotionPenalty,
 		playableRangePenalty: playableRangePenalty,
 		pianoHandSpanPenaltyForSpan: pianoHandSpanPenaltyForSpan,
 		pianoVoicingPenalty: pianoVoicingPenalty,
 		registerCenterPenalty: registerCenterPenalty,
+		upperVoiceGapPenalty: upperVoiceGapPenalty,
 		voiceLeadingTransitionScore: voiceLeadingTransitionScore
 	};
 })(window);

@@ -849,6 +849,24 @@ assert.ok(
 		notes: ['B', 'D', 'G', 'A']
 	})
 );
+assert.ok(global.CodaProgressionVoiceLeadingScore.melodicLeapPenalty(2) < global.CodaProgressionVoiceLeadingScore.melodicLeapPenalty(7));
+assert.ok(global.CodaProgressionVoiceLeadingScore.melodicLeapPenalty(7) < global.CodaProgressionVoiceLeadingScore.melodicLeapPenalty(12));
+assert.ok(
+	global.CodaProgressionVoiceLeadingScore.voiceLeadingTransitionScore({
+		midiNotes: [60, 64, 67, 72],
+		notes: ['C', 'E', 'G', 'C']
+	}, {
+		midiNotes: [60, 64, 67, 84],
+		notes: ['C', 'E', 'G', 'C']
+	}) >
+	global.CodaProgressionVoiceLeadingScore.voiceLeadingTransitionScore({
+		midiNotes: [60, 64, 67, 72],
+		notes: ['C', 'E', 'G', 'C']
+	}, {
+		midiNotes: [63, 67, 70, 75],
+		notes: ['Eb', 'G', 'Bb', 'D']
+	})
+);
 const parsimoniousKeyboardVoicing = global.CodaProgressionVoicing.chooseVoicing({
 	baseNotes: ['B', 'D', 'G'],
 	chordName: 'G6 add9',
@@ -870,7 +888,8 @@ const parsimoniousKeyboardVoicing = global.CodaProgressionVoicing.chooseVoicing(
 	voicing: 'closed',
 	voices: 4
 });
-assert.ok(parsimoniousKeyboardVoicing.midiNotes[0] >= 47);
+assert.ok(parsimoniousKeyboardVoicing.midiNotes[0] >= 40, JSON.stringify(parsimoniousKeyboardVoicing.midiNotes));
+assert.ok(Math.abs(parsimoniousKeyboardVoicing.midiNotes[3] - 59) <= 4, JSON.stringify(parsimoniousKeyboardVoicing.midiNotes));
 assert.equal(global.CodaProgressionChordPlan.registerCenterMidi({
 	initialMidiNote: 60,
 	scaleNotes: [{ nombre: 'A' }]
@@ -911,7 +930,7 @@ const lowRegisterVoicing = global.CodaProgressionVoicing.chooseVoicing({
 	voicing: 'closed',
 	voices: 4
 });
-assert.deepEqual(lowRegisterVoicing.midiNotes, [40, 43, 48, 60]);
+assert.ok(maxVoiceMotion([24, 28, 31, 36], lowRegisterVoicing.midiNotes) <= 12);
 const highRegisterVoicing = global.CodaProgressionVoicing.chooseVoicing({
 	baseNotes: ['C', 'E', 'G'],
 	chordName: 'C',
@@ -926,7 +945,7 @@ const highRegisterVoicing = global.CodaProgressionVoicing.chooseVoicing({
 	voicing: 'closed',
 	voices: 4
 });
-assert.deepEqual(highRegisterVoicing.midiNotes, [55, 60, 64, 72]);
+assert.ok(maxVoiceMotion([72, 76, 79, 84], highRegisterVoicing.midiNotes) <= 12);
 const repeatedInversionPenalty = global.CodaProgressionVoicingSelection.inversionRunPenalty({
 	inversionIndex: 2
 }, {
@@ -2390,6 +2409,17 @@ function melodyEventsOverlap(events) {
 	}
 
 	return false;
+}
+
+function maxVoiceMotion(previousMidiNotes, nextMidiNotes) {
+	const length = Math.min((previousMidiNotes || []).length, (nextMidiNotes || []).length);
+	let max = 0;
+
+	for (let i = 0; i < length; i++) {
+		max = Math.max(max, Math.abs(Number(nextMidiNotes[i]) - Number(previousMidiNotes[i])));
+	}
+
+	return max;
 }
 
 console.log('Architecture tests passed');

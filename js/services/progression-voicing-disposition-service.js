@@ -41,7 +41,11 @@
 
 		candidates = registerShiftCandidates(candidates);
 
-		return prefersLowRegisterSpacing(options && options.midiInstrument) ? candidates.map(spreadLowRegisterSpacing) : candidates;
+		if (!prefersLowRegisterSpacing(options && options.midiInstrument)) {
+			return candidates;
+		}
+
+		return shouldForceLowRegisterSpacing(voicing, options) ? candidates.map(spreadLowRegisterSpacing) : lowRegisterSpacingAlternatives(candidates, spreadLowRegisterSpacing);
 	}
 
 	function score(voicing, previousPlan, disposition, options) {
@@ -148,6 +152,41 @@
 			midiNotes: midiNotes,
 			voiceNotes: voiceNotes
 		}) : voicing;
+	}
+
+	function lowRegisterSpacingAlternatives(candidates, spacingFunction) {
+		var result = [];
+
+		for (var i = 0; i < candidates.length; i++) {
+			appendUniqueCandidate(result, candidates[i]);
+			appendUniqueCandidate(result, spacingFunction(candidates[i]));
+		}
+
+		return result;
+	}
+
+	function shouldForceLowRegisterSpacing(voicing, options) {
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes : [];
+		var bass = Number(midiNotes[0]);
+		var center = Number(options && options.registerCenterMidi);
+
+		return isFinite(bass) && (bass < 40 || (bass < 48 && isFinite(center) && center < 50));
+	}
+
+	function appendUniqueCandidate(target, candidate) {
+		var key = candidateKey(candidate);
+
+		for (var i = 0; i < target.length; i++) {
+			if (candidateKey(target[i]) === key) {
+				return;
+			}
+		}
+
+		target.push(candidate);
+	}
+
+	function candidateKey(candidate) {
+		return (candidate && candidate.midiNotes ? candidate.midiNotes : []).join(',');
 	}
 
 	function minimumLowRegisterGap(lowerMidiNote, upperVoiceIndex) {
