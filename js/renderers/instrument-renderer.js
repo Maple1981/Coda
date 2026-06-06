@@ -12,11 +12,11 @@
 
 		for (var i = 0; i < options.strings.length; i++) {
 			html += '<tr class="guitarString" data-string-index="' + i + '">';
-			html += renderGuitarCell(options, options.strings[i].aire, options.strings[i].midiNote, options.strings[i].perteneceEscala, options.strings[i].tipo, options.scaleDefinition, 0);
+			html += renderGuitarCell(options, options.strings[i].aire, options.strings[i].midiNote, options.strings[i].perteneceEscala, options.strings[i].tipo, options.scaleDefinition, 0, i, options.strings.length);
 
 			for (var j = 0; j < options.strings[i].trastes.length; j++) {
 				var fret = options.strings[i].trastes[j];
-				html += renderGuitarCell(options, fret.nombre, fret.midiNote, fret.perteneceEscala, fret.tipo, options.scaleDefinition, j + 1);
+				html += renderGuitarCell(options, fret.nombre, fret.midiNote, fret.perteneceEscala, fret.tipo, options.scaleDefinition, j + 1, i, options.strings.length);
 			}
 
 			html += '</tr>';
@@ -26,7 +26,7 @@
 		html += '<tfoot><tr>';
 
 		for (var k = 0; k < options.strings[0].trastes.length + 1; k++) {
-			html += '<td class="fretNumber' + fretPositionMarkerClass(k) + '"><span>' + k + '</span></td>';
+			html += '<td class="fretNumber"><span>' + k + '</span></td>';
 		}
 
 		html += '</tr></tfoot>';
@@ -50,11 +50,11 @@
 		return html;
 	}
 
-	function renderGuitarCell(options, noteName, midiNote, belongsToScale, modalType, scaleDefinition, fretNumber) {
+	function renderGuitarCell(options, noteName, midiNote, belongsToScale, modalType, scaleDefinition, fretNumber, stringIndex, stringCount) {
 		var scaleClass = belongsToScale ? ' perteneceEscala' : ' noPerteneceEscala';
 		var modalClass = modalSpanClass(modalType, scaleDefinition);
 		var fretClass = Number(fretNumber) === 0 ? ' guitarOpenString' : ' guitarFret';
-		var cellClass = 'celdaNota guitarNoteCell' + fretClass;
+		var cellClass = 'celdaNota guitarNoteCell' + fretClass + guitarFretMarkerClass(fretNumber, stringIndex, stringCount);
 		var midiAttribute = midiNote != null ? ' data-midi-note="' + midiNote + '"' : '';
 
 		return '<td class="' + cellClass + scaleClass + '"><span data-note-name="' + noteName + '"' + midiAttribute + modalClass + '>' + formatNote(options, noteName) + '</span></td>';
@@ -149,14 +149,22 @@
 		return '--key-left:' + left.toFixed(4) + '%';
 	}
 
-	function fretPositionMarkerClass(fretNumber) {
+	function guitarFretMarkerClass(fretNumber, stringIndex, stringCount) {
 		var number = Number(fretNumber);
+		var index = Number(stringIndex);
+		var count = Number(stringCount) || 6;
+		var centerLowerStringIndex = Math.floor((count - 1) / 2);
 
 		if ([3, 5, 7, 9, 15, 17, 19, 21].indexOf(number) > -1) {
-			return ' fretPositionMarker';
+			return index === centerLowerStringIndex ? ' fretPositionMarker' : '';
 		}
-		if (number === 12 || number === 24) {
-			return ' fretPositionMarker fretPositionMarkerDouble';
+		if (number === 12) {
+			if (index === Math.max(0, centerLowerStringIndex - 1)) {
+				return ' fretPositionMarker fretPositionMarkerDoubleUpper';
+			}
+			if (index === Math.min(count - 1, centerLowerStringIndex + 2)) {
+				return ' fretPositionMarker fretPositionMarkerDoubleLower';
+			}
 		}
 
 		return '';
@@ -179,7 +187,7 @@
 
 		midiNote = Number(midiNote);
 
-		return isFinite(midiNote) ? Math.floor(midiNote / 12) - 1 : null;
+		return isFinite(midiNote) ? Math.floor(midiNote / 12) - 2 : null;
 	}
 
 	function capitalize(value) {
@@ -244,7 +252,7 @@
 	global.CodaRenderers.instruments = {
 		renderBlackKeys: renderBlackKeys,
 		renderGuitar: renderGuitar,
-		fretPositionMarkerClass: fretPositionMarkerClass,
+		guitarFretMarkerClass: guitarFretMarkerClass,
 		octaveMarkerHtml: octaveMarkerHtml,
 		pianoOctaveNumber: pianoOctaveNumber,
 		renderPiano: renderPiano,

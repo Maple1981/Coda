@@ -874,38 +874,26 @@ section#instrumento{
 			background:linear-gradient(90deg, rgba(255,255,255,.18), rgba(255,255,255,.7), rgba(255,255,255,.2));
 			box-shadow:0 1px 1px rgba(0,0,0,.65);
 			pointer-events:none;
+			z-index:2;
 		}
 
-		tfoot td.fretPositionMarker:before{
+		td.guitarNoteCell.fretPositionMarker:before{
 			content:"";
 			position:absolute;
 			left:50%;
-			top:-58px;
-			width:7px;
-			height:7px;
+			top:100%;
+			width:8px;
+			height:8px;
 			border-radius:50%;
-			background:rgba(238,238,238,.68);
+			background:rgba(245,245,245,.82);
 			transform:translate(-50%, -50%);
 			pointer-events:none;
 			z-index:1;
 		}
 
-		tfoot td.fretPositionMarkerDouble:before{
-			top:-72px;
-		}
-
-		tfoot td.fretPositionMarkerDouble:after{
-			content:"";
-			position:absolute;
-			left:50%;
-			top:-44px;
-			width:7px;
-			height:7px;
-			border-radius:50%;
-			background:rgba(238,238,238,.68);
-			transform:translate(-50%, -50%);
-			pointer-events:none;
-			z-index:1;
+		td.guitarNoteCell.fretPositionMarkerDoubleUpper:before,
+		td.guitarNoteCell.fretPositionMarkerDoubleLower:before{
+			top:50%;
 		}
 
 		tfoot td{
@@ -984,9 +972,9 @@ section#instrumento{
 		.pianoWhiteKey .pianoOctaveMarker{
 			top:7px;
 			bottom:auto;
-			color:rgba(80,80,80,.62);
+			color:rgba(65,65,65,.82);
 			background:transparent;
-			font-size:.72em;
+			font-size:.76em;
 			font-weight:700;
 			pointer-events:none;
 		}

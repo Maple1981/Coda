@@ -1705,40 +1705,27 @@ section#instrumento table.diapason td.guitarNoteCell:after {
   -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.65);
           box-shadow: 0 1px 1px rgba(0, 0, 0, 0.65);
   pointer-events: none;
+  z-index: 2;
 }
 
-section#instrumento table.diapason tfoot td.fretPositionMarker:before {
+section#instrumento table.diapason td.guitarNoteCell.fretPositionMarker:before {
   content: "";
   position: absolute;
   left: 50%;
-  top: -58px;
-  width: 7px;
-  height: 7px;
+  top: 100%;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: rgba(238, 238, 238, 0.68);
+  background: rgba(245, 245, 245, 0.82);
   -webkit-transform: translate(-50%, -50%);
           transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 1;
 }
 
-section#instrumento table.diapason tfoot td.fretPositionMarkerDouble:before {
-  top: -72px;
-}
-
-section#instrumento table.diapason tfoot td.fretPositionMarkerDouble:after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: -44px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: rgba(238, 238, 238, 0.68);
-  -webkit-transform: translate(-50%, -50%);
-          transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: 1;
+section#instrumento table.diapason td.guitarNoteCell.fretPositionMarkerDoubleUpper:before,
+section#instrumento table.diapason td.guitarNoteCell.fretPositionMarkerDoubleLower:before {
+  top: 50%;
 }
 
 section#instrumento table.diapason tfoot td {
@@ -1824,9 +1811,9 @@ section#instrumento div.teclado .pianoWhiteKey span {
 section#instrumento div.teclado .pianoWhiteKey .pianoOctaveMarker {
   top: 7px;
   bottom: auto;
-  color: rgba(80, 80, 80, 0.62);
+  color: rgba(65, 65, 65, 0.82);
   background: transparent;
-  font-size: .72em;
+  font-size: .76em;
   font-weight: 700;
   pointer-events: none;
 }
