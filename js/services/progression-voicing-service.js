@@ -11,8 +11,8 @@
 		return voicingSelectionService.chooseVoicing(options);
 	}
 
-	function voiceLeadingTransitionScore(previousPlan, nextPlan) {
-		return voiceLeadingScoreService.voiceLeadingTransitionScore(previousPlan, nextPlan);
+	function voiceLeadingTransitionScore(previousPlan, nextPlan, options) {
+		return voiceLeadingScoreService.voiceLeadingTransitionScore(previousPlan, nextPlan, options);
 	}
 
 	function commonPitchNames(firstNotes, secondNotes) {

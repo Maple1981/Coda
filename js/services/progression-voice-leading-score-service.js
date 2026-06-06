@@ -7,7 +7,7 @@
 	var GUITAR_MAX_FRET = 24;
 
 	function voiceLeadingTransitionScore(previousPlan, nextPlan, options) {
-		var score = transitionScore(previousPlan.midiNotes, nextPlan.midiNotes);
+		var score = transitionScore(previousPlan.midiNotes, nextPlan.midiNotes, options);
 		var commonTones = pitchService.commonPitchNames(previousPlan.notes, nextPlan.notes).length;
 		var parallelPerfects = countParallelPerfects(previousPlan.midiNotes, nextPlan.midiNotes, false);
 		var exteriorParallelPerfects = countParallelPerfects(previousPlan.midiNotes, nextPlan.midiNotes, true);
@@ -52,12 +52,14 @@
 			idiomaticInstrumentPenalty(voicing, options && options.midiInstrument);
 	}
 
-	function transitionScore(previousMidiNotes, nextMidiNotes) {
+	function transitionScore(previousMidiNotes, nextMidiNotes, options) {
 		var length = Math.min(previousMidiNotes.length, nextMidiNotes.length);
 		var score = Math.abs(previousMidiNotes.length - nextMidiNotes.length) * 4;
 
 		for (var i = 0; i < length; i++) {
-			score += Math.abs(pitchService.nearestMidiTo(previousMidiNotes[i], nextMidiNotes[i]) - previousMidiNotes[i]);
+			score += options && options.pitchClassOnly ?
+				Math.abs(pitchService.nearestMidiTo(previousMidiNotes[i], nextMidiNotes[i]) - previousMidiNotes[i]) :
+				Math.abs(nextMidiNotes[i] - previousMidiNotes[i]);
 		}
 
 		return score;

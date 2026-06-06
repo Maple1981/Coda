@@ -85,7 +85,11 @@
 			voices: voices
 		});
 
-		return voicingService.voiceLeadingTransitionScore(previousPlan, seventhVoicing) + 2 <= voicingService.voiceLeadingTransitionScore(previousPlan, triadVoicing);
+		return voicingService.voiceLeadingTransitionScore(previousPlan, seventhVoicing, {
+			pitchClassOnly: true
+		}) + 2 <= voicingService.voiceLeadingTransitionScore(previousPlan, triadVoicing, {
+			pitchClassOnly: true
+		});
 	}
 
 	function isTonicBoundary(index, length, degreeIndex) {

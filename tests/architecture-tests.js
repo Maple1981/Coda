@@ -803,6 +803,44 @@ assert.ok(global.CodaProgressionVoiceLeadingScore.guitarVoicingPenalty({
 assert.ok(global.CodaProgressionVoiceLeadingScore.idiomaticInstrumentPenalty({
 	midiNotes: [48, 65, 67, 84]
 }, 'acoustic_grand_piano') > 0);
+assert.ok(
+	global.CodaProgressionVoiceLeadingScore.voiceLeadingTransitionScore({
+		midiNotes: [45, 48, 52, 59],
+		notes: ['A', 'C', 'E', 'B']
+	}, {
+		midiNotes: [35, 38, 43, 45],
+		notes: ['B', 'D', 'G', 'A']
+	}) >
+	global.CodaProgressionVoiceLeadingScore.voiceLeadingTransitionScore({
+		midiNotes: [45, 48, 52, 59],
+		notes: ['A', 'C', 'E', 'B']
+	}, {
+		midiNotes: [47, 50, 55, 57],
+		notes: ['B', 'D', 'G', 'A']
+	})
+);
+const parsimoniousKeyboardVoicing = global.CodaProgressionVoicing.chooseVoicing({
+	baseNotes: ['B', 'D', 'G'],
+	chordName: 'G6 add9',
+	extraNotes: ['A'],
+	initialMidiNote: 60,
+	kind: 'triad',
+	midiInstrument: 'acoustic_grand_piano',
+	previousPlan: {
+		midiNotes: [45, 48, 52, 59],
+		notes: ['A', 'C', 'E', 'B'],
+		voiceNotes: [
+			{ midiNote: 45, note: 'A' },
+			{ midiNote: 48, note: 'C' },
+			{ midiNote: 52, note: 'E' },
+			{ midiNote: 59, note: 'B' }
+		]
+	},
+	registerCenterMidi: 54,
+	voicing: 'closed',
+	voices: 4
+});
+assert.ok(parsimoniousKeyboardVoicing.midiNotes[0] >= 47);
 assert.equal(global.CodaProgressionChordPlan.registerCenterMidi({
 	initialMidiNote: 60,
 	scaleNotes: [{ nombre: 'A' }]
