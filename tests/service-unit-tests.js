@@ -16,6 +16,7 @@ loader.runManifestRange('js/data/constants-data.js', 'js/application/progression
 loader.runScript('js/ui/progression-generation-events-controller.js');
 loader.runScript('js/ui/circle-of-fifths-popover-controller.js');
 loader.runScript('js/ui/workbench-instrument-menu-controller.js');
+loader.runScript('js/ui/scale-report-ui.js');
 
 const global = context.window;
 
@@ -441,6 +442,37 @@ fakeInstrumentRoot.dispatch('click', {
 });
 assert.deepEqual(selectedInstruments, ['drawbar_organ']);
 assert.equal(instrumentMenu.isOpen(), false);
+
+const previousDocument = global.document;
+const fakePianoViewport = {
+	clientWidth: 240,
+	scrollLeft: 0,
+	scrollWidth: 1400
+};
+const fakeC3Key = {
+	offsetLeft: 600,
+	offsetWidth: 24
+};
+const fakeC3Note = {
+	closest: function (selector) {
+		return selector === '.pianoKey' ? fakeC3Key : null;
+	}
+};
+global.document = {
+	querySelector: function (selector) {
+		if (selector === '#instrumento .instrumentScaleViewport') {
+			return fakePianoViewport;
+		}
+		if (selector === '#instrumento .pianoKeyboard [data-midi-note="60"]') {
+			return fakeC3Note;
+		}
+
+		return null;
+	}
+};
+global.CodaUi.scrollPianoToDefaultOctave();
+assert.equal(fakePianoViewport.scrollLeft, 492);
+global.document = previousDocument;
 
 console.log('Service unit tests passed');
 

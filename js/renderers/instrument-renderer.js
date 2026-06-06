@@ -144,7 +144,7 @@
 	}
 
 	function blackKeyStyle(whiteIndex, whiteCount) {
-		var left = ((whiteIndex - 0.32) / whiteCount) * 100;
+		var left = (whiteIndex / whiteCount) * 100;
 
 		return '--key-left:' + left.toFixed(4) + '%';
 	}
@@ -162,7 +162,7 @@
 			if (index === Math.max(0, centerLowerStringIndex - 1)) {
 				return ' fretPositionMarker fretPositionMarkerDoubleUpper';
 			}
-			if (index === Math.min(count - 1, centerLowerStringIndex + 2)) {
+			if (index === Math.min(count - 1, centerLowerStringIndex + 1)) {
 				return ' fretPositionMarker fretPositionMarkerDoubleLower';
 			}
 		}
@@ -251,6 +251,7 @@
 	global.CodaRenderers = global.CodaRenderers || {};
 	global.CodaRenderers.instruments = {
 		renderBlackKeys: renderBlackKeys,
+		blackKeyStyle: blackKeyStyle,
 		renderGuitar: renderGuitar,
 		guitarFretMarkerClass: guitarFretMarkerClass,
 		octaveMarkerHtml: octaveMarkerHtml,

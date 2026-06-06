@@ -304,7 +304,8 @@ assert.equal(instrumentsRenderer.guitarFretMarkerClass(3, 1, 6), '');
 assert.equal(instrumentsRenderer.guitarFretMarkerClass(19, 2, 6), ' fretPositionMarker');
 assert.equal(instrumentsRenderer.guitarFretMarkerClass(21, 2, 6), ' fretPositionMarker');
 assert.equal(instrumentsRenderer.guitarFretMarkerClass(12, 1, 6), ' fretPositionMarker fretPositionMarkerDoubleUpper');
-assert.equal(instrumentsRenderer.guitarFretMarkerClass(12, 4, 6), ' fretPositionMarker fretPositionMarkerDoubleLower');
+assert.equal(instrumentsRenderer.guitarFretMarkerClass(12, 3, 6), ' fretPositionMarker fretPositionMarkerDoubleLower');
+assert.equal(instrumentsRenderer.guitarFretMarkerClass(12, 4, 6), '');
 assert.equal(instrumentsRenderer.guitarFretMarkerClass(24, 2, 6), '');
 
 const pianoKeyboard = domain.buildPianoKeyboard({
@@ -324,6 +325,9 @@ const pianoHtml = instrumentsRenderer.renderPiano({
 assert.ok(pianoHtml.indexOf('<div class="teclasNegras pianoBlackKeys">') > -1);
 assert.ok(pianoHtml.indexOf('<div class="teclasBlancas pianoWhiteKeys">') > -1);
 assert.ok(pianoHtml.indexOf('<span data-note-name="Bb" data-midi-note="58">Bb</span>') > -1);
+assert.ok(pianoHtml.indexOf('style="--key-left:14.2857%"') > -1);
+assert.equal(instrumentsRenderer.blackKeyStyle(1, 7), '--key-left:14.2857%');
+assert.equal(instrumentsRenderer.blackKeyStyle(6, 7), '--key-left:85.7143%');
 assert.ok(pianoHtml.indexOf('<div class="celdaNota pianoKey pianoWhiteKey perteneceEscala"><span class="pianoOctaveMarker" aria-hidden="true">2</span><span data-note-name="C" data-midi-note="48">C</span></div>') > -1);
 assert.equal(instrumentsRenderer.pianoOctaveNumber('C', 24), 0);
 assert.equal(instrumentsRenderer.pianoOctaveNumber('C', 48), 2);

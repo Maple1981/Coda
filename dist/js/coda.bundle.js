@@ -22610,7 +22610,7 @@
 	}
 
 	function blackKeyStyle(whiteIndex, whiteCount) {
-		var left = ((whiteIndex - 0.32) / whiteCount) * 100;
+		var left = (whiteIndex / whiteCount) * 100;
 
 		return '--key-left:' + left.toFixed(4) + '%';
 	}
@@ -22628,7 +22628,7 @@
 			if (index === Math.max(0, centerLowerStringIndex - 1)) {
 				return ' fretPositionMarker fretPositionMarkerDoubleUpper';
 			}
-			if (index === Math.min(count - 1, centerLowerStringIndex + 2)) {
+			if (index === Math.min(count - 1, centerLowerStringIndex + 1)) {
 				return ' fretPositionMarker fretPositionMarkerDoubleLower';
 			}
 		}
@@ -22717,6 +22717,7 @@
 	global.CodaRenderers = global.CodaRenderers || {};
 	global.CodaRenderers.instruments = {
 		renderBlackKeys: renderBlackKeys,
+		blackKeyStyle: blackKeyStyle,
 		renderGuitar: renderGuitar,
 		guitarFretMarkerClass: guitarFretMarkerClass,
 		octaveMarkerHtml: octaveMarkerHtml,
@@ -27074,6 +27075,10 @@
 		}
 
 		setHtmlById('instrumento', html);
+		if (options.instrumentView.type === 'piano') {
+			scrollPianoToDefaultOctave();
+			nextFrame(scrollPianoToDefaultOctave);
+		}
 		attachInstrumentEvents(options);
 	}
 
@@ -27161,6 +27166,32 @@
 		canvas.style.transform = 'scale(' + scale + ')';
 		canvas.style.left = offsetLeft + 'px';
 		viewport.style.height = Math.ceil(baseHeight * scale) + 'px';
+	}
+
+	function scrollPianoToDefaultOctave(targetMidiNote) {
+		var midiNote = targetMidiNote == null ? 60 : targetMidiNote;
+		var viewport = query('#instrumento .instrumentScaleViewport');
+		var target = query('#instrumento .pianoKeyboard [data-midi-note="' + midiNote + '"]');
+		var key = target && target.closest ? target.closest('.pianoKey') : null;
+		var keyLeft;
+		var keyWidth;
+		var nextScroll;
+		var maxScroll;
+
+		if (!viewport || !key) {
+			return;
+		}
+
+		keyLeft = numberOrDefault(key.offsetLeft, 0);
+		keyWidth = numberOrDefault(key.offsetWidth, 0);
+		nextScroll = keyLeft + keyWidth / 2 - numberOrDefault(viewport.clientWidth, 0) / 2;
+		maxScroll = Math.max(0, numberOrDefault(viewport.scrollWidth, 0) - numberOrDefault(viewport.clientWidth, 0));
+
+		if (maxScroll > 0) {
+			nextScroll = Math.min(nextScroll, maxScroll);
+		}
+
+		viewport.scrollLeft = Math.max(0, Math.round(nextScroll));
 	}
 
 	function syncDashboardWorkspaceHeight() {
@@ -27281,6 +27312,12 @@
 		return global.document ? global.document.querySelector(selector) : null;
 	}
 
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
 	function selectedText(select) {
 		if (!select || select.selectedIndex < 0 || !select.options[select.selectedIndex]) {
 			return '';
@@ -27315,6 +27352,7 @@
 		scheduleDashboardWorkspaceHeight: scheduleDashboardWorkspaceHeight,
 		scheduleInstrumentScale: scheduleInstrumentScale,
 		scheduleSidebarPanelViewport: scheduleSidebarPanelViewport,
+		scrollPianoToDefaultOctave: scrollPianoToDefaultOctave,
 		syncDashboardWorkspaceHeight: syncDashboardWorkspaceHeight,
 		syncInstrumentScale: syncInstrumentScale,
 		syncSidebarPanelViewport: syncSidebarPanelViewport,
