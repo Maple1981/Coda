@@ -876,34 +876,36 @@ section#instrumento{
 			pointer-events:none;
 		}
 
-		td.fretMarker:before{
+		tfoot td.fretPositionMarker:before{
 			content:"";
 			position:absolute;
 			left:50%;
-			top:50%;
+			top:-58px;
 			width:7px;
 			height:7px;
 			border-radius:50%;
-			background:rgba(238,238,238,.34);
+			background:rgba(238,238,238,.68);
 			transform:translate(-50%, -50%);
 			pointer-events:none;
+			z-index:1;
 		}
 
-		td.fretMarkerDouble:before{
-			top:34%;
+		tfoot td.fretPositionMarkerDouble:before{
+			top:-72px;
 		}
 
-		td.fretMarkerDouble:after{
+		tfoot td.fretPositionMarkerDouble:after{
 			content:"";
 			position:absolute;
 			left:50%;
-			top:66%;
+			top:-44px;
 			width:7px;
 			height:7px;
 			border-radius:50%;
-			background:rgba(238,238,238,.34);
+			background:rgba(238,238,238,.68);
 			transform:translate(-50%, -50%);
 			pointer-events:none;
+			z-index:1;
 		}
 
 		tfoot td{
@@ -977,6 +979,16 @@ section#instrumento{
 			left:50%;
 			bottom:7px;
 			transform:translateX(-50%);
+		}
+
+		.pianoWhiteKey .pianoOctaveMarker{
+			top:7px;
+			bottom:auto;
+			color:rgba(80,80,80,.62);
+			background:transparent;
+			font-size:.72em;
+			font-weight:700;
+			pointer-events:none;
 		}
 
 		.pianoBlackKey span{

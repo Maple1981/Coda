@@ -26,7 +26,7 @@
 		html += '<tfoot><tr>';
 
 		for (var k = 0; k < options.strings[0].trastes.length + 1; k++) {
-			html += '<td class="fretNumber' + markerClass(k) + '"><span>' + k + '</span></td>';
+			html += '<td class="fretNumber' + fretPositionMarkerClass(k) + '"><span>' + k + '</span></td>';
 		}
 
 		html += '</tr></tfoot>';
@@ -54,7 +54,7 @@
 		var scaleClass = belongsToScale ? ' perteneceEscala' : ' noPerteneceEscala';
 		var modalClass = modalSpanClass(modalType, scaleDefinition);
 		var fretClass = Number(fretNumber) === 0 ? ' guitarOpenString' : ' guitarFret';
-		var cellClass = 'celdaNota guitarNoteCell' + fretClass + markerClass(fretNumber);
+		var cellClass = 'celdaNota guitarNoteCell' + fretClass;
 		var midiAttribute = midiNote != null ? ' data-midi-note="' + midiNote + '"' : '';
 
 		return '<td class="' + cellClass + scaleClass + '"><span data-note-name="' + noteName + '"' + midiAttribute + modalClass + '>' + formatNote(options, noteName) + '</span></td>';
@@ -117,8 +117,9 @@
 		var cellClass = 'celdaNota pianoKey piano' + capitalize(keyType || 'white') + 'Key';
 		var midiAttribute = midiNote != null ? ' data-midi-note="' + midiNote + '"' : '';
 		var styleAttribute = style ? ' style="' + style + '"' : '';
+		var octaveMarker = octaveMarkerHtml(noteName, midiNote, keyType);
 
-		return '<div class="' + cellClass + scaleClass + '"' + styleAttribute + '><span data-note-name="' + noteName + '"' + midiAttribute + modalClass + '>' + formatNote(options, noteName) + '</span></div>';
+		return '<div class="' + cellClass + scaleClass + '"' + styleAttribute + '>' + octaveMarker + '<span data-note-name="' + noteName + '"' + midiAttribute + modalClass + '>' + formatNote(options, noteName) + '</span></div>';
 	}
 
 	function pianoKeys(keyboard) {
@@ -148,17 +149,37 @@
 		return '--key-left:' + left.toFixed(4) + '%';
 	}
 
-	function markerClass(fretNumber) {
+	function fretPositionMarkerClass(fretNumber) {
 		var number = Number(fretNumber);
 
 		if ([3, 5, 7, 9, 15, 17, 19, 21].indexOf(number) > -1) {
-			return ' fretMarker';
+			return ' fretPositionMarker';
 		}
 		if (number === 12 || number === 24) {
-			return ' fretMarker fretMarkerDouble';
+			return ' fretPositionMarker fretPositionMarkerDouble';
 		}
 
 		return '';
+	}
+
+	function octaveMarkerHtml(noteName, midiNote, keyType) {
+		var octave = pianoOctaveNumber(noteName, midiNote);
+
+		if (keyType !== 'white' || octave === null) {
+			return '';
+		}
+
+		return '<span class="pianoOctaveMarker" aria-hidden="true">' + octave + '</span>';
+	}
+
+	function pianoOctaveNumber(noteName, midiNote) {
+		if (String(noteName || '').charAt(0) !== 'C') {
+			return null;
+		}
+
+		midiNote = Number(midiNote);
+
+		return isFinite(midiNote) ? Math.floor(midiNote / 12) - 1 : null;
 	}
 
 	function capitalize(value) {
@@ -223,6 +244,9 @@
 	global.CodaRenderers.instruments = {
 		renderBlackKeys: renderBlackKeys,
 		renderGuitar: renderGuitar,
+		fretPositionMarkerClass: fretPositionMarkerClass,
+		octaveMarkerHtml: octaveMarkerHtml,
+		pianoOctaveNumber: pianoOctaveNumber,
 		renderPiano: renderPiano,
 		renderTuningSelect: renderTuningSelect,
 		tuningLabel: tuningLabel,

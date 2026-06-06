@@ -299,6 +299,11 @@ assert.ok(guitarHtml.indexOf('<select id="selectorAfinaciones">') > -1);
 assert.ok(guitarHtml.indexOf('<table class="diapason fretboard">') > -1);
 assert.ok(guitarHtml.indexOf('<td class="celdaNota guitarNoteCell guitarOpenString perteneceEscala"><span data-note-name="E" data-midi-note="64">E</span></td>') > -1);
 assert.ok(guitarHtml.indexOf('<td class="fretNumber"><span>2</span></td>') > -1);
+assert.equal(instrumentsRenderer.fretPositionMarkerClass(3), ' fretPositionMarker');
+assert.equal(instrumentsRenderer.fretPositionMarkerClass(19), ' fretPositionMarker');
+assert.equal(instrumentsRenderer.fretPositionMarkerClass(21), ' fretPositionMarker');
+assert.equal(instrumentsRenderer.fretPositionMarkerClass(12), ' fretPositionMarker fretPositionMarkerDouble');
+assert.equal(instrumentsRenderer.fretPositionMarkerClass(24), ' fretPositionMarker fretPositionMarkerDouble');
 
 const pianoKeyboard = domain.buildPianoKeyboard({
 	isDegreeSuppressed: function () { return false; },
@@ -317,7 +322,10 @@ const pianoHtml = instrumentsRenderer.renderPiano({
 assert.ok(pianoHtml.indexOf('<div class="teclasNegras pianoBlackKeys">') > -1);
 assert.ok(pianoHtml.indexOf('<div class="teclasBlancas pianoWhiteKeys">') > -1);
 assert.ok(pianoHtml.indexOf('<span data-note-name="Bb" data-midi-note="58">Bb</span>') > -1);
-assert.ok(pianoHtml.indexOf('<div class="celdaNota pianoKey pianoWhiteKey perteneceEscala"><span data-note-name="C" data-midi-note="48">C</span></div>') > -1);
+assert.ok(pianoHtml.indexOf('<div class="celdaNota pianoKey pianoWhiteKey perteneceEscala"><span class="pianoOctaveMarker" aria-hidden="true">3</span><span data-note-name="C" data-midi-note="48">C</span></div>') > -1);
+assert.equal(instrumentsRenderer.pianoOctaveNumber('C', 48), 3);
+assert.equal(instrumentsRenderer.pianoOctaveNumber('C', 108), 8);
+assert.equal(instrumentsRenderer.pianoOctaveNumber('D', 50), null);
 
 const englishPianoHtml = instrumentsRenderer.renderPiano({
 	i18n: englishI18n,
