@@ -818,7 +818,9 @@ section#instrumento{
 	.instrumentScaleViewport{
 		position:relative;
 		width:100%;
-		overflow:hidden;
+		overflow-x:auto;
+		overflow-y:hidden;
+		padding-bottom:.4em;
 	}
 
 	.instrumentScaleCanvas{
@@ -826,108 +828,194 @@ section#instrumento{
 		top:0;
 		left:0;
 		transform-origin:top left;
+
+		&.instrumentScaleCanvas--scroll{
+			position:relative;
+			display:inline-block;
+			min-width:max-content;
+		}
 	}
 
 	table.diapason{
-		width:650px;
-		height:212px;
-		background:transparent url("../../img/diapason.jpg") no-repeat 0 0; 
-		background-size: contain;
+		border-collapse:separate;
+		border-spacing:0;
+		width:auto;
+		height:auto;
+		background:linear-gradient(90deg, #26170f 0%, #4d2b16 38%, #2b160d 100%);
+		border:1px solid rgba(255,255,255,.14);
+		box-shadow:inset 0 0 0 2px rgba(0,0,0,.35), 0 8px 18px rgba(0,0,0,.25);
 		margin:0 auto;
 
 		td{
-			width:50px; 
-			height:29px; 
-			padding:2px 5px; 
+			position:relative;
+			width:46px; 
+			height:28px; 
+			padding:3px 4px; 
 			text-align:center; 
 		}/*traste*/
+
+		td.guitarOpenString{
+			width:42px;
+			background:rgba(0,0,0,.28);
+			border-right:4px solid rgba(235,220,190,.75);
+		}
+
+		td.guitarFret{
+			border-right:2px solid rgba(205,190,170,.42);
+		}
+
+		td.guitarNoteCell:after{
+			content:"";
+			position:absolute;
+			left:0;
+			right:0;
+			top:50%;
+			height:1px;
+			background:linear-gradient(90deg, rgba(255,255,255,.18), rgba(255,255,255,.7), rgba(255,255,255,.2));
+			box-shadow:0 1px 1px rgba(0,0,0,.65);
+			pointer-events:none;
+		}
+
+		td.fretMarker:before{
+			content:"";
+			position:absolute;
+			left:50%;
+			top:50%;
+			width:7px;
+			height:7px;
+			border-radius:50%;
+			background:rgba(238,238,238,.34);
+			transform:translate(-50%, -50%);
+			pointer-events:none;
+		}
+
+		td.fretMarkerDouble:before{
+			top:34%;
+		}
+
+		td.fretMarkerDouble:after{
+			content:"";
+			position:absolute;
+			left:50%;
+			top:66%;
+			width:7px;
+			height:7px;
+			border-radius:50%;
+			background:rgba(238,238,238,.34);
+			transform:translate(-50%, -50%);
+			pointer-events:none;
+		}
+
+		tfoot td{
+			height:18px;
+			padding-top:4px;
+			background:rgba(0,0,0,.22);
+			color:$neutral_color;
+			font-size:.75em;
+		}
 
 	} /*width=13 trastes x (width traste sin sumar padding traste)*/
 
 
 	div.teclado{
 		box-sizing:border-box;
-		width:646px;
-		height:212px;
-		background:transparent url("../../img/teclado.jpg") no-repeat 0 0;
-		background-size:contain; 
+		position:relative;
+		width:calc(var(--white-key-count) * 24px);
+		height:168px;
+		background:linear-gradient(180deg, #242424, #101010);
+		border:1px solid rgba(255,255,255,.18);
+		box-shadow:inset 0 0 0 2px rgba(0,0,0,.55), 0 8px 18px rgba(0,0,0,.25);
 		margin:0 auto;
-		padding-left:36px; 
-		padding-right:40px;
+		padding:8px 8px 10px;
 
-		table td{
-			text-align:center; 
-			padding:0px;
+		.pianoWhiteKeys{
+			position:relative;
+			z-index:1;
+			display:grid;
+			grid-template-columns:repeat(var(--white-key-count), 24px);
+			height:148px;
 		}
 
-		table.teclasNegras{
-			padding-top:100px;
-			width:572px;
-
-			td{
-				vertical-align:top;
-				width:18px;
-			}
-
-			td.huecoBlancas{
-				width:24px;
-			}
-
-			td.huecoC{
-				width:26px;
-			}
-
-			td.huecoE{
-				width:30px;
-			}
-
-			td.huecoA{
-				width:18px;
-			}
-
+		.pianoBlackKeys{
+			position:absolute;
+			z-index:2;
+			left:8px;
+			right:8px;
+			top:8px;
+			height:92px;
+			pointer-events:none;
 		}
 
-		table.teclasBlancas{
-			padding-top:40px;
-			width:574px;
-
-			td{
-				vertical-align:bottom; 
-				width:28px;
-			}
-
+		.pianoKey{
+			position:relative;
+			text-align:center;
 		}
 
+		.pianoWhiteKey{
+			background:linear-gradient(180deg, #f7f7f7 0%, #d8d8d8 100%);
+			border-left:1px solid #777;
+			border-bottom:3px solid #aaa;
+			border-radius:0 0 4px 4px;
+		}
 
+		.pianoBlackKey{
+			position:absolute;
+			left:var(--key-left);
+			top:0;
+			width:15px;
+			height:92px;
+			margin-left:-7px;
+			background:linear-gradient(180deg, #242424 0%, #050505 100%);
+			border:1px solid #000;
+			border-radius:0 0 4px 4px;
+			box-shadow:0 3px 5px rgba(0,0,0,.65);
+			pointer-events:auto;
+		}
+
+		.pianoWhiteKey span{
+			position:absolute;
+			left:50%;
+			bottom:7px;
+			transform:translateX(-50%);
+		}
+
+		.pianoBlackKey span{
+			position:absolute;
+			left:50%;
+			bottom:8px;
+			transform:translateX(-50%);
+		}
 
 	} /*(width teclaBlanca * 14) + (width teclaNegra * 10)*/
 
-	table td.celdaNota span{
+	.celdaNota span{
 		border-radius:11px;
 		width:22px;
 		height:22px;
 		display:block;
 		margin:0 auto;
 		cursor:pointer;
+		position:relative;
+		z-index:3;
 	}
 
-	table td.noPerteneceEscala span{
+	.noPerteneceEscala span{
 		color: $neutral_color;
 		background-color:transparent;
 	}
 
-	table td.perteneceEscala span{
+	.perteneceEscala span{
 		background-color: $corporative_main_color;
 		color:$basic_filldarkgrad_color;  
 		font-weight:800;
 	}
 
-	div.teclado table td.perteneceEscala span{
+	div.teclado .perteneceEscala span{
 		background-color: $corporative_main_color;
 	}
 
-	table td.celdaNota span.resaltada,
-	table td.celdaNota span.isPlayingInstrumentNote{
+	.celdaNota span.resaltada,
+	.celdaNota span.isPlayingInstrumentNote{
 		background-color:$corporative_complementary_color !important; 
 	}
 

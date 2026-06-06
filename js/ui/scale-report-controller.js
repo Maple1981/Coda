@@ -1356,7 +1356,7 @@
 	function highlightChord() {
 		return function (element) {
 			var noteNames = element.id.split('-');
-			var noteElements = global.document ? global.document.querySelectorAll('td.celdaNota span[data-note-name]') : [];
+			var noteElements = global.document ? global.document.querySelectorAll('.celdaNota span[data-note-name]') : [];
 
 			for (var i = 0; i < noteNames.length; i++) {
 				highlightInstrumentPitch(noteElements, noteNames[i]);
@@ -1388,7 +1388,7 @@
 
 	function clearChordHighlight() {
 		return function () {
-			forEachElement('td.celdaNota span.resaltada', function (note) {
+			forEachElement('.celdaNota span.resaltada', function (note) {
 				note.classList.remove('resaltada');
 			});
 		};

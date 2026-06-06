@@ -1640,7 +1640,9 @@ section#instrumento {
 section#instrumento .instrumentScaleViewport {
   position: relative;
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: .4em;
 }
 
 section#instrumento .instrumentScaleCanvas {
@@ -1651,101 +1653,208 @@ section#instrumento .instrumentScaleCanvas {
           transform-origin: top left;
 }
 
+section#instrumento .instrumentScaleCanvas.instrumentScaleCanvas--scroll {
+  position: relative;
+  display: inline-block;
+  min-width: -webkit-max-content;
+  min-width: -moz-max-content;
+  min-width: max-content;
+}
+
 section#instrumento table.diapason {
-  width: 650px;
-  height: 212px;
-  background: transparent url("../../img/diapason.jpg") no-repeat 0 0;
-  background-size: contain;
+  border-collapse: separate;
+  border-spacing: 0;
+  width: auto;
+  height: auto;
+  background: -webkit-gradient(linear, left top, right top, from(#26170f), color-stop(38%, #4d2b16), to(#2b160d));
+  background: linear-gradient(90deg, #26170f 0%, #4d2b16 38%, #2b160d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  -webkit-box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35), 0 8px 18px rgba(0, 0, 0, 0.25);
+          box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35), 0 8px 18px rgba(0, 0, 0, 0.25);
   margin: 0 auto;
   /*traste*/
 }
 
 section#instrumento table.diapason td {
-  width: 50px;
-  height: 29px;
-  padding: 2px 5px;
+  position: relative;
+  width: 46px;
+  height: 28px;
+  padding: 3px 4px;
   text-align: center;
+}
+
+section#instrumento table.diapason td.guitarOpenString {
+  width: 42px;
+  background: rgba(0, 0, 0, 0.28);
+  border-right: 4px solid rgba(235, 220, 190, 0.75);
+}
+
+section#instrumento table.diapason td.guitarFret {
+  border-right: 2px solid rgba(205, 190, 170, 0.42);
+}
+
+section#instrumento table.diapason td.guitarNoteCell:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: -webkit-gradient(linear, left top, right top, from(rgba(255, 255, 255, 0.18)), color-stop(rgba(255, 255, 255, 0.7)), to(rgba(255, 255, 255, 0.2)));
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.2));
+  -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.65);
+          box-shadow: 0 1px 1px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+
+section#instrumento table.diapason td.fretMarker:before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(238, 238, 238, 0.34);
+  -webkit-transform: translate(-50%, -50%);
+          transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+section#instrumento table.diapason td.fretMarkerDouble:before {
+  top: 34%;
+}
+
+section#instrumento table.diapason td.fretMarkerDouble:after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 66%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(238, 238, 238, 0.34);
+  -webkit-transform: translate(-50%, -50%);
+          transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+section#instrumento table.diapason tfoot td {
+  height: 18px;
+  padding-top: 4px;
+  background: rgba(0, 0, 0, 0.22);
+  color: #bbb;
+  font-size: .75em;
 }
 
 section#instrumento div.teclado {
   -webkit-box-sizing: border-box;
           box-sizing: border-box;
-  width: 646px;
-  height: 212px;
-  background: transparent url("../../img/teclado.jpg") no-repeat 0 0;
-  background-size: contain;
+  position: relative;
+  width: calc(var(--white-key-count) * 24px);
+  height: 168px;
+  background: -webkit-gradient(linear, left top, left bottom, from(#242424), to(#101010));
+  background: linear-gradient(180deg, #242424, #101010);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  -webkit-box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.55), 0 8px 18px rgba(0, 0, 0, 0.25);
+          box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.55), 0 8px 18px rgba(0, 0, 0, 0.25);
   margin: 0 auto;
-  padding-left: 36px;
-  padding-right: 40px;
+  padding: 8px 8px 10px;
 }
 
-section#instrumento div.teclado table td {
+section#instrumento div.teclado .pianoWhiteKeys {
+  position: relative;
+  z-index: 1;
+  display: -ms-grid;
+  display: grid;
+  -ms-grid-columns: (24px)[var(--white-key-count)];
+      grid-template-columns: repeat(var(--white-key-count), 24px);
+  height: 148px;
+}
+
+section#instrumento div.teclado .pianoBlackKeys {
+  position: absolute;
+  z-index: 2;
+  left: 8px;
+  right: 8px;
+  top: 8px;
+  height: 92px;
+  pointer-events: none;
+}
+
+section#instrumento div.teclado .pianoKey {
+  position: relative;
   text-align: center;
-  padding: 0px;
 }
 
-section#instrumento div.teclado table.teclasNegras {
-  padding-top: 100px;
-  width: 572px;
+section#instrumento div.teclado .pianoWhiteKey {
+  background: -webkit-gradient(linear, left top, left bottom, from(#f7f7f7), to(#d8d8d8));
+  background: linear-gradient(180deg, #f7f7f7 0%, #d8d8d8 100%);
+  border-left: 1px solid #777;
+  border-bottom: 3px solid #aaa;
+  border-radius: 0 0 4px 4px;
 }
 
-section#instrumento div.teclado table.teclasNegras td {
-  vertical-align: top;
-  width: 18px;
+section#instrumento div.teclado .pianoBlackKey {
+  position: absolute;
+  left: var(--key-left);
+  top: 0;
+  width: 15px;
+  height: 92px;
+  margin-left: -7px;
+  background: -webkit-gradient(linear, left top, left bottom, from(#242424), to(#050505));
+  background: linear-gradient(180deg, #242424 0%, #050505 100%);
+  border: 1px solid #000;
+  border-radius: 0 0 4px 4px;
+  -webkit-box-shadow: 0 3px 5px rgba(0, 0, 0, 0.65);
+          box-shadow: 0 3px 5px rgba(0, 0, 0, 0.65);
+  pointer-events: auto;
 }
 
-section#instrumento div.teclado table.teclasNegras td.huecoBlancas {
-  width: 24px;
+section#instrumento div.teclado .pianoWhiteKey span {
+  position: absolute;
+  left: 50%;
+  bottom: 7px;
+  -webkit-transform: translateX(-50%);
+          transform: translateX(-50%);
 }
 
-section#instrumento div.teclado table.teclasNegras td.huecoC {
-  width: 26px;
+section#instrumento div.teclado .pianoBlackKey span {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  -webkit-transform: translateX(-50%);
+          transform: translateX(-50%);
 }
 
-section#instrumento div.teclado table.teclasNegras td.huecoE {
-  width: 30px;
-}
-
-section#instrumento div.teclado table.teclasNegras td.huecoA {
-  width: 18px;
-}
-
-section#instrumento div.teclado table.teclasBlancas {
-  padding-top: 40px;
-  width: 574px;
-}
-
-section#instrumento div.teclado table.teclasBlancas td {
-  vertical-align: bottom;
-  width: 28px;
-}
-
-section#instrumento table td.celdaNota span {
+section#instrumento .celdaNota span {
   border-radius: 11px;
   width: 22px;
   height: 22px;
   display: block;
   margin: 0 auto;
   cursor: pointer;
+  position: relative;
+  z-index: 3;
 }
 
-section#instrumento table td.noPerteneceEscala span {
+section#instrumento .noPerteneceEscala span {
   color: #bbb;
   background-color: transparent;
 }
 
-section#instrumento table td.perteneceEscala span {
+section#instrumento .perteneceEscala span {
   background-color: #00ff95;
   color: #151515;
   font-weight: 800;
 }
 
-section#instrumento div.teclado table td.perteneceEscala span {
+section#instrumento div.teclado .perteneceEscala span {
   background-color: #00ff95;
 }
 
-section#instrumento table td.celdaNota span.resaltada,
-section#instrumento table td.celdaNota span.isPlayingInstrumentNote {
+section#instrumento .celdaNota span.resaltada,
+section#instrumento .celdaNota span.isPlayingInstrumentNote {
   background-color: #a622ae !important;
 }
 

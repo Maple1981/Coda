@@ -1901,10 +1901,11 @@ const cMajorPiano = app.buildInstrumentView({
 });
 
 assert.equal(cMajorPiano.type, 'piano');
-assert.equal(cMajorPiano.keyboard.blackKeys.length, 12);
-assert.equal(cMajorPiano.keyboard.whiteKeys.length, 7);
-assert.equal(cMajorPiano.keyboard.blackKeys[1].nombre, 'Db');
-assert.equal(cMajorPiano.keyboard.whiteKeys[0].midiNote, 48);
+assert.equal(cMajorPiano.keyboard.allKeys.length, 88);
+assert.equal(cMajorPiano.keyboard.blackKeys.length, 36);
+assert.equal(cMajorPiano.keyboard.whiteKeys.length, 52);
+assert.equal(cMajorPiano.keyboard.blackKeys[0].nombre, 'Bb');
+assert.equal(cMajorPiano.keyboard.whiteKeys[0].midiNote, 21);
 
 let playedNotes = null;
 let playedOptions = null;

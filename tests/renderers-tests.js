@@ -296,9 +296,9 @@ const guitarHtml = instrumentsRenderer.renderGuitar({
 });
 
 assert.ok(guitarHtml.indexOf('<select id="selectorAfinaciones">') > -1);
-assert.ok(guitarHtml.indexOf('<table class="diapason">') > -1);
-assert.ok(guitarHtml.indexOf('<td class="celdaNota perteneceEscala"><span data-note-name="E" data-midi-note="64">E</span></td>') > -1);
-assert.ok(guitarHtml.indexOf('<td><span>2</span></td>') > -1);
+assert.ok(guitarHtml.indexOf('<table class="diapason fretboard">') > -1);
+assert.ok(guitarHtml.indexOf('<td class="celdaNota guitarNoteCell guitarOpenString perteneceEscala"><span data-note-name="E" data-midi-note="64">E</span></td>') > -1);
+assert.ok(guitarHtml.indexOf('<td class="fretNumber"><span>2</span></td>') > -1);
 
 const pianoKeyboard = domain.buildPianoKeyboard({
 	isDegreeSuppressed: function () { return false; },
@@ -314,10 +314,10 @@ const pianoHtml = instrumentsRenderer.renderPiano({
 	scaleDefinition: byName(data.scales, 'Mayor')
 });
 
-assert.ok(pianoHtml.indexOf('<table class="teclasNegras">') > -1);
-assert.ok(pianoHtml.indexOf('<table class="teclasBlancas">') > -1);
+assert.ok(pianoHtml.indexOf('<div class="teclasNegras pianoBlackKeys">') > -1);
+assert.ok(pianoHtml.indexOf('<div class="teclasBlancas pianoWhiteKeys">') > -1);
 assert.ok(pianoHtml.indexOf('<span data-note-name="Bb" data-midi-note="58">Bb</span>') > -1);
-assert.ok(pianoHtml.indexOf('<td class="celdaNota  perteneceEscala"><span data-note-name="C" data-midi-note="48">C</span></td>') > -1);
+assert.ok(pianoHtml.indexOf('<div class="celdaNota pianoKey pianoWhiteKey perteneceEscala"><span data-note-name="C" data-midi-note="48">C</span></div>') > -1);
 
 const englishPianoHtml = instrumentsRenderer.renderPiano({
 	i18n: englishI18n,

@@ -10,11 +10,13 @@
 
 	//VARIABLES DE ÁMBITO GLOBAL, CONSTANTES
 	const numeroNotasEscalaDiatonica = 12; //7 + alteraciones
-	const numeroTrastes = 12; //diapasón de la guitarra
+	const numeroTrastes = 24; //diapasón completo de la guitarra
 	
 	global.CodaDataCatalogs.constants = {
 		octaveSemitones: numeroNotasEscalaDiatonica,
-		fretCount: numeroTrastes
+		fretCount: numeroTrastes,
+		pianoKeyCount: 88,
+		pianoStartMidiNote: 21
 	};
 })(window);
 
@@ -18086,7 +18088,7 @@
 			return [];
 		}
 
-		return global.document.querySelectorAll('#instrumento td.celdaNota span' + selectorSuffix);
+		return global.document.querySelectorAll('#instrumento .celdaNota span' + selectorSuffix);
 	}
 
 	function normalizeMidiNotes(midiNotes) {
@@ -20749,41 +20751,32 @@
 
 	function buildPianoKeyboard(options) {
 		return {
+			allKeys: buildPianoKeys(options),
 			blackKeys: buildBlackKeys(options),
 			whiteKeys: buildWhiteKeys(options)
 		};
 	}
 
+	function buildPianoKeys(options) {
+		var keys = [];
+		var midiNotes = pianoMidiNotes(options);
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			keys.push(pianoKeyForMidiNote(midiNotes[i], options));
+		}
+
+		return keys;
+	}
+
 	function buildBlackKeys(options) {
 		var keys = [];
-		var firstMidiNote = options.pianoStartMidiNote || 48;
+		var midiNotes = pianoMidiNotes(options);
 
-		for (var octave = 0; octave < options.octaveCount; octave++) {
-			for (var i = 0; i < options.notes.length; i++) {
-				var note = options.notes[i];
-				var midiNote = firstMidiNote + (octave * options.notes.length) + i;
+		for (var i = 0; i < midiNotes.length; i++) {
+			var key = pianoKeyForMidiNote(midiNotes[i], options);
 
-				if (note.enarmonica != null) {
-					var noteState = findScaleNoteStateForPitch({
-						note: note,
-						includeEnharmonic: true,
-						scaleNotes: options.scaleNotes,
-						isDegreeSuppressed: options.isDegreeSuppressed
-					});
-
-					keys.push({
-						midiNote: midiNote,
-						type: 'note',
-						nombre: options.preferFlats ? note.enarmonica : note.nombre,
-						perteneceEscala: noteState.belongsToScale,
-						tipo: noteState.modalType
-					});
-				} else {
-					keys.push({
-						type: 'spacer',
-						nombre: note.nombre
-					});
-				}
+			if (key.type === 'black') {
+				keys.push(key);
 			}
 		}
 
@@ -20792,33 +20785,50 @@
 
 	function buildWhiteKeys(options) {
 		var keys = [];
-		var firstMidiNote = options.pianoStartMidiNote || 48;
+		var midiNotes = pianoMidiNotes(options);
 
-		for (var octave = 0; octave < options.octaveCount; octave++) {
-			for (var i = 0; i < options.notes.length; i++) {
-				var note = options.notes[i];
-				var midiNote = firstMidiNote + (octave * options.notes.length) + i;
+		for (var i = 0; i < midiNotes.length; i++) {
+			var key = pianoKeyForMidiNote(midiNotes[i], options);
 
-				if (note.enarmonica == null) {
-					var noteState = findScaleNoteStateForPitch({
-						note: note,
-						includeEnharmonic: false,
-						scaleNotes: options.scaleNotes,
-						isDegreeSuppressed: options.isDegreeSuppressed
-					});
-
-					keys.push({
-						midiNote: midiNote,
-						type: 'note',
-						nombre: note.nombre,
-						perteneceEscala: noteState.belongsToScale,
-						tipo: noteState.modalType
-					});
-				}
+			if (key.type === 'white') {
+				keys.push(key);
 			}
 		}
 
 		return keys;
+	}
+
+	function pianoKeyForMidiNote(midiNote, options) {
+		var note = options.notes[normalizePitchClass(midiNote)];
+		var includeEnharmonic = note.enarmonica != null;
+		var noteState = findScaleNoteStateForPitch({
+			note: note,
+			includeEnharmonic: includeEnharmonic,
+			scaleNotes: options.scaleNotes,
+			isDegreeSuppressed: options.isDegreeSuppressed
+		});
+
+		return {
+			midiNote: midiNote,
+			type: note.enarmonica == null ? 'white' : 'black',
+			nombre: includeEnharmonic && options.preferFlats ? note.enarmonica : note.nombre,
+			perteneceEscala: noteState.belongsToScale,
+			tipo: noteState.modalType
+		};
+	}
+
+	function pianoMidiNotes(options) {
+		var firstMidiNote = numberOrDefault(options.pianoStartMidiNote, 48);
+		var explicitEndMidiNote = numberOrNull(options.pianoEndMidiNote);
+		var keyCount = numberOrDefault(options.pianoKeyCount, numberOrDefault(options.octaveCount, 2) * options.notes.length);
+		var lastMidiNote = explicitEndMidiNote != null ? explicitEndMidiNote : firstMidiNote + keyCount - 1;
+		var midiNotes = [];
+
+		for (var midiNote = firstMidiNote; midiNote <= lastMidiNote; midiNote++) {
+			midiNotes.push(midiNote);
+		}
+
+		return midiNotes;
 	}
 
 	function findScaleNoteStateByName(options) {
@@ -20904,6 +20914,18 @@
 		return ((value % 12) + 12) % 12;
 	}
 
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
+	function numberOrNull(value) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : null;
+	}
+
 	function findNoteIndex(notes, noteName) {
 		if (notes._codaIndex && notes._codaIndex.indexByName && notes._codaIndex.indexByName[noteName] !== undefined) {
 			return notes._codaIndex.indexByName[noteName];
@@ -20955,6 +20977,7 @@
 	global.CodaInstrumentDomain = {
 		buildBlackKeys: buildBlackKeys,
 		buildGuitarFretboard: buildGuitarFretboard,
+		buildPianoKeys: buildPianoKeys,
 		buildPianoKeyboard: buildPianoKeyboard,
 		buildStringFrets: buildStringFrets,
 		buildWhiteKeys: buildWhiteKeys,
@@ -21266,13 +21289,16 @@
 	}
 
 	function buildInstrumentView(options) {
+		var constants = options.data.constants || {};
+
 		if (options.instrument === '1') {
 			return {
 				keyboard: options.domain.buildPianoKeyboard({
 					isDegreeSuppressed: options.report.isDegreeSuppressed,
 					notes: options.data.notes,
-					octaveCount: options.octaveCount || 2,
-					pianoStartMidiNote: options.pianoStartMidiNote || 48,
+					octaveCount: options.octaveCount,
+					pianoKeyCount: options.pianoKeyCount || constants.pianoKeyCount,
+					pianoStartMidiNote: options.pianoStartMidiNote || constants.pianoStartMidiNote || 48,
 					preferFlats: options.preferFlats,
 					scaleDefinition: options.report.scaleDefinition,
 					scaleNotes: options.report.scaleNotes
@@ -22447,16 +22473,16 @@
 
 		html += renderTuningSelect(options);
 		html += '</h4>';
-		html += '<div class="instrumentScaleViewport"><div class="instrumentScaleCanvas">';
-		html += '<table class="diapason"><tbody>';
+		html += '<div class="instrumentScaleViewport"><div class="instrumentScaleCanvas instrumentScaleCanvas--scroll">';
+		html += '<table class="diapason fretboard"><tbody>';
 
 		for (var i = 0; i < options.strings.length; i++) {
-			html += '<tr>';
-			html += renderGuitarCell(options, options.strings[i].aire, options.strings[i].midiNote, options.strings[i].perteneceEscala, options.strings[i].tipo, options.scaleDefinition);
+			html += '<tr class="guitarString" data-string-index="' + i + '">';
+			html += renderGuitarCell(options, options.strings[i].aire, options.strings[i].midiNote, options.strings[i].perteneceEscala, options.strings[i].tipo, options.scaleDefinition, 0);
 
 			for (var j = 0; j < options.strings[i].trastes.length; j++) {
 				var fret = options.strings[i].trastes[j];
-				html += renderGuitarCell(options, fret.nombre, fret.midiNote, fret.perteneceEscala, fret.tipo, options.scaleDefinition, true);
+				html += renderGuitarCell(options, fret.nombre, fret.midiNote, fret.perteneceEscala, fret.tipo, options.scaleDefinition, j + 1);
 			}
 
 			html += '</tr>';
@@ -22466,7 +22492,7 @@
 		html += '<tfoot><tr>';
 
 		for (var k = 0; k < options.strings[0].trastes.length + 1; k++) {
-			html += '<td><span>' + k + '</span></td>';
+			html += '<td class="fretNumber' + markerClass(k) + '"><span>' + k + '</span></td>';
 		}
 
 		html += '</tr></tfoot>';
@@ -22490,10 +22516,11 @@
 		return html;
 	}
 
-	function renderGuitarCell(options, noteName, midiNote, belongsToScale, modalType, scaleDefinition, addSpace) {
+	function renderGuitarCell(options, noteName, midiNote, belongsToScale, modalType, scaleDefinition, fretNumber) {
 		var scaleClass = belongsToScale ? ' perteneceEscala' : ' noPerteneceEscala';
 		var modalClass = modalSpanClass(modalType, scaleDefinition);
-		var cellClass = addSpace ? 'celdaNota ' : 'celdaNota';
+		var fretClass = Number(fretNumber) === 0 ? ' guitarOpenString' : ' guitarFret';
+		var cellClass = 'celdaNota guitarNoteCell' + fretClass + markerClass(fretNumber);
 		var midiAttribute = midiNote != null ? ' data-midi-note="' + midiNote + '"' : '';
 
 		return '<td class="' + cellClass + scaleClass + '"><span data-note-name="' + noteName + '"' + midiAttribute + modalClass + '>' + formatNote(options, noteName) + '</span></td>';
@@ -22502,10 +22529,10 @@
 	function renderPiano(options) {
 		var html = '<h4>' + t(options, 'instrument.pianoView') + '</h4>';
 
-		html += '<div class="instrumentScaleViewport"><div class="instrumentScaleCanvas">';
-		html += '<div class="teclado">';
-		html += renderBlackKeys(options);
+		html += '<div class="instrumentScaleViewport"><div class="instrumentScaleCanvas instrumentScaleCanvas--scroll">';
+		html += '<div class="teclado pianoKeyboard" style="--white-key-count:' + whiteKeyCount(options.keyboard) + '">';
 		html += renderWhiteKeys(options);
+		html += renderBlackKeys(options);
 		html += '</div>';
 		html += '</div></div>';
 
@@ -22513,43 +22540,97 @@
 	}
 
 	function renderBlackKeys(options) {
-		var html = '<table class="teclasNegras"><tbody><tr>';
+		var keys = pianoKeys(options.keyboard);
+		var whiteCount = whiteKeyCount(options.keyboard);
+		var whiteIndex = 0;
+		var html = '<div class="teclasNegras pianoBlackKeys">';
 
-		for (var i = 0; i < options.keyboard.blackKeys.length; i++) {
-			var key = options.keyboard.blackKeys[i];
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
 
-			if (key.type === 'note') {
-				html += renderPianoNoteCell(options, key.nombre, key.midiNote, key.perteneceEscala, key.tipo, options.scaleDefinition);
-			} else {
-				html += '<td class="huecoBlanco hueco' + key.nombre + '"><span>&nbsp;&nbsp;</span></td>';
+			if (key.type === 'white' || key.type === 'note') {
+				whiteIndex += 1;
+			} else if (key.type === 'black') {
+				html += renderPianoNoteCell(options, key.nombre, key.midiNote, key.perteneceEscala, key.tipo, options.scaleDefinition, 'black', blackKeyStyle(whiteIndex, whiteCount));
 			}
 		}
 
-		html += '</tr></table>';
+		html += '</div>';
 
 		return html;
 	}
 
 	function renderWhiteKeys(options) {
-		var html = '<table class="teclasBlancas"><tbody><tr>';
+		var keys = pianoKeys(options.keyboard);
+		var html = '<div class="teclasBlancas pianoWhiteKeys">';
 
-		for (var i = 0; i < options.keyboard.whiteKeys.length; i++) {
-			var key = options.keyboard.whiteKeys[i];
-			html += renderPianoNoteCell(options, key.nombre, key.midiNote, key.perteneceEscala, key.tipo, options.scaleDefinition, true);
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
+
+			if (key.type === 'white' || key.type === 'note') {
+				html += renderPianoNoteCell(options, key.nombre, key.midiNote, key.perteneceEscala, key.tipo, options.scaleDefinition, 'white');
+			}
 		}
 
-		html += '</tr></table>';
+		html += '</div>';
 
 		return html;
 	}
 
-	function renderPianoNoteCell(options, noteName, midiNote, belongsToScale, modalType, scaleDefinition, addSpace) {
+	function renderPianoNoteCell(options, noteName, midiNote, belongsToScale, modalType, scaleDefinition, keyType, style) {
 		var scaleClass = belongsToScale ? ' perteneceEscala' : ' noPerteneceEscala';
 		var modalClass = modalSpanClass(modalType, scaleDefinition);
-		var cellClass = addSpace ? 'celdaNota ' : 'celdaNota';
+		var cellClass = 'celdaNota pianoKey piano' + capitalize(keyType || 'white') + 'Key';
 		var midiAttribute = midiNote != null ? ' data-midi-note="' + midiNote + '"' : '';
+		var styleAttribute = style ? ' style="' + style + '"' : '';
 
-		return '<td class="' + cellClass + scaleClass + '"><span data-note-name="' + noteName + '"' + midiAttribute + modalClass + '>' + formatNote(options, noteName) + '</span></td>';
+		return '<div class="' + cellClass + scaleClass + '"' + styleAttribute + '><span data-note-name="' + noteName + '"' + midiAttribute + modalClass + '>' + formatNote(options, noteName) + '</span></div>';
+	}
+
+	function pianoKeys(keyboard) {
+		if (keyboard && keyboard.allKeys && keyboard.allKeys.length) {
+			return keyboard.allKeys;
+		}
+
+		return (keyboard && keyboard.whiteKeys) || [];
+	}
+
+	function whiteKeyCount(keyboard) {
+		var keys = pianoKeys(keyboard);
+		var count = 0;
+
+		for (var i = 0; i < keys.length; i++) {
+			if (keys[i].type === 'white' || keys[i].type === 'note') {
+				count += 1;
+			}
+		}
+
+		return count || 1;
+	}
+
+	function blackKeyStyle(whiteIndex, whiteCount) {
+		var left = ((whiteIndex - 0.32) / whiteCount) * 100;
+
+		return '--key-left:' + left.toFixed(4) + '%';
+	}
+
+	function markerClass(fretNumber) {
+		var number = Number(fretNumber);
+
+		if ([3, 5, 7, 9, 15, 17, 19, 21].indexOf(number) > -1) {
+			return ' fretMarker';
+		}
+		if (number === 12 || number === 24) {
+			return ' fretMarker fretMarkerDouble';
+		}
+
+		return '';
+	}
+
+	function capitalize(value) {
+		value = String(value || '');
+
+		return value.charAt(0).toUpperCase() + value.slice(1);
 	}
 
 	function modalSpanClass(modalType, scaleDefinition) {
@@ -26973,7 +27054,7 @@
 
 		instrument.setAttribute('data-coda-instrument-events', 'true');
 		instrument.addEventListener('click', function (event) {
-			var note = closestWithin(event.target, 'td.celdaNota span[data-midi-note]', instrument);
+			var note = closestWithin(event.target, '.celdaNota span[data-midi-note]', instrument);
 
 			if (note) {
 				options.onInstrumentNoteClick(note);
@@ -27028,6 +27109,10 @@
 		canvas.style.transform = 'none';
 		canvas.style.left = '0px';
 		viewport.style.height = 'auto';
+
+		if (canvas.classList && canvas.classList.contains('instrumentScaleCanvas--scroll')) {
+			return;
+		}
 
 		var baseWidth = canvas.offsetWidth;
 		var baseHeight = canvas.offsetHeight;
@@ -28566,7 +28651,7 @@
 	function highlightChord() {
 		return function (element) {
 			var noteNames = element.id.split('-');
-			var noteElements = global.document ? global.document.querySelectorAll('td.celdaNota span[data-note-name]') : [];
+			var noteElements = global.document ? global.document.querySelectorAll('.celdaNota span[data-note-name]') : [];
 
 			for (var i = 0; i < noteNames.length; i++) {
 				highlightInstrumentPitch(noteElements, noteNames[i]);
@@ -28598,7 +28683,7 @@
 
 	function clearChordHighlight() {
 		return function () {
-			forEachElement('td.celdaNota span.resaltada', function (note) {
+			forEachElement('.celdaNota span.resaltada', function (note) {
 				note.classList.remove('resaltada');
 			});
 		};

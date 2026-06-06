@@ -51,7 +51,7 @@
 			return [];
 		}
 
-		return global.document.querySelectorAll('#instrumento td.celdaNota span' + selectorSuffix);
+		return global.document.querySelectorAll('#instrumento .celdaNota span' + selectorSuffix);
 	}
 
 	function normalizeMidiNotes(midiNotes) {

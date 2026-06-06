@@ -272,7 +272,7 @@ assert.equal(cMajorGuitar[0].aire, 'E');
 assert.equal(cMajorGuitar[0].midiNote, 64);
 assert.equal(cMajorGuitar[5].aire, 'E');
 assert.equal(cMajorGuitar[5].midiNote, 40);
-assert.equal(cMajorGuitar[0].trastes.length, 12);
+assert.equal(cMajorGuitar[0].trastes.length, 24);
 assert.deepEqual(cMajorGuitar[0].trastes.slice(0, 3).map(function (fret) { return fret.nombre; }), ['F', 'F#', 'G']);
 assert.deepEqual(cMajorGuitar[5].trastes.slice(0, 3).map(function (fret) { return fret.midiNote; }), [41, 42, 43]);
 assert.equal(cMajorGuitar[0].trastes[0].perteneceEscala, true);
@@ -299,13 +299,32 @@ const cMajorPiano = domain.buildPianoKeyboard({
 	scaleNotes: cMajor
 });
 
-assert.equal(cMajorPiano.blackKeys.length, 24);
+assert.equal(cMajorPiano.blackKeys.length, 10);
 assert.equal(cMajorPiano.whiteKeys.length, 14);
-assert.equal(cMajorPiano.blackKeys[1].nombre, 'Db');
+assert.equal(cMajorPiano.allKeys.length, 24);
+assert.equal(cMajorPiano.blackKeys[0].nombre, 'Db');
 assert.equal(cMajorPiano.whiteKeys[0].nombre, 'C');
 assert.equal(cMajorPiano.whiteKeys[0].midiNote, 48);
 assert.equal(cMajorPiano.whiteKeys[7].midiNote, 60);
 assert.equal(cMajorPiano.whiteKeys[0].perteneceEscala, true);
+
+const fullPiano = domain.buildPianoKeyboard({
+	isDegreeSuppressed: function () { return false; },
+	notes: data.notes,
+	pianoKeyCount: data.constants.pianoKeyCount,
+	pianoStartMidiNote: data.constants.pianoStartMidiNote,
+	preferFlats: false,
+	scaleDefinition: byName(data.scales, 'Mayor'),
+	scaleNotes: cMajor
+});
+
+assert.equal(fullPiano.allKeys.length, 88);
+assert.equal(fullPiano.whiteKeys.length, 52);
+assert.equal(fullPiano.blackKeys.length, 36);
+assert.equal(fullPiano.allKeys[0].nombre, 'A');
+assert.equal(fullPiano.allKeys[0].midiNote, 21);
+assert.equal(fullPiano.allKeys[87].nombre, 'C');
+assert.equal(fullPiano.allKeys[87].midiNote, 108);
 
 const cMajorChords = buildScaleChords(cMajor, 'Mayor');
 assert.deepEqual(domain.createDiatonicDegreePlan({

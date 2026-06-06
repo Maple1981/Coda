@@ -155,7 +155,7 @@ const bbbChordInstrumentNotes = ['A', 'B', 'D', 'E', 'Gb'].map(function (noteNam
 	return element;
 });
 document.querySelectorAll = function (selector) {
-	if (selector === 'td.celdaNota span[data-note-name]') {
+	if (selector === '.celdaNota span[data-note-name]') {
 		return bbbChordInstrumentNotes;
 	}
 

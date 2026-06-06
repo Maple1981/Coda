@@ -173,13 +173,16 @@
 	}
 
 	function buildInstrumentView(options) {
+		var constants = options.data.constants || {};
+
 		if (options.instrument === '1') {
 			return {
 				keyboard: options.domain.buildPianoKeyboard({
 					isDegreeSuppressed: options.report.isDegreeSuppressed,
 					notes: options.data.notes,
-					octaveCount: options.octaveCount || 2,
-					pianoStartMidiNote: options.pianoStartMidiNote || 48,
+					octaveCount: options.octaveCount,
+					pianoKeyCount: options.pianoKeyCount || constants.pianoKeyCount,
+					pianoStartMidiNote: options.pianoStartMidiNote || constants.pianoStartMidiNote || 48,
 					preferFlats: options.preferFlats,
 					scaleDefinition: options.report.scaleDefinition,
 					scaleNotes: options.report.scaleNotes

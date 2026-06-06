@@ -317,7 +317,7 @@
 
 		instrument.setAttribute('data-coda-instrument-events', 'true');
 		instrument.addEventListener('click', function (event) {
-			var note = closestWithin(event.target, 'td.celdaNota span[data-midi-note]', instrument);
+			var note = closestWithin(event.target, '.celdaNota span[data-midi-note]', instrument);
 
 			if (note) {
 				options.onInstrumentNoteClick(note);
@@ -372,6 +372,10 @@
 		canvas.style.transform = 'none';
 		canvas.style.left = '0px';
 		viewport.style.height = 'auto';
+
+		if (canvas.classList && canvas.classList.contains('instrumentScaleCanvas--scroll')) {
+			return;
+		}
 
 		var baseWidth = canvas.offsetWidth;
 		var baseHeight = canvas.offsetHeight;

@@ -54,41 +54,32 @@
 
 	function buildPianoKeyboard(options) {
 		return {
+			allKeys: buildPianoKeys(options),
 			blackKeys: buildBlackKeys(options),
 			whiteKeys: buildWhiteKeys(options)
 		};
 	}
 
+	function buildPianoKeys(options) {
+		var keys = [];
+		var midiNotes = pianoMidiNotes(options);
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			keys.push(pianoKeyForMidiNote(midiNotes[i], options));
+		}
+
+		return keys;
+	}
+
 	function buildBlackKeys(options) {
 		var keys = [];
-		var firstMidiNote = options.pianoStartMidiNote || 48;
+		var midiNotes = pianoMidiNotes(options);
 
-		for (var octave = 0; octave < options.octaveCount; octave++) {
-			for (var i = 0; i < options.notes.length; i++) {
-				var note = options.notes[i];
-				var midiNote = firstMidiNote + (octave * options.notes.length) + i;
+		for (var i = 0; i < midiNotes.length; i++) {
+			var key = pianoKeyForMidiNote(midiNotes[i], options);
 
-				if (note.enarmonica != null) {
-					var noteState = findScaleNoteStateForPitch({
-						note: note,
-						includeEnharmonic: true,
-						scaleNotes: options.scaleNotes,
-						isDegreeSuppressed: options.isDegreeSuppressed
-					});
-
-					keys.push({
-						midiNote: midiNote,
-						type: 'note',
-						nombre: options.preferFlats ? note.enarmonica : note.nombre,
-						perteneceEscala: noteState.belongsToScale,
-						tipo: noteState.modalType
-					});
-				} else {
-					keys.push({
-						type: 'spacer',
-						nombre: note.nombre
-					});
-				}
+			if (key.type === 'black') {
+				keys.push(key);
 			}
 		}
 
@@ -97,33 +88,50 @@
 
 	function buildWhiteKeys(options) {
 		var keys = [];
-		var firstMidiNote = options.pianoStartMidiNote || 48;
+		var midiNotes = pianoMidiNotes(options);
 
-		for (var octave = 0; octave < options.octaveCount; octave++) {
-			for (var i = 0; i < options.notes.length; i++) {
-				var note = options.notes[i];
-				var midiNote = firstMidiNote + (octave * options.notes.length) + i;
+		for (var i = 0; i < midiNotes.length; i++) {
+			var key = pianoKeyForMidiNote(midiNotes[i], options);
 
-				if (note.enarmonica == null) {
-					var noteState = findScaleNoteStateForPitch({
-						note: note,
-						includeEnharmonic: false,
-						scaleNotes: options.scaleNotes,
-						isDegreeSuppressed: options.isDegreeSuppressed
-					});
-
-					keys.push({
-						midiNote: midiNote,
-						type: 'note',
-						nombre: note.nombre,
-						perteneceEscala: noteState.belongsToScale,
-						tipo: noteState.modalType
-					});
-				}
+			if (key.type === 'white') {
+				keys.push(key);
 			}
 		}
 
 		return keys;
+	}
+
+	function pianoKeyForMidiNote(midiNote, options) {
+		var note = options.notes[normalizePitchClass(midiNote)];
+		var includeEnharmonic = note.enarmonica != null;
+		var noteState = findScaleNoteStateForPitch({
+			note: note,
+			includeEnharmonic: includeEnharmonic,
+			scaleNotes: options.scaleNotes,
+			isDegreeSuppressed: options.isDegreeSuppressed
+		});
+
+		return {
+			midiNote: midiNote,
+			type: note.enarmonica == null ? 'white' : 'black',
+			nombre: includeEnharmonic && options.preferFlats ? note.enarmonica : note.nombre,
+			perteneceEscala: noteState.belongsToScale,
+			tipo: noteState.modalType
+		};
+	}
+
+	function pianoMidiNotes(options) {
+		var firstMidiNote = numberOrDefault(options.pianoStartMidiNote, 48);
+		var explicitEndMidiNote = numberOrNull(options.pianoEndMidiNote);
+		var keyCount = numberOrDefault(options.pianoKeyCount, numberOrDefault(options.octaveCount, 2) * options.notes.length);
+		var lastMidiNote = explicitEndMidiNote != null ? explicitEndMidiNote : firstMidiNote + keyCount - 1;
+		var midiNotes = [];
+
+		for (var midiNote = firstMidiNote; midiNote <= lastMidiNote; midiNote++) {
+			midiNotes.push(midiNote);
+		}
+
+		return midiNotes;
 	}
 
 	function findScaleNoteStateByName(options) {
@@ -209,6 +217,18 @@
 		return ((value % 12) + 12) % 12;
 	}
 
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
+	function numberOrNull(value) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : null;
+	}
+
 	function findNoteIndex(notes, noteName) {
 		if (notes._codaIndex && notes._codaIndex.indexByName && notes._codaIndex.indexByName[noteName] !== undefined) {
 			return notes._codaIndex.indexByName[noteName];
@@ -260,6 +280,7 @@
 	global.CodaInstrumentDomain = {
 		buildBlackKeys: buildBlackKeys,
 		buildGuitarFretboard: buildGuitarFretboard,
+		buildPianoKeys: buildPianoKeys,
 		buildPianoKeyboard: buildPianoKeyboard,
 		buildStringFrets: buildStringFrets,
 		buildWhiteKeys: buildWhiteKeys,

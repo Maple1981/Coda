@@ -812,15 +812,15 @@ const note60b = fakeInstrumentNoteElement();
 const note64 = fakeInstrumentNoteElement();
 context.window.document = {
 	querySelectorAll: function (selector) {
-		if (selector === '#instrumento td.celdaNota span[data-midi-note="60"]') {
+		if (selector === '#instrumento .celdaNota span[data-midi-note="60"]') {
 			return [note60a, note60b];
 		}
 
-		if (selector === '#instrumento td.celdaNota span[data-midi-note="64"]') {
+		if (selector === '#instrumento .celdaNota span[data-midi-note="64"]') {
 			return [note64];
 		}
 
-		if (selector === '#instrumento td.celdaNota span.isPlayingInstrumentNote') {
+		if (selector === '#instrumento .celdaNota span.isPlayingInstrumentNote') {
 			return [note60a, note60b, note64].filter(function (element) {
 				return element.classList.contains('isPlayingInstrumentNote');
 			});
