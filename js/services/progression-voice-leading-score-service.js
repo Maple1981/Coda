@@ -227,10 +227,67 @@
 		}
 
 		if (midiInstrument === 'acoustic_grand_piano') {
-			return pianoVoicingPenalty(voicing);
+			return pianoVoicingPenalty(voicing) + lowRegisterSpacingPenalty(voicing);
+		}
+
+		if (prefersLowRegisterSpacing(midiInstrument)) {
+			return lowRegisterSpacingPenalty(voicing);
 		}
 
 		return 0;
+	}
+
+	function lowRegisterSpacingPenalty(voicing) {
+		var midiNotes = sortedMidiNotes(voicing);
+		var penalty = 0;
+
+		for (var i = 1; i < midiNotes.length; i++) {
+			var minimumGap = minimumLowRegisterGap(midiNotes[i - 1], i);
+			var gap = midiNotes[i] - midiNotes[i - 1];
+			var shortage = Math.max(0, minimumGap - gap);
+
+			penalty += shortage * shortage * (i === 1 ? 10 : 4);
+		}
+
+		return penalty;
+	}
+
+	function minimumLowRegisterGap(lowerMidiNote, upperVoiceIndex) {
+		var lower = Number(lowerMidiNote);
+
+		if (!isFinite(lower)) {
+			return 0;
+		}
+
+		if (upperVoiceIndex === 1) {
+			if (lower < 36) {
+				return 12;
+			}
+
+			if (lower < 48) {
+				return 8;
+			}
+
+			if (lower < 52) {
+				return 7;
+			}
+		}
+
+		if (lower < 43) {
+			return 7;
+		}
+
+		if (lower < 50) {
+			return 5;
+		}
+
+		return 1;
+	}
+
+	function prefersLowRegisterSpacing(midiInstrument) {
+		return midiInstrument === 'drawbar_organ' ||
+			midiInstrument === 'string_ensemble_1' ||
+			midiInstrument === 'pad_2_warm';
 	}
 
 	function pianoVoicingPenalty(voicing) {
@@ -427,6 +484,7 @@
 		guitarVoicingPenalty: guitarVoicingPenalty,
 		idiomaticInstrumentPenalty: idiomaticInstrumentPenalty,
 		lowRegisterBassPenalty: lowRegisterBassPenalty,
+		lowRegisterSpacingPenalty: lowRegisterSpacingPenalty,
 		playableRangePenalty: playableRangePenalty,
 		pianoHandSpanPenaltyForSpan: pianoHandSpanPenaltyForSpan,
 		pianoVoicingPenalty: pianoVoicingPenalty,

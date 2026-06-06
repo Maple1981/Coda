@@ -4,6 +4,7 @@
 
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
 	var structureIndex = global.CodaProgressionStructureIndex;
+	var voiceLeadingService = global.CodaProgressionVoiceLeading;
 
 	function reorderMeasures(progression, fromIndex, toIndex) {
 		var measures = progression && progression.measures ? progression.measures.slice() : [];
@@ -19,7 +20,7 @@
 		movedMeasure = measures.splice(fromIndex, 1)[0];
 		measures.splice(toIndex, 0, movedMeasure);
 
-		return measureTimelineService.rebuildTimeline(progression, measures);
+		return rebuildVoiceLeading(measureTimelineService.rebuildTimeline(progression, measures));
 	}
 
 	function reorderMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex) {
@@ -45,9 +46,9 @@
 		segments.splice(toChordIndex, 0, movedSegment);
 		measures[index] = measureTimelineService.measureWithSegments(measure, segments, progression);
 
-		return structureIndex.extendObject(progression, {
+		return rebuildVoiceLeading(structureIndex.extendObject(progression, {
 			measures: measures
-		});
+		}));
 	}
 
 	function removeMeasureChord(progression, measureIndex, chordIndex) {
@@ -70,9 +71,9 @@
 		segments.splice(normalizedChordIndex, 1);
 		measures[index] = measureTimelineService.measureWithSegments(measure, segments, progression);
 
-		return structureIndex.extendObject(progression, {
+		return rebuildVoiceLeading(structureIndex.extendObject(progression, {
 			measures: measures
-		});
+		}));
 	}
 
 	function removeSection(progression, sectionId) {
@@ -90,7 +91,7 @@
 		}
 
 		nextMeasures = measures.slice(0, startIndex).concat(measures.slice(startIndex + length));
-		nextProgression = measureTimelineService.rebuildTimeline(progression, nextMeasures);
+		nextProgression = rebuildVoiceLeading(measureTimelineService.rebuildTimeline(progression, nextMeasures));
 		nextSections = normalizeSectionIdsAfterRemoval(rebuildSectionsWithout(sections, section.id));
 		annotateSectionMeasures(nextProgression.measures, nextSections);
 
@@ -184,6 +185,41 @@
 				measures[k].sectionLabelKey = section.labelKey;
 			}
 		}
+	}
+
+	function rebuildVoiceLeading(progression) {
+		if (!progression || !progression.measures || !voiceLeadingService || typeof voiceLeadingService.annotateMeasures !== 'function') {
+			return progression;
+		}
+
+		if (!hasPlayableVoiceLeadingSegments(progression.measures)) {
+			return progression;
+		}
+
+		return structureIndex.extendObject(progression, {
+			measures: voiceLeadingService.annotateMeasures(progression.measures, progression)
+		});
+	}
+
+	function hasPlayableVoiceLeadingSegments(measures) {
+		var timeline;
+
+		if (!voiceLeadingService || typeof voiceLeadingService.segmentTimeline !== 'function') {
+			return false;
+		}
+
+		timeline = voiceLeadingService.segmentTimeline(measures);
+		if (!timeline.length) {
+			return false;
+		}
+
+		for (var i = 0; i < timeline.length; i++) {
+			if (!Array.isArray(timeline[i].midiNotes) || !Array.isArray(timeline[i].voiceNotes)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	function clampMeasureIndex(index, length) {

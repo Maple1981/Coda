@@ -17,6 +17,7 @@ loader.runScript('js/ui/progression-generation-events-controller.js');
 loader.runScript('js/ui/circle-of-fifths-popover-controller.js');
 loader.runScript('js/ui/workbench-instrument-menu-controller.js');
 loader.runScript('js/ui/scale-report-ui.js');
+loader.runScript('js/services/playback-service.js');
 
 const global = context.window;
 
@@ -473,6 +474,33 @@ global.document = {
 global.CodaUi.scrollPianoToDefaultOctave();
 assert.equal(fakePianoViewport.scrollLeft, 492);
 global.document = previousDocument;
+
+const playbackPrograms = [];
+const fakeMidiForSustainMetadata = {
+	channels: [{ instrument: 0 }],
+	loadPlugin: function (options) {
+		options.onsuccess();
+	},
+	programChange: function (channel, program) {
+		playbackPrograms.push({ channel: channel, program: program });
+		this.channels[channel].instrument = program;
+	},
+	setVolume: function () {}
+};
+const sustainMetadataPlayback = global.CodaPlayback.create({
+	channel: 0,
+	instrument: 'pad_2_warm',
+	instruments: global.CodaData.midiInstruments,
+	midi: fakeMidiForSustainMetadata
+});
+sustainMetadataPlayback.load();
+assert.equal(fakeMidiForSustainMetadata.channels[0].codaInstrumentId, 'pad_2_warm');
+assert.equal(fakeMidiForSustainMetadata.channels[0].codaSustainedInstrument, true);
+sustainMetadataPlayback.setInstrument('acoustic_grand_piano');
+sustainMetadataPlayback.load();
+assert.equal(fakeMidiForSustainMetadata.channels[0].codaInstrumentId, 'acoustic_grand_piano');
+assert.equal(fakeMidiForSustainMetadata.channels[0].codaSustainedInstrument, false);
+assert.deepEqual(playbackPrograms.map(function (program) { return program.program; }), [89, 0]);
 
 console.log('Service unit tests passed');
 

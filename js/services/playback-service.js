@@ -115,6 +115,23 @@
 			if (midi && typeof midi.programChange === 'function' && instrument && instrument.program !== undefined) {
 				midi.programChange(channel, instrument.program);
 			}
+
+			applyChannelInstrumentMetadata(instrument);
+		}
+
+		function applyChannelInstrumentMetadata(instrument) {
+			var midiChannel = midi && midi.channels ? midi.channels[channel] : null;
+
+			if (!midiChannel || !instrument) {
+				return;
+			}
+
+			midiChannel.codaInstrumentId = instrument.id || '';
+			midiChannel.codaSoundEnvelope = instrument.soundEnvelope || (instrument.sustained ? 'sustained' : 'percussive');
+			midiChannel.codaSustainedInstrument = instrument.sustained === true ||
+				instrument.supportsPedalHold === true ||
+				instrument.pedalBehavior === 'sustain' ||
+				instrument.soundEnvelope === 'sustained';
 		}
 
 		function findInstrument(instrumentId) {

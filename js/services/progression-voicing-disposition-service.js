@@ -7,7 +7,7 @@
 
 	function chooseCandidate(voicing, previousPlan, disposition, options) {
 		var normalizedDisposition = normalize(disposition);
-		var candidates = dispositionCandidates(voicing, normalizedDisposition);
+		var candidates = dispositionCandidates(voicing, normalizedDisposition, options);
 		var bestCandidate = candidates[0];
 		var bestScore = score(bestCandidate, previousPlan, normalizedDisposition, options);
 
@@ -23,7 +23,7 @@
 		return bestCandidate;
 	}
 
-	function dispositionCandidates(voicing, disposition) {
+	function dispositionCandidates(voicing, disposition, options) {
 		var candidates;
 
 		if (!voicing.midiNotes || voicing.midiNotes.length < 3) {
@@ -39,7 +39,9 @@
 
 		candidates = isOpenVoicing(voicing.midiNotes) ? [compactUpperVoices(voicing)] : [voicing];
 
-		return registerShiftCandidates(candidates);
+		candidates = registerShiftCandidates(candidates);
+
+		return prefersLowRegisterSpacing(options && options.midiInstrument) ? candidates.map(spreadLowRegisterSpacing) : candidates;
 	}
 
 	function score(voicing, previousPlan, disposition, options) {
@@ -99,6 +101,30 @@
 	}
 
 	function spreadLowRegister(voicing) {
+		var spacedVoicing = spreadLowRegisterSpacing(voicing);
+		var midiNotes = spacedVoicing.midiNotes ? spacedVoicing.midiNotes.slice() : [];
+		var voiceNotes = cloneVoiceNotes(spacedVoicing.voiceNotes);
+		var changed = spacedVoicing !== voicing;
+
+		while (midiNotes.length >= 3 && !isOpenVoicing(midiNotes)) {
+			var topIndex = midiNotes.length - 1;
+
+			midiNotes[topIndex] += 12;
+			changed = true;
+			if (voiceNotes[topIndex]) {
+				voiceNotes[topIndex] = extendObject(voiceNotes[topIndex], {
+					midiNote: midiNotes[topIndex]
+				});
+			}
+		}
+
+		return changed ? extendObject(spacedVoicing, {
+			midiNotes: midiNotes,
+			voiceNotes: voiceNotes
+		}) : spacedVoicing;
+	}
+
+	function spreadLowRegisterSpacing(voicing) {
 		var midiNotes = voicing.midiNotes ? voicing.midiNotes.slice() : [];
 		var voiceNotes = cloneVoiceNotes(voicing.voiceNotes);
 		var changed = false;
@@ -118,18 +144,6 @@
 			}
 		}
 
-		while (midiNotes.length >= 3 && !isOpenVoicing(midiNotes)) {
-			var topIndex = midiNotes.length - 1;
-
-			midiNotes[topIndex] += 12;
-			changed = true;
-			if (voiceNotes[topIndex]) {
-				voiceNotes[topIndex] = extendObject(voiceNotes[topIndex], {
-					midiNote: midiNotes[topIndex]
-				});
-			}
-		}
-
 		return changed ? extendObject(voicing, {
 			midiNotes: midiNotes,
 			voiceNotes: voiceNotes
@@ -144,12 +158,12 @@
 		}
 
 		if (upperVoiceIndex === 1) {
-			if (lower < 40) {
+			if (lower < 36) {
 				return 12;
 			}
 
 			if (lower < 48) {
-				return 9;
+				return 8;
 			}
 
 			if (lower < 52) {
@@ -166,6 +180,13 @@
 		}
 
 		return 1;
+	}
+
+	function prefersLowRegisterSpacing(midiInstrument) {
+		return midiInstrument === 'acoustic_grand_piano' ||
+			midiInstrument === 'drawbar_organ' ||
+			midiInstrument === 'string_ensemble_1' ||
+			midiInstrument === 'pad_2_warm';
 	}
 
 	function compactUpperVoices(voicing) {
@@ -217,6 +238,7 @@
 		registerShiftCandidates: registerShiftCandidates,
 		score: score,
 		spreadLowRegister: spreadLowRegister,
+		spreadLowRegisterSpacing: spreadLowRegisterSpacing,
 		upperVoiceSpan: upperVoiceSpan
 	};
 })(window);

@@ -4932,10 +4932,67 @@
 		}
 
 		if (midiInstrument === 'acoustic_grand_piano') {
-			return pianoVoicingPenalty(voicing);
+			return pianoVoicingPenalty(voicing) + lowRegisterSpacingPenalty(voicing);
+		}
+
+		if (prefersLowRegisterSpacing(midiInstrument)) {
+			return lowRegisterSpacingPenalty(voicing);
 		}
 
 		return 0;
+	}
+
+	function lowRegisterSpacingPenalty(voicing) {
+		var midiNotes = sortedMidiNotes(voicing);
+		var penalty = 0;
+
+		for (var i = 1; i < midiNotes.length; i++) {
+			var minimumGap = minimumLowRegisterGap(midiNotes[i - 1], i);
+			var gap = midiNotes[i] - midiNotes[i - 1];
+			var shortage = Math.max(0, minimumGap - gap);
+
+			penalty += shortage * shortage * (i === 1 ? 10 : 4);
+		}
+
+		return penalty;
+	}
+
+	function minimumLowRegisterGap(lowerMidiNote, upperVoiceIndex) {
+		var lower = Number(lowerMidiNote);
+
+		if (!isFinite(lower)) {
+			return 0;
+		}
+
+		if (upperVoiceIndex === 1) {
+			if (lower < 36) {
+				return 12;
+			}
+
+			if (lower < 48) {
+				return 8;
+			}
+
+			if (lower < 52) {
+				return 7;
+			}
+		}
+
+		if (lower < 43) {
+			return 7;
+		}
+
+		if (lower < 50) {
+			return 5;
+		}
+
+		return 1;
+	}
+
+	function prefersLowRegisterSpacing(midiInstrument) {
+		return midiInstrument === 'drawbar_organ' ||
+			midiInstrument === 'string_ensemble_1' ||
+			midiInstrument === 'pad_2_warm';
 	}
 
 	function pianoVoicingPenalty(voicing) {
@@ -5132,6 +5189,7 @@
 		guitarVoicingPenalty: guitarVoicingPenalty,
 		idiomaticInstrumentPenalty: idiomaticInstrumentPenalty,
 		lowRegisterBassPenalty: lowRegisterBassPenalty,
+		lowRegisterSpacingPenalty: lowRegisterSpacingPenalty,
 		playableRangePenalty: playableRangePenalty,
 		pianoHandSpanPenaltyForSpan: pianoHandSpanPenaltyForSpan,
 		pianoVoicingPenalty: pianoVoicingPenalty,
@@ -5152,7 +5210,7 @@
 
 	function chooseCandidate(voicing, previousPlan, disposition, options) {
 		var normalizedDisposition = normalize(disposition);
-		var candidates = dispositionCandidates(voicing, normalizedDisposition);
+		var candidates = dispositionCandidates(voicing, normalizedDisposition, options);
 		var bestCandidate = candidates[0];
 		var bestScore = score(bestCandidate, previousPlan, normalizedDisposition, options);
 
@@ -5168,7 +5226,7 @@
 		return bestCandidate;
 	}
 
-	function dispositionCandidates(voicing, disposition) {
+	function dispositionCandidates(voicing, disposition, options) {
 		var candidates;
 
 		if (!voicing.midiNotes || voicing.midiNotes.length < 3) {
@@ -5184,7 +5242,9 @@
 
 		candidates = isOpenVoicing(voicing.midiNotes) ? [compactUpperVoices(voicing)] : [voicing];
 
-		return registerShiftCandidates(candidates);
+		candidates = registerShiftCandidates(candidates);
+
+		return prefersLowRegisterSpacing(options && options.midiInstrument) ? candidates.map(spreadLowRegisterSpacing) : candidates;
 	}
 
 	function score(voicing, previousPlan, disposition, options) {
@@ -5244,6 +5304,30 @@
 	}
 
 	function spreadLowRegister(voicing) {
+		var spacedVoicing = spreadLowRegisterSpacing(voicing);
+		var midiNotes = spacedVoicing.midiNotes ? spacedVoicing.midiNotes.slice() : [];
+		var voiceNotes = cloneVoiceNotes(spacedVoicing.voiceNotes);
+		var changed = spacedVoicing !== voicing;
+
+		while (midiNotes.length >= 3 && !isOpenVoicing(midiNotes)) {
+			var topIndex = midiNotes.length - 1;
+
+			midiNotes[topIndex] += 12;
+			changed = true;
+			if (voiceNotes[topIndex]) {
+				voiceNotes[topIndex] = extendObject(voiceNotes[topIndex], {
+					midiNote: midiNotes[topIndex]
+				});
+			}
+		}
+
+		return changed ? extendObject(spacedVoicing, {
+			midiNotes: midiNotes,
+			voiceNotes: voiceNotes
+		}) : spacedVoicing;
+	}
+
+	function spreadLowRegisterSpacing(voicing) {
 		var midiNotes = voicing.midiNotes ? voicing.midiNotes.slice() : [];
 		var voiceNotes = cloneVoiceNotes(voicing.voiceNotes);
 		var changed = false;
@@ -5263,18 +5347,6 @@
 			}
 		}
 
-		while (midiNotes.length >= 3 && !isOpenVoicing(midiNotes)) {
-			var topIndex = midiNotes.length - 1;
-
-			midiNotes[topIndex] += 12;
-			changed = true;
-			if (voiceNotes[topIndex]) {
-				voiceNotes[topIndex] = extendObject(voiceNotes[topIndex], {
-					midiNote: midiNotes[topIndex]
-				});
-			}
-		}
-
 		return changed ? extendObject(voicing, {
 			midiNotes: midiNotes,
 			voiceNotes: voiceNotes
@@ -5289,12 +5361,12 @@
 		}
 
 		if (upperVoiceIndex === 1) {
-			if (lower < 40) {
+			if (lower < 36) {
 				return 12;
 			}
 
 			if (lower < 48) {
-				return 9;
+				return 8;
 			}
 
 			if (lower < 52) {
@@ -5311,6 +5383,13 @@
 		}
 
 		return 1;
+	}
+
+	function prefersLowRegisterSpacing(midiInstrument) {
+		return midiInstrument === 'acoustic_grand_piano' ||
+			midiInstrument === 'drawbar_organ' ||
+			midiInstrument === 'string_ensemble_1' ||
+			midiInstrument === 'pad_2_warm';
 	}
 
 	function compactUpperVoices(voicing) {
@@ -5362,6 +5441,7 @@
 		registerShiftCandidates: registerShiftCandidates,
 		score: score,
 		spreadLowRegister: spreadLowRegister,
+		spreadLowRegisterSpacing: spreadLowRegisterSpacing,
 		upperVoiceSpan: upperVoiceSpan
 	};
 })(window);
@@ -9060,6 +9140,7 @@
 
 	var measureTimelineService = global.CodaProgressionMeasureTimeline;
 	var structureIndex = global.CodaProgressionStructureIndex;
+	var voiceLeadingService = global.CodaProgressionVoiceLeading;
 
 	function reorderMeasures(progression, fromIndex, toIndex) {
 		var measures = progression && progression.measures ? progression.measures.slice() : [];
@@ -9075,7 +9156,7 @@
 		movedMeasure = measures.splice(fromIndex, 1)[0];
 		measures.splice(toIndex, 0, movedMeasure);
 
-		return measureTimelineService.rebuildTimeline(progression, measures);
+		return rebuildVoiceLeading(measureTimelineService.rebuildTimeline(progression, measures));
 	}
 
 	function reorderMeasureChords(progression, measureIndex, fromChordIndex, toChordIndex) {
@@ -9101,9 +9182,9 @@
 		segments.splice(toChordIndex, 0, movedSegment);
 		measures[index] = measureTimelineService.measureWithSegments(measure, segments, progression);
 
-		return structureIndex.extendObject(progression, {
+		return rebuildVoiceLeading(structureIndex.extendObject(progression, {
 			measures: measures
-		});
+		}));
 	}
 
 	function removeMeasureChord(progression, measureIndex, chordIndex) {
@@ -9126,9 +9207,9 @@
 		segments.splice(normalizedChordIndex, 1);
 		measures[index] = measureTimelineService.measureWithSegments(measure, segments, progression);
 
-		return structureIndex.extendObject(progression, {
+		return rebuildVoiceLeading(structureIndex.extendObject(progression, {
 			measures: measures
-		});
+		}));
 	}
 
 	function removeSection(progression, sectionId) {
@@ -9146,7 +9227,7 @@
 		}
 
 		nextMeasures = measures.slice(0, startIndex).concat(measures.slice(startIndex + length));
-		nextProgression = measureTimelineService.rebuildTimeline(progression, nextMeasures);
+		nextProgression = rebuildVoiceLeading(measureTimelineService.rebuildTimeline(progression, nextMeasures));
 		nextSections = normalizeSectionIdsAfterRemoval(rebuildSectionsWithout(sections, section.id));
 		annotateSectionMeasures(nextProgression.measures, nextSections);
 
@@ -9240,6 +9321,41 @@
 				measures[k].sectionLabelKey = section.labelKey;
 			}
 		}
+	}
+
+	function rebuildVoiceLeading(progression) {
+		if (!progression || !progression.measures || !voiceLeadingService || typeof voiceLeadingService.annotateMeasures !== 'function') {
+			return progression;
+		}
+
+		if (!hasPlayableVoiceLeadingSegments(progression.measures)) {
+			return progression;
+		}
+
+		return structureIndex.extendObject(progression, {
+			measures: voiceLeadingService.annotateMeasures(progression.measures, progression)
+		});
+	}
+
+	function hasPlayableVoiceLeadingSegments(measures) {
+		var timeline;
+
+		if (!voiceLeadingService || typeof voiceLeadingService.segmentTimeline !== 'function') {
+			return false;
+		}
+
+		timeline = voiceLeadingService.segmentTimeline(measures);
+		if (!timeline.length) {
+			return false;
+		}
+
+		for (var i = 0; i < timeline.length; i++) {
+			if (!Array.isArray(timeline[i].midiNotes) || !Array.isArray(timeline[i].voiceNotes)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	function clampMeasureIndex(index, length) {
@@ -16414,12 +16530,12 @@
 				continue;
 			}
 
-			if (shouldOmitPedalIn(midiNotes[i], measure, options)) {
+			if (shouldOmitPedalIn(midiNotes[i], measure, duration, options)) {
 				continue;
 			}
 
 			events.push({
-				duration: duration + pedalOutDuration(midiNotes[i], measure),
+				duration: duration + pedalOutDuration(midiNotes[i], measure) + pedalOutGapCompensation(midiNotes[i], measure, duration),
 				midiNote: midiNotes[i]
 			});
 		}
@@ -16783,8 +16899,12 @@
 		return !!(options && options.forcePedalAttack === true);
 	}
 
-	function shouldOmitPedalIn(midiNote, measure, options) {
-		return !forcePedalAttack(options) && isPedalIn(midiNote, measure) && !isSameBarPedalIn(midiNote, measure);
+	function shouldOmitPedalIn(midiNote, measure, duration, options) {
+		return !forcePedalAttack(options) &&
+			isPedalIn(midiNote, measure) &&
+			!isSameBarPedalIn(midiNote, measure) &&
+			previousSegmentCanCarryPedal(midiNote, options ? options.previousSegment : null, duration) &&
+			pedalInCoversDuration(midiNote, measure, duration);
 	}
 
 	function arpeggioStepSeconds(measure, duration, options) {
@@ -16829,6 +16949,23 @@
 		return false;
 	}
 
+	function pedalInCoversDuration(midiNote, measure, duration) {
+		var pedals = measure.pedalsIn || [];
+		var requiredDuration = Math.max(0, Number(duration) || 0);
+
+		if (!requiredDuration) {
+			return true;
+		}
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (Number(pedals[i].midiNote) === Number(midiNote)) {
+				return (Number(pedals[i].durationSeconds) || 0) + 0.001 >= requiredDuration;
+			}
+		}
+
+		return false;
+	}
+
 	function isSameBarPedalIn(midiNote, measure) {
 		var pedals = measure.pedalsIn || [];
 		var bar = Number(measure && measure.bar);
@@ -16853,6 +16990,57 @@
 		}
 
 		return duration;
+	}
+
+	function pedalOutGapCompensation(midiNote, measure, playbackDuration) {
+		if (!pedalOutDuration(midiNote, measure)) {
+			return 0;
+		}
+
+		return Math.max(0, (Number(measure && measure.durationSeconds) || 0) - (Number(playbackDuration) || 0));
+	}
+
+	function hasPreviousPedalOut(midiNote, previousSegment) {
+		var pedals = previousSegment && previousSegment.pedalsOut ? previousSegment.pedalsOut : [];
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (Number(pedals[i].midiNote) === Number(midiNote)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function previousSegmentCanCarryPedal(midiNote, previousSegment, currentDuration) {
+		var previousDuration;
+
+		if (!hasPreviousPedalOut(midiNote, previousSegment)) {
+			return false;
+		}
+
+		if (!isPedalIn(midiNote, previousSegment) || isSameBarPedalIn(midiNote, previousSegment)) {
+			return true;
+		}
+
+		previousDuration = playbackDuration(previousSegment);
+
+		return pedalInCoversDuration(midiNote, previousSegment, previousDuration + Math.max(0, Number(currentDuration) || 0));
+	}
+
+	function playbackDuration(measure) {
+		var duration = Number(measure && measure.durationSeconds) || 0;
+		var articulation = measure && measure.articulation;
+
+		if (articulation === 'staccato') {
+			return Math.max(0.1, duration * 0.45);
+		}
+
+		if (String(articulation || '').indexOf('arpeggio') === 0) {
+			return Math.max(0.1, duration * 0.9);
+		}
+
+		return Math.max(0.1, duration * 0.95);
 	}
 
 	function notesForVoices(notes, voices) {
@@ -16930,6 +17118,7 @@
 		var velocity = clamp(numberOrDefault(options.velocity, 96), 1, 127);
 		var initialMidiNote = numberOrDefault(options.initialMidiNote, 60);
 		var instrument = options.instrument || {};
+		var previousSegment = null;
 		var events = [
 			{
 				microsecondsPerBeat: bpmToMicrosecondsPerBeat(progression.bpm || options.bpm || 96),
@@ -16951,13 +17140,14 @@
 		];
 
 		for (var i = 0; i < measures.length; i++) {
-			appendMeasureEvents(events, measures[i], {
+			previousSegment = appendMeasureEvents(events, measures[i], {
 				channel: channel,
 				initialMidiNote: initialMidiNote,
 				articulationInstruments: options.articulationInstruments || [],
 				enableMelodicVoice: progression.generateMelodicVoice === true,
 				instrument: instrument,
 				nextMeasure: measures[i + 1] || null,
+				previousSegment: previousSegment,
 				ticksPerBeat: ticksPerBeat,
 				velocity: velocity
 			});
@@ -16968,10 +17158,14 @@
 
 	function appendMeasureEvents(events, measure, options) {
 		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
+		var previousSegment = options.previousSegment || null;
 
 		for (var chordIndex = 0; chordIndex < chords.length; chordIndex++) {
-			appendChordEvents(events, chords[chordIndex], options);
+			appendChordEvents(events, chords[chordIndex], chordPlaybackOptions(options, previousSegment, chords[chordIndex + 1] || options.nextMeasure));
+			previousSegment = chords[chordIndex];
 		}
+
+		return previousSegment;
 	}
 
 	function appendChordEvents(events, measure, options) {
@@ -16990,7 +17184,8 @@
 			sharedNoteEvents = noteEventService.build(measureWithMidiNotes(measure, notes, options), ticksToSeconds(durationTicks, measure, options), {
 				arpeggioStepSeconds: secondsPerBeatForMeasure(measure) / 4,
 				enableMelodicVoice: options.enableMelodicVoice !== false,
-				instrument: options.instrument
+				instrument: options.instrument,
+				previousSegment: options.previousSegment
 			});
 			appendSharedNoteEvents(events, sharedNoteEvents, measure, options, startTick, velocity);
 			return;
@@ -16999,13 +17194,14 @@
 		for (var i = 0; i < order.length; i++) {
 			var noteIndex = Math.max(0, Math.min(notes.length - 1, order[i]));
 			var note = notes[noteIndex];
+			var pedalTicks = supportsPedalHold(options.instrument) ? pedalOutTicks(note, measure, options) : 0;
 
-			if (supportsPedalHold(options.instrument) && isPedalIn(note, measure)) {
+			if (supportsPedalHold(options.instrument) && shouldOmitPedalIn(note, measure, durationTicks, options)) {
 				continue;
 			}
 
 			var noteStart = startTick + (arpeggioStep * i);
-			var noteEnd = Math.max(noteStart + 1, startTick + durationTicks + (supportsPedalHold(options.instrument) ? pedalOutTicks(note, measure, options) : 0));
+			var noteEnd = Math.max(noteStart + 1, startTick + durationTicks + pedalTicks + pedalOutGapTicks(pedalTicks, measure, durationTicks, options));
 
 			events.push({
 				bar: measure.bar,
@@ -17068,6 +17264,9 @@
 		copyHiddenMeasureValue(result, measure, 'melody');
 		copyHiddenMeasureValue(result, measure, 'melodyEvents');
 		copyHiddenMeasureValue(result, measure, 'melodicStartType');
+		result.pedalsIn = pedalsWithDurationFallback(result.pedalsIn, {
+			nextMeasure: measure
+		});
 		result.pedalsOut = pedalsWithDurationFallback(result.pedalsOut, options);
 
 		return result;
@@ -17247,6 +17446,86 @@
 		return false;
 	}
 
+	function shouldOmitPedalIn(midiNote, measure, durationTicks, options) {
+		return isPedalIn(midiNote, measure) &&
+			!isSameBarPedalIn(midiNote, measure) &&
+			previousSegmentCanCarryPedal(midiNote, options ? options.previousSegment : null, durationTicks, options) &&
+			pedalInCoversTicks(midiNote, measure, durationTicks, options);
+	}
+
+	function isSameBarPedalIn(midiNote, measure) {
+		var pedals = measure.pedalsIn || [];
+		var bar = Number(measure && measure.bar);
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (Number(pedals[i].midiNote) === Number(midiNote) && Number(pedals[i].fromBar) === bar) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function hasPreviousPedalOut(midiNote, previousSegment) {
+		var pedals = previousSegment && previousSegment.pedalsOut ? previousSegment.pedalsOut : [];
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (Number(pedals[i].midiNote) === Number(midiNote)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function previousSegmentCanCarryPedal(midiNote, previousSegment, currentDurationTicks, options) {
+		var previousDurationTicks;
+
+		if (!hasPreviousPedalOut(midiNote, previousSegment)) {
+			return false;
+		}
+
+		if (!isPedalIn(midiNote, previousSegment) || isSameBarPedalIn(midiNote, previousSegment)) {
+			return true;
+		}
+
+		previousDurationTicks = Math.max(1, Math.round((Number(previousSegment.durationBeats) || 0) * options.ticksPerBeat * articulationFactor(previousSegment.articulation)));
+
+		return pedalInCoversTicks(midiNote, previousSegment, previousDurationTicks + Math.max(0, Number(currentDurationTicks) || 0), options);
+	}
+
+	function pedalInCoversTicks(midiNote, measure, durationTicks, options) {
+		var pedals = measure.pedalsIn || [];
+		var requiredTicks = Math.max(0, Number(durationTicks) || 0);
+
+		if (!requiredTicks) {
+			return true;
+		}
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (Number(pedals[i].midiNote) === Number(midiNote)) {
+				return pedalDurationTicks(pedals[i], measure, options) + 1 >= requiredTicks;
+			}
+		}
+
+		return false;
+	}
+
+	function pedalDurationTicks(pedal, measure, options) {
+		var durationSeconds = Number(pedal && pedal.durationSeconds) || 0;
+		var durationBeats = Number(pedal && pedal.durationBeats) || 0;
+
+		if (durationBeats > 0) {
+			return Math.round(durationBeats * options.ticksPerBeat);
+		}
+
+		if (durationSeconds > 0) {
+			return Math.round((durationSeconds / secondsPerBeatForMeasure(measure)) * options.ticksPerBeat);
+		}
+
+		return 0;
+	}
+
 	function supportsPedalHold(instrument) {
 		return noteEventService.supportsPedalHold(instrument);
 	}
@@ -17264,12 +17543,40 @@
 		return ticks;
 	}
 
+	function pedalOutGapTicks(pedalTicks, measure, durationTicks, options) {
+		var fullDurationTicks;
+
+		if (!pedalTicks) {
+			return 0;
+		}
+
+		fullDurationTicks = Math.max(0, Math.round((Number(measure && measure.durationBeats) || 0) * options.ticksPerBeat));
+
+		return Math.max(0, fullDurationTicks - (Number(durationTicks) || 0));
+	}
+
 	function nextMeasureDurationTicks(options) {
 		if (!options.nextMeasure) {
 			return 0;
 		}
 
 		return Math.max(0, Math.round((Number(options.nextMeasure.durationBeats) || 0) * options.ticksPerBeat));
+	}
+
+	function chordPlaybackOptions(options, previousSegment, nextMeasure) {
+		var result = {};
+		var key;
+
+		for (key in options || {}) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		result.previousSegment = previousSegment || null;
+		result.nextMeasure = nextMeasure || null;
+
+		return result;
 	}
 
 	function encodeMidiFile(events, options) {
@@ -17876,9 +18183,11 @@
 	function buildMeasurePlaybackEvents(measure, index, startOffset, options) {
 		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
 		var events = [];
+		var previousSegment = options ? options.previousSegment || null : null;
 
 		for (var i = 0; i < chords.length; i++) {
-			events.push(buildMeasurePlaybackEvent(chords[i], index, startOffset, options, i));
+			events.push(buildMeasurePlaybackEvent(chords[i], index, startOffset, playbackOptionsWithPreviousSegment(options, previousSegment), i));
+			previousSegment = chords[i];
 		}
 
 		return events;
@@ -17904,6 +18213,7 @@
 		};
 
 		setHiddenStartOffset(event, startOffset || 0);
+		setHiddenPreviousSegment(event, options ? options.previousSegment : null);
 
 		if (shouldForcePedalAttack(options, chordIndex)) {
 			event.forcePedalAttack = true;
@@ -17973,6 +18283,39 @@
 		}
 
 		event.startOffset = startOffset;
+	}
+
+	function setHiddenPreviousSegment(event, previousSegment) {
+		if (!previousSegment) {
+			return;
+		}
+
+		if (typeof Object.defineProperty === 'function') {
+			Object.defineProperty(event, 'previousSegment', {
+				configurable: true,
+				enumerable: false,
+				value: previousSegment,
+				writable: true
+			});
+			return;
+		}
+
+		event.previousSegment = previousSegment;
+	}
+
+	function playbackOptionsWithPreviousSegment(options, previousSegment) {
+		var result = {};
+		var key;
+
+		for (key in options || {}) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		result.previousSegment = previousSegment || null;
+
+		return result;
 	}
 
 	function expressiveVelocity(measure, chordIndex) {
@@ -18055,10 +18398,12 @@
 		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
 		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
 		var playbackOptions = playbackOptionsForProgression(progression, options);
+		var previousSegment = previousSegmentBeforeStart(measures, startIndex);
 		var schedule = [];
 
 		for (var i = startIndex; i < measures.length; i++) {
-			schedule = schedule.concat(eventBuilder.buildMeasurePlaybackEvents(measures[i], i, startOffset, measurePlaybackOptions(playbackOptions, i === startIndex && startIndex > 0)));
+			schedule = schedule.concat(eventBuilder.buildMeasurePlaybackEvents(measures[i], i, startOffset, measurePlaybackOptions(playbackOptionsWithPreviousSegment(playbackOptions, previousSegment), i === startIndex && startIndex > 0)));
+			previousSegment = lastPlaybackSegment(measures[i]);
 		}
 
 		return schedule;
@@ -18122,6 +18467,10 @@
 			result.forcePedalAttack = true;
 		}
 
+		if (event && event.previousSegment) {
+			result.previousSegment = event.previousSegment;
+		}
+
 		return result;
 	}
 
@@ -18176,6 +18525,39 @@
 		return result;
 	}
 
+	function playbackOptionsWithPreviousSegment(options, previousSegment) {
+		var result = {};
+		var key;
+
+		for (key in options || {}) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		result.previousSegment = previousSegment || null;
+
+		return result;
+	}
+
+	function previousSegmentBeforeStart(measures, startIndex) {
+		if (!startIndex) {
+			return null;
+		}
+
+		return lastPlaybackSegment(measures[startIndex - 1]);
+	}
+
+	function lastPlaybackSegment(measure) {
+		var chords = measure && measure.chords && measure.chords.length ? measure.chords : null;
+
+		if (chords) {
+			return chords[chords.length - 1];
+		}
+
+		return measure || null;
+	}
+
 	global.CodaProgressionPlaybackSchedule = {
 		articulationDurationFactor: articulationDurationFactor,
 		buildProgressionMetronomeSchedule: buildProgressionMetronomeSchedule,
@@ -18185,6 +18567,7 @@
 		notesForVoices: notesForVoices,
 		measurePlaybackOptions: measurePlaybackOptions,
 		playbackOptionsForProgression: playbackOptionsForProgression,
+		playbackOptionsWithPreviousSegment: playbackOptionsWithPreviousSegment,
 		playbackTotalSeconds: playbackTotalSeconds,
 		refreshedPlaybackOptions: refreshedPlaybackOptions,
 		refreshPlaybackEvent: refreshPlaybackEvent
@@ -18906,7 +19289,7 @@
 			args.playbackTimers.schedule(args.run, args.scheduledMeasures[i].delay, createMeasureStartCallback(args, args.scheduledMeasures[i].measure, args.scheduledMeasures[i].index));
 		}
 
-		args.playbackTimers.schedule(args.run, totalSeconds, function () {
+		args.playbackTimers.schedule(args.run, totalSeconds + completionGraceSeconds(), function () {
 			if (args.getActiveRun() !== args.run) {
 				return;
 			}
@@ -18935,6 +19318,10 @@
 				scheduleInstrumentNoteCallbacks(args, nextEvent);
 			}
 		};
+	}
+
+	function completionGraceSeconds() {
+		return 0.05;
 	}
 
 	function scheduleInstrumentNoteCallbacks(args, event) {
@@ -30082,6 +30469,23 @@
 			if (midi && typeof midi.programChange === 'function' && instrument && instrument.program !== undefined) {
 				midi.programChange(channel, instrument.program);
 			}
+
+			applyChannelInstrumentMetadata(instrument);
+		}
+
+		function applyChannelInstrumentMetadata(instrument) {
+			var midiChannel = midi && midi.channels ? midi.channels[channel] : null;
+
+			if (!midiChannel || !instrument) {
+				return;
+			}
+
+			midiChannel.codaInstrumentId = instrument.id || '';
+			midiChannel.codaSoundEnvelope = instrument.soundEnvelope || (instrument.sustained ? 'sustained' : 'percussive');
+			midiChannel.codaSustainedInstrument = instrument.sustained === true ||
+				instrument.supportsPedalHold === true ||
+				instrument.pedalBehavior === 'sustain' ||
+				instrument.soundEnvelope === 'sustained';
 		}
 
 		function findInstrument(instrumentId) {

@@ -258,9 +258,44 @@ const pedalSchedule = app.buildProgressionPlaybackSchedule({
 assert.deepEqual(pedalSchedule[0].midiNoteEvents, [
 	{ duration: 1.9, midiNote: 48 },
 	{ duration: 1.9, midiNote: 52 },
-	{ duration: 3.9, midiNote: 55 }
+	{ duration: 4, midiNote: 55 }
 ]);
 assert.deepEqual(pedalSchedule[1].midiNoteEvents, [
+	{ duration: 1.9, midiNote: 60 },
+	{ duration: 1.9, midiNote: 65 }
+]);
+const invalidIncomingPedalSchedule = app.buildProgressionPlaybackSchedule({
+	measures: [
+		{
+			articulation: 'sustain',
+			bar: 1,
+			degree: 'I',
+			durationSeconds: 2,
+			midiNotes: [48, 52, 55],
+			notes: ['C', 'E', 'G'],
+			startSeconds: 0,
+			voices: 3
+		},
+		{
+			articulation: 'sustain',
+			bar: 2,
+			degree: 'IV',
+			durationSeconds: 2,
+			midiNotes: [55, 60, 65],
+			notes: ['G', 'C', 'F'],
+			pedalsIn: [{ durationSeconds: 2, midiNote: 55, note: 'G', fromBar: 1 }],
+			startSeconds: 2,
+			voices: 3
+		}
+	]
+}, {
+	instrument: {
+		pedalBehavior: 'sustain',
+		supportsPedalHold: true
+	}
+});
+assert.deepEqual(invalidIncomingPedalSchedule[1].midiNoteEvents, [
+	{ duration: 1.9, midiNote: 55 },
 	{ duration: 1.9, midiNote: 60 },
 	{ duration: 1.9, midiNote: 65 }
 ]);
@@ -331,10 +366,10 @@ const chainedSplitPedalSchedule = app.buildProgressionPlaybackSchedule({
 assert.deepEqual(chainedSplitPedalSchedule[0].midiNoteEvents, [
 	{ duration: 0.95, midiNote: 48 },
 	{ duration: 0.95, midiNote: 52 },
-	{ duration: 2.95, midiNote: 55 }
+	{ duration: 3, midiNote: 55 }
 ]);
 assert.deepEqual(chainedSplitPedalSchedule[1].midiNoteEvents, [
-	{ duration: 1.95, midiNote: 55 },
+	{ duration: 2, midiNote: 55 },
 	{ duration: 0.95, midiNote: 60 },
 	{ duration: 0.95, midiNote: 65 }
 ]);
@@ -701,7 +736,7 @@ assert.deepEqual(noteCalls.map(function (call) { return call.note; }), [63, 62, 
 assert.deepEqual(noteCalls.map(function (call) { return call.options.delay; }), [0, 0.18, 0.36, 0.54]);
 
 assert.equal(completed, false);
-runTimersAt(6000);
+runTimersAt(6050);
 assert.equal(completed, true);
 assert.equal(playback.isPlaying(), false);
 
@@ -822,9 +857,9 @@ loopPlayback.play(progression, {
 	startIndex: 1
 });
 
-assert.deepEqual(loopTimers.map(function (timer) { return timer.milliseconds; }).slice(0, 5), [0, 2000, 0, 2000, 4000]);
+assert.deepEqual(loopTimers.map(function (timer) { return timer.milliseconds; }).slice(0, 5), [0, 2000, 0, 2000, 4050]);
 loopTimers.filter(function (timer) {
-	return timer.milliseconds === 4000;
+	return timer.milliseconds === 4050;
 })[0].callback();
 assert.equal(cycleCompleted, true);
 assert.equal(loopCompleted, false);
@@ -1112,7 +1147,9 @@ assert.deepEqual(pedalVisualEnds, [[48, 52]]);
 runPedalVisualTimersAt(2000);
 assert.deepEqual(pedalVisualStarts, [[48, 52, 55], [60, 65]]);
 runPedalVisualTimersAt(3900);
-assert.deepEqual(pedalVisualEnds, [[48, 52], [55], [60, 65]]);
+assert.deepEqual(pedalVisualEnds, [[48, 52], [60, 65]]);
+runPedalVisualTimersAt(4001);
+assert.deepEqual(pedalVisualEnds, [[48, 52], [60, 65], [55]]);
 
 const note60a = fakeInstrumentNoteElement();
 const note60b = fakeInstrumentNoteElement();
@@ -1237,7 +1274,7 @@ function runPedalVisualTimersAt(milliseconds) {
 	do {
 		ran = false;
 		pedalVisualTimers.filter(function (timer) {
-			return timer.milliseconds === milliseconds && timer.done === false;
+			return timer.milliseconds <= milliseconds + 0.01 && timer.done === false;
 		}).forEach(function (timer) {
 			timer.done = true;
 			ran = true;

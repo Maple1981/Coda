@@ -49,6 +49,7 @@
 		var velocity = clamp(numberOrDefault(options.velocity, 96), 1, 127);
 		var initialMidiNote = numberOrDefault(options.initialMidiNote, 60);
 		var instrument = options.instrument || {};
+		var previousSegment = null;
 		var events = [
 			{
 				microsecondsPerBeat: bpmToMicrosecondsPerBeat(progression.bpm || options.bpm || 96),
@@ -70,13 +71,14 @@
 		];
 
 		for (var i = 0; i < measures.length; i++) {
-			appendMeasureEvents(events, measures[i], {
+			previousSegment = appendMeasureEvents(events, measures[i], {
 				channel: channel,
 				initialMidiNote: initialMidiNote,
 				articulationInstruments: options.articulationInstruments || [],
 				enableMelodicVoice: progression.generateMelodicVoice === true,
 				instrument: instrument,
 				nextMeasure: measures[i + 1] || null,
+				previousSegment: previousSegment,
 				ticksPerBeat: ticksPerBeat,
 				velocity: velocity
 			});
@@ -87,10 +89,14 @@
 
 	function appendMeasureEvents(events, measure, options) {
 		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
+		var previousSegment = options.previousSegment || null;
 
 		for (var chordIndex = 0; chordIndex < chords.length; chordIndex++) {
-			appendChordEvents(events, chords[chordIndex], options);
+			appendChordEvents(events, chords[chordIndex], chordPlaybackOptions(options, previousSegment, chords[chordIndex + 1] || options.nextMeasure));
+			previousSegment = chords[chordIndex];
 		}
+
+		return previousSegment;
 	}
 
 	function appendChordEvents(events, measure, options) {
@@ -109,7 +115,8 @@
 			sharedNoteEvents = noteEventService.build(measureWithMidiNotes(measure, notes, options), ticksToSeconds(durationTicks, measure, options), {
 				arpeggioStepSeconds: secondsPerBeatForMeasure(measure) / 4,
 				enableMelodicVoice: options.enableMelodicVoice !== false,
-				instrument: options.instrument
+				instrument: options.instrument,
+				previousSegment: options.previousSegment
 			});
 			appendSharedNoteEvents(events, sharedNoteEvents, measure, options, startTick, velocity);
 			return;
@@ -118,13 +125,14 @@
 		for (var i = 0; i < order.length; i++) {
 			var noteIndex = Math.max(0, Math.min(notes.length - 1, order[i]));
 			var note = notes[noteIndex];
+			var pedalTicks = supportsPedalHold(options.instrument) ? pedalOutTicks(note, measure, options) : 0;
 
-			if (supportsPedalHold(options.instrument) && isPedalIn(note, measure)) {
+			if (supportsPedalHold(options.instrument) && shouldOmitPedalIn(note, measure, durationTicks, options)) {
 				continue;
 			}
 
 			var noteStart = startTick + (arpeggioStep * i);
-			var noteEnd = Math.max(noteStart + 1, startTick + durationTicks + (supportsPedalHold(options.instrument) ? pedalOutTicks(note, measure, options) : 0));
+			var noteEnd = Math.max(noteStart + 1, startTick + durationTicks + pedalTicks + pedalOutGapTicks(pedalTicks, measure, durationTicks, options));
 
 			events.push({
 				bar: measure.bar,
@@ -187,6 +195,9 @@
 		copyHiddenMeasureValue(result, measure, 'melody');
 		copyHiddenMeasureValue(result, measure, 'melodyEvents');
 		copyHiddenMeasureValue(result, measure, 'melodicStartType');
+		result.pedalsIn = pedalsWithDurationFallback(result.pedalsIn, {
+			nextMeasure: measure
+		});
 		result.pedalsOut = pedalsWithDurationFallback(result.pedalsOut, options);
 
 		return result;
@@ -366,6 +377,86 @@
 		return false;
 	}
 
+	function shouldOmitPedalIn(midiNote, measure, durationTicks, options) {
+		return isPedalIn(midiNote, measure) &&
+			!isSameBarPedalIn(midiNote, measure) &&
+			previousSegmentCanCarryPedal(midiNote, options ? options.previousSegment : null, durationTicks, options) &&
+			pedalInCoversTicks(midiNote, measure, durationTicks, options);
+	}
+
+	function isSameBarPedalIn(midiNote, measure) {
+		var pedals = measure.pedalsIn || [];
+		var bar = Number(measure && measure.bar);
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (Number(pedals[i].midiNote) === Number(midiNote) && Number(pedals[i].fromBar) === bar) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function hasPreviousPedalOut(midiNote, previousSegment) {
+		var pedals = previousSegment && previousSegment.pedalsOut ? previousSegment.pedalsOut : [];
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (Number(pedals[i].midiNote) === Number(midiNote)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function previousSegmentCanCarryPedal(midiNote, previousSegment, currentDurationTicks, options) {
+		var previousDurationTicks;
+
+		if (!hasPreviousPedalOut(midiNote, previousSegment)) {
+			return false;
+		}
+
+		if (!isPedalIn(midiNote, previousSegment) || isSameBarPedalIn(midiNote, previousSegment)) {
+			return true;
+		}
+
+		previousDurationTicks = Math.max(1, Math.round((Number(previousSegment.durationBeats) || 0) * options.ticksPerBeat * articulationFactor(previousSegment.articulation)));
+
+		return pedalInCoversTicks(midiNote, previousSegment, previousDurationTicks + Math.max(0, Number(currentDurationTicks) || 0), options);
+	}
+
+	function pedalInCoversTicks(midiNote, measure, durationTicks, options) {
+		var pedals = measure.pedalsIn || [];
+		var requiredTicks = Math.max(0, Number(durationTicks) || 0);
+
+		if (!requiredTicks) {
+			return true;
+		}
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (Number(pedals[i].midiNote) === Number(midiNote)) {
+				return pedalDurationTicks(pedals[i], measure, options) + 1 >= requiredTicks;
+			}
+		}
+
+		return false;
+	}
+
+	function pedalDurationTicks(pedal, measure, options) {
+		var durationSeconds = Number(pedal && pedal.durationSeconds) || 0;
+		var durationBeats = Number(pedal && pedal.durationBeats) || 0;
+
+		if (durationBeats > 0) {
+			return Math.round(durationBeats * options.ticksPerBeat);
+		}
+
+		if (durationSeconds > 0) {
+			return Math.round((durationSeconds / secondsPerBeatForMeasure(measure)) * options.ticksPerBeat);
+		}
+
+		return 0;
+	}
+
 	function supportsPedalHold(instrument) {
 		return noteEventService.supportsPedalHold(instrument);
 	}
@@ -383,12 +474,40 @@
 		return ticks;
 	}
 
+	function pedalOutGapTicks(pedalTicks, measure, durationTicks, options) {
+		var fullDurationTicks;
+
+		if (!pedalTicks) {
+			return 0;
+		}
+
+		fullDurationTicks = Math.max(0, Math.round((Number(measure && measure.durationBeats) || 0) * options.ticksPerBeat));
+
+		return Math.max(0, fullDurationTicks - (Number(durationTicks) || 0));
+	}
+
 	function nextMeasureDurationTicks(options) {
 		if (!options.nextMeasure) {
 			return 0;
 		}
 
 		return Math.max(0, Math.round((Number(options.nextMeasure.durationBeats) || 0) * options.ticksPerBeat));
+	}
+
+	function chordPlaybackOptions(options, previousSegment, nextMeasure) {
+		var result = {};
+		var key;
+
+		for (key in options || {}) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		result.previousSegment = previousSegment || null;
+		result.nextMeasure = nextMeasure || null;
+
+		return result;
 	}
 
 	function encodeMidiFile(events, options) {

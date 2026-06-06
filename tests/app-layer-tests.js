@@ -1175,6 +1175,79 @@ const removedAdditionalChordProgression = app.removeProgressionMeasureChord(four
 assert.equal(removedAdditionalChordProgression.measures[0].chords.length, 3);
 assert.deepEqual(removedAdditionalChordProgression.measures[0].chords.map(function (chord) { return chord.durationBeats; }), [1, 1, 1]);
 assert.equal(app.removeProgressionMeasureChord(splitProgression, 0, 1).measures[0].chords, undefined);
+const staleSplitPedalProgression = {
+	articulation: 'sustain',
+	beatsPerBar: 4,
+	beatUnit: 4,
+	bpm: 120,
+	counterpoint: 0,
+	measures: [{
+		bar: 1,
+		chordName: 'C',
+		durationBeats: 4,
+		durationSeconds: 2,
+		midiNotes: [48, 52, 55],
+		pedalsIn: [],
+		pedalsOut: [],
+		startBeat: 0,
+		startSeconds: 0,
+		voiceNotes: [
+			{ midiNote: 48, note: 'C' },
+			{ midiNote: 52, note: 'E' },
+			{ midiNote: 55, note: 'G' }
+		],
+		chords: [{
+			chordName: 'C',
+			durationBeats: 1,
+			durationSeconds: 0.5,
+			midiNotes: [48, 52, 55],
+			pedalsIn: [],
+			pedalsOut: [{ midiNote: 52, note: 'E' }],
+			startBeat: 0,
+			startSeconds: 0,
+			voiceNotes: [
+				{ midiNote: 48, note: 'C' },
+				{ midiNote: 52, note: 'E' },
+				{ midiNote: 55, note: 'G' }
+			]
+		}, {
+			chordName: 'Em',
+			durationBeats: 1,
+			durationSeconds: 0.5,
+			midiNotes: [52, 55, 59],
+			pedalsIn: [{ midiNote: 52, note: 'E' }],
+			pedalsOut: [{ midiNote: 52, note: 'E' }],
+			startBeat: 1,
+			startSeconds: 0.5,
+			voiceNotes: [
+				{ midiNote: 52, note: 'E' },
+				{ midiNote: 55, note: 'G' },
+				{ midiNote: 59, note: 'B' }
+			]
+		}, {
+			chordName: 'F',
+			durationBeats: 2,
+			durationSeconds: 1,
+			midiNotes: [48, 53, 57],
+			pedalsIn: [{ midiNote: 52, note: 'E' }],
+			pedalsOut: [],
+			startBeat: 2,
+			startSeconds: 1,
+			voiceNotes: [
+				{ midiNote: 48, note: 'C' },
+				{ midiNote: 53, note: 'F' },
+				{ midiNote: 57, note: 'A' }
+			]
+		}]
+	}],
+	midiInstrument: 'pad_2_warm',
+	secondsPerBeat: 0.5
+};
+const removedStaleSplitPedalProgression = app.removeProgressionMeasureChord(staleSplitPedalProgression, 0, 1);
+assert.equal(removedStaleSplitPedalProgression.measures[0].chords.length, 2);
+assert.deepEqual(removedStaleSplitPedalProgression.measures[0].chords[0].pedalsOut.map(function (pedal) { return pedal.midiNote; }), [48]);
+assert.deepEqual(removedStaleSplitPedalProgression.measures[0].chords[1].pedalsIn.map(function (pedal) { return pedal.midiNote; }), [48]);
+assert.equal(removedStaleSplitPedalProgression.measures[0].chords[1].pedalsIn.some(function (pedal) { return pedal.midiNote === 52; }), false);
 const pulseTimedMeasure = {
 	bar: 1,
 	durationBeats: 4,

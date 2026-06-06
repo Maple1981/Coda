@@ -41,7 +41,7 @@
 			args.playbackTimers.schedule(args.run, args.scheduledMeasures[i].delay, createMeasureStartCallback(args, args.scheduledMeasures[i].measure, args.scheduledMeasures[i].index));
 		}
 
-		args.playbackTimers.schedule(args.run, totalSeconds, function () {
+		args.playbackTimers.schedule(args.run, totalSeconds + completionGraceSeconds(), function () {
 			if (args.getActiveRun() !== args.run) {
 				return;
 			}
@@ -70,6 +70,10 @@
 				scheduleInstrumentNoteCallbacks(args, nextEvent);
 			}
 		};
+	}
+
+	function completionGraceSeconds() {
+		return 0.05;
 	}
 
 	function scheduleInstrumentNoteCallbacks(args, event) {

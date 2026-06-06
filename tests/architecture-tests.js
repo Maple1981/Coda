@@ -763,6 +763,15 @@ assert.deepEqual(global.CodaProgressionVoicingDisposition.spreadLowRegister({
 		{ midiNote: 60, note: 'C', role: 'root-doubling' }
 	]
 }).midiNotes, [36, 52, 55, 72]);
+assert.deepEqual(global.CodaProgressionVoicingDisposition.spreadLowRegisterSpacing({
+	midiNotes: [36, 40, 43, 60],
+	voiceNotes: [
+		{ midiNote: 36, note: 'C', role: 'root' },
+		{ midiNote: 40, note: 'E', role: 'third' },
+		{ midiNote: 43, note: 'G', role: 'fifth' },
+		{ midiNote: 60, note: 'C', role: 'root-doubling' }
+	]
+}).midiNotes, [36, 52, 55, 60]);
 const lowOpenVoicing = global.CodaProgressionVoicing.chooseVoicing({
 	baseNotes: ['C', 'E', 'G'],
 	chordName: 'C',
@@ -782,6 +791,11 @@ assert.ok(global.CodaProgressionVoiceLeadingScore.lowRegisterBassPenalty({
 	midiNotes: [16, 31, 48, 72]
 }) > global.CodaProgressionVoiceLeadingScore.lowRegisterBassPenalty({
 	midiNotes: [36, 48, 55, 72]
+}));
+assert.ok(global.CodaProgressionVoiceLeadingScore.lowRegisterSpacingPenalty({
+	midiNotes: [36, 40, 55, 60]
+}) > global.CodaProgressionVoiceLeadingScore.lowRegisterSpacingPenalty({
+	midiNotes: [36, 45, 55, 60]
 }));
 assert.ok(global.CodaProgressionVoiceLeadingScore.playableRangePenalty({
 	midiNotes: [16, 31, 48, 72]
@@ -803,6 +817,22 @@ assert.ok(global.CodaProgressionVoiceLeadingScore.guitarVoicingPenalty({
 assert.ok(global.CodaProgressionVoiceLeadingScore.idiomaticInstrumentPenalty({
 	midiNotes: [48, 65, 67, 84]
 }, 'acoustic_grand_piano') > 0);
+const closedLowKeyboardVoicing = global.CodaProgressionVoicing.chooseVoicing({
+	baseNotes: ['C', 'E', 'G'],
+	chordName: 'C',
+	extraNotes: [],
+	initialMidiNote: 60,
+	kind: 'triad',
+	midiInstrument: 'acoustic_grand_piano',
+	previousPlan: {
+		midiNotes: [36, 40, 43, 48],
+		notes: ['C', 'E', 'G', 'C']
+	},
+	registerCenterMidi: 45,
+	voicing: 'closed',
+	voices: 4
+});
+assert.ok(closedLowKeyboardVoicing.midiNotes[1] - closedLowKeyboardVoicing.midiNotes[0] >= global.CodaProgressionVoicingDisposition.minimumLowRegisterGap(closedLowKeyboardVoicing.midiNotes[0], 1));
 assert.ok(
 	global.CodaProgressionVoiceLeadingScore.voiceLeadingTransitionScore({
 		midiNotes: [45, 48, 52, 59],

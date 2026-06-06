@@ -80,6 +80,7 @@
 			} else { // XMLHTTP buffer
 				var source = ctx.createBufferSource();
 				source.buffer = buffer;
+				applySustainLoop(source, buffer, channel);
 			}
 
 			/// add effects to buffer
@@ -118,6 +119,22 @@
 			///
 			return source;
 		};
+
+		function applySustainLoop(source, buffer, channel) {
+			var duration = buffer && Number(buffer.duration);
+			var loopStart;
+			var loopEnd;
+
+			if (!channel || channel.codaSustainedInstrument !== true || !isFinite(duration) || duration <= 0.4) {
+				return;
+			}
+
+			loopStart = Math.max(0, Math.min(duration - 0.2, duration * 0.35));
+			loopEnd = Math.max(loopStart + 0.1, duration - 0.05);
+			source.loop = true;
+			source.loopStart = loopStart;
+			source.loopEnd = loopEnd;
+		}
 
 		midi.noteOff = function(channelId, noteId, delay) {
 			delay = delay || 0;

@@ -9,9 +9,11 @@
 	function buildMeasurePlaybackEvents(measure, index, startOffset, options) {
 		var chords = measure.chords && measure.chords.length ? measure.chords : [measure];
 		var events = [];
+		var previousSegment = options ? options.previousSegment || null : null;
 
 		for (var i = 0; i < chords.length; i++) {
-			events.push(buildMeasurePlaybackEvent(chords[i], index, startOffset, options, i));
+			events.push(buildMeasurePlaybackEvent(chords[i], index, startOffset, playbackOptionsWithPreviousSegment(options, previousSegment), i));
+			previousSegment = chords[i];
 		}
 
 		return events;
@@ -37,6 +39,7 @@
 		};
 
 		setHiddenStartOffset(event, startOffset || 0);
+		setHiddenPreviousSegment(event, options ? options.previousSegment : null);
 
 		if (shouldForcePedalAttack(options, chordIndex)) {
 			event.forcePedalAttack = true;
@@ -106,6 +109,39 @@
 		}
 
 		event.startOffset = startOffset;
+	}
+
+	function setHiddenPreviousSegment(event, previousSegment) {
+		if (!previousSegment) {
+			return;
+		}
+
+		if (typeof Object.defineProperty === 'function') {
+			Object.defineProperty(event, 'previousSegment', {
+				configurable: true,
+				enumerable: false,
+				value: previousSegment,
+				writable: true
+			});
+			return;
+		}
+
+		event.previousSegment = previousSegment;
+	}
+
+	function playbackOptionsWithPreviousSegment(options, previousSegment) {
+		var result = {};
+		var key;
+
+		for (key in options || {}) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		result.previousSegment = previousSegment || null;
+
+		return result;
 	}
 
 	function expressiveVelocity(measure, chordIndex) {

@@ -29,12 +29,12 @@
 				continue;
 			}
 
-			if (shouldOmitPedalIn(midiNotes[i], measure, options)) {
+			if (shouldOmitPedalIn(midiNotes[i], measure, duration, options)) {
 				continue;
 			}
 
 			events.push({
-				duration: duration + pedalOutDuration(midiNotes[i], measure),
+				duration: duration + pedalOutDuration(midiNotes[i], measure) + pedalOutGapCompensation(midiNotes[i], measure, duration),
 				midiNote: midiNotes[i]
 			});
 		}
@@ -398,8 +398,12 @@
 		return !!(options && options.forcePedalAttack === true);
 	}
 
-	function shouldOmitPedalIn(midiNote, measure, options) {
-		return !forcePedalAttack(options) && isPedalIn(midiNote, measure) && !isSameBarPedalIn(midiNote, measure);
+	function shouldOmitPedalIn(midiNote, measure, duration, options) {
+		return !forcePedalAttack(options) &&
+			isPedalIn(midiNote, measure) &&
+			!isSameBarPedalIn(midiNote, measure) &&
+			previousSegmentCanCarryPedal(midiNote, options ? options.previousSegment : null, duration) &&
+			pedalInCoversDuration(midiNote, measure, duration);
 	}
 
 	function arpeggioStepSeconds(measure, duration, options) {
@@ -444,6 +448,23 @@
 		return false;
 	}
 
+	function pedalInCoversDuration(midiNote, measure, duration) {
+		var pedals = measure.pedalsIn || [];
+		var requiredDuration = Math.max(0, Number(duration) || 0);
+
+		if (!requiredDuration) {
+			return true;
+		}
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (Number(pedals[i].midiNote) === Number(midiNote)) {
+				return (Number(pedals[i].durationSeconds) || 0) + 0.001 >= requiredDuration;
+			}
+		}
+
+		return false;
+	}
+
 	function isSameBarPedalIn(midiNote, measure) {
 		var pedals = measure.pedalsIn || [];
 		var bar = Number(measure && measure.bar);
@@ -468,6 +489,57 @@
 		}
 
 		return duration;
+	}
+
+	function pedalOutGapCompensation(midiNote, measure, playbackDuration) {
+		if (!pedalOutDuration(midiNote, measure)) {
+			return 0;
+		}
+
+		return Math.max(0, (Number(measure && measure.durationSeconds) || 0) - (Number(playbackDuration) || 0));
+	}
+
+	function hasPreviousPedalOut(midiNote, previousSegment) {
+		var pedals = previousSegment && previousSegment.pedalsOut ? previousSegment.pedalsOut : [];
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (Number(pedals[i].midiNote) === Number(midiNote)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function previousSegmentCanCarryPedal(midiNote, previousSegment, currentDuration) {
+		var previousDuration;
+
+		if (!hasPreviousPedalOut(midiNote, previousSegment)) {
+			return false;
+		}
+
+		if (!isPedalIn(midiNote, previousSegment) || isSameBarPedalIn(midiNote, previousSegment)) {
+			return true;
+		}
+
+		previousDuration = playbackDuration(previousSegment);
+
+		return pedalInCoversDuration(midiNote, previousSegment, previousDuration + Math.max(0, Number(currentDuration) || 0));
+	}
+
+	function playbackDuration(measure) {
+		var duration = Number(measure && measure.durationSeconds) || 0;
+		var articulation = measure && measure.articulation;
+
+		if (articulation === 'staccato') {
+			return Math.max(0.1, duration * 0.45);
+		}
+
+		if (String(articulation || '').indexOf('arpeggio') === 0) {
+			return Math.max(0.1, duration * 0.9);
+		}
+
+		return Math.max(0.1, duration * 0.95);
 	}
 
 	function notesForVoices(notes, voices) {

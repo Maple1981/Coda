@@ -11,10 +11,12 @@
 		var startIndex = normalizeStartIndex(options ? options.startIndex : 0, progression);
 		var startOffset = measures[startIndex] ? Number(measures[startIndex].startSeconds) || 0 : 0;
 		var playbackOptions = playbackOptionsForProgression(progression, options);
+		var previousSegment = previousSegmentBeforeStart(measures, startIndex);
 		var schedule = [];
 
 		for (var i = startIndex; i < measures.length; i++) {
-			schedule = schedule.concat(eventBuilder.buildMeasurePlaybackEvents(measures[i], i, startOffset, measurePlaybackOptions(playbackOptions, i === startIndex && startIndex > 0)));
+			schedule = schedule.concat(eventBuilder.buildMeasurePlaybackEvents(measures[i], i, startOffset, measurePlaybackOptions(playbackOptionsWithPreviousSegment(playbackOptions, previousSegment), i === startIndex && startIndex > 0)));
+			previousSegment = lastPlaybackSegment(measures[i]);
 		}
 
 		return schedule;
@@ -78,6 +80,10 @@
 			result.forcePedalAttack = true;
 		}
 
+		if (event && event.previousSegment) {
+			result.previousSegment = event.previousSegment;
+		}
+
 		return result;
 	}
 
@@ -132,6 +138,39 @@
 		return result;
 	}
 
+	function playbackOptionsWithPreviousSegment(options, previousSegment) {
+		var result = {};
+		var key;
+
+		for (key in options || {}) {
+			if (Object.prototype.hasOwnProperty.call(options, key)) {
+				result[key] = options[key];
+			}
+		}
+
+		result.previousSegment = previousSegment || null;
+
+		return result;
+	}
+
+	function previousSegmentBeforeStart(measures, startIndex) {
+		if (!startIndex) {
+			return null;
+		}
+
+		return lastPlaybackSegment(measures[startIndex - 1]);
+	}
+
+	function lastPlaybackSegment(measure) {
+		var chords = measure && measure.chords && measure.chords.length ? measure.chords : null;
+
+		if (chords) {
+			return chords[chords.length - 1];
+		}
+
+		return measure || null;
+	}
+
 	global.CodaProgressionPlaybackSchedule = {
 		articulationDurationFactor: articulationDurationFactor,
 		buildProgressionMetronomeSchedule: buildProgressionMetronomeSchedule,
@@ -141,6 +180,7 @@
 		notesForVoices: notesForVoices,
 		measurePlaybackOptions: measurePlaybackOptions,
 		playbackOptionsForProgression: playbackOptionsForProgression,
+		playbackOptionsWithPreviousSegment: playbackOptionsWithPreviousSegment,
 		playbackTotalSeconds: playbackTotalSeconds,
 		refreshedPlaybackOptions: refreshedPlaybackOptions,
 		refreshPlaybackEvent: refreshPlaybackEvent
