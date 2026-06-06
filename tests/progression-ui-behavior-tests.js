@@ -183,6 +183,7 @@ assert.deepEqual(initialState, {
 	intensity: 80,
 	meter: '4/4',
 	modalInterchange: 25,
+	midiInstrument: 'acoustic_grand_piano',
 	style: 'contemporary',
 	swing: 0,
 	tensions: 35,

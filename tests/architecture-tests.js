@@ -643,6 +643,7 @@ assert.deepEqual(global.CodaProgressionStateNormalizer.normalize({
 	intensity: 80,
 	meter: '7/8',
 	modalInterchange: 25,
+	midiInstrument: 'acoustic_grand_piano',
 	style: 'classic',
 	swing: 0,
 	tensions: 35,
@@ -831,6 +832,33 @@ assert.equal(global.CodaProgressionVoicingSelection.nextInversionRunLength({
 }, {
 	inversionIndex: 2
 }), 4);
+assert.ok(global.CodaProgressionChordPlan.sustainedInstrumentCommonToneStickiness({
+	midiInstrument: 'pad_2_warm'
+}) > 0);
+assert.equal(global.CodaProgressionChordPlan.sustainedInstrumentCommonToneStickiness({
+	midiInstrument: 'acoustic_grand_piano'
+}), 0);
+assert.equal(global.CodaProgressionChordPlan.sustainedInstrumentCommonToneStickiness({
+	articulation: 'staccato',
+	midiInstrument: 'pad_2_warm'
+}), 0);
+assert.equal(global.CodaProgressionChordPlan.sustainedInstrumentCommonToneStickiness({
+	articulation: 'arpeggio_up',
+	midiInstrument: 'string_ensemble_1'
+}), 0);
+assert.ok(global.CodaProgressionVoiceLeadingScore.commonToneStickinessBonus({
+	voiceNotes: [
+		{ midiNote: 48, note: 'C' },
+		{ midiNote: 52, note: 'E' },
+		{ midiNote: 55, note: 'G' }
+	]
+}, {
+	voiceNotes: [
+		{ midiNote: 48, note: 'C' },
+		{ midiNote: 53, note: 'F' },
+		{ midiNote: 55, note: 'G' }
+	]
+}, 42) > 80);
 const repeatedInversionBreakVoicing = global.CodaProgressionVoicing.chooseVoicing({
 	baseNotes: ['D', 'F', 'A'],
 	chordName: 'Dm',
@@ -881,6 +909,99 @@ const voiceLeadingPedalMeasures = global.CodaProgressionVoiceLeading.annotateMea
 ], { counterpoint: 80 });
 assert.deepEqual(voiceLeadingPedalMeasures[0].pedalsOut.map(function (pedal) { return pedal.note; }), ['C']);
 assert.equal(voiceLeadingPedalMeasures[1].voiceNotes[0].role, 'root-pedal');
+assert.equal(global.CodaProgressionPedalLinks.prefersSustainedCommonTones({
+	midiInstrument: 'pad_2_warm'
+}), true);
+assert.equal(global.CodaProgressionPedalLinks.prefersSustainedCommonTones({
+	articulation: 'staccato',
+	midiInstrument: 'pad_2_warm'
+}), false);
+assert.equal(global.CodaProgressionPedalLinks.prefersSustainedCommonTones({
+	articulation: 'arpeggio',
+	midiInstrument: 'drawbar_organ'
+}), false);
+const lowCounterpointPianoPedalMeasures = global.CodaProgressionVoiceLeading.annotateMeasures([
+	{
+		bar: 1,
+		durationSeconds: 2,
+		midiNotes: [48, 52, 55],
+		voiceNotes: [
+			{ midiNote: 48, note: 'C', role: 'root' },
+			{ midiNote: 52, note: 'E', role: 'third' },
+			{ midiNote: 55, note: 'G', role: 'fifth' }
+		]
+	},
+	{
+		bar: 2,
+		durationSeconds: 2,
+		midiNotes: [48, 53, 57],
+		voiceNotes: [
+			{ midiNote: 48, note: 'C', role: 'root' },
+			{ midiNote: 53, note: 'F', role: 'fourth' },
+			{ midiNote: 57, note: 'A', role: 'sixth' }
+		]
+	}
+], { counterpoint: 0, midiInstrument: 'acoustic_grand_piano' });
+assert.deepEqual(lowCounterpointPianoPedalMeasures[0].pedalsOut, []);
+const lowCounterpointPadPedalMeasures = global.CodaProgressionVoiceLeading.annotateMeasures([
+	{
+		bar: 1,
+		durationSeconds: 2,
+		midiNotes: [48, 52, 55],
+		voiceNotes: [
+			{ midiNote: 48, note: 'C', role: 'root' },
+			{ midiNote: 52, note: 'E', role: 'third' },
+			{ midiNote: 55, note: 'G', role: 'fifth' }
+		]
+	},
+	{
+		bar: 2,
+		durationSeconds: 2,
+		midiNotes: [48, 53, 57],
+		voiceNotes: [
+			{ midiNote: 48, note: 'C', role: 'root' },
+			{ midiNote: 53, note: 'F', role: 'fourth' },
+			{ midiNote: 57, note: 'A', role: 'sixth' }
+		]
+	}
+], { counterpoint: 0, midiInstrument: 'pad_2_warm' });
+assert.deepEqual(lowCounterpointPadPedalMeasures[0].pedalsOut.map(function (pedal) { return pedal.note; }), ['C']);
+const splitPedalMeasures = global.CodaProgressionVoiceLeading.annotateMeasures([
+	{
+		bar: 1,
+		chords: [
+			{
+				bar: 1,
+				durationSeconds: 1,
+				midiNotes: [48, 52, 55],
+				voiceNotes: [
+					{ midiNote: 48, note: 'C', role: 'root' },
+					{ midiNote: 52, note: 'E', role: 'third' },
+					{ midiNote: 55, note: 'G', role: 'fifth' }
+				]
+			},
+			{
+				bar: 1,
+				durationSeconds: 1,
+				midiNotes: [48, 53, 57],
+				voiceNotes: [
+					{ midiNote: 48, note: 'C', role: 'fifth' },
+					{ midiNote: 53, note: 'F', role: 'root' },
+					{ midiNote: 57, note: 'A', role: 'third' }
+				]
+			}
+		],
+		durationSeconds: 2,
+		midiNotes: [48, 52, 55],
+		voiceNotes: [
+			{ midiNote: 48, note: 'C', role: 'root' },
+			{ midiNote: 52, note: 'E', role: 'third' },
+			{ midiNote: 55, note: 'G', role: 'fifth' }
+		]
+	}
+], { counterpoint: 0, midiInstrument: 'string_ensemble_1' });
+assert.deepEqual(splitPedalMeasures[0].chords[0].pedalsOut.map(function (pedal) { return pedal.note; }), ['C']);
+assert.deepEqual(splitPedalMeasures[0].chords[1].pedalsIn.map(function (pedal) { return pedal.note; }), ['C']);
 const melodicCounterpointMeasures = global.CodaProgressionMelodicCounterpoint.annotateMeasures([
 	{
 		bar: 1,

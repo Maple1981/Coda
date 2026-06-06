@@ -36,6 +36,7 @@
 			intensity: valueOf(root, 'progressionIntensity'),
 			meter: valueOf(root, 'progressionMeter'),
 			modalInterchange: valueOf(root, 'progressionModalInterchange'),
+			midiInstrument: valueOf(root, 'instrumentoSonoro'),
 			style: valueOf(root, 'progressionStyle'),
 			swing: valueOf(root, 'progressionSwing'),
 			tensions: valueOf(root, 'progressionTensions'),

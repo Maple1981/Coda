@@ -235,7 +235,11 @@ Los arpegios también se construyen como eventos de nota compartidos. La preescu
 
 El algoritmo valora positivamente las progresiones que enlazan acordes con notas comunes. Cuando dos acordes consecutivos comparten una o dos notas y el nivel de contrapunto lo favorece, esas notas pueden marcarse como pedales.
 
-El comportamiento audible del pedal depende del instrumento. En instrumentos sostenidos, como órgano y cuerdas, la preescucha y la exportación MIDI prolongan el `noteOff` y omiten el `noteOn` duplicado en el compás siguiente. En instrumentos pulsados o percusivos, como piano y guitarra, la nota se reataca aunque sea común, para que la voz no quede muda por la caída natural del sonido.
+Si el instrumento seleccionado es sostenido, actualmente `drawbar_organ`, `string_ensemble_1` o `pad_2_warm`, y la articulación es **Sostenido**, el sesgo cambia de suave a fuerte: la selección de voicings premia que las notas comunes se mantengan en la misma altura MIDI y la anotación de pedales intenta conservar hasta tres enlaces comunes entre acordes consecutivos. Esta regla se aplica también entre segmentos internos de un compás dividido, no sólo entre compases completos.
+
+Ese sesgo no se activa en articulaciones cortas o articuladas, como `staccato` o cualquier variante de `arpeggio`. En esos casos las notas comunes pueden existir por conducción normal, pero no deben convertirse en pedales prolongados ni condicionar de forma fuerte la selección del voicing, porque la articulación pide reataque o dibujo rítmico.
+
+El comportamiento audible del pedal depende del instrumento. En instrumentos sostenidos, como órgano, cuerdas o pad, la preescucha y la exportación MIDI prolongan el `noteOff` y omiten el `noteOn` duplicado en el compás siguiente. En instrumentos pulsados o percusivos, como piano y guitarra, la nota se reataca aunque sea común, para que la voz no quede muda por la caída natural del sonido.
 
 Los acordes pueden suspender la tercera cuando la conducción de voces lo justifica. Las calidades menores, disminuidas y semidisminuidas tienden a `sus2`; las calidades mayores, dominantes y de séptima mayor tienden a `sus4`. El cifrado se muestra después de la inversión y antes de las tensiones añadidas, por ejemplo `G 6 sus4`, `Cm7 sus2` o `D7♭5 4/2 sus2`. Los grados reflejan la misma suspensión, por ejemplo `V 6 sus4` o `ii7♭5 4/2 sus2`.
 

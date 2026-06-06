@@ -33,6 +33,7 @@
 		intensity: 80,
 		meter: '4/4',
 		modalInterchange: 25,
+		midiInstrument: 'acoustic_grand_piano',
 		style: 'contemporary',
 		swing: 0,
 		tensions: 35,
@@ -58,6 +59,7 @@
 			intensity: clampInteger(values.intensity, 1, 127, fallback.intensity),
 			meter: pick(values.meter, allowedMeters, fallback.meter),
 			modalInterchange: clampInteger(values.modalInterchange, 0, 100, fallback.modalInterchange),
+			midiInstrument: instrumentId(values.midiInstrument, fallback.midiInstrument),
 			style: pickStyle(values.style, fallback.style),
 			swing: clampInteger(values.swing, 0, 75, fallback.swing),
 			tensions: clampInteger(values.tensions, 0, 100, fallback.tensions),
@@ -81,6 +83,7 @@
 			intensity: value.intensity,
 			meter: value.meter,
 			modalInterchange: value.modalInterchange,
+			midiInstrument: value.midiInstrument,
 			style: value.style,
 			swing: value.swing,
 			tensions: value.tensions,
@@ -97,6 +100,12 @@
 		var normalized = legacyStyles[value] || value;
 
 		return pick(normalized, allowedStyles, fallback);
+	}
+
+	function instrumentId(value, fallback) {
+		var id = String(value || '');
+
+		return /^[a-z0-9_]+$/.test(id) ? id : fallback;
 	}
 
 	function pickNumber(value, allowedValues, fallback) {

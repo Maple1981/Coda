@@ -30,6 +30,7 @@
 			generateMelodicVoice: progressionState.generateMelodicVoice === true,
 			measures: options.measures || [],
 			meter: progressionState.meter,
+			midiInstrument: progressionState.midiInstrument,
 			secondsPerBeat: secondsPerBeat,
 			style: progressionState.style,
 			swing: progressionState.swing,

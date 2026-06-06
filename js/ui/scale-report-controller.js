@@ -599,9 +599,22 @@
 
 			setValue(instrumentSelect, instrumentId);
 			setPlaybackInstrument(options, instrumentId);
+			updateProgressionInstrumentState(instrumentId);
 			saveFormPreferences(preferences);
 			renderInstrument(true);
 			recordHistorySnapshot();
+		}
+
+		function updateProgressionInstrumentState(instrumentId) {
+			var state = uiState.getProgressionState();
+
+			if (!state) {
+				return;
+			}
+
+			state = cloneJson(state);
+			state.midiInstrument = instrumentId;
+			uiState.setProgressionState(state);
 		}
 
 		function recordHistorySnapshot() {

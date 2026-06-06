@@ -4120,6 +4120,7 @@
 			intensity: numberOrDefault(progressionState.intensity, 80),
 			meter: progressionState.meter || '4/4',
 			modalInterchange: numberOrDefault(progressionState.modalInterchange, 25),
+			midiInstrument: instrumentId(progressionState.midiInstrument, 'acoustic_grand_piano'),
 			style: styleService.normalize(progressionState && progressionState.style),
 			swing: numberOrDefault(progressionState.swing, 0),
 			tensions: numberOrDefault(progressionState.tensions, 35),
@@ -4139,6 +4140,12 @@
 		var number = Number(parts[partIndex]);
 
 		return isFinite(number) ? number : fallback;
+	}
+
+	function instrumentId(value, fallback) {
+		var id = String(value || '');
+
+		return /^[a-z0-9_]+$/.test(id) ? id : fallback;
 	}
 
 	global.CodaProgressionStateNormalizer = {
@@ -4687,6 +4694,7 @@
 		score += exteriorParallelPerfects * 28;
 		score += registerCenterPenalty(nextPlan, options && options.registerCenterMidi);
 		score += lowRegisterBassPenalty(nextPlan);
+		score -= commonToneStickinessBonus(previousPlan, nextPlan, options && options.commonToneStickiness);
 
 		return score;
 	}
@@ -4723,6 +4731,65 @@
 		}
 
 		return score;
+	}
+
+	function commonToneStickinessBonus(previousPlan, nextPlan, weight) {
+		var normalizedWeight = Math.max(0, Number(weight) || 0);
+		var sameVoiceCount;
+		var sameMidiCount;
+
+		if (!normalizedWeight) {
+			return 0;
+		}
+
+		sameVoiceCount = stickySameVoiceCommonTones(previousPlan, nextPlan);
+		sameMidiCount = stickySameMidiCommonTones(previousPlan, nextPlan);
+
+		return (sameVoiceCount * normalizedWeight) + (sameMidiCount * Math.round(normalizedWeight / 2));
+	}
+
+	function stickySameVoiceCommonTones(previousPlan, nextPlan) {
+		var previousVoices = previousPlan && previousPlan.voiceNotes ? previousPlan.voiceNotes : [];
+		var nextVoices = nextPlan && nextPlan.voiceNotes ? nextPlan.voiceNotes : [];
+		var length = Math.min(previousVoices.length, nextVoices.length);
+		var count = 0;
+
+		for (var i = 0; i < length; i++) {
+			if (
+				Number(previousVoices[i].midiNote) === Number(nextVoices[i].midiNote) &&
+				pitchService.normalizePitchName(previousVoices[i].note) === pitchService.normalizePitchName(nextVoices[i].note)
+			) {
+				count += 1;
+			}
+		}
+
+		return count;
+	}
+
+	function stickySameMidiCommonTones(previousPlan, nextPlan) {
+		var previousVoices = previousPlan && previousPlan.voiceNotes ? previousPlan.voiceNotes : [];
+		var nextVoices = nextPlan && nextPlan.voiceNotes ? nextPlan.voiceNotes : [];
+		var usedNext = {};
+		var count = 0;
+
+		for (var i = 0; i < previousVoices.length; i++) {
+			for (var j = 0; j < nextVoices.length; j++) {
+				if (usedNext[j]) {
+					continue;
+				}
+
+				if (
+					Number(previousVoices[i].midiNote) === Number(nextVoices[j].midiNote) &&
+					pitchService.normalizePitchName(previousVoices[i].note) === pitchService.normalizePitchName(nextVoices[j].note)
+				) {
+					usedNext[j] = true;
+					count += 1;
+					break;
+				}
+			}
+		}
+
+		return count;
 	}
 
 	function isParallelPerfect(previousMidiNotes, nextMidiNotes, lowerIndex, upperIndex) {
@@ -4793,6 +4860,7 @@
 	}
 
 	global.CodaProgressionVoiceLeadingScore = {
+		commonToneStickinessBonus: commonToneStickinessBonus,
 		countParallelPerfects: countParallelPerfects,
 		firstVoicingScore: firstVoicingScore,
 		lowRegisterBassPenalty: lowRegisterBassPenalty,
@@ -5336,6 +5404,7 @@
 
 	function scoreOptions(options) {
 		return {
+			commonToneStickiness: numberOrDefault(options && options.commonToneStickiness, 0),
 			registerCenterMidi: registerCenterMidi(options)
 		};
 	}
@@ -5349,6 +5418,12 @@
 		}
 
 		return (isFinite(fallback) ? fallback : 60) + 6;
+	}
+
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
 	}
 
 	function inversionRunKey(plan) {
@@ -5539,9 +5614,12 @@
 	var voicingService = global.CodaProgressionVoicing;
 
 	function createBetween(currentMeasure, nextMeasure, progressionState) {
+		progressionState = progressionState || {};
+
 		var links = commonVoiceLinks(currentMeasure, nextMeasure);
-		var maxPedals = numberOrDefault(progressionState.counterpoint, 0) >= 70 ? 2 : 1;
-		var pedalProbability = 0.16 +
+		var sustainedPedalInstrument = prefersSustainedCommonTones(progressionState);
+		var maxPedals = sustainedPedalInstrument ? 3 : (numberOrDefault(progressionState.counterpoint, 0) >= 70 ? 2 : 1);
+		var pedalProbability = sustainedPedalInstrument ? 1 : 0.16 +
 			Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 20) / 180 +
 			Math.max(0, links.length - 1) * 0.12;
 		var selectedLinks = links.slice(0, Math.min(maxPedals, links.length));
@@ -5619,6 +5697,22 @@
 		return result;
 	}
 
+	function prefersSustainedCommonTones(progressionState) {
+		var instrument = progressionState && progressionState.midiInstrument;
+
+		return isSustainArticulation(progressionState) && (
+			instrument === 'drawbar_organ' ||
+			instrument === 'string_ensemble_1' ||
+			instrument === 'pad_2_warm'
+		);
+	}
+
+	function isSustainArticulation(progressionState) {
+		var articulation = progressionState && progressionState.articulation;
+
+		return !articulation || articulation === 'sustain';
+	}
+
 	function extendObject(target, values) {
 		return objectService.extendObject(target, values);
 	}
@@ -5632,6 +5726,7 @@
 	global.CodaProgressionPedalLinks = {
 		commonVoiceLinks: commonVoiceLinks,
 		createBetween: createBetween,
+		prefersSustainedCommonTones: prefersSustainedCommonTones,
 		midiNotesFromVoiceNotes: midiNotesFromVoiceNotes
 	};
 })(window);
@@ -5647,32 +5742,67 @@
 	var voicingService = global.CodaProgressionVoicing;
 
 	function annotateMeasures(measures, progressionState) {
+		clearPedals(measures);
+
 		for (var i = 0; i < measures.length; i++) {
 			var previousMeasure = measures[i - 1] || null;
-			var nextMeasure = measures[i + 1] || null;
 			var commonLinks = previousMeasure ? pedalLinkService.commonVoiceLinks(previousMeasure, measures[i]) : [];
 
-			measures[i].pedalsIn = measures[i].pedalsIn || [];
-			measures[i].pedalsOut = measures[i].pedalsOut || [];
 			measures[i].voiceLeading = {
 				commonTones: commonLinks.length,
 				exteriorParallelPerfects: previousMeasure ? voicingService.countParallelPerfects(previousMeasure.midiNotes, measures[i].midiNotes, true) : 0,
 				parallelPerfects: previousMeasure ? voicingService.countParallelPerfects(previousMeasure.midiNotes, measures[i].midiNotes, false) : 0,
 				score: previousMeasure ? voicingService.voiceLeadingTransitionScore(previousMeasure, measures[i]) : voicingService.firstVoicingScore(measures[i])
 			};
+		}
 
-			if (nextMeasure) {
-				pedalLinkService.createBetween(measures[i], nextMeasure, progressionState);
+		annotatePedalTimeline(measures, progressionState);
+
+		return measures;
+	}
+
+	function annotatePedalTimeline(measures, progressionState) {
+		var timeline = segmentTimeline(measures);
+
+		for (var i = 0; i < timeline.length - 1; i++) {
+			pedalLinkService.createBetween(timeline[i], timeline[i + 1], progressionState);
+		}
+	}
+
+	function segmentTimeline(measures) {
+		var timeline = [];
+
+		for (var i = 0; i < (measures || []).length; i++) {
+			if (measures[i].chords && measures[i].chords.length) {
+				for (var j = 0; j < measures[i].chords.length; j++) {
+					timeline.push(measures[i].chords[j]);
+				}
+			} else {
+				timeline.push(measures[i]);
 			}
 		}
 
-		return measures;
+		return timeline;
+	}
+
+	function clearPedals(measures) {
+		for (var i = 0; i < (measures || []).length; i++) {
+			measures[i].pedalsIn = [];
+			measures[i].pedalsOut = [];
+
+			for (var j = 0; j < ((measures[i] && measures[i].chords) || []).length; j++) {
+				measures[i].chords[j].pedalsIn = [];
+				measures[i].chords[j].pedalsOut = [];
+			}
+		}
+
 	}
 
 	global.CodaProgressionVoiceLeading = {
 		annotateMeasures: annotateMeasures,
 		commonVoiceLinks: pedalLinkService.commonVoiceLinks,
-		midiNotesFromVoiceNotes: pedalLinkService.midiNotesFromVoiceNotes
+		midiNotesFromVoiceNotes: pedalLinkService.midiNotesFromVoiceNotes,
+		segmentTimeline: segmentTimeline
 	};
 })(window);
 
@@ -10089,6 +10219,7 @@
 			openingTonicInversionPolicy: openingTonicInversionPolicy(context),
 			previousPlan: context.previousPlan,
 			registerCenterMidi: registerCenterMidi(context.options),
+			commonToneStickiness: sustainedInstrumentCommonToneStickiness(context.progressionState),
 			voicing: context.progressionState.voicing,
 			voices: context.progressionState.voices
 		});
@@ -10174,12 +10305,30 @@
 		return 'root';
 	}
 
+	function sustainedInstrumentCommonToneStickiness(progressionState) {
+		var instrument = progressionState && progressionState.midiInstrument;
+		var sustainedInstruments = {
+			drawbar_organ: true,
+			pad_2_warm: true,
+			string_ensemble_1: true
+		};
+
+		return sustainedInstruments[instrument] && isSustainArticulation(progressionState) ? 42 : 0;
+	}
+
+	function isSustainArticulation(progressionState) {
+		var articulation = progressionState && progressionState.articulation;
+
+		return !articulation || articulation === 'sustain';
+	}
+
 	global.CodaProgressionChordPlan = {
 		build: build,
 		chordNotes: chordNotes,
 		openingTonicInversionPolicy: openingTonicInversionPolicy,
 		nextTriadNotes: nextTriadNotes,
 		registerCenterMidi: registerCenterMidi,
+		sustainedInstrumentCommonToneStickiness: sustainedInstrumentCommonToneStickiness,
 		suspendedNotes: suspendedNotes,
 		triadNotes: triadNotes
 	};
@@ -11136,6 +11285,7 @@
 			generateMelodicVoice: progressionState.generateMelodicVoice === true,
 			measures: options.measures || [],
 			meter: progressionState.meter,
+			midiInstrument: progressionState.midiInstrument,
 			secondsPerBeat: secondsPerBeat,
 			style: progressionState.style,
 			swing: progressionState.swing,
@@ -23807,6 +23957,7 @@
 		intensity: 80,
 		meter: '4/4',
 		modalInterchange: 25,
+		midiInstrument: 'acoustic_grand_piano',
 		style: 'contemporary',
 		swing: 0,
 		tensions: 35,
@@ -23832,6 +23983,7 @@
 			intensity: clampInteger(values.intensity, 1, 127, fallback.intensity),
 			meter: pick(values.meter, allowedMeters, fallback.meter),
 			modalInterchange: clampInteger(values.modalInterchange, 0, 100, fallback.modalInterchange),
+			midiInstrument: instrumentId(values.midiInstrument, fallback.midiInstrument),
 			style: pickStyle(values.style, fallback.style),
 			swing: clampInteger(values.swing, 0, 75, fallback.swing),
 			tensions: clampInteger(values.tensions, 0, 100, fallback.tensions),
@@ -23855,6 +24007,7 @@
 			intensity: value.intensity,
 			meter: value.meter,
 			modalInterchange: value.modalInterchange,
+			midiInstrument: value.midiInstrument,
 			style: value.style,
 			swing: value.swing,
 			tensions: value.tensions,
@@ -23871,6 +24024,12 @@
 		var normalized = legacyStyles[value] || value;
 
 		return pick(normalized, allowedStyles, fallback);
+	}
+
+	function instrumentId(value, fallback) {
+		var id = String(value || '');
+
+		return /^[a-z0-9_]+$/.test(id) ? id : fallback;
 	}
 
 	function pickNumber(value, allowedValues, fallback) {
@@ -23962,6 +24121,7 @@
 			intensity: valueOf(root, 'progressionIntensity'),
 			meter: valueOf(root, 'progressionMeter'),
 			modalInterchange: valueOf(root, 'progressionModalInterchange'),
+			midiInstrument: valueOf(root, 'instrumentoSonoro'),
 			style: valueOf(root, 'progressionStyle'),
 			swing: valueOf(root, 'progressionSwing'),
 			tensions: valueOf(root, 'progressionTensions'),
@@ -27462,9 +27622,22 @@
 
 			setValue(instrumentSelect, instrumentId);
 			setPlaybackInstrument(options, instrumentId);
+			updateProgressionInstrumentState(instrumentId);
 			saveFormPreferences(preferences);
 			renderInstrument(true);
 			recordHistorySnapshot();
+		}
+
+		function updateProgressionInstrumentState(instrumentId) {
+			var state = uiState.getProgressionState();
+
+			if (!state) {
+				return;
+			}
+
+			state = cloneJson(state);
+			state.midiInstrument = instrumentId;
+			uiState.setProgressionState(state);
 		}
 
 		function recordHistorySnapshot() {

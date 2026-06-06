@@ -15,6 +15,7 @@
 		score += exteriorParallelPerfects * 28;
 		score += registerCenterPenalty(nextPlan, options && options.registerCenterMidi);
 		score += lowRegisterBassPenalty(nextPlan);
+		score -= commonToneStickinessBonus(previousPlan, nextPlan, options && options.commonToneStickiness);
 
 		return score;
 	}
@@ -51,6 +52,65 @@
 		}
 
 		return score;
+	}
+
+	function commonToneStickinessBonus(previousPlan, nextPlan, weight) {
+		var normalizedWeight = Math.max(0, Number(weight) || 0);
+		var sameVoiceCount;
+		var sameMidiCount;
+
+		if (!normalizedWeight) {
+			return 0;
+		}
+
+		sameVoiceCount = stickySameVoiceCommonTones(previousPlan, nextPlan);
+		sameMidiCount = stickySameMidiCommonTones(previousPlan, nextPlan);
+
+		return (sameVoiceCount * normalizedWeight) + (sameMidiCount * Math.round(normalizedWeight / 2));
+	}
+
+	function stickySameVoiceCommonTones(previousPlan, nextPlan) {
+		var previousVoices = previousPlan && previousPlan.voiceNotes ? previousPlan.voiceNotes : [];
+		var nextVoices = nextPlan && nextPlan.voiceNotes ? nextPlan.voiceNotes : [];
+		var length = Math.min(previousVoices.length, nextVoices.length);
+		var count = 0;
+
+		for (var i = 0; i < length; i++) {
+			if (
+				Number(previousVoices[i].midiNote) === Number(nextVoices[i].midiNote) &&
+				pitchService.normalizePitchName(previousVoices[i].note) === pitchService.normalizePitchName(nextVoices[i].note)
+			) {
+				count += 1;
+			}
+		}
+
+		return count;
+	}
+
+	function stickySameMidiCommonTones(previousPlan, nextPlan) {
+		var previousVoices = previousPlan && previousPlan.voiceNotes ? previousPlan.voiceNotes : [];
+		var nextVoices = nextPlan && nextPlan.voiceNotes ? nextPlan.voiceNotes : [];
+		var usedNext = {};
+		var count = 0;
+
+		for (var i = 0; i < previousVoices.length; i++) {
+			for (var j = 0; j < nextVoices.length; j++) {
+				if (usedNext[j]) {
+					continue;
+				}
+
+				if (
+					Number(previousVoices[i].midiNote) === Number(nextVoices[j].midiNote) &&
+					pitchService.normalizePitchName(previousVoices[i].note) === pitchService.normalizePitchName(nextVoices[j].note)
+				) {
+					usedNext[j] = true;
+					count += 1;
+					break;
+				}
+			}
+		}
+
+		return count;
 	}
 
 	function isParallelPerfect(previousMidiNotes, nextMidiNotes, lowerIndex, upperIndex) {
@@ -121,6 +181,7 @@
 	}
 
 	global.CodaProgressionVoiceLeadingScore = {
+		commonToneStickinessBonus: commonToneStickinessBonus,
 		countParallelPerfects: countParallelPerfects,
 		firstVoicingScore: firstVoicingScore,
 		lowRegisterBassPenalty: lowRegisterBassPenalty,

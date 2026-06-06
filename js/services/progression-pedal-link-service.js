@@ -6,9 +6,12 @@
 	var voicingService = global.CodaProgressionVoicing;
 
 	function createBetween(currentMeasure, nextMeasure, progressionState) {
+		progressionState = progressionState || {};
+
 		var links = commonVoiceLinks(currentMeasure, nextMeasure);
-		var maxPedals = numberOrDefault(progressionState.counterpoint, 0) >= 70 ? 2 : 1;
-		var pedalProbability = 0.16 +
+		var sustainedPedalInstrument = prefersSustainedCommonTones(progressionState);
+		var maxPedals = sustainedPedalInstrument ? 3 : (numberOrDefault(progressionState.counterpoint, 0) >= 70 ? 2 : 1);
+		var pedalProbability = sustainedPedalInstrument ? 1 : 0.16 +
 			Math.max(0, numberOrDefault(progressionState.counterpoint, 0) - 20) / 180 +
 			Math.max(0, links.length - 1) * 0.12;
 		var selectedLinks = links.slice(0, Math.min(maxPedals, links.length));
@@ -86,6 +89,22 @@
 		return result;
 	}
 
+	function prefersSustainedCommonTones(progressionState) {
+		var instrument = progressionState && progressionState.midiInstrument;
+
+		return isSustainArticulation(progressionState) && (
+			instrument === 'drawbar_organ' ||
+			instrument === 'string_ensemble_1' ||
+			instrument === 'pad_2_warm'
+		);
+	}
+
+	function isSustainArticulation(progressionState) {
+		var articulation = progressionState && progressionState.articulation;
+
+		return !articulation || articulation === 'sustain';
+	}
+
 	function extendObject(target, values) {
 		return objectService.extendObject(target, values);
 	}
@@ -99,6 +118,7 @@
 	global.CodaProgressionPedalLinks = {
 		commonVoiceLinks: commonVoiceLinks,
 		createBetween: createBetween,
+		prefersSustainedCommonTones: prefersSustainedCommonTones,
 		midiNotesFromVoiceNotes: midiNotesFromVoiceNotes
 	};
 })(window);

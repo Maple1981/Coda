@@ -74,6 +74,7 @@
 
 	function scoreOptions(options) {
 		return {
+			commonToneStickiness: numberOrDefault(options && options.commonToneStickiness, 0),
 			registerCenterMidi: registerCenterMidi(options)
 		};
 	}
@@ -87,6 +88,12 @@
 		}
 
 		return (isFinite(fallback) ? fallback : 60) + 6;
+	}
+
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
 	}
 
 	function inversionRunKey(plan) {

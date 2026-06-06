@@ -51,6 +51,7 @@
 			openingTonicInversionPolicy: openingTonicInversionPolicy(context),
 			previousPlan: context.previousPlan,
 			registerCenterMidi: registerCenterMidi(context.options),
+			commonToneStickiness: sustainedInstrumentCommonToneStickiness(context.progressionState),
 			voicing: context.progressionState.voicing,
 			voices: context.progressionState.voices
 		});
@@ -136,12 +137,30 @@
 		return 'root';
 	}
 
+	function sustainedInstrumentCommonToneStickiness(progressionState) {
+		var instrument = progressionState && progressionState.midiInstrument;
+		var sustainedInstruments = {
+			drawbar_organ: true,
+			pad_2_warm: true,
+			string_ensemble_1: true
+		};
+
+		return sustainedInstruments[instrument] && isSustainArticulation(progressionState) ? 42 : 0;
+	}
+
+	function isSustainArticulation(progressionState) {
+		var articulation = progressionState && progressionState.articulation;
+
+		return !articulation || articulation === 'sustain';
+	}
+
 	global.CodaProgressionChordPlan = {
 		build: build,
 		chordNotes: chordNotes,
 		openingTonicInversionPolicy: openingTonicInversionPolicy,
 		nextTriadNotes: nextTriadNotes,
 		registerCenterMidi: registerCenterMidi,
+		sustainedInstrumentCommonToneStickiness: sustainedInstrumentCommonToneStickiness,
 		suspendedNotes: suspendedNotes,
 		triadNotes: triadNotes
 	};

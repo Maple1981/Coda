@@ -21,6 +21,7 @@
 			intensity: numberOrDefault(progressionState.intensity, 80),
 			meter: progressionState.meter || '4/4',
 			modalInterchange: numberOrDefault(progressionState.modalInterchange, 25),
+			midiInstrument: instrumentId(progressionState.midiInstrument, 'acoustic_grand_piano'),
 			style: styleService.normalize(progressionState && progressionState.style),
 			swing: numberOrDefault(progressionState.swing, 0),
 			tensions: numberOrDefault(progressionState.tensions, 35),
@@ -40,6 +41,12 @@
 		var number = Number(parts[partIndex]);
 
 		return isFinite(number) ? number : fallback;
+	}
+
+	function instrumentId(value, fallback) {
+		var id = String(value || '');
+
+		return /^[a-z0-9_]+$/.test(id) ? id : fallback;
 	}
 
 	global.CodaProgressionStateNormalizer = {
