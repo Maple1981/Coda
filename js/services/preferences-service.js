@@ -59,7 +59,7 @@
 			},
 			dashboardSidebarWidth: integerRange(320, 760),
 			language: allowList(['es', 'en']),
-			midiInstrument: allowList(['acoustic_grand_piano', 'acoustic_guitar_nylon', 'drawbar_organ', 'string_ensemble_1']),
+			midiInstrument: allowList(['acoustic_grand_piano', 'acoustic_guitar_nylon', 'drawbar_organ', 'string_ensemble_1', 'pad_2_warm']),
 			notation: allowList(['anglosaxon', 'latin']),
 			progressionArticulation: allowList([
 				'sustain',

@@ -14,6 +14,7 @@ La atribución documental de estos archivos se mantiene en [`docs/ATTRIBUTIONS.m
 - `acoustic_guitar_nylon`: guitarra clásica. Corresponde a la vista de guitarra.
 - `drawbar_organ`: órgano drawbar. Usa la vista de piano y queda disponible para progresiones y sonidos sostenidos.
 - `string_ensemble_1`: cuerdas. Usa la vista de piano y queda disponible para progresiones y arreglos.
+- `pad_2_warm`: pad cálido. Usa la vista de piano y queda disponible para progresiones sostenidas o texturas de fondo.
 - `percussive_organ`: órgano percutivo. No aparece en el selector principal; se carga como preset alternativo cuando el órgano drawbar usa articulación Staccato o Arpegio.
 - `pizzicato_strings`: cuerdas en pizzicato. No aparece en el selector principal; se carga como preset alternativo cuando las cuerdas usan articulación Staccato o Arpegio.
 

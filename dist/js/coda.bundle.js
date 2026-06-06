@@ -91,6 +91,18 @@
 			usage: ['progressions'],
 			viewInstrument: '1',
 			sustained: true
+		},
+		{
+			id: 'pad_2_warm',
+			nombre: 'Pad cálido',
+			family: 'synth-pad',
+			pedalBehavior: 'sustain',
+			program: 89,
+			soundEnvelope: 'sustained',
+			supportsPedalHold: true,
+			usage: ['progressions'],
+			viewInstrument: '1',
+			sustained: true
 		}
 	];
 
@@ -2273,6 +2285,7 @@
 			'data.midiInstruments.1': 'Guitarra clásica',
 			'data.midiInstruments.2': 'Órgano drawbar',
 			'data.midiInstruments.3': 'Cuerdas',
+			'data.midiInstruments.4': 'Pad cálido',
 			'extended.colorLegend': 'Color: acorde más frecuente',
 			'extended.relativeMinorSeconds': 'II menor relativo (SD)',
 			'extended.secondaryDominants': 'Dominantes secundarios (D)',
@@ -2562,6 +2575,7 @@
 			'data.midiInstruments.1': 'Classical guitar',
 			'data.midiInstruments.2': 'Drawbar organ',
 			'data.midiInstruments.3': 'Strings',
+			'data.midiInstruments.4': 'Warm pad',
 			'extended.colorLegend': 'Color: most frequent chord',
 			'extended.relativeMinorSeconds': 'Relative minor ii (SD)',
 			'extended.secondaryDominants': 'Secondary dominants (D)',
@@ -3134,7 +3148,7 @@
 			},
 			dashboardSidebarWidth: integerRange(320, 760),
 			language: allowList(['es', 'en']),
-			midiInstrument: allowList(['acoustic_grand_piano', 'acoustic_guitar_nylon', 'drawbar_organ', 'string_ensemble_1']),
+			midiInstrument: allowList(['acoustic_grand_piano', 'acoustic_guitar_nylon', 'drawbar_organ', 'string_ensemble_1', 'pad_2_warm']),
 			notation: allowList(['anglosaxon', 'latin']),
 			progressionArticulation: allowList([
 				'sustain',

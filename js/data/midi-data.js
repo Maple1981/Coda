@@ -68,6 +68,18 @@
 			usage: ['progressions'],
 			viewInstrument: '1',
 			sustained: true
+		},
+		{
+			id: 'pad_2_warm',
+			nombre: 'Pad cálido',
+			family: 'synth-pad',
+			pedalBehavior: 'sustain',
+			program: 89,
+			soundEnvelope: 'sustained',
+			supportsPedalHold: true,
+			usage: ['progressions'],
+			viewInstrument: '1',
+			sustained: true
 		}
 	];
 
