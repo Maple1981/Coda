@@ -37,15 +37,62 @@
 			return playMidiChord(playbackService, event);
 		}
 
-		for (var i = 0; i < event.midiNoteEvents.length; i++) {
-			playbackService.playMidiNote(event.midiNoteEvents[i].midiNote, withVelocity({
-				delay: event.delay + (event.midiNoteEvents[i].delay || 0),
-				duration: event.midiNoteEvents[i].duration,
-				instrumentId: event.playbackInstrumentId
-			}, event.midiNoteEvents[i].velocity || event.velocity));
+		var groups = groupedMidiNoteEvents(event);
+
+		for (var i = 0; i < groups.length; i++) {
+			if (groups[i].midiNotes.length > 1 && typeof playbackService.playMidiChord === 'function') {
+				playbackService.playMidiChord(groups[i].midiNotes, withVelocity({
+					delay: event.delay + groups[i].delay,
+					duration: groups[i].duration,
+					instrumentId: event.playbackInstrumentId
+				}, groups[i].velocity));
+				continue;
+			}
+
+			for (var j = 0; j < groups[i].midiNotes.length; j++) {
+				playbackService.playMidiNote(groups[i].midiNotes[j], withVelocity({
+					delay: event.delay + groups[i].delay,
+					duration: groups[i].duration,
+					instrumentId: event.playbackInstrumentId
+				}, groups[i].velocity));
+			}
 		}
 
 		return true;
+	}
+
+	function groupedMidiNoteEvents(event) {
+		var groups = [];
+		var indexes = {};
+		var fallbackVelocity = event && event.velocity;
+		var source = event && event.midiNoteEvents ? event.midiNoteEvents : [];
+
+		for (var i = 0; i < source.length; i++) {
+			if (source[i].midiNote == null) {
+				continue;
+			}
+
+			var delay = Math.max(0, Number(source[i].delay) || 0);
+			var duration = Math.max(0, Number(source[i].duration) || 0);
+			var velocity = source[i].velocity || fallbackVelocity;
+			var key = [delay.toFixed(6), duration.toFixed(6), velocity == null ? '' : String(velocity)].join('|');
+			var groupIndex = indexes[key];
+
+			if (groupIndex == null) {
+				groupIndex = groups.length;
+				indexes[key] = groupIndex;
+				groups.push({
+					delay: delay,
+					duration: duration,
+					midiNotes: [],
+					velocity: velocity
+				});
+			}
+
+			groups[groupIndex].midiNotes.push(source[i].midiNote);
+		}
+
+		return groups;
 	}
 
 	function playArpeggio(playbackService, event) {
@@ -103,6 +150,7 @@
 	}
 
 	global.CodaProgressionMidiEventPlayer = {
+		groupedMidiNoteEvents: groupedMidiNoteEvents,
 		playArpeggio: playArpeggio,
 		playChordFallback: playChordFallback,
 		playMidiChord: playMidiChord,

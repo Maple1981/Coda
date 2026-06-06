@@ -5926,6 +5926,7 @@
 				toBar: nextMeasure.bar
 			};
 
+			extendIncomingPedal(currentMeasure, link.midiNote, nextMeasure.durationSeconds);
 			alignPedalVoice(nextMeasure, link);
 			currentMeasure.pedalsOut.push(pedal);
 			nextMeasure.pedalsIn.push(pedal);
@@ -5934,9 +5935,23 @@
 		nextMeasure.midiNotes = midiNotesFromVoiceNotes(nextMeasure.voiceNotes);
 	}
 
+	function extendIncomingPedal(measure, midiNote, durationSeconds) {
+		var extension = Number(durationSeconds) || 0;
+
+		if (!extension || !measure || !measure.pedalsIn || !measure.pedalsIn.length) {
+			return;
+		}
+
+		for (var i = 0; i < measure.pedalsIn.length; i++) {
+			if (Number(measure.pedalsIn[i].midiNote) === Number(midiNote)) {
+				measure.pedalsIn[i].durationSeconds = (Number(measure.pedalsIn[i].durationSeconds) || 0) + extension;
+			}
+		}
+	}
+
 	function alignPedalVoice(measure, link) {
 		for (var i = 0; i < measure.voiceNotes.length; i++) {
-			if (voicingService.normalizePitchName(measure.voiceNotes[i].note) === voicingService.normalizePitchName(link.note)) {
+			if (Number(measure.voiceNotes[i].midiNote) === Number(link.midiNote)) {
 				measure.voiceNotes[i] = extendObject(measure.voiceNotes[i], {
 					midiNote: link.midiNote,
 					role: measure.voiceNotes[i].role + '-pedal'
@@ -5952,7 +5967,7 @@
 
 		for (var i = 0; i < (firstMeasure.voiceNotes || []).length; i++) {
 			for (var j = 0; j < (secondMeasure.voiceNotes || []).length; j++) {
-				if (usedSecondVoices[j] || voicingService.normalizePitchName(firstMeasure.voiceNotes[i].note) !== voicingService.normalizePitchName(secondMeasure.voiceNotes[j].note)) {
+				if (usedSecondVoices[j] || !isExactCommonVoice(firstMeasure.voiceNotes[i], secondMeasure.voiceNotes[j])) {
 					continue;
 				}
 
@@ -5970,6 +5985,11 @@
 		return links.sort(function (a, b) {
 			return Math.abs(a.firstVoiceIndex - a.secondVoiceIndex) - Math.abs(b.firstVoiceIndex - b.secondVoiceIndex);
 		});
+	}
+
+	function isExactCommonVoice(firstVoice, secondVoice) {
+		return Number(firstVoice && firstVoice.midiNote) === Number(secondVoice && secondVoice.midiNote) &&
+			voicingService.normalizePitchName(firstVoice && firstVoice.note) === voicingService.normalizePitchName(secondVoice && secondVoice.note);
 	}
 
 	function midiNotesFromVoiceNotes(voiceNotes) {
@@ -11042,6 +11062,7 @@
 	var objectService = global.CodaProgressionObjects;
 	var segmentBuilder = global.CodaProgressionSegmentBuilder;
 	var voiceLeadingService = global.CodaProgressionVoiceLeading;
+	var MAX_INVERSION_RUN = 3;
 
 	function apply(progression, options) {
 		var progressionState = options && options.progressionState ? options.progressionState : {};
@@ -11067,6 +11088,7 @@
 				var rebuiltSegment = revoiceSegment(segment, {
 					data: options.data,
 					index: i,
+					nextSegment: nextSegmentAfter(measures, i, j),
 					preserveInversions: !(options && options.preserveInversions === false),
 					previousPlan: previousPlan,
 					progressionState: progressionState,
@@ -11098,7 +11120,7 @@
 		chordPlan = chordPlanService.build({
 			index: context.index,
 			options: {
-				forceInversionIndex: shouldPreserveSegmentInversion(segment, context) ? numberOrDefault(segment.inversionIndex, 0) : null,
+				forceInversionIndex: forcedInversionIndexForSegment(segment, context),
 				forceKind: segment.chordKind === 'seventh' ? 'seventh' : 'triad',
 				includeTensions: true,
 				initialMidiNote: context.data && context.data.midi ? context.data.midi.initialMidiNote : 60,
@@ -11126,9 +11148,71 @@
 		});
 	}
 
+	function forcedInversionIndexForSegment(segment, context) {
+		if (shouldPreserveSegmentInversion(segment, context)) {
+			return numberOrDefault(segment.inversionIndex, 0);
+		}
+
+		if (wouldSetUpForcedInversionOverflow(segment, context)) {
+			return alternateInversionIndex(segment);
+		}
+
+		return null;
+	}
+
 	function shouldPreserveSegmentInversion(segment, context) {
-		return context.preserveInversions ||
-			!!(segment && (segment.cadentialRole || segment.chromaticRole || segment.restorableInversionIndex != null));
+		var structurallyProtected = !!(segment && (segment.cadentialRole || segment.chromaticRole || segment.restorableInversionIndex != null));
+
+		if (context.preserveInversions) {
+			return true;
+		}
+
+		if (!structurallyProtected) {
+			return false;
+		}
+
+		return !wouldSetUpForcedInversionOverflow(segment, context);
+	}
+
+	function wouldSetUpForcedInversionOverflow(segment, context) {
+		var current = Number(segment && segment.inversionIndex);
+		var previousKey = context.previousPlan && context.previousPlan.inversionRunKey != null ?
+			String(context.previousPlan.inversionRunKey) :
+			String(Number(context.previousPlan && context.previousPlan.inversionIndex));
+		var previousLength = Number(context.previousPlan && context.previousPlan.inversionRunLength);
+		var nextSegment = context.nextSegment;
+
+		if (!isFinite(current) || String(current) !== previousKey || !isFinite(previousLength) || previousLength < MAX_INVERSION_RUN - 1) {
+			return false;
+		}
+
+		return Number(nextSegment && nextSegment.inversionIndex) === current &&
+			!!(nextSegment && (nextSegment.cadentialRole || nextSegment.chromaticRole || nextSegment.restorableInversionIndex != null));
+	}
+
+	function alternateInversionIndex(segment) {
+		var current = numberOrDefault(segment && segment.inversionIndex, 0);
+		var max = segment && segment.chordKind === 'seventh' ? 3 : 2;
+
+		return current === 1 ? 2 : 1 <= max ? 1 : 0;
+	}
+
+	function nextSegmentAfter(measures, measureIndex, segmentIndex) {
+		var currentSegments = measureTimelineService.measureSegments(measures[measureIndex]);
+
+		if (currentSegments[segmentIndex + 1]) {
+			return currentSegments[segmentIndex + 1];
+		}
+
+		for (var i = measureIndex + 1; i < measures.length; i++) {
+			var segments = measureTimelineService.measureSegments(measures[i]);
+
+			if (segments.length) {
+				return segments[0];
+			}
+		}
+
+		return null;
 	}
 
 	function resolvedDegreeFromSegment(segment, report) {
@@ -16298,7 +16382,8 @@
 	'use strict';
 
 	function build(measure, duration, options) {
-		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
+		var timingService = global.CodaProgressionPlaybackTiming;
+		var midiNotes = timingService && typeof timingService.midiNotesForMeasure === 'function' ? timingService.midiNotesForMeasure(measure) : notesForVoices(measure.midiNotes, measure.voices);
 		var events = [];
 		var melodicVoiceEnabled = !options || options.enableMelodicVoice !== false;
 		var usesPatternArticulation = isArpeggioArticulation(measure && measure.articulation) || (measure && measure.articulation === 'staccato');
@@ -16323,7 +16408,7 @@
 				continue;
 			}
 
-			if (!forcePedalAttack(options) && isPedalIn(midiNotes[i], measure)) {
+			if (shouldOmitPedalIn(midiNotes[i], measure, options)) {
 				continue;
 			}
 
@@ -16692,6 +16777,10 @@
 		return !!(options && options.forcePedalAttack === true);
 	}
 
+	function shouldOmitPedalIn(midiNote, measure, options) {
+		return !forcePedalAttack(options) && isPedalIn(midiNote, measure) && !isSameBarPedalIn(midiNote, measure);
+	}
+
 	function arpeggioStepSeconds(measure, duration, options) {
 		var configuredStep = Number(options && options.arpeggioStepSeconds);
 
@@ -16726,7 +16815,20 @@
 		var pedals = measure.pedalsIn || [];
 
 		for (var i = 0; i < pedals.length; i++) {
-			if (pedals[i].midiNote === midiNote) {
+			if (Number(pedals[i].midiNote) === Number(midiNote)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function isSameBarPedalIn(midiNote, measure) {
+		var pedals = measure.pedalsIn || [];
+		var bar = Number(measure && measure.bar);
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (Number(pedals[i].midiNote) === Number(midiNote) && Number(pedals[i].fromBar) === bar) {
 				return true;
 			}
 		}
@@ -16778,6 +16880,7 @@
 	var arpeggioPatterns = global.CodaProgressionArpeggioPatterns;
 	var articulationInstruments = global.CodaProgressionArticulationInstruments;
 	var noteEventService = global.CodaProgressionPlaybackNoteEvents;
+	var playbackTiming = global.CodaProgressionPlaybackTiming;
 	var defaultTicksPerBeat = 480;
 	var midiMimeType = 'audio/midi';
 	var noteIndexes = {
@@ -16866,7 +16969,7 @@
 	}
 
 	function appendChordEvents(events, measure, options) {
-		var notes = measure.midiNotes && measure.midiNotes.length ? measure.midiNotes.slice() : chordNotesToMidi(measure.notes || [], options.initialMidiNote);
+		var notes = playbackTiming && typeof playbackTiming.midiNotesForMeasure === 'function' ? playbackTiming.midiNotesForMeasure(measure) : (measure.midiNotes && measure.midiNotes.length ? measure.midiNotes.slice() : chordNotesToMidi(measure.notes || [], options.initialMidiNote));
 		var startTick = Math.max(0, Math.round(measure.startBeat * options.ticksPerBeat) + expressiveDelayTicks(measure, options));
 		var durationTicks = Math.max(1, Math.round(measure.durationBeats * options.ticksPerBeat * articulationFactor(measure.articulation)));
 		var arpeggioStep = isArpeggioArticulation(measure.articulation) ? Math.max(1, Math.round(options.ticksPerBeat / 4)) : 0;
@@ -17664,6 +17767,31 @@
 		return (notes || []).slice(0, voiceCount);
 	}
 
+	function midiNotesForMeasure(measure) {
+		var voiceMidiNotes = midiNotesFromVoiceNotes(measure && measure.voiceNotes);
+		var fallbackMidiNotes = measure && measure.midiNotes ? measure.midiNotes : [];
+
+		if (voiceMidiNotes.length >= fallbackMidiNotes.length) {
+			return notesForVoices(voiceMidiNotes, measure && measure.voices);
+		}
+
+		return notesForVoices(fallbackMidiNotes, measure && measure.voices);
+	}
+
+	function midiNotesFromVoiceNotes(voiceNotes) {
+		var result = [];
+
+		for (var i = 0; i < (voiceNotes || []).length; i++) {
+			var midiNote = Number(voiceNotes[i] && voiceNotes[i].midiNote);
+
+			if (isFinite(midiNote)) {
+				result.push(midiNote);
+			}
+		}
+
+		return result;
+	}
+
 	function playbackDuration(measure) {
 		var duration = Number(measure && measure.durationSeconds) || 0;
 		var factor = articulationDurationFactor(measure ? measure.articulation : null);
@@ -17719,6 +17847,8 @@
 		arpeggioStepSeconds: arpeggioStepSeconds,
 		articulationDurationFactor: articulationDurationFactor,
 		isArpeggioArticulation: isArpeggioArticulation,
+		midiNotesForMeasure: midiNotesForMeasure,
+		midiNotesFromVoiceNotes: midiNotesFromVoiceNotes,
 		normalizeStartIndex: normalizeStartIndex,
 		notesForVoices: notesForVoices,
 		playbackDuration: playbackDuration,
@@ -17751,7 +17881,7 @@
 	function buildMeasurePlaybackEvent(measure, index, startOffset, options, chordIndex) {
 		var duration = timingService.playbackDuration(measure);
 		var notes = timingService.notesForVoices(measure.notes, measure.voices);
-		var midiNotes = timingService.notesForVoices(measure.midiNotes, measure.voices);
+		var midiNotes = timingService.midiNotesForMeasure(measure);
 		var midiNoteEvents = noteEventService.build(measure, duration, noteEventOptions(options, chordIndex));
 		var mode = timingService.isArpeggioArticulation(measure.articulation) ? 'arpeggio' : 'chord';
 		var delay = Math.max(0, (measure.startSeconds || 0) - (startOffset || 0));
@@ -17768,6 +17898,10 @@
 		};
 
 		setHiddenStartOffset(event, startOffset || 0);
+
+		if (shouldForcePedalAttack(options, chordIndex)) {
+			event.forcePedalAttack = true;
+		}
 
 		if (chordIndex) {
 			event.chordIndex = chordIndex;
@@ -17800,7 +17934,7 @@
 	}
 
 	function noteEventOptions(options, chordIndex) {
-		if (!options || !options.forcePedalAttackOnFirstEvent || chordIndex) {
+		if (!options || (!options.forcePedalAttack && (!options.forcePedalAttackOnFirstEvent || chordIndex))) {
 			return options;
 		}
 
@@ -17815,6 +17949,10 @@
 		result.forcePedalAttack = true;
 
 		return result;
+	}
+
+	function shouldForcePedalAttack(options, chordIndex) {
+		return !!(options && (options.forcePedalAttack || (options.forcePedalAttackOnFirstEvent && !chordIndex)));
 	}
 
 	function setHiddenStartOffset(event, startOffset) {
@@ -17965,10 +18103,20 @@
 			return event;
 		}
 
-		refreshed = eventBuilder.buildMeasurePlaybackEvent(measure, event.index, event.startOffset || 0, playbackOptionsForProgression(progression, options), event.chordIndex || 0);
+		refreshed = eventBuilder.buildMeasurePlaybackEvent(measure, event.index, event.startOffset || 0, refreshedPlaybackOptions(progression, options, event), event.chordIndex || 0);
 		refreshed.delay = Math.max(0, (refreshed.delay || 0) - (event.delay || 0));
 
 		return refreshed;
+	}
+
+	function refreshedPlaybackOptions(progression, options, event) {
+		var result = playbackOptionsForProgression(progression, options);
+
+		if (event && event.forcePedalAttack) {
+			result.forcePedalAttack = true;
+		}
+
+		return result;
 	}
 
 	function measureForPlaybackEvent(event, progression) {
@@ -18032,6 +18180,7 @@
 		measurePlaybackOptions: measurePlaybackOptions,
 		playbackOptionsForProgression: playbackOptionsForProgression,
 		playbackTotalSeconds: playbackTotalSeconds,
+		refreshedPlaybackOptions: refreshedPlaybackOptions,
 		refreshPlaybackEvent: refreshPlaybackEvent
 	};
 })(window);
@@ -18128,15 +18277,62 @@
 			return playMidiChord(playbackService, event);
 		}
 
-		for (var i = 0; i < event.midiNoteEvents.length; i++) {
-			playbackService.playMidiNote(event.midiNoteEvents[i].midiNote, withVelocity({
-				delay: event.delay + (event.midiNoteEvents[i].delay || 0),
-				duration: event.midiNoteEvents[i].duration,
-				instrumentId: event.playbackInstrumentId
-			}, event.midiNoteEvents[i].velocity || event.velocity));
+		var groups = groupedMidiNoteEvents(event);
+
+		for (var i = 0; i < groups.length; i++) {
+			if (groups[i].midiNotes.length > 1 && typeof playbackService.playMidiChord === 'function') {
+				playbackService.playMidiChord(groups[i].midiNotes, withVelocity({
+					delay: event.delay + groups[i].delay,
+					duration: groups[i].duration,
+					instrumentId: event.playbackInstrumentId
+				}, groups[i].velocity));
+				continue;
+			}
+
+			for (var j = 0; j < groups[i].midiNotes.length; j++) {
+				playbackService.playMidiNote(groups[i].midiNotes[j], withVelocity({
+					delay: event.delay + groups[i].delay,
+					duration: groups[i].duration,
+					instrumentId: event.playbackInstrumentId
+				}, groups[i].velocity));
+			}
 		}
 
 		return true;
+	}
+
+	function groupedMidiNoteEvents(event) {
+		var groups = [];
+		var indexes = {};
+		var fallbackVelocity = event && event.velocity;
+		var source = event && event.midiNoteEvents ? event.midiNoteEvents : [];
+
+		for (var i = 0; i < source.length; i++) {
+			if (source[i].midiNote == null) {
+				continue;
+			}
+
+			var delay = Math.max(0, Number(source[i].delay) || 0);
+			var duration = Math.max(0, Number(source[i].duration) || 0);
+			var velocity = source[i].velocity || fallbackVelocity;
+			var key = [delay.toFixed(6), duration.toFixed(6), velocity == null ? '' : String(velocity)].join('|');
+			var groupIndex = indexes[key];
+
+			if (groupIndex == null) {
+				groupIndex = groups.length;
+				indexes[key] = groupIndex;
+				groups.push({
+					delay: delay,
+					duration: duration,
+					midiNotes: [],
+					velocity: velocity
+				});
+			}
+
+			groups[groupIndex].midiNotes.push(source[i].midiNote);
+		}
+
+		return groups;
 	}
 
 	function playArpeggio(playbackService, event) {
@@ -18194,6 +18390,7 @@
 	}
 
 	global.CodaProgressionMidiEventPlayer = {
+		groupedMidiNoteEvents: groupedMidiNoteEvents,
 		playArpeggio: playArpeggio,
 		playChordFallback: playChordFallback,
 		playMidiChord: playMidiChord,
@@ -18256,8 +18453,9 @@
 
 		for (var i = 0; i < notes.length; i++) {
 			activeCounts[notes[i]] = (activeCounts[notes[i]] || 0) + 1;
-			setNoteClass(notes[i], true);
 		}
+
+		refreshActiveHighlights();
 	}
 
 	function noteOff(midiNotes) {
@@ -18270,9 +18468,10 @@
 
 			if (!activeCounts[notes[i]]) {
 				delete activeCounts[notes[i]];
-				setNoteClass(notes[i], false);
 			}
 		}
+
+		refreshActiveHighlights();
 	}
 
 	function clear() {
@@ -18284,12 +18483,23 @@
 		}
 	}
 
-	function setNoteClass(midiNote, active) {
-		var elements = instrumentNoteElements('[data-midi-note="' + String(midiNote) + '"]');
-		var targets = active ? highlightTargets(elements) : elements;
+	function refreshActiveHighlights() {
+		var activeElements = instrumentNoteElements('.' + activeClass);
+		var activeNotes = Object.keys(activeCounts).map(function (midiNote) {
+			return Number(midiNote);
+		}).filter(function (midiNote) {
+			return isFinite(midiNote);
+		}).sort(function (a, b) {
+			return a - b;
+		});
+		var targets = highlightTargetsForMidiNotes(activeNotes);
 
-		for (var i = 0; i < targets.length; i++) {
-			targets[i].classList.toggle(activeClass, active);
+		for (var i = 0; i < activeElements.length; i++) {
+			activeElements[i].classList.remove(activeClass);
+		}
+
+		for (var j = 0; j < targets.length; j++) {
+			targets[j].classList.add(activeClass);
 		}
 	}
 
@@ -18309,6 +18519,157 @@
 		});
 	}
 
+	function highlightTargetsForMidiNotes(midiNotes) {
+		var source = [];
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			source = source.concat(Array.prototype.slice.call(instrumentNoteElements('[data-midi-note="' + String(midiNotes[i]) + '"]')));
+		}
+
+		return coherentHighlightTargets(source, midiNotes);
+	}
+
+	function coherentHighlightTargets(elements, midiNotes) {
+		var source = Array.prototype.slice.call(elements || []);
+		var regularTargets = source.filter(function (element) {
+			return !isGuitarNoteElement(element);
+		});
+		var guitarTargets = source.filter(isGuitarNoteElement);
+
+		if (!guitarTargets.length) {
+			return source;
+		}
+
+		return regularTargets.concat(coherentGuitarTargets(guitarTargets, midiNotes));
+	}
+
+	function coherentGuitarTargets(elements, midiNotes) {
+		var notes = normalizeMidiNotes(midiNotes).sort(function (a, b) {
+			return a - b;
+		});
+		var grouped = {};
+		var assignment;
+
+		for (var i = 0; i < elements.length; i++) {
+			var midiNote = elementMidiNote(elements[i]);
+
+			if (!grouped[midiNote]) {
+				grouped[midiNote] = [];
+			}
+			grouped[midiNote].push(elements[i]);
+		}
+
+		for (var j = 0; j < notes.length; j++) {
+			if (!grouped[notes[j]] || !grouped[notes[j]].length) {
+				return greedyUniqueGuitarTargets(elements);
+			}
+			grouped[notes[j]].sort(function (a, b) {
+				return guitarNoteSortValue(a) - guitarNoteSortValue(b);
+			});
+		}
+
+		assignment = bestGuitarTargetAssignment(notes, grouped, 0, {}, []);
+
+		return assignment && assignment.targets ? assignment.targets : greedyUniqueGuitarTargets(elements);
+	}
+
+	function bestGuitarTargetAssignment(notes, grouped, index, usedStrings, targets) {
+		var midiNote;
+		var candidates;
+		var best = null;
+
+		if (index >= notes.length) {
+			return {
+				score: guitarTargetAssignmentScore(targets),
+				targets: targets.slice()
+			};
+		}
+
+		midiNote = notes[index];
+		candidates = grouped[midiNote] || [];
+
+		for (var i = 0; i < candidates.length; i++) {
+			var stringIndex = guitarStringIndex(candidates[i]);
+			var candidate;
+
+			if (usedStrings[stringIndex]) {
+				continue;
+			}
+
+			usedStrings[stringIndex] = true;
+			targets.push(candidates[i]);
+			candidate = bestGuitarTargetAssignment(notes, grouped, index + 1, usedStrings, targets);
+			targets.pop();
+			delete usedStrings[stringIndex];
+
+			if (candidate && (!best || candidate.score < best.score)) {
+				best = candidate;
+			}
+		}
+
+		return best;
+	}
+
+	function greedyUniqueGuitarTargets(elements) {
+		var sorted = Array.prototype.slice.call(elements || []).sort(function (a, b) {
+			return guitarNoteSortValue(a) - guitarNoteSortValue(b);
+		});
+		var usedStrings = {};
+		var targets = [];
+
+		for (var i = 0; i < sorted.length; i++) {
+			var stringIndex = guitarStringIndex(sorted[i]);
+
+			if (usedStrings[stringIndex]) {
+				continue;
+			}
+
+			usedStrings[stringIndex] = true;
+			targets.push(sorted[i]);
+		}
+
+		return targets;
+	}
+
+	function guitarTargetAssignmentScore(elements) {
+		var frets = [];
+		var score = 0;
+		var openCount = 0;
+		var fretCounts = {};
+		var bassStringIndex = elements[0] ? guitarStringIndex(elements[0]) : 0;
+
+		for (var i = 0; i < elements.length; i++) {
+			var fret = guitarFretNumber(elements[i]);
+
+			if (fret === 0) {
+				openCount += 1;
+				continue;
+			}
+
+			frets.push(fret);
+			fretCounts[fret] = (fretCounts[fret] || 0) + 1;
+		}
+
+		if (frets.length) {
+			frets.sort(function (a, b) {
+				return a - b;
+			});
+			score += (frets[frets.length - 1] - frets[0]) * 20;
+			score += frets[0];
+		}
+
+		Object.keys(fretCounts).forEach(function (fret) {
+			if (fretCounts[fret] > 1) {
+				score -= (fretCounts[fret] - 1) * 4;
+			}
+		});
+
+		score -= openCount * 6;
+		score += Math.max(0, bassStringIndex - 2) * 12;
+
+		return score;
+	}
+
 	function preferredGuitarNoteElement(elements) {
 		var result = elements[0];
 
@@ -18322,11 +18683,7 @@
 	}
 
 	function guitarNoteSortValue(element) {
-		var cell = guitarNoteCell(element);
-		var fret = numberOrDefault(cell && cell.getAttribute ? cell.getAttribute('data-fret-number') : null, 99);
-		var stringIndex = numberOrDefault(cell && cell.getAttribute ? cell.getAttribute('data-string-index') : null, 99);
-
-		return fret * 100 + stringIndex;
+		return guitarFretNumber(element) * 100 + guitarStringIndex(element);
 	}
 
 	function isGuitarNoteElement(element) {
@@ -18335,6 +18692,22 @@
 
 	function guitarNoteCell(element) {
 		return element && element.closest ? element.closest('.guitarNoteCell') : null;
+	}
+
+	function elementMidiNote(element) {
+		return numberOrDefault(element && element.getAttribute ? element.getAttribute('data-midi-note') : null, NaN);
+	}
+
+	function guitarFretNumber(element) {
+		var cell = guitarNoteCell(element);
+
+		return numberOrDefault(cell && cell.getAttribute ? cell.getAttribute('data-fret-number') : null, 99);
+	}
+
+	function guitarStringIndex(element) {
+		var cell = guitarNoteCell(element);
+
+		return numberOrDefault(cell && cell.getAttribute ? cell.getAttribute('data-string-index') : null, 99);
 	}
 
 	function instrumentNoteElements(selectorSuffix) {
@@ -18370,7 +18743,10 @@
 
 	global.CodaInstrumentNoteHighlight = {
 		clear: clear,
+		coherentGuitarTargets: coherentGuitarTargets,
+		coherentHighlightTargets: coherentHighlightTargets,
 		highlightTargets: highlightTargets,
+		highlightTargetsForMidiNotes: highlightTargetsForMidiNotes,
 		noteOff: noteOff,
 		noteOn: noteOn,
 		normalizeMidiNotes: normalizeMidiNotes
@@ -18563,24 +18939,38 @@
 		}
 
 		noteEvents = instrumentNoteEvents(args, event);
-		for (var i = 0; i < noteEvents.length; i++) {
-			scheduleNoteStart(args, noteEvents[i]);
-			scheduleNoteEnd(args, noteEvents[i]);
+		scheduleNoteStarts(args, noteEvents);
+		scheduleNoteEnds(args, noteEvents);
+	}
+
+	function scheduleNoteStarts(args, noteEvents) {
+		var groups = groupNoteEvents(noteEvents, startGroupKey);
+
+		for (var i = 0; i < groups.length; i++) {
+			scheduleNoteStart(args, groups[i]);
 		}
 	}
 
-	function scheduleNoteStart(args, noteEvent) {
-		args.playbackTimers.schedule(args.run, noteEvent.delay, function () {
+	function scheduleNoteEnds(args, noteEvents) {
+		var groups = groupNoteEvents(noteEvents, endGroupKey);
+
+		for (var i = 0; i < groups.length; i++) {
+			scheduleNoteEnd(args, groups[i]);
+		}
+	}
+
+	function scheduleNoteStart(args, noteGroup) {
+		args.playbackTimers.schedule(args.run, noteGroup.delay, function () {
 			if (args.getActiveRun() === args.run) {
-				args.playbackCallbacks.run(args.run.callbacks.onNoteStart, noteEvent.midiNotes);
+				args.playbackCallbacks.run(args.run.callbacks.onNoteStart, noteGroup.midiNotes);
 			}
 		});
 	}
 
-	function scheduleNoteEnd(args, noteEvent) {
-		args.playbackTimers.schedule(args.run, noteEvent.delay + noteEvent.duration, function () {
+	function scheduleNoteEnd(args, noteGroup) {
+		args.playbackTimers.schedule(args.run, noteGroup.endDelay, function () {
 			if (args.getActiveRun() === args.run) {
-				args.playbackCallbacks.run(args.run.callbacks.onNoteEnd, noteEvent.midiNotes);
+				args.playbackCallbacks.run(args.run.callbacks.onNoteEnd, noteGroup.midiNotes);
 			}
 		});
 	}
@@ -18611,6 +19001,51 @@
 		}
 
 		return result;
+	}
+
+	function groupNoteEvents(noteEvents, keyBuilder) {
+		var groups = [];
+		var indexes = {};
+
+		for (var i = 0; i < noteEvents.length; i++) {
+			var noteEvent = noteEvents[i];
+			var key = keyBuilder(noteEvent);
+			var groupIndex = indexes[key];
+
+			if (groupIndex == null) {
+				groupIndex = groups.length;
+				indexes[key] = groupIndex;
+				groups.push({
+					delay: Math.max(0, Number(noteEvent.delay) || 0),
+					duration: Math.max(0, Number(noteEvent.duration) || 0),
+					endDelay: Math.max(0, Number(noteEvent.delay) || 0) + Math.max(0, Number(noteEvent.duration) || 0),
+					midiNotes: []
+				});
+			}
+
+			appendMidiNotes(groups[groupIndex].midiNotes, noteEvent.midiNotes);
+		}
+
+		return groups;
+	}
+
+	function appendMidiNotes(target, midiNotes) {
+		for (var i = 0; i < midiNotes.length; i++) {
+			if (midiNotes[i] != null) {
+				target.push(midiNotes[i]);
+			}
+		}
+	}
+
+	function startGroupKey(noteEvent) {
+		return (Math.max(0, Number(noteEvent.delay) || 0)).toFixed(6);
+	}
+
+	function endGroupKey(noteEvent) {
+		return (
+			Math.max(0, Number(noteEvent.delay) || 0) +
+			Math.max(0, Number(noteEvent.duration) || 0)
+		).toFixed(6);
 	}
 
 	function arpeggioNoteEvents(args, event) {
@@ -21640,6 +22075,7 @@
 					bassOctaveOffset: playbackOptions && playbackOptions.bassOctaveOffset,
 					cellId: cellId,
 					duration: playbackOptions && playbackOptions.duration,
+					midiNotes: playbackOptions && playbackOptions.midiNotes,
 					playbackService: options.playbackService
 				});
 			}
@@ -21662,6 +22098,15 @@
 		var noteNames = options.cellId.split('-').filter(function (noteName) {
 			return noteName !== '';
 		});
+		var midiNotes = parseMidiNotes(options.midiNotes);
+
+		if (midiNotes.length && typeof options.playbackService.playMidiChord === 'function') {
+			options.playbackService.playMidiChord(midiNotes, {
+				duration: options.duration != null ? options.duration : 0.75
+			});
+
+			return midiNotes;
+		}
 
 		options.playbackService.playChordFromNames(noteNames, {
 			bassOctaveOffset: options.bassOctaveOffset != null ? options.bassOctaveOffset : -12,
@@ -21669,6 +22114,25 @@
 		});
 
 		return noteNames;
+	}
+
+	function parseMidiNotes(value) {
+		var source = Array.isArray(value) ? value : String(value || '').split(',');
+		var result = [];
+
+		for (var i = 0; i < source.length; i++) {
+			if (String(source[i]).trim() === '') {
+				continue;
+			}
+
+			var midiNote = Number(source[i]);
+
+			if (isFinite(midiNote)) {
+				result.push(midiNote);
+			}
+		}
+
+		return result;
 	}
 
 	function playMidiNote(options) {
@@ -21690,6 +22154,7 @@
 	global.CodaApplication.createInstrumentPlayback = createInstrumentPlayback;
 	global.CodaApplication.playChordFromCellId = playChordFromCellId;
 	global.CodaApplication.playMidiNote = playMidiNote;
+	global.CodaApplication.parseChordMidiNotes = parseMidiNotes;
 })(window);
 
 ;
@@ -23732,7 +24197,7 @@
 			buttons = '<span class="measureSplitActions">' + buttons + '</span>';
 		}
 
-		return '<div class="measureChord" data-measure-chord-index="' + labels.escapeHtml(chordIndex) + '">' +
+		return '<div class="measureChord" data-measure-chord-index="' + labels.escapeHtml(chordIndex) + '"' + midiNotesAttribute(chord) + '>' +
 			dragHandle +
 			buttons +
 			'<span class="measureChordName"><strong>' + labels.formatMusicalLabel(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button>' + quickControls + '</span>' +
@@ -23741,6 +24206,21 @@
 			(tonalFunction ? '<span class="measureFunction">' + labels.escapeHtml(tonalFunction) + '</span>' : '') +
 			(source ? '<span class="measureSource">' + labels.escapeHtml(source) + '</span>' : '') +
 			'</div>';
+	}
+
+	function midiNotesAttribute(chord) {
+		var midiNotes = chord && chord.midiNotes ? chord.midiNotes : [];
+		var values = [];
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			var midiNote = Number(midiNotes[i]);
+
+			if (isFinite(midiNote)) {
+				values.push(midiNote);
+			}
+		}
+
+		return values.length ? ' data-midi-notes="' + labels.escapeHtml(values.join(',')) + '"' : '';
 	}
 
 	function renderQuickControls(chord, options) {
@@ -23957,6 +24437,7 @@
 		renderMeasureChord: renderMeasureChord,
 		renderQuickControls: renderQuickControls,
 		renderQuickEditor: renderQuickEditor,
+		midiNotesAttribute: midiNotesAttribute,
 		renderUnsupportedScaleMessage: renderUnsupportedScaleMessage,
 		renderSectionHeader: renderSectionHeader,
 		renderSectionNavigator: renderSectionNavigator,
@@ -29025,7 +29506,8 @@
 		return function (element) {
 			chordPlayback.playChordFromCellId(element.id, {
 				bassOctaveOffset: -12,
-				duration: 0.75
+				duration: 0.75,
+				midiNotes: element.getAttribute('data-midi-notes')
 			});
 		};
 	}

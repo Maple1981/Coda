@@ -80,24 +80,38 @@
 		}
 
 		noteEvents = instrumentNoteEvents(args, event);
-		for (var i = 0; i < noteEvents.length; i++) {
-			scheduleNoteStart(args, noteEvents[i]);
-			scheduleNoteEnd(args, noteEvents[i]);
+		scheduleNoteStarts(args, noteEvents);
+		scheduleNoteEnds(args, noteEvents);
+	}
+
+	function scheduleNoteStarts(args, noteEvents) {
+		var groups = groupNoteEvents(noteEvents, startGroupKey);
+
+		for (var i = 0; i < groups.length; i++) {
+			scheduleNoteStart(args, groups[i]);
 		}
 	}
 
-	function scheduleNoteStart(args, noteEvent) {
-		args.playbackTimers.schedule(args.run, noteEvent.delay, function () {
+	function scheduleNoteEnds(args, noteEvents) {
+		var groups = groupNoteEvents(noteEvents, endGroupKey);
+
+		for (var i = 0; i < groups.length; i++) {
+			scheduleNoteEnd(args, groups[i]);
+		}
+	}
+
+	function scheduleNoteStart(args, noteGroup) {
+		args.playbackTimers.schedule(args.run, noteGroup.delay, function () {
 			if (args.getActiveRun() === args.run) {
-				args.playbackCallbacks.run(args.run.callbacks.onNoteStart, noteEvent.midiNotes);
+				args.playbackCallbacks.run(args.run.callbacks.onNoteStart, noteGroup.midiNotes);
 			}
 		});
 	}
 
-	function scheduleNoteEnd(args, noteEvent) {
-		args.playbackTimers.schedule(args.run, noteEvent.delay + noteEvent.duration, function () {
+	function scheduleNoteEnd(args, noteGroup) {
+		args.playbackTimers.schedule(args.run, noteGroup.endDelay, function () {
 			if (args.getActiveRun() === args.run) {
-				args.playbackCallbacks.run(args.run.callbacks.onNoteEnd, noteEvent.midiNotes);
+				args.playbackCallbacks.run(args.run.callbacks.onNoteEnd, noteGroup.midiNotes);
 			}
 		});
 	}
@@ -128,6 +142,51 @@
 		}
 
 		return result;
+	}
+
+	function groupNoteEvents(noteEvents, keyBuilder) {
+		var groups = [];
+		var indexes = {};
+
+		for (var i = 0; i < noteEvents.length; i++) {
+			var noteEvent = noteEvents[i];
+			var key = keyBuilder(noteEvent);
+			var groupIndex = indexes[key];
+
+			if (groupIndex == null) {
+				groupIndex = groups.length;
+				indexes[key] = groupIndex;
+				groups.push({
+					delay: Math.max(0, Number(noteEvent.delay) || 0),
+					duration: Math.max(0, Number(noteEvent.duration) || 0),
+					endDelay: Math.max(0, Number(noteEvent.delay) || 0) + Math.max(0, Number(noteEvent.duration) || 0),
+					midiNotes: []
+				});
+			}
+
+			appendMidiNotes(groups[groupIndex].midiNotes, noteEvent.midiNotes);
+		}
+
+		return groups;
+	}
+
+	function appendMidiNotes(target, midiNotes) {
+		for (var i = 0; i < midiNotes.length; i++) {
+			if (midiNotes[i] != null) {
+				target.push(midiNotes[i]);
+			}
+		}
+	}
+
+	function startGroupKey(noteEvent) {
+		return (Math.max(0, Number(noteEvent.delay) || 0)).toFixed(6);
+	}
+
+	function endGroupKey(noteEvent) {
+		return (
+			Math.max(0, Number(noteEvent.delay) || 0) +
+			Math.max(0, Number(noteEvent.duration) || 0)
+		).toFixed(6);
 	}
 
 	function arpeggioNoteEvents(args, event) {

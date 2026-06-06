@@ -21,6 +21,31 @@
 		return (notes || []).slice(0, voiceCount);
 	}
 
+	function midiNotesForMeasure(measure) {
+		var voiceMidiNotes = midiNotesFromVoiceNotes(measure && measure.voiceNotes);
+		var fallbackMidiNotes = measure && measure.midiNotes ? measure.midiNotes : [];
+
+		if (voiceMidiNotes.length >= fallbackMidiNotes.length) {
+			return notesForVoices(voiceMidiNotes, measure && measure.voices);
+		}
+
+		return notesForVoices(fallbackMidiNotes, measure && measure.voices);
+	}
+
+	function midiNotesFromVoiceNotes(voiceNotes) {
+		var result = [];
+
+		for (var i = 0; i < (voiceNotes || []).length; i++) {
+			var midiNote = Number(voiceNotes[i] && voiceNotes[i].midiNote);
+
+			if (isFinite(midiNote)) {
+				result.push(midiNote);
+			}
+		}
+
+		return result;
+	}
+
 	function playbackDuration(measure) {
 		var duration = Number(measure && measure.durationSeconds) || 0;
 		var factor = articulationDurationFactor(measure ? measure.articulation : null);
@@ -76,6 +101,8 @@
 		arpeggioStepSeconds: arpeggioStepSeconds,
 		articulationDurationFactor: articulationDurationFactor,
 		isArpeggioArticulation: isArpeggioArticulation,
+		midiNotesForMeasure: midiNotesForMeasure,
+		midiNotesFromVoiceNotes: midiNotesFromVoiceNotes,
 		normalizeStartIndex: normalizeStartIndex,
 		notesForVoices: notesForVoices,
 		playbackDuration: playbackDuration,

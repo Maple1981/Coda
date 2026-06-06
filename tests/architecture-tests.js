@@ -1044,6 +1044,80 @@ const splitPedalMeasures = global.CodaProgressionVoiceLeading.annotateMeasures([
 ], { counterpoint: 0, midiInstrument: 'string_ensemble_1' });
 assert.deepEqual(splitPedalMeasures[0].chords[0].pedalsOut.map(function (pedal) { return pedal.note; }), ['C']);
 assert.deepEqual(splitPedalMeasures[0].chords[1].pedalsIn.map(function (pedal) { return pedal.note; }), ['C']);
+const splitOctaveShiftPedalMeasures = global.CodaProgressionVoiceLeading.annotateMeasures([
+	{
+		bar: 1,
+		chords: [
+			{
+				bar: 1,
+				durationSeconds: 1,
+				midiNotes: [48, 52, 55, 60],
+				voiceNotes: [
+					{ midiNote: 48, note: 'C', role: 'root' },
+					{ midiNote: 52, note: 'E', role: 'third' },
+					{ midiNote: 55, note: 'G', role: 'fifth' },
+					{ midiNote: 60, note: 'C', role: 'root' }
+				]
+			},
+			{
+				bar: 1,
+				durationSeconds: 1,
+				midiNotes: [57, 60, 62, 65],
+				voiceNotes: [
+					{ midiNote: 57, note: 'A', role: 'root' },
+					{ midiNote: 60, note: 'C', role: 'third' },
+					{ midiNote: 62, note: 'D', role: 'fourth' },
+					{ midiNote: 65, note: 'F', role: 'sixth' }
+				]
+			}
+		],
+		durationSeconds: 2,
+		midiNotes: [48, 52, 55, 60]
+	}
+], { counterpoint: 0, midiInstrument: 'pad_2_warm' });
+assert.deepEqual(splitOctaveShiftPedalMeasures[0].chords[0].pedalsOut.map(function (pedal) { return pedal.midiNote; }), [60]);
+assert.deepEqual(splitOctaveShiftPedalMeasures[0].chords[1].midiNotes, [57, 60, 62, 65]);
+const splitPedalChainMeasures = global.CodaProgressionVoiceLeading.annotateMeasures([
+	{
+		bar: 1,
+		chords: [
+			{
+				bar: 1,
+				durationSeconds: 1,
+				midiNotes: [48, 52, 55],
+				voiceNotes: [
+					{ midiNote: 48, note: 'C', role: 'root' },
+					{ midiNote: 52, note: 'E', role: 'third' },
+					{ midiNote: 55, note: 'G', role: 'fifth' }
+				]
+			},
+			{
+				bar: 1,
+				durationSeconds: 1,
+				midiNotes: [55, 60, 65],
+				voiceNotes: [
+					{ midiNote: 55, note: 'G', role: 'fifth' },
+					{ midiNote: 60, note: 'C', role: 'root' },
+					{ midiNote: 65, note: 'F', role: 'fourth' }
+				]
+			},
+			{
+				bar: 1,
+				durationSeconds: 1,
+				midiNotes: [55, 62, 67],
+				voiceNotes: [
+					{ midiNote: 55, note: 'G', role: 'root' },
+					{ midiNote: 62, note: 'D', role: 'fifth' },
+					{ midiNote: 67, note: 'G', role: 'root' }
+				]
+			}
+		],
+		durationSeconds: 3,
+		midiNotes: [48, 52, 55]
+	}
+], { counterpoint: 0, midiInstrument: 'pad_2_warm' });
+assert.equal(splitPedalChainMeasures[0].chords[0].pedalsOut[0].durationSeconds, 2);
+assert.deepEqual(splitPedalChainMeasures[0].chords[1].pedalsOut.map(function (pedal) { return pedal.midiNote; }), [55]);
 const melodicCounterpointMeasures = global.CodaProgressionMelodicCounterpoint.annotateMeasures([
 	{
 		bar: 1,

@@ -79,6 +79,29 @@ assert.deepEqual(schedule[0], {
 	notes: ['C', 'E', 'G', 'B'],
 	velocity: 80
 });
+const voiceNotesAuthoritativeSchedule = app.buildProgressionPlaybackSchedule({
+	generateMelodicVoice: false,
+	measures: [
+		{
+			articulation: 'sustain',
+			bar: 1,
+			degree: 'iv',
+			durationSeconds: 2,
+			midiNotes: [62, 65],
+			notes: ['A', 'C', 'D', 'F'],
+			startSeconds: 0,
+			voiceNotes: [
+				{ midiNote: 57, note: 'A' },
+				{ midiNote: 60, note: 'C' },
+				{ midiNote: 62, note: 'D' },
+				{ midiNote: 65, note: 'F' }
+			],
+			voices: 4
+		}
+	],
+	totalSeconds: 2
+});
+assert.deepEqual(voiceNotesAuthoritativeSchedule[0].midiNotes, [57, 60, 62, 65]);
 assert.deepEqual(schedule[1], {
 	arpeggioStep: 0.18,
 	bar: 2,
@@ -241,6 +264,85 @@ assert.deepEqual(pedalSchedule[1].midiNoteEvents, [
 	{ duration: 1.9, midiNote: 60 },
 	{ duration: 1.9, midiNote: 65 }
 ]);
+const chainedSplitPedalMeasures = [
+	{
+		bar: 1,
+		chords: [
+			{
+				articulation: 'sustain',
+				bar: 1,
+				durationSeconds: 1,
+				midiNotes: [48, 52, 55],
+				notes: ['C', 'E', 'G'],
+				pedalsOut: [{ durationSeconds: 2, midiNote: 55, note: 'G', toBar: 1 }],
+				startSeconds: 0,
+				voiceNotes: [
+					{ midiNote: 48, note: 'C', role: 'root' },
+					{ midiNote: 52, note: 'E', role: 'third' },
+					{ midiNote: 55, note: 'G', role: 'fifth' }
+				],
+				voices: 3
+			},
+			{
+				articulation: 'sustain',
+				bar: 1,
+				durationSeconds: 1,
+				midiNotes: [55, 60, 65],
+				notes: ['G', 'C', 'F'],
+				pedalsIn: [{ durationSeconds: 2, midiNote: 55, note: 'G', fromBar: 1 }],
+				pedalsOut: [{ durationSeconds: 1, midiNote: 55, note: 'G', toBar: 1 }],
+				startSeconds: 1,
+				voiceNotes: [
+					{ midiNote: 55, note: 'G', role: 'fifth' },
+					{ midiNote: 60, note: 'C', role: 'root' },
+					{ midiNote: 65, note: 'F', role: 'fourth' }
+				],
+				voices: 3
+			},
+			{
+				articulation: 'sustain',
+				bar: 1,
+				durationSeconds: 1,
+				midiNotes: [55, 62, 67],
+				notes: ['G', 'D', 'G'],
+				pedalsIn: [{ durationSeconds: 1, midiNote: 55, note: 'G', fromBar: 1 }],
+				startSeconds: 2,
+				voiceNotes: [
+					{ midiNote: 55, note: 'G', role: 'root' },
+					{ midiNote: 62, note: 'D', role: 'fifth' },
+					{ midiNote: 67, note: 'G', role: 'root' }
+				],
+				voices: 3
+			}
+		],
+		durationSeconds: 3,
+		midiNotes: [48, 52, 55],
+		startSeconds: 0
+	}
+];
+const chainedSplitPedalSchedule = app.buildProgressionPlaybackSchedule({
+	measures: chainedSplitPedalMeasures
+}, {
+	instrument: {
+		pedalBehavior: 'sustain',
+		supportsPedalHold: true
+	}
+});
+assert.deepEqual(chainedSplitPedalSchedule[0].midiNoteEvents, [
+	{ duration: 0.95, midiNote: 48 },
+	{ duration: 0.95, midiNote: 52 },
+	{ duration: 2.95, midiNote: 55 }
+]);
+assert.deepEqual(chainedSplitPedalSchedule[1].midiNoteEvents, [
+	{ duration: 1.95, midiNote: 55 },
+	{ duration: 0.95, midiNote: 60 },
+	{ duration: 0.95, midiNote: 65 }
+]);
+assert.deepEqual(chainedSplitPedalSchedule[2].midiNoteEvents, [
+	{ duration: 0.95, midiNote: 55 },
+	{ duration: 0.95, midiNote: 62 },
+	{ duration: 0.95, midiNote: 67 }
+]);
 const partialPedalSchedule = app.buildProgressionPlaybackSchedule({
 	measures: [
 		{
@@ -278,6 +380,68 @@ assert.deepEqual(partialPedalSchedule[0].midiNoteEvents, [
 	{ duration: 1.9, midiNote: 60 },
 	{ duration: 1.9, midiNote: 65 }
 ]);
+const refreshedPartialPedalNoteCalls = [];
+const refreshedPartialPedalTimers = [];
+const refreshedPartialPedalPlayback = app.createProgressionPlayback({
+	playbackService: {
+		getInstrumentAttributes: function () {
+			return {
+				pedalBehavior: 'sustain',
+				supportsPedalHold: true
+			};
+		},
+		playMidiNote: function (note, options) {
+			refreshedPartialPedalNoteCalls.push({ note: note, options: options });
+		},
+		stopAllNotes: function () {}
+	},
+	timerApi: {
+		clearTimeout: function () {},
+		setTimeout: function (callback, milliseconds) {
+			refreshedPartialPedalTimers.push({
+				callback: callback,
+				milliseconds: milliseconds
+			});
+			return refreshedPartialPedalTimers.length;
+		}
+	}
+});
+refreshedPartialPedalPlayback.play({
+	measures: [
+		{
+			articulation: 'sustain',
+			bar: 1,
+			degree: 'I',
+			durationSeconds: 2,
+			midiNotes: [48, 52, 55],
+			notes: ['C', 'E', 'G'],
+			pedalsOut: [{ durationSeconds: 2, midiNote: 55, note: 'G', toBar: 2 }],
+			startSeconds: 0,
+			voices: 3
+		},
+		{
+			articulation: 'sustain',
+			bar: 2,
+			degree: 'IV',
+			durationSeconds: 2,
+			midiNotes: [55, 60, 65],
+			notes: ['G', 'C', 'F'],
+			pedalsIn: [{ durationSeconds: 2, midiNote: 55, note: 'G', fromBar: 1 }],
+			startSeconds: 2,
+			voices: 3
+		}
+	]
+}, {
+	startIndex: 1
+});
+refreshedPartialPedalTimers.filter(function (timer) {
+	return timer.milliseconds === 0;
+}).forEach(function (timer) {
+	timer.callback();
+});
+assert.deepEqual(refreshedPartialPedalNoteCalls.map(function (call) {
+	return call.note;
+}), [55, 60, 65]);
 const passingSchedule = app.buildProgressionPlaybackSchedule({
 	generateMelodicVoice: true,
 	measures: [
@@ -560,6 +724,29 @@ assert.deepEqual(shortPresetNoteCalls.map(function (call) { return call.options.
 	'pizzicato_strings'
 ]);
 
+const simultaneousChordCalls = [];
+const simultaneousNoteCalls = [];
+context.window.CodaProgressionEventPlayer.play({
+	playMidiChord: function (notes, options) {
+		simultaneousChordCalls.push({ notes: notes, options: options });
+	},
+	playMidiNote: function (note, options) {
+		simultaneousNoteCalls.push({ note: note, options: options });
+	}
+}, context.window.CodaProgressionEventPlayer.asImmediateEvent({
+	delay: 0,
+	duration: 1.9,
+	midiNoteEvents: [
+		{ delay: 0, duration: 1.9, midiNote: 52 },
+		{ delay: 0, duration: 1.9, midiNote: 55 },
+		{ delay: 0, duration: 1.9, midiNote: 59 },
+		{ delay: 0, duration: 1.9, midiNote: 64 }
+	],
+	playbackInstrumentId: 'acoustic_grand_piano'
+}));
+assert.deepEqual(simultaneousChordCalls.map(function (call) { return call.notes; }), [[52, 55, 59, 64]]);
+assert.equal(simultaneousNoteCalls.length, 0);
+
 playback.play(progression);
 const chordCallsBeforeStop = chordCalls.length;
 assert.equal(playback.stop(), true);
@@ -807,6 +994,126 @@ assert.deepEqual(visualNoteStarts, [[60, 64]]);
 runVisualNoteTimersAt(950);
 assert.deepEqual(visualNoteEnds, [[60, 64]]);
 
+const groupedVisualStarts = [];
+const groupedVisualPlayback = app.createProgressionPlayback({
+	playbackService: {
+		playMidiChord: function () {},
+		playMidiNote: function () {},
+		stopAllNotes: function () {}
+	},
+	timerApi: {
+		clearTimeout: function () {},
+		setTimeout: function (callback, milliseconds) {
+			visualNoteTimers.push({
+				callback: callback,
+				done: false,
+				milliseconds: milliseconds
+			});
+			return visualNoteTimers.length;
+		}
+	}
+});
+groupedVisualPlayback.play({
+	generateMelodicVoice: true,
+	measures: [
+		{
+			articulation: 'sustain',
+			bar: 1,
+			degree: 'i',
+			durationSeconds: 1,
+			melodicVoiceIndex: 3,
+			midiNotes: [52, 55, 59, 64],
+			notes: ['E', 'G', 'B', 'E'],
+			startSeconds: 0,
+			voiceNotes: [
+				{ midiNote: 52, note: 'E' },
+				{ midiNote: 55, note: 'G' },
+				{ midiNote: 59, note: 'B' },
+				{ midiNote: 64, note: 'E' }
+			],
+			voices: 4
+		}
+	],
+	totalSeconds: 1
+}, {
+	onNoteStart: function (midiNotes) {
+		groupedVisualStarts.push(midiNotes.slice());
+	}
+});
+runVisualNoteTimersAt(0);
+assert.deepEqual(groupedVisualStarts, [[52, 55, 59, 76]]);
+
+const pedalVisualStarts = [];
+const pedalVisualEnds = [];
+const pedalVisualTimers = [];
+let pedalVisualNow = 0;
+const pedalVisualPlayback = app.createProgressionPlayback({
+	playbackService: {
+		getInstrumentAttributes: function () {
+			return {
+				pedalBehavior: 'sustain',
+				supportsPedalHold: true
+			};
+		},
+		playMidiChord: function () {},
+		playMidiNote: function () {},
+		stopAllNotes: function () {}
+	},
+	timerApi: {
+		clearTimeout: function () {},
+		setTimeout: function (callback, milliseconds) {
+			pedalVisualTimers.push({
+				callback: callback,
+				done: false,
+				milliseconds: pedalVisualNow + milliseconds
+			});
+			return pedalVisualTimers.length;
+		}
+	}
+});
+pedalVisualPlayback.play({
+	measures: [
+		{
+			articulation: 'sustain',
+			bar: 1,
+			degree: 'I',
+			durationSeconds: 2,
+			midiNotes: [48, 52, 55],
+			notes: ['C', 'E', 'G'],
+			pedalsOut: [{ durationSeconds: 2, midiNote: 55, note: 'G', toBar: 2 }],
+			startSeconds: 0,
+			voices: 3
+		},
+		{
+			articulation: 'sustain',
+			bar: 2,
+			degree: 'I',
+			durationSeconds: 2,
+			midiNotes: [55, 60, 65],
+			notes: ['G', 'C', 'F'],
+			pedalsIn: [{ durationSeconds: 2, midiNote: 55, note: 'G', fromBar: 1 }],
+			startSeconds: 2,
+			voices: 3
+		}
+	],
+	totalSeconds: 4
+}, {
+	onNoteEnd: function (midiNotes) {
+		pedalVisualEnds.push(midiNotes.slice());
+	},
+	onNoteStart: function (midiNotes) {
+		pedalVisualStarts.push(midiNotes.slice());
+	}
+});
+runPedalVisualTimersAt(0);
+assert.deepEqual(pedalVisualStarts, [[48, 52, 55]]);
+runPedalVisualTimersAt(1900);
+assert.deepEqual(pedalVisualEnds, [[48, 52]]);
+runPedalVisualTimersAt(2000);
+assert.deepEqual(pedalVisualStarts, [[48, 52, 55], [60, 65]]);
+runPedalVisualTimersAt(3900);
+assert.deepEqual(pedalVisualEnds, [[48, 52], [55], [60, 65]]);
+
 const note60a = fakeInstrumentNoteElement();
 const note60b = fakeInstrumentNoteElement();
 const note64 = fakeInstrumentNoteElement();
@@ -846,8 +1153,8 @@ highlighter.clear();
 assert.equal(note64.classList.contains('isPlayingInstrumentNote'), false);
 delete context.window.document;
 
-const guitarFretFive = fakeGuitarInstrumentNoteElement(5, 1);
-const guitarOpen = fakeGuitarInstrumentNoteElement(0, 2);
+const guitarFretFive = fakeGuitarInstrumentNoteElement(5, 1, 64);
+const guitarOpen = fakeGuitarInstrumentNoteElement(0, 2, 64);
 context.window.document = {
 	querySelectorAll: function (selector) {
 		if (selector === '#instrumento .celdaNota span[data-midi-note="64"]') {
@@ -869,6 +1176,35 @@ highlighter.noteOff(64);
 assert.equal(guitarOpen.classList.contains('isPlayingInstrumentNote'), false);
 delete context.window.document;
 
+const guitarOpenE = fakeGuitarInstrumentNoteElement(0, 2, 64);
+const guitarSameStringG = fakeGuitarInstrumentNoteElement(3, 2, 67);
+const guitarOtherStringE = fakeGuitarInstrumentNoteElement(5, 1, 64);
+const guitarOtherStringG = fakeGuitarInstrumentNoteElement(8, 3, 67);
+const guitarAllCandidates = [guitarOpenE, guitarSameStringG, guitarOtherStringE, guitarOtherStringG];
+context.window.document = {
+	querySelectorAll: function (selector) {
+		if (selector === '#instrumento .celdaNota span[data-midi-note="64"]') {
+			return [guitarOpenE, guitarOtherStringE];
+		}
+		if (selector === '#instrumento .celdaNota span[data-midi-note="67"]') {
+			return [guitarSameStringG, guitarOtherStringG];
+		}
+		if (selector === '#instrumento .celdaNota span.isPlayingInstrumentNote') {
+			return guitarAllCandidates.filter(function (element) {
+				return element.classList.contains('isPlayingInstrumentNote');
+			});
+		}
+
+		return [];
+	}
+};
+highlighter.noteOn([64, 67]);
+assert.equal(guitarOpenE.classList.contains('isPlayingInstrumentNote'), true);
+assert.equal(guitarSameStringG.classList.contains('isPlayingInstrumentNote'), false);
+assert.equal(guitarOtherStringG.classList.contains('isPlayingInstrumentNote'), true);
+highlighter.noteOff([64, 67]);
+delete context.window.document;
+
 console.log('Progression playback tests passed');
 
 function runTimersAt(milliseconds) {
@@ -885,6 +1221,22 @@ function runVisualNoteTimersAt(milliseconds) {
 	do {
 		ran = false;
 		visualNoteTimers.filter(function (timer) {
+			return timer.milliseconds === milliseconds && timer.done === false;
+		}).forEach(function (timer) {
+			timer.done = true;
+			ran = true;
+			timer.callback();
+		});
+	} while (ran);
+}
+
+function runPedalVisualTimersAt(milliseconds) {
+	let ran;
+
+	pedalVisualNow = milliseconds;
+	do {
+		ran = false;
+		pedalVisualTimers.filter(function (timer) {
 			return timer.milliseconds === milliseconds && timer.done === false;
 		}).forEach(function (timer) {
 			timer.done = true;
@@ -919,7 +1271,7 @@ function fakeInstrumentNoteElement() {
 	};
 }
 
-function fakeGuitarInstrumentNoteElement(fretNumber, stringIndex) {
+function fakeGuitarInstrumentNoteElement(fretNumber, stringIndex, midiNote) {
 	const element = fakeInstrumentNoteElement();
 	const cell = {
 		getAttribute: function (name) {
@@ -936,6 +1288,9 @@ function fakeGuitarInstrumentNoteElement(fretNumber, stringIndex) {
 
 	element.closest = function (selector) {
 		return selector === '.guitarNoteCell' ? cell : null;
+	};
+	element.getAttribute = function (name) {
+		return name === 'data-midi-note' ? String(midiNote) : '';
 	};
 
 	return element;

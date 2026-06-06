@@ -65,10 +65,20 @@
 			return event;
 		}
 
-		refreshed = eventBuilder.buildMeasurePlaybackEvent(measure, event.index, event.startOffset || 0, playbackOptionsForProgression(progression, options), event.chordIndex || 0);
+		refreshed = eventBuilder.buildMeasurePlaybackEvent(measure, event.index, event.startOffset || 0, refreshedPlaybackOptions(progression, options, event), event.chordIndex || 0);
 		refreshed.delay = Math.max(0, (refreshed.delay || 0) - (event.delay || 0));
 
 		return refreshed;
+	}
+
+	function refreshedPlaybackOptions(progression, options, event) {
+		var result = playbackOptionsForProgression(progression, options);
+
+		if (event && event.forcePedalAttack) {
+			result.forcePedalAttack = true;
+		}
+
+		return result;
 	}
 
 	function measureForPlaybackEvent(event, progression) {
@@ -132,6 +142,7 @@
 		measurePlaybackOptions: measurePlaybackOptions,
 		playbackOptionsForProgression: playbackOptionsForProgression,
 		playbackTotalSeconds: playbackTotalSeconds,
+		refreshedPlaybackOptions: refreshedPlaybackOptions,
 		refreshPlaybackEvent: refreshPlaybackEvent
 	};
 })(window);

@@ -3,7 +3,8 @@
 	'use strict';
 
 	function build(measure, duration, options) {
-		var midiNotes = notesForVoices(measure.midiNotes, measure.voices);
+		var timingService = global.CodaProgressionPlaybackTiming;
+		var midiNotes = timingService && typeof timingService.midiNotesForMeasure === 'function' ? timingService.midiNotesForMeasure(measure) : notesForVoices(measure.midiNotes, measure.voices);
 		var events = [];
 		var melodicVoiceEnabled = !options || options.enableMelodicVoice !== false;
 		var usesPatternArticulation = isArpeggioArticulation(measure && measure.articulation) || (measure && measure.articulation === 'staccato');
@@ -28,7 +29,7 @@
 				continue;
 			}
 
-			if (!forcePedalAttack(options) && isPedalIn(midiNotes[i], measure)) {
+			if (shouldOmitPedalIn(midiNotes[i], measure, options)) {
 				continue;
 			}
 
@@ -397,6 +398,10 @@
 		return !!(options && options.forcePedalAttack === true);
 	}
 
+	function shouldOmitPedalIn(midiNote, measure, options) {
+		return !forcePedalAttack(options) && isPedalIn(midiNote, measure) && !isSameBarPedalIn(midiNote, measure);
+	}
+
 	function arpeggioStepSeconds(measure, duration, options) {
 		var configuredStep = Number(options && options.arpeggioStepSeconds);
 
@@ -431,7 +436,20 @@
 		var pedals = measure.pedalsIn || [];
 
 		for (var i = 0; i < pedals.length; i++) {
-			if (pedals[i].midiNote === midiNote) {
+			if (Number(pedals[i].midiNote) === Number(midiNote)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function isSameBarPedalIn(midiNote, measure) {
+		var pedals = measure.pedalsIn || [];
+		var bar = Number(measure && measure.bar);
+
+		for (var i = 0; i < pedals.length; i++) {
+			if (Number(pedals[i].midiNote) === Number(midiNote) && Number(pedals[i].fromBar) === bar) {
 				return true;
 			}
 		}

@@ -8,6 +8,7 @@
 	var objectService = global.CodaProgressionObjects;
 	var segmentBuilder = global.CodaProgressionSegmentBuilder;
 	var voiceLeadingService = global.CodaProgressionVoiceLeading;
+	var MAX_INVERSION_RUN = 3;
 
 	function apply(progression, options) {
 		var progressionState = options && options.progressionState ? options.progressionState : {};
@@ -33,6 +34,7 @@
 				var rebuiltSegment = revoiceSegment(segment, {
 					data: options.data,
 					index: i,
+					nextSegment: nextSegmentAfter(measures, i, j),
 					preserveInversions: !(options && options.preserveInversions === false),
 					previousPlan: previousPlan,
 					progressionState: progressionState,
@@ -64,7 +66,7 @@
 		chordPlan = chordPlanService.build({
 			index: context.index,
 			options: {
-				forceInversionIndex: shouldPreserveSegmentInversion(segment, context) ? numberOrDefault(segment.inversionIndex, 0) : null,
+				forceInversionIndex: forcedInversionIndexForSegment(segment, context),
 				forceKind: segment.chordKind === 'seventh' ? 'seventh' : 'triad',
 				includeTensions: true,
 				initialMidiNote: context.data && context.data.midi ? context.data.midi.initialMidiNote : 60,
@@ -92,9 +94,71 @@
 		});
 	}
 
+	function forcedInversionIndexForSegment(segment, context) {
+		if (shouldPreserveSegmentInversion(segment, context)) {
+			return numberOrDefault(segment.inversionIndex, 0);
+		}
+
+		if (wouldSetUpForcedInversionOverflow(segment, context)) {
+			return alternateInversionIndex(segment);
+		}
+
+		return null;
+	}
+
 	function shouldPreserveSegmentInversion(segment, context) {
-		return context.preserveInversions ||
-			!!(segment && (segment.cadentialRole || segment.chromaticRole || segment.restorableInversionIndex != null));
+		var structurallyProtected = !!(segment && (segment.cadentialRole || segment.chromaticRole || segment.restorableInversionIndex != null));
+
+		if (context.preserveInversions) {
+			return true;
+		}
+
+		if (!structurallyProtected) {
+			return false;
+		}
+
+		return !wouldSetUpForcedInversionOverflow(segment, context);
+	}
+
+	function wouldSetUpForcedInversionOverflow(segment, context) {
+		var current = Number(segment && segment.inversionIndex);
+		var previousKey = context.previousPlan && context.previousPlan.inversionRunKey != null ?
+			String(context.previousPlan.inversionRunKey) :
+			String(Number(context.previousPlan && context.previousPlan.inversionIndex));
+		var previousLength = Number(context.previousPlan && context.previousPlan.inversionRunLength);
+		var nextSegment = context.nextSegment;
+
+		if (!isFinite(current) || String(current) !== previousKey || !isFinite(previousLength) || previousLength < MAX_INVERSION_RUN - 1) {
+			return false;
+		}
+
+		return Number(nextSegment && nextSegment.inversionIndex) === current &&
+			!!(nextSegment && (nextSegment.cadentialRole || nextSegment.chromaticRole || nextSegment.restorableInversionIndex != null));
+	}
+
+	function alternateInversionIndex(segment) {
+		var current = numberOrDefault(segment && segment.inversionIndex, 0);
+		var max = segment && segment.chordKind === 'seventh' ? 3 : 2;
+
+		return current === 1 ? 2 : 1 <= max ? 1 : 0;
+	}
+
+	function nextSegmentAfter(measures, measureIndex, segmentIndex) {
+		var currentSegments = measureTimelineService.measureSegments(measures[measureIndex]);
+
+		if (currentSegments[segmentIndex + 1]) {
+			return currentSegments[segmentIndex + 1];
+		}
+
+		for (var i = measureIndex + 1; i < measures.length; i++) {
+			var segments = measureTimelineService.measureSegments(measures[i]);
+
+			if (segments.length) {
+				return segments[0];
+			}
+		}
+
+		return null;
 	}
 
 	function resolvedDegreeFromSegment(segment, report) {

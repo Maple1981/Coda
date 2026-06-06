@@ -1398,7 +1398,8 @@
 		return function (element) {
 			chordPlayback.playChordFromCellId(element.id, {
 				bassOctaveOffset: -12,
-				duration: 0.75
+				duration: 0.75,
+				midiNotes: element.getAttribute('data-midi-notes')
 			});
 		};
 	}

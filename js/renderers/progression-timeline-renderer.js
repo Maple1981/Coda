@@ -315,7 +315,7 @@
 			buttons = '<span class="measureSplitActions">' + buttons + '</span>';
 		}
 
-		return '<div class="measureChord" data-measure-chord-index="' + labels.escapeHtml(chordIndex) + '">' +
+		return '<div class="measureChord" data-measure-chord-index="' + labels.escapeHtml(chordIndex) + '"' + midiNotesAttribute(chord) + '>' +
 			dragHandle +
 			buttons +
 			'<span class="measureChordName"><strong>' + labels.formatMusicalLabel(label) + '</strong><button type="button" class="measureChordMenuButton" data-measure-chord-menu="true" aria-haspopup="menu" aria-expanded="false" aria-label="" title="" data-i18n-title="progression.changeMeasureChord"><span class="material-icons" aria-hidden="true">more_vert</span></button>' + quickControls + '</span>' +
@@ -324,6 +324,21 @@
 			(tonalFunction ? '<span class="measureFunction">' + labels.escapeHtml(tonalFunction) + '</span>' : '') +
 			(source ? '<span class="measureSource">' + labels.escapeHtml(source) + '</span>' : '') +
 			'</div>';
+	}
+
+	function midiNotesAttribute(chord) {
+		var midiNotes = chord && chord.midiNotes ? chord.midiNotes : [];
+		var values = [];
+
+		for (var i = 0; i < midiNotes.length; i++) {
+			var midiNote = Number(midiNotes[i]);
+
+			if (isFinite(midiNote)) {
+				values.push(midiNote);
+			}
+		}
+
+		return values.length ? ' data-midi-notes="' + labels.escapeHtml(values.join(',')) + '"' : '';
 	}
 
 	function renderQuickControls(chord, options) {
@@ -540,6 +555,7 @@
 		renderMeasureChord: renderMeasureChord,
 		renderQuickControls: renderQuickControls,
 		renderQuickEditor: renderQuickEditor,
+		midiNotesAttribute: midiNotesAttribute,
 		renderUnsupportedScaleMessage: renderUnsupportedScaleMessage,
 		renderSectionHeader: renderSectionHeader,
 		renderSectionNavigator: renderSectionNavigator,

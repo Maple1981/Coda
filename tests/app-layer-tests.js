@@ -1909,8 +1909,14 @@ assert.equal(cMajorPiano.keyboard.whiteKeys[0].midiNote, 21);
 
 let playedNotes = null;
 let playedOptions = null;
+let playedChordMidiNotes = null;
+let playedChordMidiOptions = null;
 const chordPlayback = app.createChordPlayback({
 	playbackService: {
+		playMidiChord: function (midiNotes, options) {
+			playedChordMidiNotes = midiNotes;
+			playedChordMidiOptions = options;
+		},
 		playChordFromNames: function (noteNames, options) {
 			playedNotes = noteNames;
 			playedOptions = options;
@@ -1923,6 +1929,15 @@ assert.deepEqual(parsedNotes, ['C', 'E', 'G', 'B']);
 assert.deepEqual(playedNotes, ['C', 'E', 'G', 'B']);
 assert.deepEqual(playedOptions, {
 	bassOctaveOffset: -12,
+	duration: 0.75
+});
+const parsedMidiNotes = chordPlayback.playChordFromCellId('A-C-D-F', {
+	duration: 0.75,
+	midiNotes: '57,60,62,65'
+});
+assert.deepEqual(parsedMidiNotes, [57, 60, 62, 65]);
+assert.deepEqual(playedChordMidiNotes, [57, 60, 62, 65]);
+assert.deepEqual(playedChordMidiOptions, {
 	duration: 0.75
 });
 

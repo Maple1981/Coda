@@ -5,6 +5,7 @@
 	var arpeggioPatterns = global.CodaProgressionArpeggioPatterns;
 	var articulationInstruments = global.CodaProgressionArticulationInstruments;
 	var noteEventService = global.CodaProgressionPlaybackNoteEvents;
+	var playbackTiming = global.CodaProgressionPlaybackTiming;
 	var defaultTicksPerBeat = 480;
 	var midiMimeType = 'audio/midi';
 	var noteIndexes = {
@@ -93,7 +94,7 @@
 	}
 
 	function appendChordEvents(events, measure, options) {
-		var notes = measure.midiNotes && measure.midiNotes.length ? measure.midiNotes.slice() : chordNotesToMidi(measure.notes || [], options.initialMidiNote);
+		var notes = playbackTiming && typeof playbackTiming.midiNotesForMeasure === 'function' ? playbackTiming.midiNotesForMeasure(measure) : (measure.midiNotes && measure.midiNotes.length ? measure.midiNotes.slice() : chordNotesToMidi(measure.notes || [], options.initialMidiNote));
 		var startTick = Math.max(0, Math.round(measure.startBeat * options.ticksPerBeat) + expressiveDelayTicks(measure, options));
 		var durationTicks = Math.max(1, Math.round(measure.durationBeats * options.ticksPerBeat * articulationFactor(measure.articulation)));
 		var arpeggioStep = isArpeggioArticulation(measure.articulation) ? Math.max(1, Math.round(options.ticksPerBeat / 4)) : 0;

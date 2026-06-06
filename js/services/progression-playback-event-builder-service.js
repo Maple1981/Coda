@@ -20,7 +20,7 @@
 	function buildMeasurePlaybackEvent(measure, index, startOffset, options, chordIndex) {
 		var duration = timingService.playbackDuration(measure);
 		var notes = timingService.notesForVoices(measure.notes, measure.voices);
-		var midiNotes = timingService.notesForVoices(measure.midiNotes, measure.voices);
+		var midiNotes = timingService.midiNotesForMeasure(measure);
 		var midiNoteEvents = noteEventService.build(measure, duration, noteEventOptions(options, chordIndex));
 		var mode = timingService.isArpeggioArticulation(measure.articulation) ? 'arpeggio' : 'chord';
 		var delay = Math.max(0, (measure.startSeconds || 0) - (startOffset || 0));
@@ -37,6 +37,10 @@
 		};
 
 		setHiddenStartOffset(event, startOffset || 0);
+
+		if (shouldForcePedalAttack(options, chordIndex)) {
+			event.forcePedalAttack = true;
+		}
 
 		if (chordIndex) {
 			event.chordIndex = chordIndex;
@@ -69,7 +73,7 @@
 	}
 
 	function noteEventOptions(options, chordIndex) {
-		if (!options || !options.forcePedalAttackOnFirstEvent || chordIndex) {
+		if (!options || (!options.forcePedalAttack && (!options.forcePedalAttackOnFirstEvent || chordIndex))) {
 			return options;
 		}
 
@@ -84,6 +88,10 @@
 		result.forcePedalAttack = true;
 
 		return result;
+	}
+
+	function shouldForcePedalAttack(options, chordIndex) {
+		return !!(options && (options.forcePedalAttack || (options.forcePedalAttackOnFirstEvent && !chordIndex)));
 	}
 
 	function setHiddenStartOffset(event, startOffset) {

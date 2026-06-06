@@ -678,6 +678,7 @@ const renderedProgressionTimeline = progressionWorkbenchRenderer.renderTimelineM
 			displayName: 'Cmaj7 add9',
 			inversionIndex: 0,
 			kind: 'seventh',
+			midiNotes: [57, 60, 62, 65],
 			notes: ['C', 'E', 'G', 'B', 'D', 'C'],
 			tonalFunction: 'T'
 		},
@@ -692,6 +693,7 @@ assert.ok(renderedProgressionTimeline.indexOf('data-progression-section="A"') > 
 assert.ok(renderedProgressionTimeline.indexOf('progression.nextSection.aprimeClone') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('progression.nextSection.aprimeVariation') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-index="0"') > -1);
+assert.ok(renderedProgressionTimeline.indexOf('data-midi-notes="57,60,62,65"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('measureDragHandle') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('data-progression-split-action="add"') > -1);
 assert.ok(renderedProgressionTimeline.indexOf('measureChordMenuButton') > -1);

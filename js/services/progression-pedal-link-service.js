@@ -33,6 +33,7 @@
 				toBar: nextMeasure.bar
 			};
 
+			extendIncomingPedal(currentMeasure, link.midiNote, nextMeasure.durationSeconds);
 			alignPedalVoice(nextMeasure, link);
 			currentMeasure.pedalsOut.push(pedal);
 			nextMeasure.pedalsIn.push(pedal);
@@ -41,9 +42,23 @@
 		nextMeasure.midiNotes = midiNotesFromVoiceNotes(nextMeasure.voiceNotes);
 	}
 
+	function extendIncomingPedal(measure, midiNote, durationSeconds) {
+		var extension = Number(durationSeconds) || 0;
+
+		if (!extension || !measure || !measure.pedalsIn || !measure.pedalsIn.length) {
+			return;
+		}
+
+		for (var i = 0; i < measure.pedalsIn.length; i++) {
+			if (Number(measure.pedalsIn[i].midiNote) === Number(midiNote)) {
+				measure.pedalsIn[i].durationSeconds = (Number(measure.pedalsIn[i].durationSeconds) || 0) + extension;
+			}
+		}
+	}
+
 	function alignPedalVoice(measure, link) {
 		for (var i = 0; i < measure.voiceNotes.length; i++) {
-			if (voicingService.normalizePitchName(measure.voiceNotes[i].note) === voicingService.normalizePitchName(link.note)) {
+			if (Number(measure.voiceNotes[i].midiNote) === Number(link.midiNote)) {
 				measure.voiceNotes[i] = extendObject(measure.voiceNotes[i], {
 					midiNote: link.midiNote,
 					role: measure.voiceNotes[i].role + '-pedal'
@@ -59,7 +74,7 @@
 
 		for (var i = 0; i < (firstMeasure.voiceNotes || []).length; i++) {
 			for (var j = 0; j < (secondMeasure.voiceNotes || []).length; j++) {
-				if (usedSecondVoices[j] || voicingService.normalizePitchName(firstMeasure.voiceNotes[i].note) !== voicingService.normalizePitchName(secondMeasure.voiceNotes[j].note)) {
+				if (usedSecondVoices[j] || !isExactCommonVoice(firstMeasure.voiceNotes[i], secondMeasure.voiceNotes[j])) {
 					continue;
 				}
 
@@ -77,6 +92,11 @@
 		return links.sort(function (a, b) {
 			return Math.abs(a.firstVoiceIndex - a.secondVoiceIndex) - Math.abs(b.firstVoiceIndex - b.secondVoiceIndex);
 		});
+	}
+
+	function isExactCommonVoice(firstVoice, secondVoice) {
+		return Number(firstVoice && firstVoice.midiNote) === Number(secondVoice && secondVoice.midiNote) &&
+			voicingService.normalizePitchName(firstVoice && firstVoice.note) === voicingService.normalizePitchName(secondVoice && secondVoice.note);
 	}
 
 	function midiNotesFromVoiceNotes(voiceNotes) {
