@@ -52,6 +52,7 @@
 			previousPlan: context.previousPlan,
 			registerCenterMidi: registerCenterMidi(context.options),
 			commonToneStickiness: sustainedInstrumentCommonToneStickiness(context.progressionState),
+			midiInstrument: context.progressionState.midiInstrument,
 			playableRange: playableMidiRange(context.progressionState),
 			voicing: context.progressionState.voicing,
 			voices: context.progressionState.voices
@@ -153,7 +154,7 @@
 		var instrument = progressionState && progressionState.midiInstrument;
 		var ranges = {
 			acoustic_grand_piano: { min: 21, max: 109 },
-			acoustic_guitar_nylon: { min: 21, max: 108 },
+			acoustic_guitar_nylon: { min: 40, max: 88 },
 			drawbar_organ: { min: 21, max: 108 },
 			pad_2_warm: { min: 21, max: 108 },
 			string_ensemble_1: { min: 21, max: 108 }

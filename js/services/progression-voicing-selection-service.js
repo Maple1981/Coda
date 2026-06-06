@@ -75,6 +75,7 @@
 	function scoreOptions(options) {
 		return {
 			commonToneStickiness: numberOrDefault(options && options.commonToneStickiness, 0),
+			midiInstrument: options && options.midiInstrument,
 			playableRange: playableRange(options && options.playableRange),
 			registerCenterMidi: registerCenterMidi(options)
 		};

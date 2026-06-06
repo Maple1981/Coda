@@ -3,7 +3,7 @@
 	'use strict';
 
 	function renderGuitar(options) {
-		var html = '<h4>' + t(options, 'instrument.tuning') + ': ' + tuningLabel(options, options.tuning) + '&nbsp;';
+		var html = '<h4>' + t(options, 'instrument.tuning') + ': ' + tuningLabel(options, options.tuning) + '&nbsp;&nbsp;';
 
 		html += renderTuningSelect(options);
 		html += '</h4>';
@@ -56,8 +56,9 @@
 		var fretClass = Number(fretNumber) === 0 ? ' guitarOpenString' : ' guitarFret';
 		var cellClass = 'celdaNota guitarNoteCell' + fretClass + guitarFretMarkerClass(fretNumber, stringIndex, stringCount);
 		var midiAttribute = midiNote != null ? ' data-midi-note="' + midiNote + '"' : '';
+		var positionAttributes = ' data-fret-number="' + Number(fretNumber) + '" data-string-index="' + Number(stringIndex) + '"';
 
-		return '<td class="' + cellClass + scaleClass + '"><span data-note-name="' + noteName + '"' + midiAttribute + modalClass + '>' + formatNote(options, noteName) + '</span></td>';
+		return '<td class="' + cellClass + scaleClass + '"' + positionAttributes + '><span data-note-name="' + noteName + '"' + midiAttribute + modalClass + '>' + formatNote(options, noteName) + '</span></td>';
 	}
 
 	function renderPiano(options) {

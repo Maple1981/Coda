@@ -789,10 +789,27 @@ assert.ok(global.CodaProgressionVoiceLeadingScore.playableRangePenalty({
 	min: 21,
 	max: 108
 }) > 0);
+assert.equal(global.CodaProgressionVoiceLeadingScore.pianoHandSpanPenaltyForSpan(12), 0);
+assert.ok(
+	global.CodaProgressionVoiceLeadingScore.pianoHandSpanPenaltyForSpan(17) >
+	global.CodaProgressionVoiceLeadingScore.pianoHandSpanPenaltyForSpan(14)
+);
+assert.equal(global.CodaProgressionVoiceLeadingScore.guitarFingeringOptions(64).some(function (option) {
+	return option.fret === 0;
+}), true);
+assert.ok(global.CodaProgressionVoiceLeadingScore.guitarVoicingPenalty({
+	midiNotes: [40, 45, 50, 55, 59, 64, 69]
+}) >= 12000);
+assert.ok(global.CodaProgressionVoiceLeadingScore.idiomaticInstrumentPenalty({
+	midiNotes: [48, 65, 67, 84]
+}, 'acoustic_grand_piano') > 0);
 assert.equal(global.CodaProgressionChordPlan.registerCenterMidi({
 	initialMidiNote: 60,
 	scaleNotes: [{ nombre: 'A' }]
 }), 63);
+assert.deepEqual(global.CodaProgressionChordPlan.playableMidiRange({
+	midiInstrument: 'acoustic_guitar_nylon'
+}), { min: 40, max: 88 });
 assert.deepEqual(global.CodaProgressionChordPlan.playableMidiRange({
 	midiInstrument: 'pad_2_warm'
 }), { min: 21, max: 108 });

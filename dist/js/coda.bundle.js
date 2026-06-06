@@ -4708,6 +4708,8 @@
 	'use strict';
 
 	var pitchService = global.CodaProgressionPitch;
+	var GUITAR_OPEN_STRING_MIDI_NOTES = [40, 45, 50, 55, 59, 64];
+	var GUITAR_MAX_FRET = 24;
 
 	function voiceLeadingTransitionScore(previousPlan, nextPlan, options) {
 		var score = transitionScore(previousPlan.midiNotes, nextPlan.midiNotes);
@@ -4721,6 +4723,7 @@
 		score += registerCenterPenalty(nextPlan, options && options.registerCenterMidi);
 		score += lowRegisterBassPenalty(nextPlan);
 		score += playableRangePenalty(nextPlan, options && options.playableRange);
+		score += idiomaticInstrumentPenalty(nextPlan, options && options.midiInstrument);
 		score -= commonToneStickinessBonus(previousPlan, nextPlan, options && options.commonToneStickiness);
 
 		return score;
@@ -4750,7 +4753,8 @@
 			voiceSpan(voicing.midiNotes) / 12 +
 			registerCenterPenalty(voicing, options && options.registerCenterMidi) +
 			lowRegisterBassPenalty(voicing) +
-			playableRangePenalty(voicing, options && options.playableRange);
+			playableRangePenalty(voicing, options && options.playableRange) +
+			idiomaticInstrumentPenalty(voicing, options && options.midiInstrument);
 	}
 
 	function transitionScore(previousMidiNotes, nextMidiNotes) {
@@ -4920,12 +4924,215 @@
 		return penalty;
 	}
 
+	function idiomaticInstrumentPenalty(voicing, midiInstrument) {
+		if (midiInstrument === 'acoustic_guitar_nylon') {
+			return guitarVoicingPenalty(voicing);
+		}
+
+		if (midiInstrument === 'acoustic_grand_piano') {
+			return pianoVoicingPenalty(voicing);
+		}
+
+		return 0;
+	}
+
+	function pianoVoicingPenalty(voicing) {
+		var midiNotes = sortedMidiNotes(voicing);
+		var bestPenalty = Infinity;
+
+		if (midiNotes.length < 3) {
+			return 0;
+		}
+
+		for (var split = 1; split < midiNotes.length; split++) {
+			bestPenalty = Math.min(
+				bestPenalty,
+				pianoHandPenalty(midiNotes.slice(0, split)) + pianoHandPenalty(midiNotes.slice(split))
+			);
+		}
+
+		return isFinite(bestPenalty) ? bestPenalty : 0;
+	}
+
+	function pianoHandPenalty(midiNotes) {
+		var span;
+		var penalty;
+
+		if (midiNotes.length < 2) {
+			return 0;
+		}
+
+		span = midiNotes[midiNotes.length - 1] - midiNotes[0];
+		penalty = pianoHandSpanPenaltyForSpan(span);
+
+		if (midiNotes.length >= 3 && span > 14) {
+			penalty += 8 + ((span - 14) * 4);
+		}
+
+		return penalty;
+	}
+
+	function pianoHandSpanPenaltyForSpan(span) {
+		var normalizedSpan = Math.max(0, Number(span) || 0);
+		var excess;
+
+		if (normalizedSpan <= 12) {
+			return 0;
+		}
+
+		if (normalizedSpan <= 14) {
+			return (normalizedSpan - 12) * 3;
+		}
+
+		if (normalizedSpan <= 16) {
+			return 8 + ((normalizedSpan - 14) * 8);
+		}
+
+		excess = normalizedSpan - 16;
+
+		return 30 + (excess * excess * 12);
+	}
+
+	function guitarVoicingPenalty(voicing) {
+		var midiNotes = sortedMidiNotes(voicing);
+		var bestPenalty;
+
+		if (!midiNotes.length) {
+			return 0;
+		}
+
+		if (midiNotes.length > GUITAR_OPEN_STRING_MIDI_NOTES.length) {
+			return 12000 + ((midiNotes.length - GUITAR_OPEN_STRING_MIDI_NOTES.length) * 2000);
+		}
+
+		bestPenalty = bestGuitarAssignmentPenalty(midiNotes, 0, {}, []);
+
+		return isFinite(bestPenalty) ? bestPenalty : 12000;
+	}
+
+	function bestGuitarAssignmentPenalty(midiNotes, index, usedStrings, assignment) {
+		var options;
+		var bestPenalty = Infinity;
+
+		if (index >= midiNotes.length) {
+			return guitarAssignmentPenalty(assignment);
+		}
+
+		options = guitarFingeringOptions(midiNotes[index]);
+
+		for (var i = 0; i < options.length; i++) {
+			if (usedStrings[options[i].stringIndex]) {
+				continue;
+			}
+
+			usedStrings[options[i].stringIndex] = true;
+			assignment.push(options[i]);
+			bestPenalty = Math.min(bestPenalty, bestGuitarAssignmentPenalty(midiNotes, index + 1, usedStrings, assignment));
+			assignment.pop();
+			delete usedStrings[options[i].stringIndex];
+		}
+
+		return bestPenalty;
+	}
+
+	function guitarFingeringOptions(midiNote) {
+		var normalizedMidiNote = Number(midiNote);
+		var options = [];
+
+		if (!isFinite(normalizedMidiNote)) {
+			return options;
+		}
+
+		for (var i = 0; i < GUITAR_OPEN_STRING_MIDI_NOTES.length; i++) {
+			var fret = normalizedMidiNote - GUITAR_OPEN_STRING_MIDI_NOTES[i];
+
+			if (fret >= 0 && fret <= GUITAR_MAX_FRET) {
+				options.push({
+					fret: fret,
+					stringIndex: i
+				});
+			}
+		}
+
+		return options.sort(function (a, b) {
+			if (a.fret !== b.fret) {
+				return a.fret - b.fret;
+			}
+
+			return a.stringIndex - b.stringIndex;
+		});
+	}
+
+	function guitarAssignmentPenalty(assignment) {
+		var fretted = [];
+		var fretCounts = {};
+		var openCount = 0;
+		var penalty = 0;
+		var bassStringIndex;
+		var fretSpan;
+		var barreBonus = 0;
+
+		for (var i = 0; i < assignment.length; i++) {
+			var fret = assignment[i].fret;
+
+			if (fret === 0) {
+				openCount += 1;
+			} else {
+				fretted.push(fret);
+				fretCounts[fret] = (fretCounts[fret] || 0) + 1;
+			}
+		}
+
+		if (fretted.length) {
+			fretted.sort(function (a, b) {
+				return a - b;
+			});
+			fretSpan = fretted[fretted.length - 1] - fretted[0];
+
+			if (fretSpan === 5) {
+				penalty += 24;
+			} else if (fretSpan > 5) {
+				penalty += 120 + ((fretSpan - 5) * (fretSpan - 5) * 60);
+			}
+		}
+
+		Object.keys(fretCounts).forEach(function (fret) {
+			if (fretCounts[fret] > 1) {
+				barreBonus += (fretCounts[fret] - 1) * 4;
+			}
+		});
+
+		bassStringIndex = assignment[0] ? assignment[0].stringIndex : 0;
+		if (bassStringIndex > 2) {
+			penalty += (bassStringIndex - 2) * 8;
+		}
+
+		return Math.max(0, penalty - (openCount * 4) - barreBonus);
+	}
+
+	function sortedMidiNotes(voicing) {
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes : [];
+
+		return midiNotes.map(function (midiNote) {
+			return Number(midiNote);
+		}).filter(function (midiNote) {
+			return isFinite(midiNote);
+		}).sort(function (a, b) {
+			return a - b;
+		});
+	}
+
 	global.CodaProgressionVoiceLeadingScore = {
 		commonToneStickinessBonus: commonToneStickinessBonus,
 		countParallelPerfects: countParallelPerfects,
 		firstVoicingScore: firstVoicingScore,
+		guitarFingeringOptions: guitarFingeringOptions,
+		guitarVoicingPenalty: guitarVoicingPenalty,
+		idiomaticInstrumentPenalty: idiomaticInstrumentPenalty,
 		lowRegisterBassPenalty: lowRegisterBassPenalty,
 		playableRangePenalty: playableRangePenalty,
+		pianoHandSpanPenaltyForSpan: pianoHandSpanPenaltyForSpan,
+		pianoVoicingPenalty: pianoVoicingPenalty,
 		registerCenterPenalty: registerCenterPenalty,
 		voiceLeadingTransitionScore: voiceLeadingTransitionScore
 	};
@@ -5467,6 +5674,7 @@
 	function scoreOptions(options) {
 		return {
 			commonToneStickiness: numberOrDefault(options && options.commonToneStickiness, 0),
+			midiInstrument: options && options.midiInstrument,
 			playableRange: playableRange(options && options.playableRange),
 			registerCenterMidi: registerCenterMidi(options)
 		};
@@ -10321,6 +10529,7 @@
 			previousPlan: context.previousPlan,
 			registerCenterMidi: registerCenterMidi(context.options),
 			commonToneStickiness: sustainedInstrumentCommonToneStickiness(context.progressionState),
+			midiInstrument: context.progressionState.midiInstrument,
 			playableRange: playableMidiRange(context.progressionState),
 			voicing: context.progressionState.voicing,
 			voices: context.progressionState.voices
@@ -10422,7 +10631,7 @@
 		var instrument = progressionState && progressionState.midiInstrument;
 		var ranges = {
 			acoustic_grand_piano: { min: 21, max: 109 },
-			acoustic_guitar_nylon: { min: 21, max: 108 },
+			acoustic_guitar_nylon: { min: 40, max: 88 },
 			drawbar_organ: { min: 21, max: 108 },
 			pad_2_warm: { min: 21, max: 108 },
 			string_ensemble_1: { min: 21, max: 108 }
@@ -18077,10 +18286,55 @@
 
 	function setNoteClass(midiNote, active) {
 		var elements = instrumentNoteElements('[data-midi-note="' + String(midiNote) + '"]');
+		var targets = active ? highlightTargets(elements) : elements;
 
-		for (var i = 0; i < elements.length; i++) {
-			elements[i].classList.toggle(activeClass, active);
+		for (var i = 0; i < targets.length; i++) {
+			targets[i].classList.toggle(activeClass, active);
 		}
+	}
+
+	function highlightTargets(elements) {
+		var source = Array.prototype.slice.call(elements || []);
+		var guitarNotes = source.filter(isGuitarNoteElement);
+		var selectedGuitarNote;
+
+		if (guitarNotes.length <= 1) {
+			return source;
+		}
+
+		selectedGuitarNote = preferredGuitarNoteElement(guitarNotes);
+
+		return source.filter(function (element) {
+			return !isGuitarNoteElement(element) || element === selectedGuitarNote;
+		});
+	}
+
+	function preferredGuitarNoteElement(elements) {
+		var result = elements[0];
+
+		for (var i = 1; i < elements.length; i++) {
+			if (guitarNoteSortValue(elements[i]) < guitarNoteSortValue(result)) {
+				result = elements[i];
+			}
+		}
+
+		return result;
+	}
+
+	function guitarNoteSortValue(element) {
+		var cell = guitarNoteCell(element);
+		var fret = numberOrDefault(cell && cell.getAttribute ? cell.getAttribute('data-fret-number') : null, 99);
+		var stringIndex = numberOrDefault(cell && cell.getAttribute ? cell.getAttribute('data-string-index') : null, 99);
+
+		return fret * 100 + stringIndex;
+	}
+
+	function isGuitarNoteElement(element) {
+		return !!guitarNoteCell(element);
+	}
+
+	function guitarNoteCell(element) {
+		return element && element.closest ? element.closest('.guitarNoteCell') : null;
 	}
 
 	function instrumentNoteElements(selectorSuffix) {
@@ -18108,8 +18362,15 @@
 		return normalized;
 	}
 
+	function numberOrDefault(value, fallback) {
+		var number = Number(value);
+
+		return isFinite(number) ? number : fallback;
+	}
+
 	global.CodaInstrumentNoteHighlight = {
 		clear: clear,
+		highlightTargets: highlightTargets,
 		noteOff: noteOff,
 		noteOn: noteOn,
 		normalizeMidiNotes: normalizeMidiNotes
@@ -22469,7 +22730,7 @@
 	'use strict';
 
 	function renderGuitar(options) {
-		var html = '<h4>' + t(options, 'instrument.tuning') + ': ' + tuningLabel(options, options.tuning) + '&nbsp;';
+		var html = '<h4>' + t(options, 'instrument.tuning') + ': ' + tuningLabel(options, options.tuning) + '&nbsp;&nbsp;';
 
 		html += renderTuningSelect(options);
 		html += '</h4>';
@@ -22522,8 +22783,9 @@
 		var fretClass = Number(fretNumber) === 0 ? ' guitarOpenString' : ' guitarFret';
 		var cellClass = 'celdaNota guitarNoteCell' + fretClass + guitarFretMarkerClass(fretNumber, stringIndex, stringCount);
 		var midiAttribute = midiNote != null ? ' data-midi-note="' + midiNote + '"' : '';
+		var positionAttributes = ' data-fret-number="' + Number(fretNumber) + '" data-string-index="' + Number(stringIndex) + '"';
 
-		return '<td class="' + cellClass + scaleClass + '"><span data-note-name="' + noteName + '"' + midiAttribute + modalClass + '>' + formatNote(options, noteName) + '</span></td>';
+		return '<td class="' + cellClass + scaleClass + '"' + positionAttributes + '><span data-note-name="' + noteName + '"' + midiAttribute + modalClass + '>' + formatNote(options, noteName) + '</span></td>';
 	}
 
 	function renderPiano(options) {

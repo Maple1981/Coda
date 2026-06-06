@@ -846,6 +846,29 @@ highlighter.clear();
 assert.equal(note64.classList.contains('isPlayingInstrumentNote'), false);
 delete context.window.document;
 
+const guitarFretFive = fakeGuitarInstrumentNoteElement(5, 1);
+const guitarOpen = fakeGuitarInstrumentNoteElement(0, 2);
+context.window.document = {
+	querySelectorAll: function (selector) {
+		if (selector === '#instrumento .celdaNota span[data-midi-note="64"]') {
+			return [guitarFretFive, guitarOpen];
+		}
+		if (selector === '#instrumento .celdaNota span.isPlayingInstrumentNote') {
+			return [guitarFretFive, guitarOpen].filter(function (element) {
+				return element.classList.contains('isPlayingInstrumentNote');
+			});
+		}
+
+		return [];
+	}
+};
+highlighter.noteOn(64);
+assert.equal(guitarOpen.classList.contains('isPlayingInstrumentNote'), true);
+assert.equal(guitarFretFive.classList.contains('isPlayingInstrumentNote'), false);
+highlighter.noteOff(64);
+assert.equal(guitarOpen.classList.contains('isPlayingInstrumentNote'), false);
+delete context.window.document;
+
 console.log('Progression playback tests passed');
 
 function runTimersAt(milliseconds) {
@@ -894,4 +917,26 @@ function fakeInstrumentNoteElement() {
 			}
 		}
 	};
+}
+
+function fakeGuitarInstrumentNoteElement(fretNumber, stringIndex) {
+	const element = fakeInstrumentNoteElement();
+	const cell = {
+		getAttribute: function (name) {
+			if (name === 'data-fret-number') {
+				return String(fretNumber);
+			}
+			if (name === 'data-string-index') {
+				return String(stringIndex);
+			}
+
+			return '';
+		}
+	};
+
+	element.closest = function (selector) {
+		return selector === '.guitarNoteCell' ? cell : null;
+	};
+
+	return element;
 }

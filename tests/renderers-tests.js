@@ -297,7 +297,7 @@ const guitarHtml = instrumentsRenderer.renderGuitar({
 
 assert.ok(guitarHtml.indexOf('<select id="selectorAfinaciones">') > -1);
 assert.ok(guitarHtml.indexOf('<table class="diapason fretboard">') > -1);
-assert.ok(guitarHtml.indexOf('<td class="celdaNota guitarNoteCell guitarOpenString perteneceEscala"><span data-note-name="E" data-midi-note="64">E</span></td>') > -1);
+assert.ok(guitarHtml.indexOf('<td class="celdaNota guitarNoteCell guitarOpenString perteneceEscala" data-fret-number="0" data-string-index="0"><span data-note-name="E" data-midi-note="64">E</span></td>') > -1);
 assert.ok(guitarHtml.indexOf('<td class="fretNumber"><span>2</span></td>') > -1);
 assert.equal(instrumentsRenderer.guitarFretMarkerClass(3, 2, 6), ' fretPositionMarker');
 assert.equal(instrumentsRenderer.guitarFretMarkerClass(3, 1, 6), '');
