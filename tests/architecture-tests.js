@@ -851,6 +851,8 @@ assert.ok(
 );
 assert.ok(global.CodaProgressionVoiceLeadingScore.melodicLeapPenalty(2) < global.CodaProgressionVoiceLeadingScore.melodicLeapPenalty(7));
 assert.ok(global.CodaProgressionVoiceLeadingScore.melodicLeapPenalty(7) < global.CodaProgressionVoiceLeadingScore.melodicLeapPenalty(12));
+assert.ok(global.CodaProgressionVoiceLeadingScore.sopranoLeapPenalty(2) < global.CodaProgressionVoiceLeadingScore.sopranoLeapPenalty(5));
+assert.ok(global.CodaProgressionVoiceLeadingScore.sopranoLeapPenalty(5) < global.CodaProgressionVoiceLeadingScore.sopranoLeapPenalty(8));
 assert.ok(
 	global.CodaProgressionVoiceLeadingScore.voiceLeadingTransitionScore({
 		midiNotes: [60, 64, 67, 72],
@@ -865,6 +867,22 @@ assert.ok(
 	}, {
 		midiNotes: [63, 67, 70, 75],
 		notes: ['Eb', 'G', 'Bb', 'D']
+	})
+);
+assert.ok(
+	global.CodaProgressionVoiceLeadingScore.voiceLeadingTransitionScore({
+		midiNotes: [48, 52, 55, 72],
+		notes: ['C', 'E', 'G', 'C']
+	}, {
+		midiNotes: [48, 52, 55, 79],
+		notes: ['C', 'E', 'G', 'G']
+	}) >
+	global.CodaProgressionVoiceLeadingScore.voiceLeadingTransitionScore({
+		midiNotes: [48, 52, 55, 72],
+		notes: ['C', 'E', 'G', 'C']
+	}, {
+		midiNotes: [41, 52, 55, 74],
+		notes: ['F', 'E', 'G', 'D']
 	})
 );
 const parsimoniousKeyboardVoicing = global.CodaProgressionVoicing.chooseVoicing({

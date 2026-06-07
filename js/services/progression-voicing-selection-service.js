@@ -5,7 +5,7 @@
 	var voicingDispositionService = global.CodaProgressionVoicingDisposition;
 	var voicingFactory = global.CodaProgressionVoicingFactory;
 	var MAX_INVERSION_RUN = 3;
-	var INVERSION_RUN_PENALTY = 1000;
+	var INVERSION_RUN_PENALTY = 1000000;
 
 	function chooseVoicing(options) {
 		var labels = options.kind === 'seventh' ? ['', '6/5', '4/3', '4/2'] : ['', '6', '6/4'];

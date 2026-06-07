@@ -20,6 +20,7 @@
 		score += playableRangePenalty(nextPlan, options && options.playableRange);
 		score += idiomaticInstrumentPenalty(nextPlan, options && options.midiInstrument);
 		score += melodicMotionPenalty(previousPlan.midiNotes, nextPlan.midiNotes, options);
+		score += sopranoMotionPenalty(previousPlan.midiNotes, nextPlan.midiNotes, options);
 		score += upperVoiceGapPenalty(nextPlan);
 		score += extremeUpperRegisterPenalty(nextPlan);
 		score -= commonToneStickinessBonus(previousPlan, nextPlan, options && options.commonToneStickiness);
@@ -114,6 +115,57 @@
 		excess = interval - 12;
 
 		return 160 + (excess * excess * 12);
+	}
+
+	function sopranoMotionPenalty(previousMidiNotes, nextMidiNotes, options) {
+		var length = Math.min((previousMidiNotes || []).length, (nextMidiNotes || []).length);
+		var previousTop;
+		var nextTop;
+		var motion;
+
+		if (!length) {
+			return 0;
+		}
+
+		previousTop = Number(previousMidiNotes[length - 1]);
+		nextTop = Number(nextMidiNotes[length - 1]);
+
+		if (!isFinite(previousTop) || !isFinite(nextTop)) {
+			return 0;
+		}
+
+		motion = options && options.pitchClassOnly ?
+			Math.abs(pitchService.nearestMidiTo(previousTop, nextTop) - previousTop) :
+			Math.abs(nextTop - previousTop);
+
+		return sopranoLeapPenalty(motion);
+	}
+
+	function sopranoLeapPenalty(motion) {
+		var interval = Math.max(0, Number(motion) || 0);
+		var excess;
+
+		if (interval <= 2) {
+			return 0;
+		}
+
+		if (interval <= 4) {
+			return (interval - 2) * 8;
+		}
+
+		if (interval <= 7) {
+			excess = interval - 4;
+			return 48 + (excess * excess * 28);
+		}
+
+		if (interval <= 12) {
+			excess = interval - 7;
+			return 520 + (excess * excess * 80);
+		}
+
+		excess = interval - 12;
+
+		return 2600 + (excess * excess * 120);
 	}
 
 	function voiceMotionWeight(index, length) {
@@ -588,6 +640,8 @@
 		pianoHandSpanPenaltyForSpan: pianoHandSpanPenaltyForSpan,
 		pianoVoicingPenalty: pianoVoicingPenalty,
 		registerCenterPenalty: registerCenterPenalty,
+		sopranoLeapPenalty: sopranoLeapPenalty,
+		sopranoMotionPenalty: sopranoMotionPenalty,
 		upperVoiceGapPenalty: upperVoiceGapPenalty,
 		voiceLeadingTransitionScore: voiceLeadingTransitionScore
 	};

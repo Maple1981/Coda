@@ -57,6 +57,9 @@
 				voices: progressionState.voices
 			};
 
+			setInternalValue(measure, 'inversionRunKey', chordPlan.inversionRunKey);
+			setInternalValue(measure, 'inversionRunLength', chordPlan.inversionRunLength);
+
 			if (resolvedDegrees[i].cadentialRole) {
 				measure.cadentialRole = resolvedDegrees[i].cadentialRole;
 			}
@@ -108,6 +111,24 @@
 
 	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
 		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
+	}
+
+	function setInternalValue(target, key, value) {
+		if (!target) {
+			return;
+		}
+
+		if (typeof Object.defineProperty === 'function') {
+			Object.defineProperty(target, key, {
+				configurable: true,
+				enumerable: false,
+				value: value,
+				writable: true
+			});
+			return;
+		}
+
+		target[key] = value;
 	}
 
 	function optionsForDegree(options, resolvedDegree) {

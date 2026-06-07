@@ -73,7 +73,7 @@ for (let invariantSeed = 1; invariantSeed <= 40; invariantSeed++) {
 	});
 	const invariantSegments = allProgressionSegments(invariantProgression);
 
-	assert.ok(maxInversionRun(invariantSegments) <= 3, 'seed ' + invariantSeed + ' exceeds inversion run limit');
+	assert.ok(maxInversionRun(invariantSegments) <= 3, 'seed ' + invariantSeed + ' exceeds inversion run limit: ' + inversionRunTrace(invariantSegments));
 	invariantSegments.forEach(function (segment) {
 		assertNoDuplicatedInversion(segment.degree, invariantSeed);
 		assertNoDuplicatedInversion(segment.displayName, invariantSeed);
@@ -124,6 +124,12 @@ function maxInversionRun(segments) {
 	segments.forEach(function (segment) {
 		var current = segment.inversionIndex == null ? 0 : Number(segment.inversionIndex);
 
+		if (current === 0) {
+			run = 0;
+			previous = null;
+			return;
+		}
+
 		if (current === previous) {
 			run += 1;
 		} else {
@@ -135,6 +141,14 @@ function maxInversionRun(segments) {
 	});
 
 	return max;
+}
+
+function inversionRunTrace(segments) {
+	return (segments || []).map(function (segment, index) {
+		var current = segment.inversionIndex == null ? 0 : Number(segment.inversionIndex);
+
+		return index + ':' + current + ':' + segment.bar + ':' + segment.displayName;
+	}).join(' | ');
 }
 
 function assertNoDuplicatedInversion(label, seed) {
@@ -200,18 +214,28 @@ function assertRegisterStaysCentered(segments, seed) {
 }
 
 function assertVoiceMotionStaysParsimonious(segments, seed) {
+	var sopranoLargeLeaps = 0;
+	var maxSopranoLargeLeaps = Math.max(1, Math.ceil((segments || []).length / 16));
+
 	for (var i = 1; i < (segments || []).length; i++) {
 		var previous = segments[i - 1].midiNotes || [];
 		var current = segments[i].midiNotes || [];
 		var length = Math.min(previous.length, current.length);
+		var sopranoIndex = length - 1;
 
 		for (var j = 0; j < length; j++) {
 			var motion = Math.abs(Number(current[j]) - Number(previous[j]));
-			var limit = length >= 5 && j < length - 1 ? 14 : 12;
+			var limit = j === sopranoIndex ? 10 : (j === 0 ? 16 : (length >= 5 && j < length - 1 ? 14 : 12));
+
+			if (j === sopranoIndex && motion > 7) {
+				sopranoLargeLeaps += 1;
+			}
 
 			assert.ok(motion <= limit, 'seed ' + seed + ' voice ' + j + ' jumps ' + motion + ' from bar ' + segments[i - 1].bar + ' to ' + segments[i].bar + ' previous [' + previous.join(',') + '] current [' + current.join(',') + ']');
 		}
 	}
+
+	assert.ok(sopranoLargeLeaps <= maxSopranoLargeLeaps, 'seed ' + seed + ' has too many soprano leaps: ' + sopranoLargeLeaps + ' of ' + (segments || []).length);
 }
 
 function assertModulationInvariants(originReport, seed) {

@@ -21,6 +21,9 @@
 			}
 		}
 
+		copyInternalValue(clone, measure, 'inversionRunKey');
+		copyInternalValue(clone, measure, 'inversionRunLength');
+
 		return clone;
 	}
 
@@ -50,7 +53,28 @@
 			measure[keys[i]] = segment[keys[i]];
 		}
 
+		copyInternalValue(measure, segment, 'inversionRunKey');
+		copyInternalValue(measure, segment, 'inversionRunLength');
+
 		return measure;
+	}
+
+	function copyInternalValue(target, source, key) {
+		if (!target || !source || source[key] == null) {
+			return;
+		}
+
+		if (typeof Object.defineProperty === 'function') {
+			Object.defineProperty(target, key, {
+				configurable: true,
+				enumerable: false,
+				value: source[key],
+				writable: true
+			});
+			return;
+		}
+
+		target[key] = source[key];
 	}
 
 	function cloneVoiceNotes(voiceNotes) {

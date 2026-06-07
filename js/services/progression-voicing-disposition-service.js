@@ -34,12 +34,13 @@
 			candidates = isOpenVoicing(voicing.midiNotes) ? [voicing] : [
 				openUpperVoice(voicing, voicing.midiNotes.length - 1)
 			];
-			return registerShiftCandidates(candidates).map(spreadLowRegister);
+			return melodicUpperVoiceAlternatives(registerShiftCandidates(candidates).map(spreadLowRegister)).map(spreadLowRegisterSpacing);
 		}
 
 		candidates = isOpenVoicing(voicing.midiNotes) ? [compactUpperVoices(voicing)] : [voicing];
 
 		candidates = registerShiftCandidates(candidates);
+		candidates = melodicUpperVoiceAlternatives(candidates);
 
 		if (!prefersLowRegisterSpacing(options && options.midiInstrument)) {
 			return candidates;
@@ -85,6 +86,109 @@
 		}
 
 		return result;
+	}
+
+	function melodicUpperVoiceAlternatives(candidates) {
+		var result = [];
+
+		for (var i = 0; i < candidates.length; i++) {
+			appendUniqueCandidate(result, candidates[i]);
+			appendUniqueCandidate(result, shiftUpperVoice(candidates[i], -12));
+			appendUniqueCandidate(result, shiftUpperVoice(candidates[i], 12));
+			appendUniqueCandidate(result, redistributeUpperVoiceDown(candidates[i]));
+		}
+
+		return result;
+	}
+
+	function shiftUpperVoice(voicing, semitones) {
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes.slice() : [];
+		var voiceNotes = cloneVoiceNotes(voicing && voicing.voiceNotes);
+		var topIndex = midiNotes.length - 1;
+
+		if (topIndex <= 0) {
+			return voicing;
+		}
+
+		midiNotes[topIndex] += semitones;
+
+		if (midiNotes[topIndex] <= midiNotes[topIndex - 1]) {
+			return voicing;
+		}
+
+		if (voiceNotes[topIndex]) {
+			voiceNotes[topIndex] = extendObject(voiceNotes[topIndex], {
+				midiNote: midiNotes[topIndex]
+			});
+		}
+
+		return extendObject(voicing, {
+			midiNotes: midiNotes,
+			voiceNotes: voiceNotes
+		});
+	}
+
+	function redistributeUpperVoiceDown(voicing) {
+		var voiceNotes = cloneVoiceNotes(voicing && voicing.voiceNotes);
+		var topIndex = voiceNotes.length - 1;
+		var originalBass;
+		var pairs = [];
+
+		if (topIndex <= 1) {
+			return voicing;
+		}
+
+		for (var i = 0; i < voiceNotes.length; i++) {
+			pairs.push({
+				midiNote: Number(voiceNotes[i] && voiceNotes[i].midiNote),
+				voiceNote: voiceNotes[i]
+			});
+		}
+
+		if (!isFinite(pairs[topIndex].midiNote)) {
+			return voicing;
+		}
+
+		originalBass = pairs[0].midiNote;
+		pairs[topIndex].midiNote -= 12;
+
+		for (var j = topIndex - 1; j > 0; j--) {
+			while (isFinite(pairs[j].midiNote) && pairs[j].midiNote >= pairs[topIndex].midiNote) {
+				pairs[j].midiNote -= 12;
+			}
+		}
+
+		pairs.sort(function (a, b) {
+			return a.midiNote - b.midiNote;
+		});
+
+		if (!areStrictlyAscending(pairs) || pairs[0].midiNote !== originalBass) {
+			return voicing;
+		}
+
+		return extendObject(voicing, {
+			midiNotes: pairs.map(function (pair) {
+				return pair.midiNote;
+			}),
+			notes: pairs.map(function (pair) {
+				return pair.voiceNote && pair.voiceNote.note;
+			}),
+			voiceNotes: pairs.map(function (pair) {
+				return extendObject(pair.voiceNote, {
+					midiNote: pair.midiNote
+				});
+			})
+		});
+	}
+
+	function areStrictlyAscending(pairs) {
+		for (var i = 0; i < pairs.length; i++) {
+			if (!isFinite(pairs[i].midiNote) || (i > 0 && pairs[i].midiNote <= pairs[i - 1].midiNote)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	function shiftRegister(voicing, semitones) {
@@ -273,8 +377,10 @@
 
 	global.CodaProgressionVoicingDisposition = {
 		chooseCandidate: chooseCandidate,
+		melodicUpperVoiceAlternatives: melodicUpperVoiceAlternatives,
 		minimumLowRegisterGap: minimumLowRegisterGap,
 		registerShiftCandidates: registerShiftCandidates,
+		redistributeUpperVoiceDown: redistributeUpperVoiceDown,
 		score: score,
 		spreadLowRegister: spreadLowRegister,
 		spreadLowRegisterSpacing: spreadLowRegisterSpacing,

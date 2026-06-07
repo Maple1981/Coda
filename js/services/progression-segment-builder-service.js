@@ -116,6 +116,8 @@
 			measure[keys[i]] = segment[keys[i]];
 		}
 
+		setInternalValue(measure, 'inversionRunKey', segment.inversionRunKey);
+		setInternalValue(measure, 'inversionRunLength', segment.inversionRunLength);
 		measure.pedalsIn = [];
 		measure.pedalsOut = [];
 

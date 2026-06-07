@@ -10,6 +10,9 @@
 		}
 
 		return {
+			inversionIndex: measure.inversionIndex,
+			inversionRunKey: measure.inversionRunKey,
+			inversionRunLength: measure.inversionRunLength,
 			midiNotes: measure.midiNotes || [],
 			notes: measure.notes || [],
 			voiceNotes: measure.voiceNotes || []

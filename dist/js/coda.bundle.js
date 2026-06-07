@@ -4725,6 +4725,7 @@
 		score += playableRangePenalty(nextPlan, options && options.playableRange);
 		score += idiomaticInstrumentPenalty(nextPlan, options && options.midiInstrument);
 		score += melodicMotionPenalty(previousPlan.midiNotes, nextPlan.midiNotes, options);
+		score += sopranoMotionPenalty(previousPlan.midiNotes, nextPlan.midiNotes, options);
 		score += upperVoiceGapPenalty(nextPlan);
 		score += extremeUpperRegisterPenalty(nextPlan);
 		score -= commonToneStickinessBonus(previousPlan, nextPlan, options && options.commonToneStickiness);
@@ -4819,6 +4820,57 @@
 		excess = interval - 12;
 
 		return 160 + (excess * excess * 12);
+	}
+
+	function sopranoMotionPenalty(previousMidiNotes, nextMidiNotes, options) {
+		var length = Math.min((previousMidiNotes || []).length, (nextMidiNotes || []).length);
+		var previousTop;
+		var nextTop;
+		var motion;
+
+		if (!length) {
+			return 0;
+		}
+
+		previousTop = Number(previousMidiNotes[length - 1]);
+		nextTop = Number(nextMidiNotes[length - 1]);
+
+		if (!isFinite(previousTop) || !isFinite(nextTop)) {
+			return 0;
+		}
+
+		motion = options && options.pitchClassOnly ?
+			Math.abs(pitchService.nearestMidiTo(previousTop, nextTop) - previousTop) :
+			Math.abs(nextTop - previousTop);
+
+		return sopranoLeapPenalty(motion);
+	}
+
+	function sopranoLeapPenalty(motion) {
+		var interval = Math.max(0, Number(motion) || 0);
+		var excess;
+
+		if (interval <= 2) {
+			return 0;
+		}
+
+		if (interval <= 4) {
+			return (interval - 2) * 8;
+		}
+
+		if (interval <= 7) {
+			excess = interval - 4;
+			return 48 + (excess * excess * 28);
+		}
+
+		if (interval <= 12) {
+			excess = interval - 7;
+			return 520 + (excess * excess * 80);
+		}
+
+		excess = interval - 12;
+
+		return 2600 + (excess * excess * 120);
 	}
 
 	function voiceMotionWeight(index, length) {
@@ -5293,6 +5345,8 @@
 		pianoHandSpanPenaltyForSpan: pianoHandSpanPenaltyForSpan,
 		pianoVoicingPenalty: pianoVoicingPenalty,
 		registerCenterPenalty: registerCenterPenalty,
+		sopranoLeapPenalty: sopranoLeapPenalty,
+		sopranoMotionPenalty: sopranoMotionPenalty,
 		upperVoiceGapPenalty: upperVoiceGapPenalty,
 		voiceLeadingTransitionScore: voiceLeadingTransitionScore
 	};
@@ -5337,12 +5391,13 @@
 			candidates = isOpenVoicing(voicing.midiNotes) ? [voicing] : [
 				openUpperVoice(voicing, voicing.midiNotes.length - 1)
 			];
-			return registerShiftCandidates(candidates).map(spreadLowRegister);
+			return melodicUpperVoiceAlternatives(registerShiftCandidates(candidates).map(spreadLowRegister)).map(spreadLowRegisterSpacing);
 		}
 
 		candidates = isOpenVoicing(voicing.midiNotes) ? [compactUpperVoices(voicing)] : [voicing];
 
 		candidates = registerShiftCandidates(candidates);
+		candidates = melodicUpperVoiceAlternatives(candidates);
 
 		if (!prefersLowRegisterSpacing(options && options.midiInstrument)) {
 			return candidates;
@@ -5388,6 +5443,109 @@
 		}
 
 		return result;
+	}
+
+	function melodicUpperVoiceAlternatives(candidates) {
+		var result = [];
+
+		for (var i = 0; i < candidates.length; i++) {
+			appendUniqueCandidate(result, candidates[i]);
+			appendUniqueCandidate(result, shiftUpperVoice(candidates[i], -12));
+			appendUniqueCandidate(result, shiftUpperVoice(candidates[i], 12));
+			appendUniqueCandidate(result, redistributeUpperVoiceDown(candidates[i]));
+		}
+
+		return result;
+	}
+
+	function shiftUpperVoice(voicing, semitones) {
+		var midiNotes = voicing && voicing.midiNotes ? voicing.midiNotes.slice() : [];
+		var voiceNotes = cloneVoiceNotes(voicing && voicing.voiceNotes);
+		var topIndex = midiNotes.length - 1;
+
+		if (topIndex <= 0) {
+			return voicing;
+		}
+
+		midiNotes[topIndex] += semitones;
+
+		if (midiNotes[topIndex] <= midiNotes[topIndex - 1]) {
+			return voicing;
+		}
+
+		if (voiceNotes[topIndex]) {
+			voiceNotes[topIndex] = extendObject(voiceNotes[topIndex], {
+				midiNote: midiNotes[topIndex]
+			});
+		}
+
+		return extendObject(voicing, {
+			midiNotes: midiNotes,
+			voiceNotes: voiceNotes
+		});
+	}
+
+	function redistributeUpperVoiceDown(voicing) {
+		var voiceNotes = cloneVoiceNotes(voicing && voicing.voiceNotes);
+		var topIndex = voiceNotes.length - 1;
+		var originalBass;
+		var pairs = [];
+
+		if (topIndex <= 1) {
+			return voicing;
+		}
+
+		for (var i = 0; i < voiceNotes.length; i++) {
+			pairs.push({
+				midiNote: Number(voiceNotes[i] && voiceNotes[i].midiNote),
+				voiceNote: voiceNotes[i]
+			});
+		}
+
+		if (!isFinite(pairs[topIndex].midiNote)) {
+			return voicing;
+		}
+
+		originalBass = pairs[0].midiNote;
+		pairs[topIndex].midiNote -= 12;
+
+		for (var j = topIndex - 1; j > 0; j--) {
+			while (isFinite(pairs[j].midiNote) && pairs[j].midiNote >= pairs[topIndex].midiNote) {
+				pairs[j].midiNote -= 12;
+			}
+		}
+
+		pairs.sort(function (a, b) {
+			return a.midiNote - b.midiNote;
+		});
+
+		if (!areStrictlyAscending(pairs) || pairs[0].midiNote !== originalBass) {
+			return voicing;
+		}
+
+		return extendObject(voicing, {
+			midiNotes: pairs.map(function (pair) {
+				return pair.midiNote;
+			}),
+			notes: pairs.map(function (pair) {
+				return pair.voiceNote && pair.voiceNote.note;
+			}),
+			voiceNotes: pairs.map(function (pair) {
+				return extendObject(pair.voiceNote, {
+					midiNote: pair.midiNote
+				});
+			})
+		});
+	}
+
+	function areStrictlyAscending(pairs) {
+		for (var i = 0; i < pairs.length; i++) {
+			if (!isFinite(pairs[i].midiNote) || (i > 0 && pairs[i].midiNote <= pairs[i - 1].midiNote)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	function shiftRegister(voicing, semitones) {
@@ -5576,8 +5734,10 @@
 
 	global.CodaProgressionVoicingDisposition = {
 		chooseCandidate: chooseCandidate,
+		melodicUpperVoiceAlternatives: melodicUpperVoiceAlternatives,
 		minimumLowRegisterGap: minimumLowRegisterGap,
 		registerShiftCandidates: registerShiftCandidates,
+		redistributeUpperVoiceDown: redistributeUpperVoiceDown,
 		score: score,
 		spreadLowRegister: spreadLowRegister,
 		spreadLowRegisterSpacing: spreadLowRegisterSpacing,
@@ -5825,7 +5985,7 @@
 	var voicingDispositionService = global.CodaProgressionVoicingDisposition;
 	var voicingFactory = global.CodaProgressionVoicingFactory;
 	var MAX_INVERSION_RUN = 3;
-	var INVERSION_RUN_PENALTY = 1000;
+	var INVERSION_RUN_PENALTY = 1000000;
 
 	function chooseVoicing(options) {
 		var labels = options.kind === 'seventh' ? ['', '6/5', '4/3', '4/2'] : ['', '6', '6/4'];
@@ -8018,6 +8178,9 @@
 			}
 		}
 
+		copyInternalValue(clone, measure, 'inversionRunKey');
+		copyInternalValue(clone, measure, 'inversionRunLength');
+
 		return clone;
 	}
 
@@ -8047,7 +8210,28 @@
 			measure[keys[i]] = segment[keys[i]];
 		}
 
+		copyInternalValue(measure, segment, 'inversionRunKey');
+		copyInternalValue(measure, segment, 'inversionRunLength');
+
 		return measure;
+	}
+
+	function copyInternalValue(target, source, key) {
+		if (!target || !source || source[key] == null) {
+			return;
+		}
+
+		if (typeof Object.defineProperty === 'function') {
+			Object.defineProperty(target, key, {
+				configurable: true,
+				enumerable: false,
+				value: source[key],
+				writable: true
+			});
+			return;
+		}
+
+		target[key] = source[key];
 	}
 
 	function cloneVoiceNotes(voiceNotes) {
@@ -9188,6 +9372,9 @@
 		}
 
 		return {
+			inversionIndex: measure.inversionIndex,
+			inversionRunKey: measure.inversionRunKey,
+			inversionRunLength: measure.inversionRunLength,
 			midiNotes: measure.midiNotes || [],
 			notes: measure.notes || [],
 			voiceNotes: measure.voiceNotes || []
@@ -9940,6 +10127,8 @@
 			measure[keys[i]] = segment[keys[i]];
 		}
 
+		setInternalValue(measure, 'inversionRunKey', segment.inversionRunKey);
+		setInternalValue(measure, 'inversionRunLength', segment.inversionRunLength);
 		measure.pedalsIn = [];
 		measure.pedalsOut = [];
 
@@ -11873,6 +12062,9 @@
 				voices: progressionState.voices
 			};
 
+			setInternalValue(measure, 'inversionRunKey', chordPlan.inversionRunKey);
+			setInternalValue(measure, 'inversionRunLength', chordPlan.inversionRunLength);
+
 			if (resolvedDegrees[i].cadentialRole) {
 				measure.cadentialRole = resolvedDegrees[i].cadentialRole;
 			}
@@ -11924,6 +12116,24 @@
 
 	function tonalFunctionForDegree(scaleDefinition, degreeIndex) {
 		return tonalFunctionService.forDegree(scaleDefinition, degreeIndex);
+	}
+
+	function setInternalValue(target, key, value) {
+		if (!target) {
+			return;
+		}
+
+		if (typeof Object.defineProperty === 'function') {
+			Object.defineProperty(target, key, {
+				configurable: true,
+				enumerable: false,
+				value: value,
+				writable: true
+			});
+			return;
+		}
+
+		target[key] = value;
 	}
 
 	function optionsForDegree(options, resolvedDegree) {
